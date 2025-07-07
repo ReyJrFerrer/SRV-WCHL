@@ -1,0 +1,27 @@
+{
+  "canisters": {
+    "llm": {
+      "type": "pull",
+      "id": "w36hm-eqaaa-aaaal-qr76a-cai"
+    },
+    "backend": {
+      "dependencies": ["llm"],
+      "type": "motoko",
+      "main": "src/backend/main.mo"
+    },
+    "frontend": {
+      "dependencies": ["backend"],
+      "type": "assets",
+      "source": ["src/frontend/dist/"]
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": "mops sources"
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1,
+  "dfx": "0.25.0"
+}
