@@ -1,7 +1,7 @@
 # 🫡 This repository uses the ULTIMATE IC VIBE CODING TEMPLATE from the github repository link https://github.com/pt-icp-hub/IC-Vibe-Coding-Template-Motoko
 
 July 7, 2025
-As of the time we are writing, currently we are still designing the architecture and refining the idea. We will work on the repository by the start of the following week. 
+As of the time we are writing, currently we are still designing the architecture and refining the idea. We will work on the repository by the start of the following week.
 
 # 🏪 SRV A Local Service Marketplace
 
