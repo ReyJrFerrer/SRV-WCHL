@@ -38,7 +38,8 @@ Our platform revolutionizes local service booking by leveraging ICP's unique cap
 - **Ratings & Reviews**: Community-driven feedback system with AI verification
 - **COD Payments**: Secure cash-on-delivery payment options
 - **Profile Switching** : Easily switch between client and local service provider accounts
-- **PWA** : Push notifications 
+- **PWA** : Push notifications
+
 ---
 
 ## 🚀 Getting Started

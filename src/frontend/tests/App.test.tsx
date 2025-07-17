@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import App from "../src/App";
+import App from "../src/App-old";
 import { StrictMode } from "react";
 import { act } from "react";
 
