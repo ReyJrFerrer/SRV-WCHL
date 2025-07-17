@@ -8,37 +8,45 @@ import Float "mo:base/Float";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 
-import Types "../types/shared";
+import ServiceTypes "./types";
 import StaticData "../utils/staticData";
 
 actor ServiceCanister {
-    // Type definitions
-    type Service = Types.Service;
-    type ServiceCategory = Types.ServiceCategory;
-    type ServiceStatus = Types.ServiceStatus;
-    type Location = Types.Location;
-    type Result<T> = Types.Result<T>;
-    type ProviderAvailability = Types.ProviderAvailability;
-    type DayOfWeek = Types.DayOfWeek;
-    type DayAvailability = Types.DayAvailability;
-    type TimeSlot = Types.TimeSlot;
-    type AvailableSlot = Types.AvailableSlot;
-    type ServicePackage = Types.ServicePackage;
+    // Type definitions from service-specific types module
+    type Service = ServiceTypes.Service;
+    type ServiceCategory = ServiceTypes.ServiceCategory;
+    type ServiceStatus = ServiceTypes.ServiceStatus;
+    type Location = ServiceTypes.Location;
+    type Result<T> = ServiceTypes.Result<T>;
+    type ProviderAvailability = ServiceTypes.ProviderAvailability;
+    type DayOfWeek = ServiceTypes.DayOfWeek;
+    type DayAvailability = ServiceTypes.DayAvailability;
+    type TimeSlot = ServiceTypes.TimeSlot;
+    type AvailableSlot = ServiceTypes.AvailableSlot;
+    type ServicePackage = ServiceTypes.ServicePackage;
+    
+    // Service-specific types
+    type ServiceValidationError = ServiceTypes.ServiceValidationError;
+    type ServiceSearchFilters = ServiceTypes.ServiceSearchFilters;
+    type ServiceStatistics = ServiceTypes.ServiceStatistics;
+    type ServiceUpdateRequest = ServiceTypes.ServiceUpdateRequest;
+    type CategoryWithStats = ServiceTypes.CategoryWithStats;
+    type ProviderProfile = ServiceTypes.ProviderProfile;
 
-    // State variables
+    // State variables with improved HashMap sizes
     private stable var serviceEntries : [(Text, Service)] = [];
-    private var services = HashMap.HashMap<Text, Service>(10, Text.equal, Text.hash);
+    private var services = HashMap.HashMap<Text, Service>(ServiceTypes.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
     
     private stable var categoryEntries : [(Text, ServiceCategory)] = [];
-    private var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
+    private var categories = HashMap.HashMap<Text, ServiceCategory>(ServiceTypes.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
 
     // Availability state variables
     private stable var availabilityEntries : [(Text, ProviderAvailability)] = [];
-    private var serviceAvailabilities = HashMap.HashMap<Text, ProviderAvailability>(10, Text.equal, Text.hash);
+    private var serviceAvailabilities = HashMap.HashMap<Text, ProviderAvailability>(ServiceTypes.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
     
     // Service package state variables
     private stable var packageEntries : [(Text, ServicePackage)] = [];
-    private var servicePackages = HashMap.HashMap<Text, ServicePackage>(10, Text.equal, Text.hash);
+    private var servicePackages = HashMap.HashMap<Text, ServicePackage>(ServiceTypes.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
 
     // Canister references
     private var authCanisterId : ?Principal = null;
@@ -46,13 +54,13 @@ actor ServiceCanister {
     private var reviewCanisterId : ?Principal = null;
     private var reputationCanisterId : ?Principal = null;
 
-    // Constants
-    private let MIN_TITLE_LENGTH : Nat = 5;
-    private let MAX_TITLE_LENGTH : Nat = 100;
-    private let MIN_DESCRIPTION_LENGTH : Nat = 5;
-    private let MAX_DESCRIPTION_LENGTH : Nat = 1000;
-    private let MIN_PRICE : Nat = 5;
-    private let MAX_PRICE : Nat = 1_000_000;
+    // Constants from validation constants
+    private let MIN_TITLE_LENGTH : Nat = ServiceTypes.VALIDATION_CONSTANTS.MIN_TITLE_LENGTH;
+    private let MAX_TITLE_LENGTH : Nat = ServiceTypes.VALIDATION_CONSTANTS.MAX_TITLE_LENGTH;
+    private let MIN_DESCRIPTION_LENGTH : Nat = ServiceTypes.VALIDATION_CONSTANTS.MIN_DESCRIPTION_LENGTH;
+    private let MAX_DESCRIPTION_LENGTH : Nat = ServiceTypes.VALIDATION_CONSTANTS.MAX_DESCRIPTION_LENGTH;
+    private let MIN_PRICE : Nat = ServiceTypes.VALIDATION_CONSTANTS.MIN_PRICE;
+    private let MAX_PRICE : Nat = ServiceTypes.VALIDATION_CONSTANTS.MAX_PRICE;
 
     // Set canister references
     public shared(_msg) func setCanisterReferences(
@@ -1284,6 +1292,263 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
             };
             case (null) {
                 return #err("Package not found");
+            };
+        };
+    };
+
+    // NEW SERVICE-SPECIFIC FUNCTIONS USING IMPROVED TYPE SYSTEM
+
+    // Get comprehensive service statistics
+    public query func getServiceStatistics() : async ServiceStatistics {
+        var totalServices : Nat = 0;
+        var activeServices : Nat = 0;
+        var draftServices : Nat = 0;
+        var suspendedServices : Nat = 0;
+        var deletedServices : Nat = 0;
+        var categoryCountMap = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
+
+        for (service in services.vals()) {
+            totalServices += 1;
+            switch (service.status) {
+                case (#Active) { activeServices += 1; };
+                case (#Draft) { draftServices += 1; };
+                case (#Suspended) { suspendedServices += 1; };
+                case (#Deleted) { deletedServices += 1; };
+            };
+
+            // Count services per category
+            switch (categoryCountMap.get(service.categoryId)) {
+                case (?count) { categoryCountMap.put(service.categoryId, count + 1); };
+                case (null) { categoryCountMap.put(service.categoryId, 1); };
+            };
+        };
+
+        let categoryCounts = Iter.toArray(categoryCountMap.entries());
+
+        return {
+            totalServices = totalServices;
+            activeServices = activeServices;
+            draftServices = draftServices;
+            suspendedServices = suspendedServices;
+            deletedServices = deletedServices;
+            categoryCounts = categoryCounts;
+        };
+    };
+
+    // Get provider profile with comprehensive stats
+    public query func getProviderProfile(providerId : Principal) : async Result<ProviderProfile> {
+        let providerServices = Array.filter<Service>(
+            Iter.toArray(services.vals()),
+            func (service : Service) : Bool {
+                return service.providerId == providerId;
+            }
+        );
+
+        let totalServices = providerServices.size();
+        let activeServices = Array.filter<Service>(
+            providerServices,
+            func (service : Service) : Bool {
+                return service.status == #Active;
+            }
+        ).size();
+
+        // Calculate average rating (simplified - in real implementation, get from review canister)
+        var totalRating : Float = 0.0;
+        var reviewCount : Nat = 0;
+        for (service in providerServices.vals()) {
+            totalRating += service.averageRating;
+            reviewCount += service.reviewCount;
+        };
+
+        let averageRating : ?Float = if (providerServices.size() > 0) {
+            ?(totalRating / Float.fromInt(providerServices.size()));
+        } else {
+            null;
+        };
+
+        let profile : ProviderProfile = {
+            providerId = providerId;
+            totalServices = totalServices;
+            activeServices = activeServices;
+            averageRating = averageRating;
+            totalReviews = reviewCount;
+            isVerified = false; // TODO: Implement verification logic
+            joinedDate = Time.now(); // TODO: Get actual join date from auth canister
+        };
+
+        return #ok(profile);
+    };
+
+    // Advanced service search with filters
+    public query func searchServicesAdvanced(filters : ServiceSearchFilters) : async [Service] {
+        let allServices = Iter.toArray(services.vals());
+        
+        let filteredServices = Array.filter<Service>(
+            allServices,
+            func (service : Service) : Bool {
+                // Category filter
+                switch (filters.categoryId) {
+                    case (?catId) {
+                        if (service.categoryId != catId) return false;
+                    };
+                    case (null) {};
+                };
+
+                // Price range filter
+                switch (filters.minPrice) {
+                    case (?minPrice) {
+                        if (service.price < minPrice) return false;
+                    };
+                    case (null) {};
+                };
+
+                switch (filters.maxPrice) {
+                    case (?maxPrice) {
+                        if (service.price > maxPrice) return false;
+                    };
+                    case (null) {};
+                };
+
+                // Rating filter
+                switch (filters.minRating) {
+                    case (?minRating) {
+                        if (service.averageRating < minRating) return false;
+                    };
+                    case (null) {};
+                };
+
+                // Provider filter
+                switch (filters.providerId) {
+                    case (?provId) {
+                        if (service.providerId != provId) return false;
+                    };
+                    case (null) {};
+                };
+
+                // Location and radius filter
+                switch (filters.location, filters.radiusKm) {
+                    case (?searchLocation, ?radius) {
+                        let distance = calculateDistance(service.location, searchLocation);
+                        if (distance > radius) return false;
+                    };
+                    case (_, _) {};
+                };
+
+                // Only show active services in search results
+                return service.status == #Active;
+            }
+        );
+
+        return filteredServices;
+    };
+
+    // Get categories with statistics
+    public query func getCategoriesWithStats() : async [CategoryWithStats] {
+        let allCategories = Iter.toArray(categories.vals());
+        
+        Array.map<ServiceCategory, CategoryWithStats>(
+            allCategories,
+            func (category : ServiceCategory) : CategoryWithStats {
+                let categoryServices = Array.filter<Service>(
+                    Iter.toArray(services.vals()),
+                    func (service : Service) : Bool {
+                        return service.categoryId == category.id and service.status == #Active;
+                    }
+                );
+
+                let serviceCount = categoryServices.size();
+                
+                let averagePrice : ?Float = if (serviceCount > 0) {
+                    var totalPrice : Nat = 0;
+                    for (service in categoryServices.vals()) {
+                        totalPrice += service.price;
+                    };
+                    ?(Float.fromInt(totalPrice) / Float.fromInt(serviceCount));
+                } else {
+                    null;
+                };
+
+                let averageRating : ?Float = if (serviceCount > 0) {
+                    var totalRating : Float = 0.0;
+                    for (service in categoryServices.vals()) {
+                        totalRating += service.averageRating;
+                    };
+                    ?(totalRating / Float.fromInt(serviceCount));
+                } else {
+                    null;
+                };
+
+                return {
+                    category = category;
+                    serviceCount = serviceCount;
+                    averagePrice = averagePrice;
+                    averageRating = averageRating;
+                };
+            }
+        );
+    };
+
+    // Bulk update service function using ServiceUpdateRequest type
+    public shared(msg) func updateServiceBulk(updateRequest : ServiceUpdateRequest) : async Result<Service> {
+        let caller = msg.caller;
+        
+        switch (services.get(updateRequest.serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to update this service");
+                };
+
+                // Validate optional fields
+                switch (updateRequest.title) {
+                    case (?title) {
+                        if (not validateTitle(title)) {
+                            return #err("Invalid title length");
+                        };
+                    };
+                    case (null) {};
+                };
+
+                switch (updateRequest.description) {
+                    case (?description) {
+                        if (not validateDescription(description)) {
+                            return #err("Invalid description length");
+                        };
+                    };
+                    case (null) {};
+                };
+
+                switch (updateRequest.price) {
+                    case (?price) {
+                        if (not validatePrice(price)) {
+                            return #err("Invalid price range");
+                        };
+                    };
+                    case (null) {};
+                };
+
+                // Create updated service
+                let updatedService : Service = {
+                    id = existingService.id;
+                    title = switch (updateRequest.title) { case (?t) t; case (null) existingService.title; };
+                    description = switch (updateRequest.description) { case (?d) d; case (null) existingService.description; };
+                    price = switch (updateRequest.price) { case (?p) p; case (null) existingService.price; };
+                    location = switch (updateRequest.location) { case (?l) l; case (null) existingService.location; };
+                    categoryId = switch (updateRequest.categoryId) { case (?c) c; case (null) existingService.categoryId; };
+                    providerId = existingService.providerId;
+                    createdAt = existingService.createdAt;
+                    updatedAt = Time.now();
+                    status = switch (updateRequest.status) { case (?s) s; case (null) existingService.status; };
+                    averageRating = existingService.averageRating;
+                    reviewCount = existingService.reviewCount;
+                    imageUrls = switch (updateRequest.imageUrls) { case (?i) i; case (null) existingService.imageUrls; };
+                    maxBookingsPerDay = switch (updateRequest.maxBookingsPerDay) { case (?m) ?m; case (null) existingService.maxBookingsPerDay; };
+                };
+
+                services.put(updateRequest.serviceId, updatedService);
+                return #ok(updatedService);
+            };
+            case (null) {
+                return #err("Service not found");
             };
         };
     };

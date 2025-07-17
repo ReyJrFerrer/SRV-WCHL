@@ -7,6 +7,10 @@ import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Char "mo:base/Char";
 import Option "mo:base/Option";
+import Int "mo:base/Int";
+import Order "mo:base/Order";
+import Debug "mo:base/Debug";
+
 import Types "./types";
 import StaticData "../utils/staticData";
 
@@ -19,36 +23,26 @@ actor AuthCanister {
     type Profile = Types.Profile;
     type UserRole = Types.UserRole;
     type Result<T> = Types.Result<T>;
-    type ReputationScore = {
-        userId: Principal;
-        trustScore: Float;
-        trustLevel: TrustLevel;
-        completedBookings: Nat;
-        averageRating: ?Float;
-        detectionFlags: [DetectionFlag];
-        lastUpdated: Time.Time;
-    };
-    type TrustLevel = {
-        #New;
-        #Low;
-        #Medium;
-        #High;
-        #VeryHigh;
-    };
-    type DetectionFlag = {
-        #ReviewBomb;
-        #CompetitiveManipulation;
-        #FakeEvidence;
-        #IdentityFraud;
-        #Other;
-    };
+    type RoleChangeRecord = Types.RoleChangeRecord;
+    type SecurityEvent = Types.SecurityEvent;
+    type SecurityEventType = Types.SecurityEventType;
+    type ProfileStatistics = Types.ProfileStatistics;
 
-    // State variables
+    // State variables with improved HashMap sizes
     private stable var profileEntries : [(Principal, Profile)] = [];
-    private var profiles = HashMap.HashMap<Principal, Profile>(10, Principal.equal, Principal.hash);
-    private var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
-    // private var emailToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
-    private var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
+    private var profiles = HashMap.HashMap<Principal, Profile>(Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Principal.equal, Principal.hash);
+    private var verifiedUsers = HashMap.HashMap<Principal, Bool>(Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Principal.equal, Principal.hash);
+    private var phoneToPrincipal = HashMap.HashMap<Text, Principal>(Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
+
+    // New state variables for enhanced functionality
+    private stable var roleChangeEntries : [(Text, RoleChangeRecord)] = [];
+    private var roleChangeHistory = HashMap.HashMap<Text, RoleChangeRecord>(Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
+    
+    private stable var securityEventEntries : [(Text, SecurityEvent)] = [];
+    private var securityEvents = HashMap.HashMap<Text, SecurityEvent>(Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
+    
+    // Rate limiting for role switches
+    private var dailyRoleSwitches = HashMap.HashMap<Principal, [(Time.Time, UserRole)]>(50, Principal.equal, Principal.hash);
 
     // Canister references
     private var reputationCanisterId : ?Principal = null;
@@ -56,39 +50,19 @@ actor AuthCanister {
     // Initial data loading 
     
 
-    // Constants
-    private let MIN_NAME_LENGTH : Nat = 2;
-    private let MAX_NAME_LENGTH : Nat = 50;
-    // private let MIN_EMAIL_LENGTH : Nat = 5;
-    // private let MAX_EMAIL_LENGTH : Nat = 100;
-    private let MIN_PHONE_LENGTH : Nat = 10;
-    private let MAX_PHONE_LENGTH : Nat = 15;
+    // Constants from validation constants
+    private let MIN_NAME_LENGTH : Nat = Types.VALIDATION_CONSTANTS.MIN_NAME_LENGTH;
+    private let MAX_NAME_LENGTH : Nat = Types.VALIDATION_CONSTANTS.MAX_NAME_LENGTH;
+    private let MIN_PHONE_LENGTH : Nat = Types.VALIDATION_CONSTANTS.MIN_PHONE_LENGTH;
+    private let MAX_PHONE_LENGTH : Nat = Types.VALIDATION_CONSTANTS.MAX_PHONE_LENGTH;
+    private let MAX_ROLE_SWITCHES_PER_DAY : Nat = Types.VALIDATION_CONSTANTS.MAX_ROLE_SWITCHES_PER_DAY;
 
     // Helper functions
-    // private func validateEmail(email : Text) : Bool {
-    //     if (email.size() < MIN_EMAIL_LENGTH or email.size() > MAX_EMAIL_LENGTH) {
-    //         return false;
-    //     };
-        
-    //     let chars = Text.toIter(email);
-    //     var hasAt = false;
-    //     var hasDot = false;
-    //     var hasContentAfterDot = false;
-        
-    //     for (c in chars) {
-    //         if (c == '@') {
-    //             if (hasAt) return false;
-    //             hasAt := true;
-    //         } else if (c == '.') {
-    //             if (not hasAt) return false;
-    //             hasDot := true;
-    //         } else if (hasDot) {
-    //             hasContentAfterDot := true;
-    //         };
-    //     };
-        
-    //     hasAt and hasDot and hasContentAfterDot
-    // };
+    private func generateId() : Text {
+        let now = Int.abs(Time.now());
+        let random = Int.abs(Time.now()) % 100000; // Increased entropy
+        return Int.toText(now) # "-" # Int.toText(random);
+    };
 
     private func validatePhone(phone : Text) : Bool {
         if (phone.size() < MIN_PHONE_LENGTH or phone.size() > MAX_PHONE_LENGTH) {
@@ -111,6 +85,68 @@ actor AuthCanister {
 
     private func validateName(name : Text) : Bool {
         name.size() >= MIN_NAME_LENGTH and name.size() <= MAX_NAME_LENGTH
+    };
+
+    // Enhanced validation for role transitions
+    private func isValidRoleTransition(currentRole : UserRole, newRole : UserRole, isAdmin : Bool) : Bool {
+        switch (currentRole, newRole) {
+            case (#Client, #ServiceProvider) true; // Users can become providers
+            case (#ServiceProvider, #Client) true; // Providers can become clients
+            case (#Client, #Admin) isAdmin; // Only admins can promote to admin
+            case (#ServiceProvider, #Admin) isAdmin; // Only admins can promote to admin
+            case (#Admin, #Client) isAdmin; // Only admins can demote themselves
+            case (#Admin, #ServiceProvider) isAdmin; // Only admins can demote themselves
+            case (_, _) false; // Same role transition not allowed
+        }
+    };
+
+    // Check if user is admin
+    private func isAdmin(userId : Principal) : Bool {
+        switch (profiles.get(userId)) {
+            case (?profile) profile.role == #Admin;
+            case (null) false;
+        }
+    };
+
+    // Rate limiting for role switches
+    private func canSwitchRole(userId : Principal) : Bool {
+        switch (dailyRoleSwitches.get(userId)) {
+            case (?switches) {
+                let now = Time.now();
+                let dayInNanoseconds = 24 * 60 * 60 * 1_000_000_000;
+                
+                // Filter switches from last 24 hours
+                let recentSwitches = Array.filter<(Time.Time, UserRole)>(
+                    switches,
+                    func ((timestamp, _) : (Time.Time, UserRole)) : Bool {
+                        (now - timestamp) < dayInNanoseconds
+                    }
+                );
+                
+                recentSwitches.size() < MAX_ROLE_SWITCHES_PER_DAY
+            };
+            case (null) true; // No switches recorded, allow
+        }
+    };
+
+    // Log security events
+    private func logSecurityEvent(
+        userId : Principal,
+        eventType : SecurityEventType,
+        details : ?Text
+    ) {
+        let eventId = generateId();
+        let event : SecurityEvent = {
+            id = eventId;
+            userId = userId;
+            eventType = eventType;
+            timestamp = Time.now();
+            ipAddress = null; // Could be enhanced with real IP tracking
+            userAgent = null; // Could be enhanced with user agent tracking
+            details = details;
+        };
+        
+        securityEvents.put(eventId, event);
     };
 
     // Helper functions for duplicate checking
@@ -164,18 +200,25 @@ actor AuthCanister {
     if (profiles.size() < 5) {
         initializeStaticProfiles();
     };
-    // Initialization
+    // Initialization with enhanced state management
     system func preupgrade() {
         profileEntries := Iter.toArray(profiles.entries());
+        roleChangeEntries := Iter.toArray(roleChangeHistory.entries());
+        securityEventEntries := Iter.toArray(securityEvents.entries());
     };
 
     system func postupgrade() {
-        profiles := HashMap.fromIter<Principal, Profile>(profileEntries.vals(), 10, Principal.equal, Principal.hash);
+        profiles := HashMap.fromIter<Principal, Profile>(profileEntries.vals(), Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Principal.equal, Principal.hash);
         profileEntries := [];
         
-        // Rebuild email and phone mappings
+        roleChangeHistory := HashMap.fromIter<Text, RoleChangeRecord>(roleChangeEntries.vals(), Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
+        roleChangeEntries := [];
+        
+        securityEvents := HashMap.fromIter<Text, SecurityEvent>(securityEventEntries.vals(), Types.VALIDATION_CONSTANTS.DEFAULT_HASHMAP_SIZE, Text.equal, Text.hash);
+        securityEventEntries := [];
+        
+        // Rebuild phone mappings
         for ((principal, profile) in profiles.entries()) {
-            // emailToPrincipal.put(profile.email, principal);
             phoneToPrincipal.put(profile.phone, principal);
         };
         
@@ -245,23 +288,32 @@ actor AuthCanister {
                     isVerified = false;
                     profilePicture = null;
                     biography = null;
+                    // New enhanced security fields
+                    lastLogin = ?Time.now();
+                    loginCount = 1;
+                    isActive = true;
+                    suspendedUntil = null;
                 };
                 
                 profiles.put(caller, newProfile);
                 verifiedUsers.put(caller, false);
-                // emailToPrincipal.put(email, caller);
                 phoneToPrincipal.put(phone, caller);
                 
-                // Initialize reputation for new user
-                switch (reputationCanisterId) {
-                    case (?repId) {
-                        let reputationCanister = actor(Principal.toText(repId)) : actor {
-                            initializeReputation : (Principal, Time.Time) -> async Result<ReputationScore>;
+                // Log security event for new registration
+                logSecurityEvent(caller, #Login, ?("New profile created"));
+                
+                // Initialize reputation for new service providers
+                if (role == #ServiceProvider) {
+                    switch (reputationCanisterId) {
+                        case (?repId) {
+                            let reputationCanister = actor(Principal.toText(repId)) : actor {
+                                initializeUserReputation : (Principal) -> async Result<Bool>;
+                            };
+                            ignore await reputationCanister.initializeUserReputation(caller);
                         };
-                        ignore await reputationCanister.initializeReputation(caller, Time.now());
-                    };
-                    case (null) {
-                        // Reputation canister not set, continue without initializing reputation
+                        case (null) {
+                            // Reputation canister not set, continue without initializing reputation
+                        };
                     };
                 };
                 
@@ -351,7 +403,6 @@ actor AuthCanister {
                 let updatedProfile : Profile = {
                     id = existingProfile.id;
                     name = Option.get(name, existingProfile.name);
-                    // email = Option.get(email, existingProfile.email);
                     phone = Option.get(phone, existingProfile.phone);
                     role = existingProfile.role;
                     createdAt = existingProfile.createdAt;
@@ -359,6 +410,11 @@ actor AuthCanister {
                     isVerified = existingProfile.isVerified;
                     profilePicture = existingProfile.profilePicture;
                     biography = existingProfile.biography;
+                    // Preserve enhanced security fields
+                    lastLogin = existingProfile.lastLogin;
+                    loginCount = existingProfile.loginCount;
+                    isActive = existingProfile.isActive;
+                    suspendedUntil = existingProfile.suspendedUntil;
                 };
                 // removed email
                 // Update email and phone mappings if changed
@@ -411,7 +467,6 @@ actor AuthCanister {
                 let updatedProfile : Profile = {
                     id = profile.id;
                     name = profile.name;
-                    // email = profile.email;
                     phone = profile.phone;
                     role = profile.role;
                     createdAt = profile.createdAt;
@@ -419,6 +474,11 @@ actor AuthCanister {
                     isVerified = true;
                     profilePicture = profile.profilePicture;
                     biography = profile.biography;
+                    // Preserve enhanced security fields
+                    lastLogin = profile.lastLogin;
+                    loginCount = profile.loginCount;
+                    isActive = profile.isActive;
+                    suspendedUntil = profile.suspendedUntil;
                 };
                 
                 profiles.put(userId, updatedProfile);
@@ -441,5 +501,325 @@ actor AuthCanister {
         );
         
         return providersBuffer;
+    };
+    
+    // NEW PROFILE SWITCHING FUNCTIONALITY
+    
+    // Switch user role with proper validation and logging
+    public shared(msg) func switchRole(
+        newRole : UserRole,
+        reason : ?Text
+    ) : async Result<Profile> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        switch (profiles.get(caller)) {
+            case (?existingProfile) {
+                // Check if role transition is valid
+                let callerIsAdmin = isAdmin(caller);
+                if (not isValidRoleTransition(existingProfile.role, newRole, callerIsAdmin)) {
+                    return #err("Invalid role transition from " # debug_show(existingProfile.role) # " to " # debug_show(newRole));
+                };
+                
+                // Check rate limiting
+                if (not canSwitchRole(caller)) {
+                    return #err("Too many role switches today. Maximum " # Nat.toText(MAX_ROLE_SWITCHES_PER_DAY) # " switches per day allowed");
+                };
+                
+                // Update profile with new role
+                let updatedProfile : Profile = {
+                    id = existingProfile.id;
+                    name = existingProfile.name;
+                    phone = existingProfile.phone;
+                    role = newRole;
+                    createdAt = existingProfile.createdAt;
+                    updatedAt = Time.now();
+                    isVerified = existingProfile.isVerified;
+                    profilePicture = existingProfile.profilePicture;
+                    biography = existingProfile.biography;
+                    lastLogin = existingProfile.lastLogin;
+                    loginCount = existingProfile.loginCount;
+                    isActive = existingProfile.isActive;
+                    suspendedUntil = existingProfile.suspendedUntil;
+                };
+                
+                profiles.put(caller, updatedProfile);
+                
+                // Log role change
+                let changeId = generateId();
+                let roleChange : RoleChangeRecord = {
+                    id = changeId;
+                    userId = caller;
+                    previousRole = existingProfile.role;
+                    newRole = newRole;
+                    changedAt = Time.now();
+                    reason = reason;
+                    approvedBy = if (callerIsAdmin and caller != caller) ?caller else null;
+                };
+                roleChangeHistory.put(changeId, roleChange);
+                
+                // Update rate limiting tracker
+                let now = Time.now();
+                switch (dailyRoleSwitches.get(caller)) {
+                    case (?switches) {
+                        let newSwitches = Array.append<(Time.Time, UserRole)>(switches, [(now, newRole)]);
+                        dailyRoleSwitches.put(caller, newSwitches);
+                    };
+                    case (null) {
+                        dailyRoleSwitches.put(caller, [(now, newRole)]);
+                    };
+                };
+                
+                // Log security event
+                logSecurityEvent(caller, #RoleSwitch, ?("Switched from " # debug_show(existingProfile.role) # " to " # debug_show(newRole)));
+                
+                // Initialize reputation in reputation canister if switching to ServiceProvider
+                if (newRole == #ServiceProvider) {
+                    switch (reputationCanisterId) {
+                        case (?repId) {
+                            let reputationCanister = actor(Principal.toText(repId)) : actor {
+                                initializeUserReputation : (Principal) -> async Result<Bool>;
+                            };
+                            let _ = await reputationCanister.initializeUserReputation(caller);
+                        };
+                        case (null) {};
+                    };
+                };
+                
+                return #ok(updatedProfile);
+            };
+            case (null) {
+                return #err("Profile not found");
+            };
+        };
+    };
+    
+    // Get role change history for a user
+    public query func getRoleHistory(userId : Principal) : async Result<[RoleChangeRecord]> {
+        let userRoleChanges = Array.filter<RoleChangeRecord>(
+            Iter.toArray(roleChangeHistory.vals()),
+            func (change : RoleChangeRecord) : Bool {
+                return change.userId == userId;
+            }
+        );
+        
+        // Sort by timestamp (most recent first)
+        let sortedChanges = Array.sort<RoleChangeRecord>(
+            userRoleChanges,
+            func (a : RoleChangeRecord, b : RoleChangeRecord) : Order.Order {
+                if (a.changedAt > b.changedAt) #less
+                else if (a.changedAt < b.changedAt) #greater
+                else #equal
+            }
+        );
+        
+        return #ok(sortedChanges);
+    };
+    
+    // ENHANCED SECURITY FUNCTIONS
+    
+    // Suspend a user (admin only)
+    public shared(msg) func suspendUser(
+        userId : Principal,
+        durationHours : Nat,
+        reason : Text
+    ) : async Result<Bool> {
+        let caller = msg.caller;
+        
+        if (not isAdmin(caller)) {
+            return #err("Only admins can suspend users");
+        };
+        
+        switch (profiles.get(userId)) {
+            case (?existingProfile) {
+                let suspensionDuration = durationHours * 60 * 60 * 1_000_000_000; // Convert to nanoseconds
+                let suspendedUntil = Time.now() + suspensionDuration;
+                
+                let updatedProfile : Profile = {
+                    id = existingProfile.id;
+                    name = existingProfile.name;
+                    phone = existingProfile.phone;
+                    role = existingProfile.role;
+                    createdAt = existingProfile.createdAt;
+                    updatedAt = Time.now();
+                    isVerified = existingProfile.isVerified;
+                    profilePicture = existingProfile.profilePicture;
+                    biography = existingProfile.biography;
+                    lastLogin = existingProfile.lastLogin;
+                    loginCount = existingProfile.loginCount;
+                    isActive = false;
+                    suspendedUntil = ?suspendedUntil;
+                };
+                
+                profiles.put(userId, updatedProfile);
+                logSecurityEvent(userId, #Suspension, ?reason);
+                
+                return #ok(true);
+            };
+            case (null) {
+                return #err("User not found");
+            };
+        };
+    };
+    
+    // Reactivate a suspended user (admin only)
+    public shared(msg) func reactivateUser(userId : Principal) : async Result<Bool> {
+        let caller = msg.caller;
+        
+        if (not isAdmin(caller)) {
+            return #err("Only admins can reactivate users");
+        };
+        
+        switch (profiles.get(userId)) {
+            case (?existingProfile) {
+                let updatedProfile : Profile = {
+                    id = existingProfile.id;
+                    name = existingProfile.name;
+                    phone = existingProfile.phone;
+                    role = existingProfile.role;
+                    createdAt = existingProfile.createdAt;
+                    updatedAt = Time.now();
+                    isVerified = existingProfile.isVerified;
+                    profilePicture = existingProfile.profilePicture;
+                    biography = existingProfile.biography;
+                    lastLogin = existingProfile.lastLogin;
+                    loginCount = existingProfile.loginCount;
+                    isActive = true;
+                    suspendedUntil = null;
+                };
+                
+                profiles.put(userId, updatedProfile);
+                logSecurityEvent(userId, #Reactivation, null);
+                
+                return #ok(true);
+            };
+            case (null) {
+                return #err("User not found");
+            };
+        };
+    };
+    
+    // Revoke user verification (admin only)
+    public shared(msg) func revokeVerification(
+        userId : Principal,
+        reason : Text
+    ) : async Result<Bool> {
+        let caller = msg.caller;
+        
+        if (not isAdmin(caller)) {
+            return #err("Only admins can revoke verification");
+        };
+        
+        switch (profiles.get(userId)) {
+            case (?existingProfile) {
+                let updatedProfile : Profile = {
+                    id = existingProfile.id;
+                    name = existingProfile.name;
+                    phone = existingProfile.phone;
+                    role = existingProfile.role;
+                    createdAt = existingProfile.createdAt;
+                    updatedAt = Time.now();
+                    isVerified = false;
+                    profilePicture = existingProfile.profilePicture;
+                    biography = existingProfile.biography;
+                    lastLogin = existingProfile.lastLogin;
+                    loginCount = existingProfile.loginCount;
+                    isActive = existingProfile.isActive;
+                    suspendedUntil = existingProfile.suspendedUntil;
+                };
+                
+                profiles.put(userId, updatedProfile);
+                verifiedUsers.put(userId, false);
+                logSecurityEvent(userId, #VerificationChange, ?("Verification revoked: " # reason));
+                
+                return #ok(true);
+            };
+            case (null) {
+                return #err("User not found");
+            };
+        };
+    };
+    
+    // Get comprehensive profile statistics
+    public query func getProfileStatistics() : async ProfileStatistics {
+        var totalProfiles : Nat = 0;
+        var activeProfiles : Nat = 0;
+        var verifiedProfiles : Nat = 0;
+        var suspendedProfiles : Nat = 0;
+        var clientCount : Nat = 0;
+        var serviceProviderCount : Nat = 0;
+        var adminCount : Nat = 0;
+        var recentRegistrations : Nat = 0;
+        
+        let now = Time.now();
+        let thirtyDaysInNanoseconds = 30 * 24 * 60 * 60 * 1_000_000_000;
+        
+        for (profile in profiles.vals()) {
+            totalProfiles += 1;
+            
+            if (profile.isActive) {
+                activeProfiles += 1;
+            };
+            
+            if (profile.isVerified) {
+                verifiedProfiles += 1;
+            };
+            
+            switch (profile.suspendedUntil) {
+                case (?_) suspendedProfiles += 1;
+                case (null) {};
+            };
+            
+            switch (profile.role) {
+                case (#Client) clientCount += 1;
+                case (#ServiceProvider) serviceProviderCount += 1;
+                case (#Admin) adminCount += 1;
+            };
+            
+            if ((now - profile.createdAt) < thirtyDaysInNanoseconds) {
+                recentRegistrations += 1;
+            };
+        };
+        
+        return {
+            totalProfiles = totalProfiles;
+            activeProfiles = activeProfiles;
+            verifiedProfiles = verifiedProfiles;
+            suspendedProfiles = suspendedProfiles;
+            clientCount = clientCount;
+            serviceProviderCount = serviceProviderCount;
+            adminCount = adminCount;
+            recentRegistrations = recentRegistrations;
+        };
+    };
+    
+    // Check if user account is in good standing
+    public query func isAccountInGoodStanding(userId : Principal) : async Result<Bool> {
+        switch (profiles.get(userId)) {
+            case (?profile) {
+                // Check if account is active
+                if (not profile.isActive) {
+                    return #ok(false);
+                };
+                
+                // Check if account is suspended
+                switch (profile.suspendedUntil) {
+                    case (?suspensionTime) {
+                        if (Time.now() < suspensionTime) {
+                            return #ok(false);
+                        };
+                    };
+                    case (null) {};
+                };
+                
+                return #ok(true);
+            };
+            case (null) {
+                return #err("Profile not found");
+            };
+        };
     };
 }
