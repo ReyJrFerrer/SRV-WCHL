@@ -1,7 +1,5 @@
 import React from "react";
-import {
-  FingerPrintIcon,
-} from "@heroicons/react/24/solid";
+import { FingerPrintIcon } from "@heroicons/react/24/solid";
 
 interface HeroProps {
   onLoginClick: () => void;
@@ -13,11 +11,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
     <section className="relative bg-white py-20 pt-36 text-slate-800">
       <div className="absolute top-6 left-6 z-20">
         <a href="/" className="block" aria-label="SRV Home">
-          <img
-            src="/logo.svg"
-            alt="SRV Logo"
-            className="h-16 w-auto"
-          />
+          <img src="/logo.svg" alt="SRV Logo" className="h-16 w-auto" />
         </a>
       </div>
 
@@ -27,7 +21,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
             <img
               src="/heroImage.png"
               alt="Ang serbisyo rito ay always valued!"
-              className="w-full h-auto object-contain"
+              className="h-auto w-full object-contain"
             />
           </div>
 

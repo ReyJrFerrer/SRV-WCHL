@@ -53,7 +53,7 @@ const AboutUs: React.FC = () => {
                   <img
                     src={member.imageUrl}
                     alt={member.name}
-                    className="w-full h-full object-cover grayscale transition-all duration-300 group-hover:grayscale-0"
+                    className="h-full w-full object-cover grayscale transition-all duration-300 group-hover:grayscale-0"
                   />
                 </div>
               </div>

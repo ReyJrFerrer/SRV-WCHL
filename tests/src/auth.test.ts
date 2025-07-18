@@ -53,24 +53,48 @@ type Result<T> = { ok: T } | { err: string };
 
 // Auth canister service interface
 interface AuthService {
-  createProfile: (name: string, phone: string, role: UserRole) => Promise<Result<Profile>>;
+  createProfile: (
+    name: string,
+    phone: string,
+    role: UserRole,
+  ) => Promise<Result<Profile>>;
   getProfile: (userId: Principal) => Promise<Result<Profile>>;
   getMyProfile: () => Promise<Result<Profile>>;
-  updateProfile: (name: [] | [string], email: [] | [string], phone: [] | [string]) => Promise<Result<Profile>>;
+  updateProfile: (
+    name: [] | [string],
+    email: [] | [string],
+    phone: [] | [string],
+  ) => Promise<Result<Profile>>;
   verifyUser: (userId: Principal) => Promise<Result<boolean>>;
   getAllServiceProviders: () => Promise<Profile[]>;
-  switchRole: (newRole: UserRole, reason: [] | [string]) => Promise<Result<Profile>>;
+  switchRole: (
+    newRole: UserRole,
+    reason: [] | [string],
+  ) => Promise<Result<Profile>>;
   getRoleHistory: (userId: Principal) => Promise<Result<RoleChangeRecord[]>>;
-  suspendUser: (userId: Principal, durationHours: bigint, reason: string) => Promise<Result<boolean>>;
+  suspendUser: (
+    userId: Principal,
+    durationHours: bigint,
+    reason: string,
+  ) => Promise<Result<boolean>>;
   reactivateUser: (userId: Principal) => Promise<Result<boolean>>;
-  revokeVerification: (userId: Principal, reason: string) => Promise<Result<boolean>>;
+  revokeVerification: (
+    userId: Principal,
+    reason: string,
+  ) => Promise<Result<boolean>>;
   getProfileStatistics: () => Promise<ProfileStatistics>;
   isAccountInGoodStanding: (userId: Principal) => Promise<Result<boolean>>;
-  setCanisterReferences: (reputation: [] | [Principal]) => Promise<Result<string>>;
+  setCanisterReferences: (
+    reputation: [] | [Principal],
+  ) => Promise<Result<string>>;
 }
 
 // IDL factory for the auth canister
-const authIdlFactory = ({ IDL }: { IDL: typeof import("@dfinity/candid").IDL }) => {
+const authIdlFactory = ({
+  IDL,
+}: {
+  IDL: typeof import("@dfinity/candid").IDL;
+}) => {
   const UserRole = IDL.Variant({
     Client: IDL.Null,
     ServiceProvider: IDL.Null,
@@ -122,20 +146,48 @@ const authIdlFactory = ({ IDL }: { IDL: typeof import("@dfinity/candid").IDL }) 
   });
 
   return IDL.Service({
-    createProfile: IDL.Func([IDL.Text, IDL.Text, UserRole], [Result(Profile)], []),
+    createProfile: IDL.Func(
+      [IDL.Text, IDL.Text, UserRole],
+      [Result(Profile)],
+      [],
+    ),
     getProfile: IDL.Func([IDL.Principal], [Result(Profile)], ["query"]),
     getMyProfile: IDL.Func([], [Result(Profile)], ["query"]),
-    updateProfile: IDL.Func([IDL.Opt(IDL.Text), IDL.Opt(IDL.Text), IDL.Opt(IDL.Text)], [Result(Profile)], []),
+    updateProfile: IDL.Func(
+      [IDL.Opt(IDL.Text), IDL.Opt(IDL.Text), IDL.Opt(IDL.Text)],
+      [Result(Profile)],
+      [],
+    ),
     verifyUser: IDL.Func([IDL.Principal], [Result(IDL.Bool)], []),
     getAllServiceProviders: IDL.Func([], [IDL.Vec(Profile)], ["query"]),
     switchRole: IDL.Func([UserRole, IDL.Opt(IDL.Text)], [Result(Profile)], []),
-    getRoleHistory: IDL.Func([IDL.Principal], [Result(IDL.Vec(RoleChangeRecord))], ["query"]),
-    suspendUser: IDL.Func([IDL.Principal, IDL.Nat, IDL.Text], [Result(IDL.Bool)], []),
+    getRoleHistory: IDL.Func(
+      [IDL.Principal],
+      [Result(IDL.Vec(RoleChangeRecord))],
+      ["query"],
+    ),
+    suspendUser: IDL.Func(
+      [IDL.Principal, IDL.Nat, IDL.Text],
+      [Result(IDL.Bool)],
+      [],
+    ),
     reactivateUser: IDL.Func([IDL.Principal], [Result(IDL.Bool)], []),
-    revokeVerification: IDL.Func([IDL.Principal, IDL.Text], [Result(IDL.Bool)], []),
+    revokeVerification: IDL.Func(
+      [IDL.Principal, IDL.Text],
+      [Result(IDL.Bool)],
+      [],
+    ),
     getProfileStatistics: IDL.Func([], [ProfileStatistics], ["query"]),
-    isAccountInGoodStanding: IDL.Func([IDL.Principal], [Result(IDL.Bool)], ["query"]),
-    setCanisterReferences: IDL.Func([IDL.Opt(IDL.Principal)], [Result(IDL.Text)], []),
+    isAccountInGoodStanding: IDL.Func(
+      [IDL.Principal],
+      [Result(IDL.Bool)],
+      ["query"],
+    ),
+    setCanisterReferences: IDL.Func(
+      [IDL.Opt(IDL.Principal)],
+      [Result(IDL.Text)],
+      [],
+    ),
   });
 };
 
@@ -297,7 +349,9 @@ describe("Auth Canister", () => {
   describe("Profile Retrieval", () => {
     beforeEach(async () => {
       // Create a test profile
-      await authActor.createProfile("Test User", "+1234567890", { Client: null });
+      await authActor.createProfile("Test User", "+1234567890", {
+        Client: null,
+      });
     });
 
     it("should get profile by principal", async () => {
@@ -346,7 +400,9 @@ describe("Auth Canister", () => {
   describe("Profile Updates", () => {
     beforeEach(async () => {
       // Create a test profile
-      await authActor.createProfile("Test User", "+1234567890", { Client: null });
+      await authActor.createProfile("Test User", "+1234567890", {
+        Client: null,
+      });
     });
 
     it("should update profile name successfully", async () => {
@@ -398,11 +454,13 @@ describe("Auth Canister", () => {
     it("should reject duplicate phone update", async () => {
       // Setup - Create another profile first
       pic.setAuthorizedPrincipal(authCanisterId, testPrincipal);
-      await authActor.createProfile("Another User", "+1111111111", { Client: null });
-      
+      await authActor.createProfile("Another User", "+1111111111", {
+        Client: null,
+      });
+
       // Switch back to original user
       pic.setAuthorizedPrincipal(authCanisterId, authCanisterId);
-      
+
       // Try to update to the other user's phone
       const result = await authActor.updateProfile([], [], ["+1111111111"]);
 
@@ -417,7 +475,9 @@ describe("Auth Canister", () => {
   describe("User Verification", () => {
     beforeEach(async () => {
       // Create a test profile
-      await authActor.createProfile("Test User", "+1234567890", { Client: null });
+      await authActor.createProfile("Test User", "+1234567890", {
+        Client: null,
+      });
     });
 
     it("should verify user successfully", async () => {
@@ -473,10 +533,14 @@ describe("Auth Canister", () => {
   describe("Service Provider Discovery", () => {
     beforeEach(async () => {
       // Create test profiles with different roles
-      await authActor.createProfile("Client User", "+1234567890", { Client: null });
-      
+      await authActor.createProfile("Client User", "+1234567890", {
+        Client: null,
+      });
+
       pic.setAuthorizedPrincipal(authCanisterId, testPrincipal);
-      await authActor.createProfile("Provider User", "+1987654321", { ServiceProvider: null });
+      await authActor.createProfile("Provider User", "+1987654321", {
+        ServiceProvider: null,
+      });
     });
 
     it("should get all service providers", async () => {
@@ -493,7 +557,9 @@ describe("Auth Canister", () => {
   describe("Role Switching", () => {
     beforeEach(async () => {
       // Create a client profile
-      await authActor.createProfile("Test User", "+1234567890", { Client: null });
+      await authActor.createProfile("Test User", "+1234567890", {
+        Client: null,
+      });
     });
 
     it("should switch from client to service provider", async () => {
@@ -514,8 +580,10 @@ describe("Auth Canister", () => {
 
     it("should switch from service provider to client", async () => {
       // Setup - First switch to service provider
-      await authActor.switchRole({ ServiceProvider: null }, ["Starting business"]);
-      
+      await authActor.switchRole({ ServiceProvider: null }, [
+        "Starting business",
+      ]);
+
       const newRole: UserRole = { Client: null };
       const reason = "Stopping business";
 
@@ -567,21 +635,29 @@ describe("Auth Canister", () => {
   describe("Admin Functions", () => {
     beforeEach(async () => {
       // Create admin and regular user profiles
-      await authActor.createProfile("Admin User", "+1111111111", { Admin: null });
-      
+      await authActor.createProfile("Admin User", "+1111111111", {
+        Admin: null,
+      });
+
       pic.setAuthorizedPrincipal(authCanisterId, testPrincipal);
-      await authActor.createProfile("Regular User", "+1234567890", { Client: null });
+      await authActor.createProfile("Regular User", "+1234567890", {
+        Client: null,
+      });
     });
 
     it("should suspend user as admin", async () => {
       // Setup - Switch to admin
       pic.setAuthorizedPrincipal(authCanisterId, authCanisterId);
-      
+
       const durationHours = BigInt(24);
       const reason = "Policy violation";
 
       // Execute
-      const result = await authActor.suspendUser(testPrincipal, durationHours, reason);
+      const result = await authActor.suspendUser(
+        testPrincipal,
+        durationHours,
+        reason,
+      );
 
       // Assert
       expect(result).toHaveProperty("ok");
@@ -590,7 +666,8 @@ describe("Auth Canister", () => {
       }
 
       // Verify user is suspended
-      const standingResult = await authActor.isAccountInGoodStanding(testPrincipal);
+      const standingResult =
+        await authActor.isAccountInGoodStanding(testPrincipal);
       if ("ok" in standingResult) {
         expect(standingResult.ok).toBe(false);
       }
@@ -611,7 +688,8 @@ describe("Auth Canister", () => {
       }
 
       // Verify user is reactivated
-      const standingResult = await authActor.isAccountInGoodStanding(testPrincipal);
+      const standingResult =
+        await authActor.isAccountInGoodStanding(testPrincipal);
       if ("ok" in standingResult) {
         expect(standingResult.ok).toBe(true);
       }
@@ -621,10 +699,10 @@ describe("Auth Canister", () => {
       // Setup - Verify user first
       pic.setAuthorizedPrincipal(authCanisterId, testPrincipal);
       await authActor.verifyUser(testPrincipal);
-      
+
       // Switch to admin
       pic.setAuthorizedPrincipal(authCanisterId, authCanisterId);
-      
+
       const reason = "Fraudulent documents";
 
       // Execute
@@ -648,7 +726,11 @@ describe("Auth Canister", () => {
       pic.setAuthorizedPrincipal(authCanisterId, testPrincipal);
 
       // Execute
-      const result = await authActor.suspendUser(authCanisterId, BigInt(24), "Test");
+      const result = await authActor.suspendUser(
+        authCanisterId,
+        BigInt(24),
+        "Test",
+      );
 
       // Assert
       expect(result).toHaveProperty("err");
@@ -661,11 +743,15 @@ describe("Auth Canister", () => {
   describe("Profile Statistics", () => {
     beforeEach(async () => {
       // Create multiple profiles for testing statistics
-      await authActor.createProfile("Client 1", "+1111111111", { Client: null });
-      
+      await authActor.createProfile("Client 1", "+1111111111", {
+        Client: null,
+      });
+
       pic.setAuthorizedPrincipal(authCanisterId, testPrincipal);
-      await authActor.createProfile("Provider 1", "+1222222222", { ServiceProvider: null });
-      
+      await authActor.createProfile("Provider 1", "+1222222222", {
+        ServiceProvider: null,
+      });
+
       pic.setAuthorizedPrincipal(authCanisterId, adminPrincipal);
       await authActor.createProfile("Admin 1", "+1333333333", { Admin: null });
     });
@@ -686,7 +772,9 @@ describe("Auth Canister", () => {
   describe("Account Status", () => {
     beforeEach(async () => {
       // Create a test profile
-      await authActor.createProfile("Test User", "+1234567890", { Client: null });
+      await authActor.createProfile("Test User", "+1234567890", {
+        Client: null,
+      });
     });
 
     it("should confirm account is in good standing", async () => {
@@ -704,7 +792,11 @@ describe("Auth Canister", () => {
       // Setup - Create admin and suspend user
       pic.setAuthorizedPrincipal(authCanisterId, adminPrincipal);
       await authActor.createProfile("Admin", "+1999999999", { Admin: null });
-      await authActor.suspendUser(authCanisterId, BigInt(24), "Test suspension");
+      await authActor.suspendUser(
+        authCanisterId,
+        BigInt(24),
+        "Test suspension",
+      );
 
       // Execute
       const result = await authActor.isAccountInGoodStanding(authCanisterId);
@@ -720,10 +812,14 @@ describe("Auth Canister", () => {
   describe("Canister References", () => {
     it("should set canister references successfully", async () => {
       // Setup
-      const reputationCanister = Principal.fromText("rdmx6-jaaaa-aaaah-qcaiq-cai");
+      const reputationCanister = Principal.fromText(
+        "rdmx6-jaaaa-aaaah-qcaiq-cai",
+      );
 
       // Execute
-      const result = await authActor.setCanisterReferences([reputationCanister]);
+      const result = await authActor.setCanisterReferences([
+        reputationCanister,
+      ]);
 
       // Assert
       expect(result).toHaveProperty("ok");

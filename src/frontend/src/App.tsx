@@ -38,7 +38,7 @@ const useAuth = () => {
       const isAuth = await client.isAuthenticated();
       const userIdentity = isAuth ? client.getIdentity() : null;
 
-      setAuthState(prev => ({
+      setAuthState((prev) => ({
         ...prev,
         authClient: client,
         isAuthenticated: isAuth,
@@ -47,9 +47,10 @@ const useAuth = () => {
       }));
     } catch (error) {
       console.error("Failed to initialize auth client:", error);
-      setAuthState(prev => ({
+      setAuthState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : "Auth initialization failed",
+        error:
+          error instanceof Error ? error.message : "Auth initialization failed",
         isCheckingProfile: false,
       }));
     }
@@ -59,15 +60,16 @@ const useAuth = () => {
     if (!authState.authClient) return;
 
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: "" }));
+      setAuthState((prev) => ({ ...prev, isLoading: true, error: "" }));
 
       await authState.authClient.login({
-        identityProvider: process.env.DFX_NETWORK === "ic" 
-          ? "https://identity.ic0.app"
-          : "http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943",
+        identityProvider:
+          process.env.DFX_NETWORK === "ic"
+            ? "https://identity.ic0.app"
+            : "http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943",
         onSuccess: () => {
           const identity = authState.authClient!.getIdentity();
-          setAuthState(prev => ({
+          setAuthState((prev) => ({
             ...prev,
             isAuthenticated: true,
             identity,
@@ -75,18 +77,21 @@ const useAuth = () => {
           }));
         },
         onError: (error?: string) => {
-          setAuthState(prev => ({
+          setAuthState((prev) => ({
             ...prev,
             error: error || "Login failed",
             isLoading: false,
           }));
-        }
+        },
       });
     } catch (error) {
       console.error("Login error:", error);
-      setAuthState(prev => ({
+      setAuthState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : "Failed to connect to Internet Identity",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to connect to Internet Identity",
         isLoading: false,
       }));
     }
@@ -96,8 +101,9 @@ const useAuth = () => {
     ...authState,
     initializeAuth,
     login,
-    setError: (error: string) => setAuthState(prev => ({ ...prev, error })),
-    setIsCheckingProfile: (isChecking: boolean) => setAuthState(prev => ({ ...prev, isCheckingProfile: isChecking })),
+    setError: (error: string) => setAuthState((prev) => ({ ...prev, error })),
+    setIsCheckingProfile: (isChecking: boolean) =>
+      setAuthState((prev) => ({ ...prev, isCheckingProfile: isChecking })),
   };
 };
 
@@ -112,7 +118,10 @@ const useProfileService = (identity: Identity | null) => {
       const authActor = createActor(canisterId, {
         agentOptions: {
           identity,
-          host: process.env.DFX_NETWORK === "ic" ? "https://ic0.app" : "http://localhost:4943",
+          host:
+            process.env.DFX_NETWORK === "ic"
+              ? "https://ic0.app"
+              : "http://localhost:4943",
         },
       });
 
@@ -143,7 +152,7 @@ export default function App() {
       if (auth.isAuthenticated && auth.identity) {
         auth.setIsCheckingProfile(true);
         auth.setError("");
-        
+
         try {
           const profileResult = await profileService.getMyProfile();
 
@@ -160,13 +169,15 @@ export default function App() {
             if (profileResult.err === "Profile not found") {
               navigate("/create-profile");
             } else {
-              throw new Error(profileResult.err || "Failed to retrieve profile.");
+              throw new Error(
+                profileResult.err || "Failed to retrieve profile.",
+              );
             }
           }
         } catch (error) {
           console.error("Profile check error:", error);
           auth.setError(
-            error instanceof Error ? error.message : "Error checking profile."
+            error instanceof Error ? error.message : "Error checking profile.",
           );
         } finally {
           auth.setIsCheckingProfile(false);
@@ -216,7 +227,7 @@ export default function App() {
           </div>
         </section>
       )}
-      
+
       <Footer />
     </main>
   );

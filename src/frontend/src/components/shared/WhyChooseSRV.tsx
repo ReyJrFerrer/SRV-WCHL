@@ -43,7 +43,7 @@ const WhyChooseUsSection: React.FC = () => {
             <img
               src="/cp.png"
               alt="SRV application on a smartphone"
-              className="w-full h-auto"
+              className="h-auto w-full"
             />
           </div>
 
