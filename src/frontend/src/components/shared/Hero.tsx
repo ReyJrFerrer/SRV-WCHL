@@ -1,12 +1,7 @@
 import React from "react";
-import Link from "next/link";
-import Image from "next/image";
 import {
-  UserIcon,
-  WrenchScrewdriverIcon,
   FingerPrintIcon,
 } from "@heroicons/react/24/solid";
-import { useAuth } from "@bundly/ares-react";
 
 interface HeroProps {
   onLoginClick: () => void;
@@ -14,35 +9,25 @@ interface HeroProps {
 }
 
 export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
-  const { isAuthenticated } = useAuth();
-
   return (
     <section className="relative bg-white py-20 pt-36 text-slate-800">
       <div className="absolute top-6 left-6 z-20">
-        <Link href="/" legacyBehavior>
-          <a className="block" aria-label="SRV Home">
-            <Image
-              src="/logo.svg"
-              alt="SRV Logo"
-              width={90}
-              height={Math.round(90 * (760 / 1000))}
-              priority
-            />
-          </a>
-        </Link>
+        <a href="/" className="block" aria-label="SRV Home">
+          <img
+            src="/logo.svg"
+            alt="SRV Logo"
+            className="h-16 w-auto"
+          />
+        </a>
       </div>
 
       <div className="container mx-auto px-6">
         <div className="flex flex-col items-center text-center">
           <div className="mb-8 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl">
-            <Image
+            <img
               src="/heroImage.png"
               alt="Ang serbisyo rito ay always valued!"
-              width={1000}
-              height={500}
-              layout="responsive"
-              objectFit="contain"
-              priority
+              className="w-full h-auto object-contain"
             />
           </div>
 
@@ -52,7 +37,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
             wide range of local on-demand service providers.
           </p>
 
-          {/* Action Buttons REPLACED */}
+          {/* Action Buttons */}
           <div className="mt-10">
             <button
               onClick={onLoginClick}

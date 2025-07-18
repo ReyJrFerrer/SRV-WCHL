@@ -1,6 +1,4 @@
 import React from "react";
-import Link from "next/link";
-import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -8,9 +6,9 @@ export default function Footer() {
       <div className="container mx-auto px-6 py-10">
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="md:col-span-1">
-            <Link href="/" className="mb-2 inline-block">
-              <Image src="/logo.svg" alt="SRV Logo" width={100} height={50} />
-            </Link>
+            <a href="/" className="mb-2 inline-block">
+              <img src="/logo.jpeg" alt="SRV Logo" className="h-12 w-auto" />
+            </a>
             <p className="text-sm text-gray-400">
               Your trusted platform for booking services on the Internet
               Computer.
@@ -21,20 +19,20 @@ export default function Footer() {
             <h3 className="mb-4 text-lg font-semibold text-white">For Users</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link
+                <a
                   href="/client"
                   className="text-gray-400 transition-colors hover:text-yellow-300"
                 >
                   Client Portal
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/provider"
                   className="text-gray-400 transition-colors hover:text-yellow-300"
                 >
                   Provider Portal
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -44,12 +42,14 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li className="text-gray-400">revitalizers2024@gmail.com</li>
               <li>
-                <Link
+                <a
                   href="https://www.facebook.com/revitalizer2024"
                   className="text-gray-400 transition-colors hover:text-yellow-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Facebook: SRV
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

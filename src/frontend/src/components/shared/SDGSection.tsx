@@ -9,7 +9,7 @@ interface SDGInfo {
   sdgNumber: string;
   title: string;
   description: string;
-  icon: JSX.Element;
+  icon: React.ReactElement<{ className?: string }>;
   colorHex: string;
   textColorHex?: string;
   isPrimary?: boolean;

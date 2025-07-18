@@ -1,118 +1,184 @@
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { useAuth, useClient } from "@bundly/ares-react";
-import Head from "next/head";
-import { Actor, HttpAgent } from "@dfinity/agent";
-import { idlFactory as authIdlFactory } from "../declarations/auth/auth.did.js";
-import type { Profile as UserProfile } from "../declarations/auth/auth.did.js";
-import Hero from "@app/components/shared/Hero";
-import Features from "@app/components/shared/Features";
-import WhyChooseSRV from "@app/components/shared/WhyChooseSRV";
-import AboutUs from "@app/components/shared/AboutUs";
-import SDGSection from "@app/components/shared/SDGSection";
-import Footer from "@app/components/shared/Footer";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthClient } from "@dfinity/auth-client";
+import { Identity } from "@dfinity/agent";
+import { canisterId, createActor } from "../../declarations/auth";
+import type { Result_1 as ProfileResult } from "../../declarations/auth/auth.did";
+import Hero from "./components/shared/Hero";
+import Features from "./components/shared/Features";
+import WhyChooseSRV from "./components/shared/WhyChooseSRV";
+import AboutUs from "./components/shared/AboutUs";
+import SDGSection from "./components/shared/SDGSection";
+import Footer from "./components/shared/Footer";
 
-type Result<T> = {
-  ok?: T;
-  err?: string;
-};
+// Types for component state
+interface AuthState {
+  authClient: AuthClient | null;
+  isAuthenticated: boolean;
+  identity: Identity | null;
+  isLoading: boolean;
+  isCheckingProfile: boolean;
+  error: string;
+}
 
-// Dynamic environment configuration function
-const getDynamicHost = () => {
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
+// Hook for authentication logic
+const useAuth = () => {
+  const [authState, setAuthState] = useState<AuthState>({
+    authClient: null,
+    isAuthenticated: false,
+    identity: null,
+    isLoading: false,
+    isCheckingProfile: true,
+    error: "",
+  });
 
-    // If accessing via localhost, use localhost for IC host
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:4943";
-    } else {
-      // If accessing via IP address, use the same IP for IC host
-      return `http://${hostname.split(":")[0]}:4943`;
-    }
-  }
-
-  // Fallback for server-side rendering
-  return process.env.NEXT_PUBLIC_IC_HOST_URL || "http://localhost:4943";
-};
-
-export default function HomePage() {
-  const router = useRouter();
-  const { isAuthenticated, currentIdentity } = useAuth();
-  const client = useClient();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const checkProfileAndRedirect = async () => {
-      if (isAuthenticated && currentIdentity) {
-        setIsCheckingProfile(true);
-        setError("");
-        try {
-          // Use dynamic host configuration
-          const host = getDynamicHost();
-          console.log("Using host:", host); // For debugging
-
-          const agent = new HttpAgent({ identity: currentIdentity, host });
-          if (process.env.NODE_ENV === "development")
-            await agent.fetchRootKey();
-
-          const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
-          if (!authCanisterId)
-            throw new Error("Auth canister ID not configured");
-
-          const authActor = Actor.createActor(authIdlFactory, {
-            agent,
-            canisterId: authCanisterId,
-          });
-          const profileResult =
-            (await authActor.getMyProfile()) as Result<UserProfile>;
-
-          if (profileResult.ok) {
-            if ("Client" in profileResult.ok.role) router.push("/client/home");
-            else if ("ServiceProvider" in profileResult.ok.role)
-              router.push("/provider/home");
-            else router.push("/create-profile");
-          } else if (profileResult.err === "Profile not found") {
-            router.push("/create-profile");
-          } else {
-            throw new Error(profileResult.err || "Failed to retrieve profile.");
-          }
-        } catch (err) {
-          console.error("Profile check error:", err);
-          setError(
-            err instanceof Error ? err.message : "Error checking profile.",
-          );
-        } finally {
-          setIsCheckingProfile(false);
-        }
-      } else {
-        setIsCheckingProfile(false);
-      }
-    };
-    checkProfileAndRedirect();
-  }, [isAuthenticated, currentIdentity, router]);
-
-  const handleIILogin = async () => {
+  const initializeAuth = async (): Promise<void> => {
     try {
-      setIsLoading(true);
-      setError("");
-      const provider = client.getProvider("internet-identity");
-      if (!provider) throw new Error("Internet Identity provider not found");
-      await provider.connect();
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to connect to Internet Identity",
-      );
-    } finally {
-      setIsLoading(false);
+      const client = await AuthClient.create();
+      const isAuth = await client.isAuthenticated();
+      const userIdentity = isAuth ? client.getIdentity() : null;
+
+      setAuthState(prev => ({
+        ...prev,
+        authClient: client,
+        isAuthenticated: isAuth,
+        identity: userIdentity,
+        isCheckingProfile: false,
+      }));
+    } catch (error) {
+      console.error("Failed to initialize auth client:", error);
+      setAuthState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : "Auth initialization failed",
+        isCheckingProfile: false,
+      }));
     }
   };
 
-  if (isCheckingProfile && isAuthenticated) {
+  const login = async (): Promise<void> => {
+    if (!authState.authClient) return;
+
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true, error: "" }));
+
+      await authState.authClient.login({
+        identityProvider: process.env.DFX_NETWORK === "ic" 
+          ? "https://identity.ic0.app"
+          : "http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943",
+        onSuccess: () => {
+          const identity = authState.authClient!.getIdentity();
+          setAuthState(prev => ({
+            ...prev,
+            isAuthenticated: true,
+            identity,
+            isLoading: false,
+          }));
+        },
+        onError: (error?: string) => {
+          setAuthState(prev => ({
+            ...prev,
+            error: error || "Login failed",
+            isLoading: false,
+          }));
+        }
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      setAuthState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : "Failed to connect to Internet Identity",
+        isLoading: false,
+      }));
+    }
+  };
+
+  return {
+    ...authState,
+    initializeAuth,
+    login,
+    setError: (error: string) => setAuthState(prev => ({ ...prev, error })),
+    setIsCheckingProfile: (isChecking: boolean) => setAuthState(prev => ({ ...prev, isCheckingProfile: isChecking })),
+  };
+};
+
+// Service function for profile operations
+const useProfileService = (identity: Identity | null) => {
+  const getMyProfile = async (): Promise<ProfileResult> => {
+    if (!identity) {
+      throw new Error("User not authenticated");
+    }
+
+    try {
+      const authActor = createActor(canisterId, {
+        agentOptions: {
+          identity,
+          host: process.env.DFX_NETWORK === "ic" ? "https://ic0.app" : "http://localhost:4943",
+        },
+      });
+
+      return await authActor.getMyProfile();
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+      throw error;
+    }
+  };
+
+  return { getMyProfile };
+};
+
+export default function App() {
+  const navigate = useNavigate();
+  const auth = useAuth();
+  const profileService = useProfileService(auth.identity);
+
+  // Initialize authentication on component mount
+  useEffect(() => {
+    document.title = "SRV - Your Service Hub";
+    auth.initializeAuth();
+  }, []);
+
+  // Check profile and redirect when authenticated
+  useEffect(() => {
+    const checkProfileAndRedirect = async () => {
+      if (auth.isAuthenticated && auth.identity) {
+        auth.setIsCheckingProfile(true);
+        auth.setError("");
+        
+        try {
+          const profileResult = await profileService.getMyProfile();
+
+          if ("ok" in profileResult) {
+            const profile = profileResult.ok;
+            if ("Client" in profile.role) {
+              navigate("/client/home");
+            } else if ("ServiceProvider" in profile.role) {
+              navigate("/provider/home");
+            } else {
+              navigate("/create-profile");
+            }
+          } else {
+            if (profileResult.err === "Profile not found") {
+              navigate("/create-profile");
+            } else {
+              throw new Error(profileResult.err || "Failed to retrieve profile.");
+            }
+          }
+        } catch (error) {
+          console.error("Profile check error:", error);
+          auth.setError(
+            error instanceof Error ? error.message : "Error checking profile."
+          );
+        } finally {
+          auth.setIsCheckingProfile(false);
+        }
+      }
+    };
+
+    checkProfileAndRedirect();
+  }, [auth.isAuthenticated, auth.identity, navigate]);
+
+  // Loading state while checking profile
+  if (auth.isCheckingProfile && auth.isAuthenticated) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
         <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-blue-600"></div>
@@ -122,44 +188,36 @@ export default function HomePage() {
   }
 
   return (
-    <>
-      <Head>
-        <title>SRV - Your Service Hub</title>
-        <meta
-          name="description"
-          content="Find and book local services with ease on the Internet Computer."
-        />
-        <link rel="icon" href="/logo.jpeg" />
-      </Head>
+    <main className="bg-gray-50">
+      <Hero onLoginClick={auth.login} isLoginLoading={auth.isLoading} />
+      <Features />
+      <WhyChooseSRV />
+      <SDGSection />
+      <AboutUs />
 
-      <main className="bg-gray-50">
-        <Hero onLoginClick={handleIILogin} isLoginLoading={isLoading} />
-        <Features />
-        <WhyChooseSRV />
-        <SDGSection />
-        <AboutUs />
-
-        {!isAuthenticated && error && (
-          <section className="bg-yellow-100 py-16 lg:py-24">
-            <div className="container mx-auto px-6 text-center">
-              <h2 className="mb-6 text-3xl font-bold text-slate-800 lg:text-4xl">
-                Login to Continue
-              </h2>
-              <div className="mx-auto mb-6 max-w-md rounded-lg bg-red-100 p-4 text-sm text-red-700">
-                Error: {error}
-              </div>
-              <button
-                onClick={handleIILogin}
-                disabled={isLoading}
-                className={`transform rounded-lg bg-blue-600 px-8 py-3 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700 hover:shadow-xl ${isLoading ? "cursor-not-allowed opacity-70" : ""}`}
-              >
-                {isLoading ? "Connecting..." : "Retry Login"}
-              </button>
+      {!auth.isAuthenticated && auth.error && (
+        <section className="bg-yellow-100 py-16 lg:py-24">
+          <div className="container mx-auto px-6 text-center">
+            <h2 className="mb-6 text-3xl font-bold text-slate-800 lg:text-4xl">
+              Login to Continue
+            </h2>
+            <div className="mx-auto mb-6 max-w-md rounded-lg bg-red-100 p-4 text-sm text-red-700">
+              Error: {auth.error}
             </div>
-          </section>
-        )}
-      </main>
+            <button
+              onClick={auth.login}
+              disabled={auth.isLoading}
+              className={`transform rounded-lg bg-blue-600 px-8 py-3 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700 hover:shadow-xl ${
+                auth.isLoading ? "cursor-not-allowed opacity-70" : ""
+              }`}
+            >
+              {auth.isLoading ? "Connecting..." : "Retry Login"}
+            </button>
+          </div>
+        </section>
+      )}
+      
       <Footer />
-    </>
+    </main>
   );
 }

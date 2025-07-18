@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import {
   ShieldCheckIcon,
   UserGroupIcon,
@@ -41,11 +40,10 @@ const WhyChooseUsSection: React.FC = () => {
 
         <div className="relative mt-16 flex flex-col items-center">
           <div className="relative z-20 -mb-20 w-48 lg:absolute lg:-top-24 lg:-left-0 lg:mx-0 lg:-mb-0 lg:w-64">
-            <Image
+            <img
               src="/cp.png"
               alt="SRV application on a smartphone"
-              width={700}
-              height={520}
+              className="w-full h-auto"
             />
           </div>
 

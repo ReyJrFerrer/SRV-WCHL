@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactor frontend from Next.js to React with react-router-dom for improved performance and simplified architecture
 - Update dependencies to latest versions
 - Switched the template to Motoko for writing the backend canister
 - Rewrote the devcontainer setup
@@ -25,8 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rewrote the npm scripts
 - Rewrote the e2e workflow
 - Fix mops installation in CI workflow by using npx
-- Improve service canister HashMap initial sizes for better performance
-- Enhance auth canister with role switching history, security events, and admin controls
+
 
 ## [0.1.0] - 2025-04-24
 

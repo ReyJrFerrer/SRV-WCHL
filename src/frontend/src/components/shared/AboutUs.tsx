@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 
 const teamMembers = [
   {
@@ -51,12 +50,10 @@ const AboutUs: React.FC = () => {
               <div className="relative mx-auto mb-7 flex h-60 w-55 items-center justify-center rounded-t-full bg-blue-600 shadow-lg">
                 {/* Circular Image Placeholder  */}
                 <div className="relative h-40 w-40 overflow-hidden rounded-full border-4 border-white bg-gray-200 shadow-inner">
-                  <Image
+                  <img
                     src={member.imageUrl}
                     alt={member.name}
-                    layout="fill"
-                    objectFit="cover"
-                    className="grayscale transition-all duration-300 group-hover:grayscale-0"
+                    className="w-full h-full object-cover grayscale transition-all duration-300 group-hover:grayscale-0"
                   />
                 </div>
               </div>
