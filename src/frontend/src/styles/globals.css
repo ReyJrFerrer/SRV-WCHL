@@ -11,13 +11,13 @@
   --text: #1f2937;
   --green-primary: #16a34a;
   --green-light: #dcfce7;
-  --blue-primary: #27548A;
+  --blue-primary: #27548a;
 }
 
 body {
   background-color: var(--background);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 .hero-gradient {
@@ -25,13 +25,13 @@ body {
 }
 
 .btn-primary {
-  @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;
+  @apply rounded-lg bg-blue-500 px-6 py-3 font-bold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg;
 }
 
 .btn-secondary {
-  @apply bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;
+  @apply rounded-lg bg-indigo-500 px-6 py-3 font-bold text-white shadow-md transition-all duration-200 hover:bg-indigo-700 hover:shadow-lg;
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-200;
+  @apply rounded-xl bg-white p-6 shadow-md transition-shadow duration-200 hover:shadow-lg;
 }

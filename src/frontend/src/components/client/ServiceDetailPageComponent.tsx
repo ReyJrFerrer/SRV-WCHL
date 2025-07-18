@@ -1,38 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-import { enrichServiceWithProvider } from '@app/utils/serviceHelpers';
-import { FrontendProfile } from '@app/services/authCanisterService';
-import { Service } from '@app/services/serviceCanisterService';
-import { FormattedServiceDetail } from '@app/hooks/serviceDetail';
-import { useServiceReviews } from '@app/hooks/reviewManagement';
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import { enrichServiceWithProvider } from "@app/utils/serviceHelpers";
+import { FrontendProfile } from "@app/services/authCanisterService";
+import { Service } from "@app/services/serviceCanisterService";
+import { FormattedServiceDetail } from "@app/hooks/serviceDetail";
+import { useServiceReviews } from "@app/hooks/reviewManagement";
 
 interface ServiceDetailPageComponentProps {
-  service: FormattedServiceDetail | null; 
+  service: FormattedServiceDetail | null;
   provider?: FrontendProfile | null;
 }
 
 // Service Hero Image Component
-const ServiceHeroImage: React.FC<{ service: any, provider?: FrontendProfile | null }> = ({ service, provider }) => (
-  <div className="w-full h-48 md:h-64 lg:h-96 overflow-hidden relative">
-    <Image 
-      src={'/images/Technician1.jpg'} 
-      alt={service.title || service.name} 
-      width={1200} 
-      height={400} 
-      className="w-full h-full object-cover"
+const ServiceHeroImage: React.FC<{
+  service: any;
+  provider?: FrontendProfile | null;
+}> = ({ service, provider }) => (
+  <div className="relative h-48 w-full overflow-hidden md:h-64 lg:h-96">
+    <Image
+      src={"/images/Technician1.jpg"}
+      alt={service.title || service.name}
+      width={1200}
+      height={400}
+      className="h-full w-full object-cover"
       priority
     />
     {/* Gradient overlay for better text readability */}
     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent lg:from-black/20"></div>
-    
+
     {/* Hero content overlay for desktop */}
-    <div className="hidden lg:block absolute bottom-6 left-8 text-white">
-      <h1 className="text-3xl font-bold mb-2">{service.name}</h1>
+    <div className="absolute bottom-6 left-8 hidden text-white lg:block">
+      <h1 className="mb-2 text-3xl font-bold">{service.name}</h1>
       <div className="flex items-center">
-        <p className="text-lg opacity-90 mr-4">{service.category.name}</p>
-        <div className="flex items-center text-white/90 bg-black/30 px-3 py-1 rounded-full">
-          <span className="text-sm">By {provider?.name || service.providerName || 'Service Provider'}</span>
+        <p className="mr-4 text-lg opacity-90">{service.category.name}</p>
+        <div className="flex items-center rounded-full bg-black/30 px-3 py-1 text-white/90">
+          <span className="text-sm">
+            By {provider?.name || service.providerName || "Service Provider"}
+          </span>
         </div>
       </div>
     </div>
@@ -40,33 +45,41 @@ const ServiceHeroImage: React.FC<{ service: any, provider?: FrontendProfile | nu
 );
 
 // Service Info Section Component
-const ServiceInfoSection: React.FC<{ service: any, provider?: FrontendProfile | null }> = ({ service, provider }) => (
+const ServiceInfoSection: React.FC<{
+  service: any;
+  provider?: FrontendProfile | null;
+}> = ({ service, provider }) => (
   <div className="card mb-6">
     {/* Title only shown on mobile/tablet, hidden on desktop due to hero overlay */}
-    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-1 lg:hidden">{service.title || service.name}</h2>
-    
+    <h2 className="mb-1 text-xl font-bold text-gray-800 md:text-2xl lg:hidden">
+      {service.title || service.name}
+    </h2>
+
     {/* Provider name for mobile display */}
-    <div className="flex items-center mb-3 lg:hidden">
-      <div className="text-sm text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
-        By {provider?.name || service.providerName || 'Service Provider'}
+    <div className="mb-3 flex items-center lg:hidden">
+      <div className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+        By {provider?.name || service.providerName || "Service Provider"}
       </div>
-      <div className="text-sm text-gray-600 ml-2 bg-blue-50 px-3 py-1 rounded-full">
+      <div className="ml-2 rounded-full bg-blue-50 px-3 py-1 text-sm text-gray-600">
         {service.category.name}
       </div>
     </div>
-    
-    <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">{service.description}</p>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <p className="mb-6 text-sm leading-relaxed text-gray-600 md:text-base">
+      {service.description}
+    </p>
+
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div className="flex items-start">
-        <span className="text-xl mr-3 mt-0.5">📍</span>
+        <span className="mt-0.5 mr-3 text-xl">📍</span>
         <div>
-          <span className="font-medium text-gray-800 block">Lokasyon</span>
-          <span className="text-sm text-gray-600 block">
+          <span className="block font-medium text-gray-800">Lokasyon</span>
+          <span className="block text-sm text-gray-600">
             {service.location.address}
           </span>
-          <span className="text-xs text-gray-500 block mt-1">
-            Saklaw ng serbisyo: {service.location.serviceRadius}{service.location.serviceRadiusUnit}
+          <span className="mt-1 block text-xs text-gray-500">
+            Saklaw ng serbisyo: {service.location.serviceRadius}
+            {service.location.serviceRadiusUnit}
           </span>
         </div>
       </div>
@@ -75,43 +88,55 @@ const ServiceInfoSection: React.FC<{ service: any, provider?: FrontendProfile | 
 );
 
 // Service Availability Section Component
-const ServiceAvailabilitySection: React.FC<{ service: any }> = ({ service }) => (
+const ServiceAvailabilitySection: React.FC<{ service: any }> = ({
+  service,
+}) => (
   <div className="card mb-6">
-    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
-      <span className="text-xl mr-2">📅</span>
+    <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-800 md:text-xl">
+      <span className="mr-2 text-xl">📅</span>
       Availabilidad
     </h3>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
-        <span className="font-medium text-gray-800 block mb-2">Iskedyul</span>
+        <span className="mb-2 block font-medium text-gray-800">Iskedyul</span>
         <div className="flex flex-wrap gap-1">
           {service.availability.schedule.map((day: string, index: number) => (
-            <span key={index} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+            <span
+              key={index}
+              className="rounded-full bg-green-100 px-2 py-1 text-xs text-green-700"
+            >
               {day}
             </span>
           ))}
         </div>
       </div>
-      
+
       <div>
-        <span className="font-medium text-gray-800 block mb-2">Mga Oras</span>
+        <span className="mb-2 block font-medium text-gray-800">Mga Oras</span>
         <div className="flex flex-wrap gap-1">
           {service.availability.timeSlots.map((slot: string, index: number) => (
-            <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+            <span
+              key={index}
+              className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700"
+            >
               {slot}
             </span>
           ))}
         </div>
       </div>
     </div>
-    
-    <div className="mt-4 pt-4 border-t border-gray-100">
-      <div className={`flex items-center text-sm font-medium ${service.availability.isAvailableNow ? 'text-green-600' : 'text-red-600'}`}>
-        <span className="text-lg mr-2">
-          {service.availability.isAvailableNow ? '✅' : '⏰'}
+
+    <div className="mt-4 border-t border-gray-100 pt-4">
+      <div
+        className={`flex items-center text-sm font-medium ${service.availability.isAvailableNow ? "text-green-600" : "text-red-600"}`}
+      >
+        <span className="mr-2 text-lg">
+          {service.availability.isAvailableNow ? "✅" : "⏰"}
         </span>
-        {service.availability.isAvailableNow ? "Available Now" : "Currently Busy"}
+        {service.availability.isAvailableNow
+          ? "Available Now"
+          : "Currently Busy"}
       </div>
     </div>
   </div>
@@ -120,7 +145,7 @@ const ServiceAvailabilitySection: React.FC<{ service: any }> = ({ service }) => 
 // Service Rating Section Component
 const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
   const router = useRouter();
-  
+
   // Use the review management hook to get real rating data
   const {
     reviews,
@@ -128,7 +153,7 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
     error: reviewsError,
     getAverageRating,
     getRatingDistribution,
-    calculateServiceRating
+    calculateServiceRating,
   } = useServiceReviews(service?.id);
 
   // Local state for calculated rating data
@@ -139,28 +164,30 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
   }>({
     average: service?.rating?.average || 0,
     count: service?.rating?.count || 0,
-    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
   });
 
   // Calculate real rating when reviews are loaded
   useEffect(() => {
     if (reviews && reviews.length > 0) {
-      const visibleReviews = reviews.filter(review => review.status === 'Visible');
+      const visibleReviews = reviews.filter(
+        (review) => review.status === "Visible",
+      );
       const average = getAverageRating(visibleReviews);
       const count = visibleReviews.length;
       const distribution = getRatingDistribution(visibleReviews);
-      
+
       setServiceRating({
         average,
         count,
-        distribution
+        distribution,
       });
     } else if (!reviewsLoading && reviews) {
       // No reviews found - set to zero
       setServiceRating({
         average: 0,
         count: 0,
-        distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+        distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
       });
     }
   }, [reviews, reviewsLoading, getAverageRating, getRatingDistribution]);
@@ -174,23 +201,25 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
   if (reviewsLoading) {
     return (
       <div className="card mb-6">
-        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="text-xl mr-2">⭐</span>
+        <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-800 md:text-xl">
+          <span className="mr-2 text-xl">⭐</span>
           Rating & Reviews
         </h3>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="w-12 h-8 bg-gray-200 animate-pulse rounded mr-2"></div>
+            <div className="mr-2 h-8 w-12 animate-pulse rounded bg-gray-200"></div>
             <div>
-              <div className="flex mb-1">
+              <div className="mb-1 flex">
                 {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-gray-300 animate-pulse">★</span>
+                  <span key={i} className="animate-pulse text-gray-300">
+                    ★
+                  </span>
                 ))}
               </div>
-              <div className="w-20 h-4 bg-gray-200 animate-pulse rounded"></div>
+              <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
             </div>
           </div>
-          <div className="w-24 h-8 bg-gray-200 animate-pulse rounded"></div>
+          <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
         </div>
       </div>
     );
@@ -200,33 +229,44 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
   if (reviewsError) {
     // Use original service data as fallback
     const fallbackRating = service?.rating || { average: 0, count: 0 };
-    
+
     return (
       <div className="card mb-6">
-        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="text-xl mr-2">⭐</span>
+        <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-800 md:text-xl">
+          <span className="mr-2 text-xl">⭐</span>
           Rating & Reviews
         </h3>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <span className="text-3xl font-bold text-yellow-500 mr-2">
+            <span className="mr-2 text-3xl font-bold text-yellow-500">
               {fallbackRating.average.toFixed(1)}
             </span>
             <div>
-              <div className="flex text-yellow-400 mb-1">
+              <div className="mb-1 flex text-yellow-400">
                 {[...Array(5)].map((_, i) => (
-                  <span key={i} className={i < Math.floor(fallbackRating.average) ? 'text-yellow-400' : 'text-gray-300'}>
+                  <span
+                    key={i}
+                    className={
+                      i < Math.floor(fallbackRating.average)
+                        ? "text-yellow-400"
+                        : "text-gray-300"
+                    }
+                  >
                     ★
                   </span>
                 ))}
               </div>
-              <p className="text-sm text-gray-600">{fallbackRating.count} reviews</p>
-              <p className="text-xs text-red-500">Hindi ma-load ang pinakabagong mga review</p>
+              <p className="text-sm text-gray-600">
+                {fallbackRating.count} reviews
+              </p>
+              <p className="text-xs text-red-500">
+                Hindi ma-load ang pinakabagong mga review
+              </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleViewReviews}
-            className="btn-secondary text-sm px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+            className="btn-secondary px-4 py-2 text-sm transition-colors hover:bg-blue-600 hover:text-white"
           >
             View Reviews
           </button>
@@ -237,61 +277,68 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
 
   return (
     <div className="card mb-6">
-      <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <span className="text-xl mr-2">⭐</span>
+      <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-800 md:text-xl">
+        <span className="mr-2 text-xl">⭐</span>
         Rating & Mga Review
       </h3>
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <span className="text-3xl font-bold text-yellow-500 mr-2">
-            {serviceRating.average > 0 ? serviceRating.average.toFixed(1) : '0.0'}
+          <span className="mr-2 text-3xl font-bold text-yellow-500">
+            {serviceRating.average > 0
+              ? serviceRating.average.toFixed(1)
+              : "0.0"}
           </span>
           <div>
-            <div className="flex text-yellow-400 mb-1">
+            <div className="mb-1 flex text-yellow-400">
               {[...Array(5)].map((_, i) => (
-                <span 
-                  key={i} 
-                  className={i < Math.floor(serviceRating.average) ? 'text-yellow-400' : 'text-gray-300'}
+                <span
+                  key={i}
+                  className={
+                    i < Math.floor(serviceRating.average)
+                      ? "text-yellow-400"
+                      : "text-gray-300"
+                  }
                 >
                   ★
                 </span>
               ))}
             </div>
             <p className="text-sm text-gray-600">
-              {serviceRating.count} {serviceRating.count === 1 ? 'review' : 'reviews'}
+              {serviceRating.count}{" "}
+              {serviceRating.count === 1 ? "review" : "reviews"}
             </p>
             {/* ✅ Add real-time indicator */}
             {serviceRating.count > 0 && (
-              <p className="text-xs text-green-600 mt-1">
+              <p className="mt-1 text-xs text-green-600">
                 ✅ Live data from {serviceRating.count} verified reviews
               </p>
             )}
             {serviceRating.count === 0 && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-gray-500">
                 No reviews yet - be the first to review!
               </p>
             )}
           </div>
         </div>
-        
+
         <div className="flex flex-col items-end">
-          <button 
+          <button
             onClick={handleViewReviews}
-            className="btn-secondary text-sm px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors mb-2"
+            className="btn-secondary mb-2 px-4 py-2 text-sm transition-colors hover:bg-blue-600 hover:text-white"
           >
-            {serviceRating.count > 0 ? 'View Reviews' : 'See Details'}
+            {serviceRating.count > 0 ? "View Reviews" : "See Details"}
           </button>
-          
+
           {/* ✅ Show rating distribution preview */}
           {serviceRating.count > 0 && (
             <div className="text-xs text-gray-500">
               <div className="flex items-center space-x-1">
                 <span>5★</span>
-                <div className="w-8 h-1 bg-gray-200 rounded">
-                  <div 
-                    className="h-1 bg-yellow-400 rounded"
-                    style={{ 
-                      width: `${serviceRating.count > 0 ? (serviceRating.distribution[5] / serviceRating.count) * 100 : 0}%` 
+                <div className="h-1 w-8 rounded bg-gray-200">
+                  <div
+                    className="h-1 rounded bg-yellow-400"
+                    style={{
+                      width: `${serviceRating.count > 0 ? (serviceRating.distribution[5] / serviceRating.count) * 100 : 0}%`,
                     }}
                   ></div>
                 </div>
@@ -299,11 +346,11 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
               </div>
               <div className="flex items-center space-x-1">
                 <span>4★</span>
-                <div className="w-8 h-1 bg-gray-200 rounded">
-                  <div 
-                    className="h-1 bg-yellow-400 rounded"
-                    style={{ 
-                      width: `${serviceRating.count > 0 ? (serviceRating.distribution[4] / serviceRating.count) * 100 : 0}%` 
+                <div className="h-1 w-8 rounded bg-gray-200">
+                  <div
+                    className="h-1 rounded bg-yellow-400"
+                    style={{
+                      width: `${serviceRating.count > 0 ? (serviceRating.distribution[4] / serviceRating.count) * 100 : 0}%`,
                     }}
                   ></div>
                 </div>
@@ -353,28 +400,38 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
 // );
 
 // Service Verification Section Component
-const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerified }) => (
-  <div className="card mb-6 lg:mb-0 lg:p-0 lg:bg-transparent lg:shadow-none lg:border-0">
-    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center lg:hidden">
-      <span className="text-xl mr-2">🛡️</span>
+const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({
+  isVerified,
+}) => (
+  <div className="card mb-6 lg:mb-0 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+    <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-800 md:text-xl lg:hidden">
+      <span className="mr-2 text-xl">🛡️</span>
       Verification Status
     </h3>
-    <div className={`flex items-center justify-between p-3 rounded-lg ${isVerified ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'} lg:p-2`}>
+    <div
+      className={`flex items-center justify-between rounded-lg p-3 ${isVerified ? "border border-green-200 bg-green-50" : "border border-yellow-200 bg-yellow-50"} lg:p-2`}
+    >
       <div className="flex items-center">
-        <span className={`text-lg mr-3 lg:mr-2 ${isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
-          {isVerified ? '✅' : '⚠️'}
+        <span
+          className={`mr-3 text-lg lg:mr-2 ${isVerified ? "text-green-600" : "text-yellow-600"}`}
+        >
+          {isVerified ? "✅" : "⚠️"}
         </span>
         <div>
-          <span className={`font-medium ${isVerified ? 'text-green-700' : 'text-yellow-700'}`}>
-            {isVerified ? 'Veripikado' : 'Hinihintay ang verepikasyon'}
+          <span
+            className={`font-medium ${isVerified ? "text-green-700" : "text-yellow-700"}`}
+          >
+            {isVerified ? "Veripikado" : "Hinihintay ang verepikasyon"}
           </span>
-          <span className="block text-xs text-gray-500 mt-0.5">
-            {isVerified ? 'Verified lahat ng dokumento ' : 'Isinasagawa pa ang pagsusuri ng dokumento'}
+          <span className="mt-0.5 block text-xs text-gray-500">
+            {isVerified
+              ? "Verified lahat ng dokumento "
+              : "Isinasagawa pa ang pagsusuri ng dokumento"}
           </span>
         </div>
       </div>
       {isVerified && (
-        <span className="text-green-600 text-xl lg:text-sm">🏆</span>
+        <span className="text-xl text-green-600 lg:text-sm">🏆</span>
       )}
     </div>
   </div>
@@ -413,70 +470,74 @@ const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerif
 
 // Placeholder Service Data
 const createPlaceholderService = (): any => ({
-  id: 'placeholder-service',
-  providerId: 'placeholder-provider',
-  name: 'Service Provider',
-  title: 'Professional Service',
-  description: 'This service provider offers professional services. Detailed information will be available once connected to the backend.',
+  id: "placeholder-service",
+  providerId: "placeholder-provider",
+  name: "Service Provider",
+  title: "Professional Service",
+  description:
+    "This service provider offers professional services. Detailed information will be available once connected to the backend.",
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
   price: {
     amount: 1000,
-    currency: 'PHP',
-    unit: '/ Hour',
-    isNegotiable: true
+    currency: "PHP",
+    unit: "/ Hour",
+    isNegotiable: true,
   },
   location: {
-    address: 'Baguio City, Philippines',
+    address: "Baguio City, Philippines",
     coordinates: {
       latitude: 16.4095,
-      longitude: 120.5975
+      longitude: 120.5975,
     },
     serviceRadius: 10,
-    serviceRadiusUnit: 'km'
+    serviceRadiusUnit: "km",
   },
   availability: {
-    schedule: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-    timeSlots: ['09:00-17:00'],
-    isAvailableNow: true
+    schedule: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    timeSlots: ["09:00-17:00"],
+    isAvailableNow: true,
   },
   rating: {
     average: 4.5,
-    count: 15
+    count: 15,
   },
   media: [],
   requirements: [
-    'Please provide service details during booking',
-    'Ensure availability at scheduled time',
-    'Payment terms will be discussed'
+    "Please provide service details during booking",
+    "Ensure availability at scheduled time",
+    "Payment terms will be discussed",
   ],
   isVerified: false,
-  slug: 'placeholder-service',
-  heroImage: '/images/default-service.png',
-  providerName: 'Service Provider', // Added provider name
+  slug: "placeholder-service",
+  heroImage: "/images/default-service.png",
+  providerName: "Service Provider", // Added provider name
   providerAvatar: null, // Added provider avatar
-  priceDisplay: '$1000.00', // Added price display
+  priceDisplay: "$1000.00", // Added price display
   category: {
-    id: 'cat-placeholder',
-    name: 'General Services',
-    description: 'General professional services',
-    slug: 'general-services',
-    icon: 'service',
-    imageUrl: '/images/default-category.png',
+    id: "cat-placeholder",
+    name: "General Services",
+    description: "General professional services",
+    slug: "general-services",
+    icon: "service",
+    imageUrl: "/images/default-category.png",
     isActive: true,
     createdAt: new Date(),
-    updatedAt: new Date()
-  }
+    updatedAt: new Date(),
+  },
 });
 
 // Main Service Detail Component
-const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({ service, provider }) => {
+const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
+  service,
+  provider,
+}) => {
   const router = useRouter();
 
   // Use placeholder service if no service is provided
   const placeholderService = createPlaceholderService();
-  
+
   // Use the service directly if provided, otherwise use placeholder
   const displayService = service || placeholderService;
 
@@ -488,7 +549,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
   return (
     <div className="bg-gray-50">
       <ServiceHeroImage service={displayService} provider={provider} />
-      
+
       {/* Content Layout - Full width like home.tsx */}
       <div className="px-4 pt-4 pb-16 lg:px-8 lg:pt-8">
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
@@ -500,68 +561,88 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
             {/* <ServiceRequirementsSection service={displayService} />
             <ServiceImagesSection service={displayService} /> */}
           </div>
-          
+
           {/* Sidebar - 1/3 width on desktop */}
           <div className="hidden lg:block">
             <div className="sticky top-24">
               <div className="card mb-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">Ibook itong Serbisyo</h3>
+                <h3 className="mb-4 text-xl font-semibold text-gray-800">
+                  Ibook itong Serbisyo
+                </h3>
                 <div className="mb-4">
-                  <p className="text-gray-600 text-sm mb-2">Tagapagbigay</p>
+                  <p className="mb-2 text-sm text-gray-600">Tagapagbigay</p>
                   <div className="flex items-center">
-                    {provider?.profilePicture?.imageUrl || displayService.providerAvatar ? (
+                    {provider?.profilePicture?.imageUrl ||
+                    displayService.providerAvatar ? (
                       <Image
-                        src={provider?.profilePicture?.imageUrl || displayService.providerAvatar || '/images/default-avatar.png'}
-                        alt={provider?.name || displayService.providerName || 'Service Provider'}
+                        src={
+                          provider?.profilePicture?.imageUrl ||
+                          displayService.providerAvatar ||
+                          "/images/default-avatar.png"
+                        }
+                        alt={
+                          provider?.name ||
+                          displayService.providerName ||
+                          "Service Provider"
+                        }
                         width={40}
                         height={40}
-                        className="rounded-full mr-3"
+                        className="mr-3 rounded-full"
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3">
+                      <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                         <span className="text-xl">👤</span>
                       </div>
                     )}
                     <div>
-                      <span className="font-medium text-gray-800 block">
-                        {provider?.name || displayService.providerName || 'Service Provider'}
+                      <span className="block font-medium text-gray-800">
+                        {provider?.name ||
+                          displayService.providerName ||
+                          "Service Provider"}
                       </span>
-                      <span className="text-xs text-gray-500">Miyembro simula pa noong {new Date(displayService.createdAt).getFullYear()}</span>
+                      <span className="text-xs text-gray-500">
+                        Miyembro simula pa noong{" "}
+                        {new Date(displayService.createdAt).getFullYear()}
+                      </span>
                     </div>
                   </div>
                 </div>
-                
-                <div className="border-t border-gray-100 pt-4 mb-4">
+
+                <div className="mb-4 border-t border-gray-100 pt-4">
                   <button
                     onClick={handleBookingRequest}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                    className="w-full rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors duration-200 hover:bg-green-700"
                   >
                     Ibook na
                   </button>
-                  <p className="text-xs text-center text-gray-500 mt-2">
+                  <p className="mt-2 text-center text-xs text-gray-500">
                     "Hindi ka pa sisingilin."
                   </p>
                 </div>
-                
-                <ServiceVerificationSection isVerified={displayService.isVerified} />
+
+                <ServiceVerificationSection
+                  isVerified={displayService.isVerified}
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Mobile booking button - Only visible on mobile */}
-      <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 z-50">
-        <div className="flex items-center justify-between mb-2">
+      <div className="fixed right-0 bottom-16 left-0 z-50 border-t border-gray-200 bg-white p-4 lg:hidden">
+        <div className="mb-2 flex items-center justify-between">
           <span className="text-gray-600">Price:</span>
           <span className="font-semibold text-gray-800">
-            {displayService.price.currency === 'PHP' ? '₱' : displayService.price.currency}
+            {displayService.price.currency === "PHP"
+              ? "₱"
+              : displayService.price.currency}
             {displayService.price.amount.toFixed(2)} {displayService.price.unit}
           </span>
         </div>
         <button
           onClick={handleBookingRequest}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+          className="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-green-700"
         >
           Ibook Na
         </button>

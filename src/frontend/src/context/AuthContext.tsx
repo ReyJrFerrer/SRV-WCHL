@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthClient } from '@dfinity/auth-client';
-import { Identity } from '@dfinity/agent';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { AuthClient } from "@dfinity/auth-client";
+import { Identity } from "@dfinity/agent";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -17,7 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -44,7 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIdentity(client.getIdentity());
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'An unknown error occurred');
+        setError(e instanceof Error ? e.message : "An unknown error occurred");
       } finally {
         setIsLoading(false);
       }
@@ -62,8 +68,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authClient.login({
         identityProvider:
-          process.env.DFX_NETWORK === 'ic'
-            ? 'https://identity.ic0.app'
+          process.env.DFX_NETWORK === "ic"
+            ? "https://identity.ic0.app"
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
         onSuccess: () => {
           setIsAuthenticated(true);
@@ -71,12 +77,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsLoading(false);
         },
         onError: (err?: string) => {
-          setError(err || 'Login failed');
+          setError(err || "Login failed");
           setIsLoading(false);
         },
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to connect to Internet Identity');
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Failed to connect to Internet Identity",
+      );
       setIsLoading(false);
     }
   };

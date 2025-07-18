@@ -36,12 +36,27 @@
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
     },
     "backend": {
-      "dependencies": ["llm", "auth", "booking", "reputation", "review", "service"],
+      "dependencies": [
+        "llm",
+        "auth",
+        "booking",
+        "reputation",
+        "review",
+        "service"
+      ],
       "type": "motoko",
       "main": "src/backend/main.mo"
     },
     "frontend": {
-      "dependencies": ["backend", "auth", "internet_identity", "booking", "reputation", "review", "service"],
+      "dependencies": [
+        "backend",
+        "auth",
+        "internet_identity",
+        "booking",
+        "reputation",
+        "review",
+        "service"
+      ],
       "type": "assets",
       "source": ["src/frontend/dist/"]
     }

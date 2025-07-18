@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import { ClockIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { DayOfWeek, TimeSlot, DayAvailability } from '../../services/serviceCanisterService';
+import React, { useState } from "react";
+import { ClockIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import {
+  DayOfWeek,
+  TimeSlot,
+  DayAvailability,
+} from "../../services/serviceCanisterService";
 
 interface TimeSlotUIData {
   id: string;
   startHour: string;
   startMinute: string;
-  startPeriod: 'AM' | 'PM';
+  startPeriod: "AM" | "PM";
   endHour: string;
   endMinute: string;
-  endPeriod: 'AM' | 'PM';
+  endPeriod: "AM" | "PM";
 }
 
 interface AvailabilityConfigurationProps {
@@ -17,13 +21,13 @@ interface AvailabilityConfigurationProps {
   instantBookingEnabled: boolean;
   bookingNoticeHours: number;
   maxBookingsPerDay: number;
-  
+
   // Schedule configuration
   availabilitySchedule: DayOfWeek[];
   useSameTimeForAllDays: boolean;
   commonTimeSlots: TimeSlotUIData[];
   perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
-  
+
   // Event handlers
   onInstantBookingChange: (enabled: boolean) => void;
   onBookingNoticeHoursChange: (hours: number) => void;
@@ -31,7 +35,9 @@ interface AvailabilityConfigurationProps {
   onAvailabilityScheduleChange: (days: DayOfWeek[]) => void;
   onUseSameTimeChange: (useSame: boolean) => void;
   onCommonTimeSlotsChange: (slots: TimeSlotUIData[]) => void;
-  onPerDayTimeSlotsChange: (perDaySlots: Record<DayOfWeek, TimeSlotUIData[]>) => void;
+  onPerDayTimeSlotsChange: (
+    perDaySlots: Record<DayOfWeek, TimeSlotUIData[]>,
+  ) => void;
 }
 
 const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
@@ -48,25 +54,41 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
   onAvailabilityScheduleChange,
   onUseSameTimeChange,
   onCommonTimeSlotsChange,
-  onPerDayTimeSlotsChange
+  onPerDayTimeSlotsChange,
 }) => {
-  const daysOfWeek: DayOfWeek[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const hourOptions = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-  const minuteOptions = ['00', '15', '30', '45'];
-  const periodOptions: ('AM' | 'PM')[] = ['AM', 'PM'];
+  const daysOfWeek: DayOfWeek[] = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+  const hourOptions = Array.from({ length: 12 }, (_, i) =>
+    String(i + 1).padStart(2, "0"),
+  );
+  const minuteOptions = ["00", "15", "30", "45"];
+  const periodOptions: ("AM" | "PM")[] = ["AM", "PM"];
 
   const handleDayToggle = (day: DayOfWeek) => {
     const isCurrentlySelected = availabilitySchedule.includes(day);
     if (isCurrentlySelected) {
-      onAvailabilityScheduleChange(availabilitySchedule.filter(d => d !== day));
+      onAvailabilityScheduleChange(
+        availabilitySchedule.filter((d) => d !== day),
+      );
     } else {
       onAvailabilityScheduleChange([...availabilitySchedule, day]);
     }
   };
 
-  const handleCommonTimeSlotChange = (index: number, field: keyof TimeSlotUIData, value: string) => {
-    const updatedSlots = commonTimeSlots.map((slot, i) => 
-      i === index ? { ...slot, [field]: value } : slot
+  const handleCommonTimeSlotChange = (
+    index: number,
+    field: keyof TimeSlotUIData,
+    value: string,
+  ) => {
+    const updatedSlots = commonTimeSlots.map((slot, i) =>
+      i === index ? { ...slot, [field]: value } : slot,
     );
     onCommonTimeSlotsChange(updatedSlots);
   };
@@ -74,28 +96,35 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
   const addCommonTimeSlot = () => {
     const newSlot: TimeSlotUIData = {
       id: `slot-${Date.now()}`,
-      startHour: '09',
-      startMinute: '00',
-      startPeriod: 'AM',
-      endHour: '05',
-      endMinute: '00',
-      endPeriod: 'PM'
+      startHour: "09",
+      startMinute: "00",
+      startPeriod: "AM",
+      endHour: "05",
+      endMinute: "00",
+      endPeriod: "PM",
     };
     onCommonTimeSlotsChange([...commonTimeSlots, newSlot]);
   };
 
   const removeCommonTimeSlot = (idToRemove: string) => {
-    onCommonTimeSlotsChange(commonTimeSlots.filter(slot => slot.id !== idToRemove));
+    onCommonTimeSlotsChange(
+      commonTimeSlots.filter((slot) => slot.id !== idToRemove),
+    );
   };
 
-  const handlePerDayTimeSlotChange = (day: DayOfWeek, index: number, field: keyof TimeSlotUIData, value: string) => {
+  const handlePerDayTimeSlotChange = (
+    day: DayOfWeek,
+    index: number,
+    field: keyof TimeSlotUIData,
+    value: string,
+  ) => {
     const daySlots = perDayTimeSlots[day] || [];
-    const updatedDaySlots = daySlots.map((slot, i) => 
-      i === index ? { ...slot, [field]: value } : slot
+    const updatedDaySlots = daySlots.map((slot, i) =>
+      i === index ? { ...slot, [field]: value } : slot,
     );
     onPerDayTimeSlotsChange({
       ...perDayTimeSlots,
-      [day]: updatedDaySlots
+      [day]: updatedDaySlots,
     });
   };
 
@@ -103,16 +132,16 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
     const daySlots = perDayTimeSlots[day] || [];
     const newSlot: TimeSlotUIData = {
       id: `slot-${day}-${Date.now()}`,
-      startHour: '09',
-      startMinute: '00',
-      startPeriod: 'AM',
-      endHour: '05',
-      endMinute: '00',
-      endPeriod: 'PM'
+      startHour: "09",
+      startMinute: "00",
+      startPeriod: "AM",
+      endHour: "05",
+      endMinute: "00",
+      endPeriod: "PM",
     };
     onPerDayTimeSlotsChange({
       ...perDayTimeSlots,
-      [day]: [...daySlots, newSlot]
+      [day]: [...daySlots, newSlot],
     });
   };
 
@@ -120,7 +149,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
     const daySlots = perDayTimeSlots[day] || [];
     onPerDayTimeSlotsChange({
       ...perDayTimeSlots,
-      [day]: daySlots.filter(slot => slot.id !== idToRemove)
+      [day]: daySlots.filter((slot) => slot.id !== idToRemove),
     });
   };
 
@@ -128,13 +157,13 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
     <div className="space-y-6">
       {/* Booking Settings */}
       {/* <div className="bg-blue-50 p-4 rounded-lg"> */}
-        {/* <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+      {/* <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
           <ClockIcon className="h-4 w-4 mr-2" />
           Booking Settings
         </h4> */}
-        
-          {/* Instant Booking Toggle */}      {/* Booking Notice Hours */}           {/* Max Bookings Per Day */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Instant Booking Toggle */} {/* Booking Notice Hours */}{" "}
+      {/* Max Bookings Per Day */}
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
           <div className="flex items-center space-x-3">
             <input
@@ -186,111 +215,167 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
           </div>
         </div> */}
       {/* </div> */}
-
       {/* Working Days Selection */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Working Days</h4>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-          {daysOfWeek.map(day => (
-            <label key={day} className="flex items-center space-x-2 cursor-pointer">
+        <h4 className="mb-3 text-sm font-medium text-gray-700">Working Days</h4>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-7">
+          {daysOfWeek.map((day) => (
+            <label
+              key={day}
+              className="flex cursor-pointer items-center space-x-2"
+            >
               <input
                 type="checkbox"
                 checked={availabilitySchedule.includes(day)}
                 onChange={() => handleDayToggle(day)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700">{day.slice(0, 3)}</span>
             </label>
           ))}
         </div>
       </div>
-
       {/* Time Slots Configuration */}
       {availabilitySchedule.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Time Slots</h4>
-          
+          <h4 className="mb-3 text-sm font-medium text-gray-700">Time Slots</h4>
+
           {/* Same Time Toggle */}
           <div className="mb-4">
-            <label className="flex items-center space-x-3 cursor-pointer">
+            <label className="flex cursor-pointer items-center space-x-3">
               <input
                 type="checkbox"
                 checked={useSameTimeForAllDays}
                 onChange={(e) => onUseSameTimeChange(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Use same time slots for all selected days</span>
+              <span className="text-sm text-gray-700">
+                Use same time slots for all selected days
+              </span>
             </label>
           </div>
 
           {/* Common Time Slots */}
           {useSameTimeForAllDays && (
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="rounded-lg bg-gray-50 p-4">
               <div className="space-y-3">
                 {commonTimeSlots.map((slot, index) => (
-                  <div key={slot.id} className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 bg-white p-3 rounded border">
+                  <div
+                    key={slot.id}
+                    className="flex flex-col space-y-2 rounded border bg-white p-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2"
+                  >
                     {/* Start Time */}
-                    <div className="flex items-center space-x-1 flex-shrink-0">
+                    <div className="flex flex-shrink-0 items-center space-x-1">
                       <select
                         value={slot.startHour}
-                        onChange={(e) => handleCommonTimeSlotChange(index, 'startHour', e.target.value)}
-                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                        onChange={(e) =>
+                          handleCommonTimeSlotChange(
+                            index,
+                            "startHour",
+                            e.target.value,
+                          )
+                        }
+                        className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                       >
-                        {hourOptions.map(hour => (
-                          <option key={hour} value={hour}>{hour}</option>
+                        {hourOptions.map((hour) => (
+                          <option key={hour} value={hour}>
+                            {hour}
+                          </option>
                         ))}
                       </select>
                       <span className="text-gray-500">:</span>
                       <select
                         value={slot.startMinute}
-                        onChange={(e) => handleCommonTimeSlotChange(index, 'startMinute', e.target.value)}
-                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                        onChange={(e) =>
+                          handleCommonTimeSlotChange(
+                            index,
+                            "startMinute",
+                            e.target.value,
+                          )
+                        }
+                        className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                       >
-                        {minuteOptions.map(minute => (
-                          <option key={minute} value={minute}>{minute}</option>
+                        {minuteOptions.map((minute) => (
+                          <option key={minute} value={minute}>
+                            {minute}
+                          </option>
                         ))}
                       </select>
                       <select
                         value={slot.startPeriod}
-                        onChange={(e) => handleCommonTimeSlotChange(index, 'startPeriod', e.target.value)}
-                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                        onChange={(e) =>
+                          handleCommonTimeSlotChange(
+                            index,
+                            "startPeriod",
+                            e.target.value,
+                          )
+                        }
+                        className="w-16 rounded border border-gray-300 px-2 py-1 text-sm"
                       >
-                        {periodOptions.map(period => (
-                          <option key={period} value={period}>{period}</option>
+                        {periodOptions.map((period) => (
+                          <option key={period} value={period}>
+                            {period}
+                          </option>
                         ))}
                       </select>
                     </div>
 
-                    <span className="text-gray-500 text-center sm:text-left">to</span>
+                    <span className="text-center text-gray-500 sm:text-left">
+                      to
+                    </span>
 
                     {/* End Time */}
-                    <div className="flex items-center space-x-1 flex-shrink-0">
+                    <div className="flex flex-shrink-0 items-center space-x-1">
                       <select
                         value={slot.endHour}
-                        onChange={(e) => handleCommonTimeSlotChange(index, 'endHour', e.target.value)}
-                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                        onChange={(e) =>
+                          handleCommonTimeSlotChange(
+                            index,
+                            "endHour",
+                            e.target.value,
+                          )
+                        }
+                        className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                       >
-                        {hourOptions.map(hour => (
-                          <option key={hour} value={hour}>{hour}</option>
+                        {hourOptions.map((hour) => (
+                          <option key={hour} value={hour}>
+                            {hour}
+                          </option>
                         ))}
                       </select>
                       <span className="text-gray-500">:</span>
                       <select
                         value={slot.endMinute}
-                        onChange={(e) => handleCommonTimeSlotChange(index, 'endMinute', e.target.value)}
-                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                        onChange={(e) =>
+                          handleCommonTimeSlotChange(
+                            index,
+                            "endMinute",
+                            e.target.value,
+                          )
+                        }
+                        className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                       >
-                        {minuteOptions.map(minute => (
-                          <option key={minute} value={minute}>{minute}</option>
+                        {minuteOptions.map((minute) => (
+                          <option key={minute} value={minute}>
+                            {minute}
+                          </option>
                         ))}
                       </select>
                       <select
                         value={slot.endPeriod}
-                        onChange={(e) => handleCommonTimeSlotChange(index, 'endPeriod', e.target.value)}
-                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                        onChange={(e) =>
+                          handleCommonTimeSlotChange(
+                            index,
+                            "endPeriod",
+                            e.target.value,
+                          )
+                        }
+                        className="w-16 rounded border border-gray-300 px-2 py-1 text-sm"
                       >
-                        {periodOptions.map(period => (
-                          <option key={period} value={period}>{period}</option>
+                        {periodOptions.map((period) => (
+                          <option key={period} value={period}>
+                            {period}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -300,7 +385,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                       <button
                         type="button"
                         onClick={() => removeCommonTimeSlot(slot.id)}
-                        className="text-red-500 hover:text-red-700 p-1 self-center sm:self-auto"
+                        className="self-center p-1 text-red-500 hover:text-red-700 sm:self-auto"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -314,85 +399,144 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
           {/* Per-Day Time Slots */}
           {!useSameTimeForAllDays && (
             <div className="space-y-4">
-              {availabilitySchedule.map(day => (
-                <div key={day} className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
+              {availabilitySchedule.map((day) => (
+                <div key={day} className="rounded-lg bg-gray-50 p-4">
+                  <div className="mb-3 flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                     <h5 className="text-sm font-medium text-gray-700">{day}</h5>
                     <button
                       type="button"
                       onClick={() => addPerDayTimeSlot(day)}
-                      className="text-blue-600 hover:text-blue-700 text-sm flex items-center self-start sm:self-auto"
+                      className="flex items-center self-start text-sm text-blue-600 hover:text-blue-700 sm:self-auto"
                     >
-                      <PlusIcon className="h-4 w-4 mr-1" />
+                      <PlusIcon className="mr-1 h-4 w-4" />
                       Add Slot
                     </button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {(perDayTimeSlots[day] || []).map((slot, index) => (
-                      <div key={slot.id} className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 bg-white p-3 rounded border">
+                      <div
+                        key={slot.id}
+                        className="flex flex-col space-y-2 rounded border bg-white p-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2"
+                      >
                         {/* Start Time */}
-                        <div className="flex items-center space-x-1 flex-shrink-0">
+                        <div className="flex flex-shrink-0 items-center space-x-1">
                           <select
                             value={slot.startHour}
-                            onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startHour', e.target.value)}
-                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                            onChange={(e) =>
+                              handlePerDayTimeSlotChange(
+                                day,
+                                index,
+                                "startHour",
+                                e.target.value,
+                              )
+                            }
+                            className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                           >
-                            {hourOptions.map(hour => (
-                              <option key={hour} value={hour}>{hour}</option>
+                            {hourOptions.map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
                             ))}
                           </select>
                           <span className="text-gray-500">:</span>
                           <select
                             value={slot.startMinute}
-                            onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startMinute', e.target.value)}
-                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                            onChange={(e) =>
+                              handlePerDayTimeSlotChange(
+                                day,
+                                index,
+                                "startMinute",
+                                e.target.value,
+                              )
+                            }
+                            className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                           >
-                            {minuteOptions.map(minute => (
-                              <option key={minute} value={minute}>{minute}</option>
+                            {minuteOptions.map((minute) => (
+                              <option key={minute} value={minute}>
+                                {minute}
+                              </option>
                             ))}
                           </select>
                           <select
                             value={slot.startPeriod}
-                            onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startPeriod', e.target.value)}
-                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                            onChange={(e) =>
+                              handlePerDayTimeSlotChange(
+                                day,
+                                index,
+                                "startPeriod",
+                                e.target.value,
+                              )
+                            }
+                            className="w-16 rounded border border-gray-300 px-2 py-1 text-sm"
                           >
-                            {periodOptions.map(period => (
-                              <option key={period} value={period}>{period}</option>
+                            {periodOptions.map((period) => (
+                              <option key={period} value={period}>
+                                {period}
+                              </option>
                             ))}
                           </select>
                         </div>
 
-                        <span className="text-gray-500 text-center sm:text-left">to</span>
+                        <span className="text-center text-gray-500 sm:text-left">
+                          to
+                        </span>
 
                         {/* End Time */}
-                        <div className="flex items-center space-x-1 flex-shrink-0">
+                        <div className="flex flex-shrink-0 items-center space-x-1">
                           <select
                             value={slot.endHour}
-                            onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endHour', e.target.value)}
-                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                            onChange={(e) =>
+                              handlePerDayTimeSlotChange(
+                                day,
+                                index,
+                                "endHour",
+                                e.target.value,
+                              )
+                            }
+                            className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                           >
-                            {hourOptions.map(hour => (
-                              <option key={hour} value={hour}>{hour}</option>
+                            {hourOptions.map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
                             ))}
                           </select>
                           <span className="text-gray-500">:</span>
                           <select
                             value={slot.endMinute}
-                            onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endMinute', e.target.value)}
-                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
+                            onChange={(e) =>
+                              handlePerDayTimeSlotChange(
+                                day,
+                                index,
+                                "endMinute",
+                                e.target.value,
+                              )
+                            }
+                            className="w-14 rounded border border-gray-300 px-2 py-1 text-sm"
                           >
-                            {minuteOptions.map(minute => (
-                              <option key={minute} value={minute}>{minute}</option>
+                            {minuteOptions.map((minute) => (
+                              <option key={minute} value={minute}>
+                                {minute}
+                              </option>
                             ))}
                           </select>
                           <select
                             value={slot.endPeriod}
-                            onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endPeriod', e.target.value)}
-                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                            onChange={(e) =>
+                              handlePerDayTimeSlotChange(
+                                day,
+                                index,
+                                "endPeriod",
+                                e.target.value,
+                              )
+                            }
+                            className="w-16 rounded border border-gray-300 px-2 py-1 text-sm"
                           >
-                            {periodOptions.map(period => (
-                              <option key={period} value={period}>{period}</option>
+                            {periodOptions.map((period) => (
+                              <option key={period} value={period}>
+                                {period}
+                              </option>
                             ))}
                           </select>
                         </div>
@@ -402,7 +546,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                           <button
                             type="button"
                             onClick={() => removePerDayTimeSlot(day, slot.id)}
-                            className="text-red-500 hover:text-red-700 p-1 self-center sm:self-auto"
+                            className="self-center p-1 text-red-500 hover:text-red-700 sm:self-auto"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>

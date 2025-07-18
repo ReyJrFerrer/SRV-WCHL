@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Principal } from '@dfinity/principal';
-import { useAuth } from '@bundly/ares-react';
-import { 
-  Service, 
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Principal } from "@dfinity/principal";
+import { useAuth } from "@bundly/ares-react";
+import {
+  Service,
   ServiceStatus,
   ServiceCategory,
   ServicePackage,
@@ -12,15 +12,21 @@ import {
   DayOfWeek,
   TimeSlot,
   DayAvailability,
-  serviceCanisterService 
-} from '../services/serviceCanisterService';
-import { 
-  FrontendProfile, 
-  authCanisterService 
-} from '../services/authCanisterService';
+  serviceCanisterService,
+} from "../services/serviceCanisterService";
+import {
+  FrontendProfile,
+  authCanisterService,
+} from "../services/authCanisterService";
 
 // Export availability-related types for use in components
-export type { DayOfWeek, DayAvailability, TimeSlot, ProviderAvailability, AvailableSlot };
+export type {
+  DayOfWeek,
+  DayAvailability,
+  TimeSlot,
+  ProviderAvailability,
+  AvailableSlot,
+};
 
 // Enhanced Service interface with additional frontend data
 export interface EnhancedService extends Service {
@@ -80,8 +86,8 @@ export interface ServiceSearchFilters {
 
 export interface ServiceSearchRequest extends ServiceSearchFilters {
   query?: string;
-  sortBy?: 'price' | 'rating' | 'distance' | 'created' | 'popularity';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "price" | "rating" | "distance" | "created" | "popularity";
+  sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
 }
@@ -104,46 +110,65 @@ interface ServiceManagementHook {
   providerProfiles: Map<string, FrontendProfile>;
   categories: ServiceCategory[];
   userServices: EnhancedService[];
-  
+
   // Loading states
   loading: boolean;
   loadingProfiles: boolean;
   loadingCategories: boolean;
   refreshing: boolean;
-  
+
   // Error state
   error: string | null;
-  
+
   // Service CRUD operations
   createService: (request: ServiceCreateRequest) => Promise<EnhancedService>;
-  updateService: (serviceId: string, title: string, description: string, price: number) => Promise<EnhancedService>;
+  updateService: (
+    serviceId: string,
+    title: string,
+    description: string,
+    price: number,
+  ) => Promise<EnhancedService>;
   deleteService: (serviceId: string) => Promise<void>;
   getService: (serviceId: string) => Promise<EnhancedService | null>;
-  
+
   // Service status management
-  updateServiceStatus: (serviceId: string, status: ServiceStatus) => Promise<void>;
+  updateServiceStatus: (
+    serviceId: string,
+    status: ServiceStatus,
+  ) => Promise<void>;
   activateService: (serviceId: string) => Promise<void>;
   suspendService: (serviceId: string) => Promise<void>;
   deactivateService: (serviceId: string) => Promise<void>;
-  
+
   // Package management
   createPackage: (request: PackageCreateRequest) => Promise<ServicePackage>;
   updatePackage: (request: PackageUpdateRequest) => Promise<ServicePackage>;
   deletePackage: (packageId: string) => Promise<void>;
   getServicePackages: (serviceId: string) => Promise<ServicePackage[]>;
-  
+
   // Availability management
-  updateAvailability: (serviceId: string, availability: ProviderAvailability) => Promise<void>;
-  getServiceAvailability: (serviceId: string) => Promise<ProviderAvailability | null>;
-  getAvailableSlots: (serviceId: string, date: Date) => Promise<AvailableSlot[]>;
+  updateAvailability: (
+    serviceId: string,
+    availability: ProviderAvailability,
+  ) => Promise<void>;
+  getServiceAvailability: (
+    serviceId: string,
+  ) => Promise<ProviderAvailability | null>;
+  getAvailableSlots: (
+    serviceId: string,
+    date: Date,
+  ) => Promise<AvailableSlot[]>;
   toggleInstantBooking: (serviceId: string, enabled: boolean) => Promise<void>;
-  
+
   // Search and filtering
   searchServices: (request: ServiceSearchRequest) => Promise<EnhancedService[]>;
   getServicesByCategory: (categoryId: string) => Promise<EnhancedService[]>;
-  getServicesByLocation: (location: Location, radius: number) => Promise<EnhancedService[]>;
+  getServicesByLocation: (
+    location: Location,
+    radius: number,
+  ) => Promise<EnhancedService[]>;
   getNearbyServices: (userLocation?: Location) => Promise<EnhancedService[]>;
-  
+
   // Utility functions
   servicesByStatus: (status: ServiceStatus) => EnhancedService[];
   refreshServices: () => Promise<void>;
@@ -158,12 +183,14 @@ interface ServiceManagementHook {
   isUserAuthenticated: () => boolean;
   retryOperation: (operation: string) => Promise<void>;
   isOperationInProgress: (operation: string) => boolean;
-  organizeWeeklySchedule: (weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>) => OrganizedWeeklySchedule;
-  
+  organizeWeeklySchedule: (
+    weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+  ) => OrganizedWeeklySchedule;
+
   // Category management
   getCategories: () => Promise<ServiceCategory[]>;
   refreshCategories: () => Promise<void>;
-  
+
   // Provider functions
   getProviderServices: (providerId?: string) => Promise<EnhancedService[]>;
   getProviderStats: (providerId?: string) => Promise<{
@@ -188,13 +215,15 @@ export interface OrganizedWeeklySchedule {
 export const useServiceManagement = (): ServiceManagementHook => {
   // Authentication - Fixed: using currentIdentity instead of user
   const { isAuthenticated, currentIdentity } = useAuth();
-  
+
   // Core state management
   const [services, setServices] = useState<EnhancedService[]>([]);
   const [userProfile, setUserProfile] = useState<FrontendProfile | null>(null);
-  const [providerProfiles, setProviderProfiles] = useState<Map<string, FrontendProfile>>(new Map());
+  const [providerProfiles, setProviderProfiles] = useState<
+    Map<string, FrontendProfile>
+  >(new Map());
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  
+
   // Loading states
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({
     services: false,
@@ -203,9 +232,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
     categories: false,
     packages: false,
     availability: false,
-    operations: new Map()
+    operations: new Map(),
   });
-  
+
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -213,48 +242,53 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Computed states
-  const loading = useMemo(() => 
-    loadingStates.services || loadingStates.profile,
-    [loadingStates.services, loadingStates.profile]
+  const loading = useMemo(
+    () => loadingStates.services || loadingStates.profile,
+    [loadingStates.services, loadingStates.profile],
   );
-  
-  const loadingProfiles = useMemo(() => 
-    loadingStates.providers,
-    [loadingStates.providers]
+
+  const loadingProfiles = useMemo(
+    () => loadingStates.providers,
+    [loadingStates.providers],
   );
-  
-  const loadingCategories = useMemo(() => 
-    loadingStates.categories,
-    [loadingStates.categories]
+
+  const loadingCategories = useMemo(
+    () => loadingStates.categories,
+    [loadingStates.categories],
   );
 
   // User services filtered from all services
   const userServices = useMemo(() => {
     if (!currentIdentity) return [];
     const currentUserIdString = currentIdentity.getPrincipal().toString();
-    return services.filter(service => 
-      service.providerId.toString() === currentUserIdString
+    return services.filter(
+      (service) => service.providerId.toString() === currentUserIdString,
     );
   }, [services, currentIdentity]);
 
   // Helper function to update loading state
-  const setLoadingState = useCallback((key: keyof Omit<LoadingStates, 'operations'>, value: boolean) => {
-    setLoadingStates(prev => ({ ...prev, [key]: value }));
-  }, []);
+  const setLoadingState = useCallback(
+    (key: keyof Omit<LoadingStates, "operations">, value: boolean) => {
+      setLoadingStates((prev) => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
 
   // Helper function to update operation loading state
-  const setOperationLoading = useCallback((operation: string, value: boolean) => {
-    setLoadingStates(prev => {
-      const newOperations = new Map(prev.operations);
-      if (value) {
-        newOperations.set(operation, true);
-      } else {
-        newOperations.delete(operation);
-      }
-      return { ...prev, operations: newOperations };
- 
-  })
-     }, []);
+  const setOperationLoading = useCallback(
+    (operation: string, value: boolean) => {
+      setLoadingStates((prev) => {
+        const newOperations = new Map(prev.operations);
+        if (value) {
+          newOperations.set(operation, true);
+        } else {
+          newOperations.delete(operation);
+        }
+        return { ...prev, operations: newOperations };
+      });
+    },
+    [],
+  );
 
   // Error handling
   const handleError = useCallback((error: any, operation: string) => {
@@ -273,18 +307,26 @@ export const useServiceManagement = (): ServiceManagementHook => {
     if (!isAuthenticated || !currentIdentity || !isInitialized) return;
 
     try {
-      setLoadingState('profile', true);
+      setLoadingState("profile", true);
       // Add a small delay to ensure HTTP agent is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const profileData = await authCanisterService.getProfile(currentIdentity.getPrincipal().toString());
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const profileData = await authCanisterService.getProfile(
+        currentIdentity.getPrincipal().toString(),
+      );
       setUserProfile(profileData);
     } catch (error) {
-      handleError(error, 'fetch user profile');
+      handleError(error, "fetch user profile");
     } finally {
-      setLoadingState('profile', false);
+      setLoadingState("profile", false);
     }
-  }, [isAuthenticated, currentIdentity, isInitialized, setLoadingState, handleError]);
+  }, [
+    isAuthenticated,
+    currentIdentity,
+    isInitialized,
+    setLoadingState,
+    handleError,
+  ]);
 
   // Add initialization effect (add this after your existing useEffects)
   useEffect(() => {
@@ -292,509 +334,602 @@ export const useServiceManagement = (): ServiceManagementHook => {
     const timer = setTimeout(() => {
       setIsInitialized(true);
     }, 500); // Give auth context time to initialize
-    
+
     return () => clearTimeout(timer);
   }, []);
 
   // Fetch provider profile
-  const fetchProviderProfile = useCallback(async (providerId: string): Promise<FrontendProfile | null> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-
-      return null;
-    }
-
-    try {
-      if (providerProfiles.has(providerId)) {
-        return providerProfiles.get(providerId)!;
+  const fetchProviderProfile = useCallback(
+    async (providerId: string): Promise<FrontendProfile | null> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return null;
       }
 
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        if (providerProfiles.has(providerId)) {
+          return providerProfiles.get(providerId)!;
+        }
 
-      const profile = await authCanisterService.getProfile(providerId);
-      if (profile) {
-        setProviderProfiles(prev => new Map(prev).set(providerId, profile));
-        return profile;
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const profile = await authCanisterService.getProfile(providerId);
+        if (profile) {
+          setProviderProfiles((prev) => new Map(prev).set(providerId, profile));
+          return profile;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error fetching provider profile:", error);
+        return null;
       }
-      return null;
-    } catch (error) {
-      console.error('Error fetching provider profile:', error);
-      return null;
-    }
-  }, [isInitialized, providerProfiles]);
+    },
+    [isInitialized, providerProfiles],
+  );
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     if (!isInitialized) return;
-    
+
     try {
-      setLoadingState('categories', true);
+      setLoadingState("categories", true);
       // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const categoriesData = await serviceCanisterService.getAllCategories();
       setCategories(categoriesData);
     } catch (error) {
-      handleError(error, 'fetch categories');
+      handleError(error, "fetch categories");
     } finally {
-      setLoadingState('categories', false);
+      setLoadingState("categories", false);
     }
   }, [isInitialized, setLoadingState, handleError]);
 
   // Enrich service with provider data
-  const enrichServiceWithProviderData = useCallback(async (service: Service): Promise<EnhancedService> => {
-    const providerProfile = await fetchProviderProfile(service.providerId.toString());
-    
-    const enrichedService: EnhancedService = {
-      ...service,
-      providerProfile: providerProfile ?? undefined,
-      formattedLocation: formatLocationString(service.location),
-      isProviderDataLoaded: true,
-      formattedPrice: formatServicePrice(service.price),
-      averageRating: service.rating || 0,
-      totalReviews: Number(service.reviewCount) || 0,
-    };
+  const enrichServiceWithProviderData = useCallback(
+    async (service: Service): Promise<EnhancedService> => {
+      const providerProfile = await fetchProviderProfile(
+        service.providerId.toString(),
+      );
 
-    return enrichedService;
-  }, [fetchProviderProfile]);
+      const enrichedService: EnhancedService = {
+        ...service,
+        providerProfile: providerProfile ?? undefined,
+        formattedLocation: formatLocationString(service.location),
+        isProviderDataLoaded: true,
+        formattedPrice: formatServicePrice(service.price),
+        averageRating: service.rating || 0,
+        totalReviews: Number(service.reviewCount) || 0,
+      };
+
+      return enrichedService;
+    },
+    [fetchProviderProfile],
+  );
 
   // Fetch services
   const fetchServices = useCallback(async () => {
     if (!isInitialized) return;
-    
+
     try {
-      setLoadingState('services', true);
+      setLoadingState("services", true);
       // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const servicesData = await serviceCanisterService.getAllServices();
-      
+
       // Enrich services with provider data
       const enrichedServices = await Promise.all(
-        servicesData.map(service => enrichServiceWithProviderData(service))
+        servicesData.map((service) => enrichServiceWithProviderData(service)),
       );
-      
+
       setServices(enrichedServices);
     } catch (error) {
-      handleError(error, 'fetch services');
+      handleError(error, "fetch services");
     } finally {
-      setLoadingState('services', false);
+      setLoadingState("services", false);
     }
-  }, [isInitialized, setLoadingState, handleError, enrichServiceWithProviderData]);
+  }, [
+    isInitialized,
+    setLoadingState,
+    handleError,
+    enrichServiceWithProviderData,
+  ]);
 
   // Service CRUD Operations
 
   // Fixed: createService now uses individual parameters instead of request object
-  const createService = useCallback(async (request: ServiceCreateRequest): Promise<EnhancedService> => {
-    try {
-      setOperationLoading('createService', true);
-      const newService = await serviceCanisterService.createService(
-        request.title,
-        request.description,
-        request.categoryId,
-        request.price,
-        request.location,
-        request.weeklySchedule,
-        request.instantBookingEnabled,
-        request.bookingNoticeHours,
-        request.maxBookingsPerDay
-      );
+  const createService = useCallback(
+    async (request: ServiceCreateRequest): Promise<EnhancedService> => {
+      try {
+        setOperationLoading("createService", true);
+        const newService = await serviceCanisterService.createService(
+          request.title,
+          request.description,
+          request.categoryId,
+          request.price,
+          request.location,
+          request.weeklySchedule,
+          request.instantBookingEnabled,
+          request.bookingNoticeHours,
+          request.maxBookingsPerDay,
+        );
 
-      if (!newService) {
-        throw new Error('Failed to create service');
+        if (!newService) {
+          throw new Error("Failed to create service");
+        }
+
+        const enrichedService = await enrichServiceWithProviderData(newService);
+        setServices((prev) => [...prev, enrichedService]);
+        return enrichedService;
+      } catch (error) {
+        handleError(error, "create service");
+        throw error;
+      } finally {
+        setOperationLoading("createService", false);
       }
-
-      const enrichedService = await enrichServiceWithProviderData(newService);
-      setServices(prev => [...prev, enrichedService]);
-      return enrichedService;
-    } catch (error) {
-      handleError(error, 'create service');
-      throw error;
-    } finally {
-      setOperationLoading('createService', false);
-    }
-  }, [setOperationLoading, handleError, enrichServiceWithProviderData]);
+    },
+    [setOperationLoading, handleError, enrichServiceWithProviderData],
+  );
 
   // Fixed: updateService now uses only 4 parameters (serviceId, title, description, price)
-  const updateService = useCallback(async (
-    serviceId: string, 
-    title: string, 
-    description: string, 
-    price: number
-  ): Promise<EnhancedService> => {
-    try {
-      setOperationLoading('updateService', true);
-      const updatedService = await serviceCanisterService.updateService(
-        serviceId,
-        title,
-        description,
-        price
-      );
+  const updateService = useCallback(
+    async (
+      serviceId: string,
+      title: string,
+      description: string,
+      price: number,
+    ): Promise<EnhancedService> => {
+      try {
+        setOperationLoading("updateService", true);
+        const updatedService = await serviceCanisterService.updateService(
+          serviceId,
+          title,
+          description,
+          price,
+        );
 
-      if (!updatedService) {
-        throw new Error('Failed to update service');
+        if (!updatedService) {
+          throw new Error("Failed to update service");
+        }
+
+        const enrichedService =
+          await enrichServiceWithProviderData(updatedService);
+        setServices((prev) =>
+          prev.map((service) =>
+            service.id === serviceId ? enrichedService : service,
+          ),
+        );
+        return enrichedService;
+      } catch (error) {
+        handleError(error, "update service");
+        throw error;
+      } finally {
+        setOperationLoading("updateService", false);
+      }
+    },
+    [setOperationLoading, handleError, enrichServiceWithProviderData],
+  );
+
+  const deleteService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      try {
+        setOperationLoading("deleteService", true);
+        await serviceCanisterService.deleteService(serviceId);
+        setServices((prev) =>
+          prev.filter((service) => service.id !== serviceId),
+        );
+      } catch (error) {
+        handleError(error, "delete service");
+        throw error;
+      } finally {
+        setOperationLoading("deleteService", false);
+      }
+    },
+    [setOperationLoading, handleError],
+  );
+
+  const getService = useCallback(
+    async (serviceId: string): Promise<EnhancedService | null> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return null;
       }
 
-      const enrichedService = await enrichServiceWithProviderData(updatedService);
-      setServices(prev => prev.map(service => 
-        service.id === serviceId ? enrichedService : service
-      ));
-      return enrichedService;
-    } catch (error) {
-      handleError(error, 'update service');
-      throw error;
-    } finally {
-      setOperationLoading('updateService', false);
-    }
-  }, [setOperationLoading, handleError, enrichServiceWithProviderData]);
+      try {
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const deleteService = useCallback(async (serviceId: string): Promise<void> => {
-    try {
-      setOperationLoading('deleteService', true);
-      await serviceCanisterService.deleteService(serviceId);
-      setServices(prev => prev.filter(service => service.id !== serviceId));
-    } catch (error) {
-      handleError(error, 'delete service');
-      throw error;
-    } finally {
-      setOperationLoading('deleteService', false);
-    }
-  }, [setOperationLoading, handleError]);
+        const service = await serviceCanisterService.getService(serviceId);
+        if (!service) return null;
 
-  const getService = useCallback(async (serviceId: string): Promise<EnhancedService | null> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-     
-      return null;
-    }
-
-    try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const service = await serviceCanisterService.getService(serviceId);
-      if (!service) return null;
-      
-      return await enrichServiceWithProviderData(service);
-    } catch (error) {
-      handleError(error, 'get service');
-      return null;
-    }
-  }, [isInitialized, handleError, enrichServiceWithProviderData]);
+        return await enrichServiceWithProviderData(service);
+      } catch (error) {
+        handleError(error, "get service");
+        return null;
+      }
+    },
+    [isInitialized, handleError, enrichServiceWithProviderData],
+  );
 
   // Service status management
-  const updateServiceStatus = useCallback(async (serviceId: string, status: ServiceStatus): Promise<void> => {
-    try {
-      setOperationLoading('updateServiceStatus', true);
-      const updatedService = await serviceCanisterService.updateServiceStatus(serviceId, status);
-      if (!updatedService) {
-        throw new Error('Failed to update service status');
+  const updateServiceStatus = useCallback(
+    async (serviceId: string, status: ServiceStatus): Promise<void> => {
+      try {
+        setOperationLoading("updateServiceStatus", true);
+        const updatedService = await serviceCanisterService.updateServiceStatus(
+          serviceId,
+          status,
+        );
+        if (!updatedService) {
+          throw new Error("Failed to update service status");
+        }
+
+        const enrichedService =
+          await enrichServiceWithProviderData(updatedService);
+        setServices((prev) =>
+          prev.map((service) =>
+            service.id === serviceId ? enrichedService : service,
+          ),
+        );
+      } catch (error) {
+        handleError(error, "update service status");
+        throw error;
+      } finally {
+        setOperationLoading("updateServiceStatus", false);
       }
+    },
+    [setOperationLoading, handleError, enrichServiceWithProviderData],
+  );
 
-      const enrichedService = await enrichServiceWithProviderData(updatedService);
-      setServices(prev => prev.map(service => 
-        service.id === serviceId ? enrichedService : service
-      ));
-    } catch (error) {
-      handleError(error, 'update service status');
-      throw error;
-    } finally {
-      setOperationLoading('updateServiceStatus', false);
-    }
-  }, [setOperationLoading, handleError, enrichServiceWithProviderData]);
+  const activateService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      await updateServiceStatus(serviceId, "Available");
+    },
+    [updateServiceStatus],
+  );
 
-  const activateService = useCallback(async (serviceId: string): Promise<void> => {
-    await updateServiceStatus(serviceId, 'Available');
-  }, [updateServiceStatus]);
+  const suspendService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      await updateServiceStatus(serviceId, "Suspended");
+    },
+    [updateServiceStatus],
+  );
 
-  const suspendService = useCallback(async (serviceId: string): Promise<void> => {
-    await updateServiceStatus(serviceId, 'Suspended');
-  }, [updateServiceStatus]);
-
-  const deactivateService = useCallback(async (serviceId: string): Promise<void> => {
-    await updateServiceStatus(serviceId, 'Unavailable');
-  }, [updateServiceStatus]);
+  const deactivateService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      await updateServiceStatus(serviceId, "Unavailable");
+    },
+    [updateServiceStatus],
+  );
 
   // Package management
-  const createPackage = useCallback(async (request: PackageCreateRequest): Promise<ServicePackage> => {
-    try {
-      setOperationLoading('createPackage', true);
-      const newPackage = await serviceCanisterService.createServicePackage(
-        request.serviceId,
-        request.title,
-        request.description,
-        request.price
-      );
+  const createPackage = useCallback(
+    async (request: PackageCreateRequest): Promise<ServicePackage> => {
+      try {
+        setOperationLoading("createPackage", true);
+        const newPackage = await serviceCanisterService.createServicePackage(
+          request.serviceId,
+          request.title,
+          request.description,
+          request.price,
+        );
 
-      if (!newPackage) {
-        throw new Error('Failed to create package');
+        if (!newPackage) {
+          throw new Error("Failed to create package");
+        }
+
+        return newPackage;
+      } catch (error) {
+        handleError(error, "create package");
+        throw error;
+      } finally {
+        setOperationLoading("createPackage", false);
+      }
+    },
+    [setOperationLoading, handleError],
+  );
+
+  const updatePackage = useCallback(
+    async (request: PackageUpdateRequest): Promise<ServicePackage> => {
+      try {
+        setOperationLoading("updatePackage", true);
+        const updatedPackage =
+          await serviceCanisterService.updateServicePackage(
+            request.id,
+            request.title!,
+            request.description!,
+            request.price!,
+          );
+
+        if (!updatedPackage) {
+          throw new Error("Failed to update package");
+        }
+
+        return updatedPackage;
+      } catch (error) {
+        handleError(error, "update package");
+        throw error;
+      } finally {
+        setOperationLoading("updatePackage", false);
+      }
+    },
+    [setOperationLoading, handleError],
+  );
+
+  const deletePackage = useCallback(
+    async (packageId: string): Promise<void> => {
+      try {
+        setOperationLoading("deletePackage", true);
+        await serviceCanisterService.deleteServicePackage(packageId);
+      } catch (error) {
+        handleError(error, "delete package");
+        throw error;
+      } finally {
+        setOperationLoading("deletePackage", false);
+      }
+    },
+    [setOperationLoading, handleError],
+  );
+
+  const getServicePackages = useCallback(
+    async (serviceId: string): Promise<ServicePackage[]> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return [];
       }
 
-      return newPackage;
-    } catch (error) {
-      handleError(error, 'create package');
-      throw error;
-    } finally {
-      setOperationLoading('createPackage', false);
-    }
-  }, [setOperationLoading, handleError]);
+      try {
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const updatePackage = useCallback(async (request: PackageUpdateRequest): Promise<ServicePackage> => {
-    try {
-      setOperationLoading('updatePackage', true);
-      const updatedPackage = await serviceCanisterService.updateServicePackage(
-        request.id,
-        request.title!,
-        request.description!,
-        request.price!
-      );
-
-      if (!updatedPackage) {
-        throw new Error('Failed to update package');
+        return await serviceCanisterService.getServicePackages(serviceId);
+      } catch (error) {
+        handleError(error, "get service packages");
+        return [];
       }
-
-      return updatedPackage;
-    } catch (error) {
-      handleError(error, 'update package');
-      throw error;
-    } finally {
-      setOperationLoading('updatePackage', false);
-    }
-  }, [setOperationLoading, handleError]);
-
-  const deletePackage = useCallback(async (packageId: string): Promise<void> => {
-    try {
-      setOperationLoading('deletePackage', true);
-      await serviceCanisterService.deleteServicePackage(packageId);
-    } catch (error) {
-      handleError(error, 'delete package');
-      throw error;
-    } finally {
-      setOperationLoading('deletePackage', false);
-    }
-  }, [setOperationLoading, handleError]);
-
-  const getServicePackages = useCallback(async (serviceId: string): Promise<ServicePackage[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      return [];
-    }
-
-    try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      return await serviceCanisterService.getServicePackages(serviceId);
-    } catch (error) {
-      handleError(error, 'get service packages');
-      return [];
-    }
-  }, [isInitialized, handleError]);
+    },
+    [isInitialized, handleError],
+  );
 
   // Availability management
-  const updateAvailability = useCallback(async (
-    serviceId: string, 
-    availability: ProviderAvailability
-  ): Promise<void> => {
-    try {
-      setOperationLoading('updateAvailability', true);
-      // Fixed: using setServiceAvailability instead of updateProviderAvailability
-      const updatedAvailability = await serviceCanisterService.setServiceAvailability(
-        serviceId,
-        availability.weeklySchedule,
-        availability.instantBookingEnabled,
-        availability.bookingNoticeHours,
-        availability.maxBookingsPerDay
-      );
+  const updateAvailability = useCallback(
+    async (
+      serviceId: string,
+      availability: ProviderAvailability,
+    ): Promise<void> => {
+      try {
+        setOperationLoading("updateAvailability", true);
+        // Fixed: using setServiceAvailability instead of updateProviderAvailability
+        const updatedAvailability =
+          await serviceCanisterService.setServiceAvailability(
+            serviceId,
+            availability.weeklySchedule,
+            availability.instantBookingEnabled,
+            availability.bookingNoticeHours,
+            availability.maxBookingsPerDay,
+          );
 
-      if (!updatedAvailability) {
-        throw new Error('Failed to update availability');
+        if (!updatedAvailability) {
+          throw new Error("Failed to update availability");
+        }
+
+        // Update the service in local state
+        setServices((prev) =>
+          prev.map((service) =>
+            service.id === serviceId
+              ? { ...service, availability: updatedAvailability }
+              : service,
+          ),
+        );
+      } catch (error) {
+        handleError(error, "update availability");
+        throw error;
+      } finally {
+        setOperationLoading("updateAvailability", false);
       }
-
-      // Update the service in local state
-      setServices(prev => prev.map(service => 
-        service.id === serviceId 
-          ? { ...service, availability: updatedAvailability }
-          : service
-      ));
-    } catch (error) {
-      handleError(error, 'update availability');
-      throw error;
-    } finally {
-      setOperationLoading('updateAvailability', false);
-    }
-  }, [setOperationLoading, handleError]);
+    },
+    [setOperationLoading, handleError],
+  );
 
   // Fixed: getAvailableSlots now uses Date parameter and correct method name
-  const getAvailableSlots = useCallback(async (
-    serviceId: string, 
-    date: Date
-  ): Promise<AvailableSlot[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      return [];
-    }
-
-    try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      return await serviceCanisterService.getAvailableTimeSlots(serviceId, date);
-    } catch (error) {
-      handleError(error, 'get available slots');
-      return [];
-    }
-  }, [isInitialized, handleError]);
-
-  const toggleInstantBooking = useCallback(async (
-    serviceId: string, 
-    enabled: boolean
-  ): Promise<void> => {
-    try {
-      setOperationLoading('toggleInstantBooking', true);
-      
-      // Get current availability
-      const currentAvailability = await serviceCanisterService.getServiceAvailability(serviceId);
-      if (!currentAvailability) {
-        throw new Error('Service availability not found');
+  const getAvailableSlots = useCallback(
+    async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return [];
       }
 
-      // Update with new instant booking setting
-      await serviceCanisterService.setServiceAvailability(
-        serviceId,
-        currentAvailability.weeklySchedule,
-        enabled,
-        currentAvailability.bookingNoticeHours,
-        currentAvailability.maxBookingsPerDay
-      );
+      try {
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Update local state
-      setServices(prev => prev.map(service => 
-        service.id === serviceId 
-          ? { 
-              ...service, 
-              availability: service.availability ? 
-                { ...service.availability, instantBookingEnabled: enabled } 
-                : undefined 
-            }
-          : service
-      ));
-    } catch (error) {
-      handleError(error, 'toggle instant booking');
-      throw error;
-    } finally {
-      setOperationLoading('toggleInstantBooking', false);
-    }
-  }, [setOperationLoading, handleError]);
+        return await serviceCanisterService.getAvailableTimeSlots(
+          serviceId,
+          date,
+        );
+      } catch (error) {
+        handleError(error, "get available slots");
+        return [];
+      }
+    },
+    [isInitialized, handleError],
+  );
+
+  const toggleInstantBooking = useCallback(
+    async (serviceId: string, enabled: boolean): Promise<void> => {
+      try {
+        setOperationLoading("toggleInstantBooking", true);
+
+        // Get current availability
+        const currentAvailability =
+          await serviceCanisterService.getServiceAvailability(serviceId);
+        if (!currentAvailability) {
+          throw new Error("Service availability not found");
+        }
+
+        // Update with new instant booking setting
+        await serviceCanisterService.setServiceAvailability(
+          serviceId,
+          currentAvailability.weeklySchedule,
+          enabled,
+          currentAvailability.bookingNoticeHours,
+          currentAvailability.maxBookingsPerDay,
+        );
+
+        // Update local state
+        setServices((prev) =>
+          prev.map((service) =>
+            service.id === serviceId
+              ? {
+                  ...service,
+                  availability: service.availability
+                    ? {
+                        ...service.availability,
+                        instantBookingEnabled: enabled,
+                      }
+                    : undefined,
+                }
+              : service,
+          ),
+        );
+      } catch (error) {
+        handleError(error, "toggle instant booking");
+        throw error;
+      } finally {
+        setOperationLoading("toggleInstantBooking", false);
+      }
+    },
+    [setOperationLoading, handleError],
+  );
 
   // Search and filtering
-  const searchServices = useCallback(async (request: ServiceSearchRequest): Promise<EnhancedService[]> => {
-    try {
-      // For now, implement basic filtering on loaded services
-      // This can be enhanced with backend search in the future
-      let filteredServices = [...services];
+  const searchServices = useCallback(
+    async (request: ServiceSearchRequest): Promise<EnhancedService[]> => {
+      try {
+        // For now, implement basic filtering on loaded services
+        // This can be enhanced with backend search in the future
+        let filteredServices = [...services];
 
-      if (request.categoryId) {
-        filteredServices = filteredServices.filter(service => 
-          service.category.id === request.categoryId
-        );
+        if (request.categoryId) {
+          filteredServices = filteredServices.filter(
+            (service) => service.category.id === request.categoryId,
+          );
+        }
+
+        if (request.status) {
+          filteredServices = filteredServices.filter(
+            (service) => service.status === request.status,
+          );
+        }
+
+        if (request.minPrice !== undefined) {
+          filteredServices = filteredServices.filter(
+            (service) => service.price >= request.minPrice!,
+          );
+        }
+
+        if (request.maxPrice !== undefined) {
+          filteredServices = filteredServices.filter(
+            (service) => service.price <= request.maxPrice!,
+          );
+        }
+
+        if (request.query) {
+          const searchTerm = request.query.toLowerCase();
+          filteredServices = filteredServices.filter(
+            (service) =>
+              service.title.toLowerCase().includes(searchTerm) ||
+              service.description.toLowerCase().includes(searchTerm),
+          );
+        }
+
+        return filteredServices;
+      } catch (error) {
+        handleError(error, "search services");
+        return [];
+      }
+    },
+    [services, handleError],
+  );
+
+  const getServicesByCategory = useCallback(
+    async (categoryId: string): Promise<EnhancedService[]> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return [];
       }
 
-      if (request.status) {
-        filteredServices = filteredServices.filter(service => 
-          service.status === request.status
+      try {
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const categoryServices =
+          await serviceCanisterService.getServicesByCategory(categoryId);
+        return await Promise.all(
+          categoryServices.map((service) =>
+            enrichServiceWithProviderData(service),
+          ),
         );
+      } catch (error) {
+        handleError(error, "get services by category");
+        return [];
+      }
+    },
+    [isInitialized, handleError, enrichServiceWithProviderData],
+  );
+
+  const getServicesByLocation = useCallback(
+    async (location: Location, radius: number): Promise<EnhancedService[]> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return [];
       }
 
-      if (request.minPrice !== undefined) {
-        filteredServices = filteredServices.filter(service => 
-          service.price >= request.minPrice!
+      try {
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const locationServices =
+          await serviceCanisterService.searchServicesByLocation(
+            location,
+            radius,
+          );
+        return await Promise.all(
+          locationServices.map((service) =>
+            enrichServiceWithProviderData(service),
+          ),
         );
+      } catch (error) {
+        handleError(error, "get services by location");
+        return [];
       }
+    },
+    [isInitialized, handleError, enrichServiceWithProviderData],
+  );
 
-      if (request.maxPrice !== undefined) {
-        filteredServices = filteredServices.filter(service => 
-          service.price <= request.maxPrice!
-        );
+  const getNearbyServices = useCallback(
+    async (userLocation?: Location): Promise<EnhancedService[]> => {
+      if (!userLocation) return services;
+
+      try {
+        return await getServicesByLocation(userLocation, 50); // 50km default radius
+      } catch (error) {
+        handleError(error, "get nearby services");
+        return services;
       }
-
-      if (request.query) {
-        const searchTerm = request.query.toLowerCase();
-        filteredServices = filteredServices.filter(service => 
-          service.title.toLowerCase().includes(searchTerm) ||
-          service.description.toLowerCase().includes(searchTerm)
-        );
-      }
-
-      return filteredServices;
-    } catch (error) {
-      handleError(error, 'search services');
-      return [];
-    }
-  }, [services, handleError]);
-
-  const getServicesByCategory = useCallback(async (categoryId: string): Promise<EnhancedService[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      return [];
-    }
-
-    try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const categoryServices = await serviceCanisterService.getServicesByCategory(categoryId);
-      return await Promise.all(
-        categoryServices.map(service => enrichServiceWithProviderData(service))
-      );
-    } catch (error) {
-      handleError(error, 'get services by category');
-      return [];
-    }
-  }, [isInitialized, handleError, enrichServiceWithProviderData]);
-
-  const getServicesByLocation = useCallback(async (
-    location: Location, 
-    radius: number
-  ): Promise<EnhancedService[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      return [];
-    }
-
-    try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const locationServices = await serviceCanisterService.searchServicesByLocation(
-        location, 
-        radius
-      );
-      return await Promise.all(
-        locationServices.map(service => enrichServiceWithProviderData(service))
-      );
-    } catch (error) {
-      handleError(error, 'get services by location');
-      return [];
-    }
-  }, [isInitialized, handleError, enrichServiceWithProviderData]);
-
-  const getNearbyServices = useCallback(async (userLocation?: Location): Promise<EnhancedService[]> => {
-    if (!userLocation) return services;
-    
-    try {
-      return await getServicesByLocation(userLocation, 50); // 50km default radius
-    } catch (error) {
-      handleError(error, 'get nearby services');
-      return services;
-    }
-  }, [services, getServicesByLocation, handleError]);
+    },
+    [services, getServicesByLocation, handleError],
+  );
 
   // Utility functions
-  const servicesByStatus = useCallback((status: ServiceStatus): EnhancedService[] => {
-    return services.filter(service => service.status === status);
-  }, [services]);
+  const servicesByStatus = useCallback(
+    (status: ServiceStatus): EnhancedService[] => {
+      return services.filter((service) => service.status === status);
+    },
+    [services],
+  );
 
   const refreshServices = useCallback(async (): Promise<void> => {
     setRefreshing(true);
@@ -805,24 +940,31 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [fetchServices]);
 
-  const getServiceCount = useCallback((status?: ServiceStatus): number => {
-    if (!status) return services.length;
-    return servicesByStatus(status).length;
-  }, [services.length, servicesByStatus]);
+  const getServiceCount = useCallback(
+    (status?: ServiceStatus): number => {
+      if (!status) return services.length;
+      return servicesByStatus(status).length;
+    },
+    [services.length, servicesByStatus],
+  );
 
   const formatServicePrice = useCallback((price: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'PHP'
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "PHP",
     }).format(price);
   }, []);
 
   const getStatusColor = useCallback((status: ServiceStatus): string => {
     switch (status) {
-      case 'Available': return 'green';
-      case 'Suspended': return 'yellow';
-      case 'Unavailable': return 'red';
-      default: return 'gray';
+      case "Available":
+        return "green";
+      case "Suspended":
+        return "yellow";
+      case "Unavailable":
+        return "red";
+      default:
+        return "gray";
     }
   }, []);
 
@@ -830,18 +972,23 @@ export const useServiceManagement = (): ServiceManagementHook => {
     return `${location.city}, ${location.state}`;
   }, []);
 
-  const calculateDistance = useCallback((from: Location, to: Location): number => {
-    // Haversine formula for calculating distance between two coordinates
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (to.latitude - from.latitude) * Math.PI / 180;
-    const dLon = (to.longitude - from.longitude) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(from.latitude * Math.PI / 180) * Math.cos(to.latitude * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }, []);
+  const calculateDistance = useCallback(
+    (from: Location, to: Location): number => {
+      // Haversine formula for calculating distance between two coordinates
+      const R = 6371; // Earth's radius in kilometers
+      const dLat = ((to.latitude - from.latitude) * Math.PI) / 180;
+      const dLon = ((to.longitude - from.longitude) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((from.latitude * Math.PI) / 180) *
+          Math.cos((to.latitude * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    },
+    [],
+  );
 
   const getCurrentUserId = useCallback((): string | null => {
     return currentIdentity ? currentIdentity.getPrincipal().toString() : null;
@@ -851,26 +998,32 @@ export const useServiceManagement = (): ServiceManagementHook => {
     return isAuthenticated && currentIdentity !== null;
   }, [isAuthenticated, currentIdentity]);
 
-  const retryOperation = useCallback(async (operation: string): Promise<void> => {
-    // Simple retry mechanism - can be enhanced based on operation type
-    switch (operation) {
-      case 'fetchServices':
-        await fetchServices();
-        break;
-      case 'fetchCategories':
-        await fetchCategories();
-        break;
-      case 'fetchUserProfile':
-        await fetchUserProfile();
-        break;
-      default:
-        console.warn(`Retry not implemented for operation: ${operation}`);
-    }
-  }, [fetchServices, fetchCategories, fetchUserProfile]);
+  const retryOperation = useCallback(
+    async (operation: string): Promise<void> => {
+      // Simple retry mechanism - can be enhanced based on operation type
+      switch (operation) {
+        case "fetchServices":
+          await fetchServices();
+          break;
+        case "fetchCategories":
+          await fetchCategories();
+          break;
+        case "fetchUserProfile":
+          await fetchUserProfile();
+          break;
+        default:
+          console.warn(`Retry not implemented for operation: ${operation}`);
+      }
+    },
+    [fetchServices, fetchCategories, fetchUserProfile],
+  );
 
-  const isOperationInProgress = useCallback((operation: string): boolean => {
-    return loadingStates.operations.has(operation);
-  }, [loadingStates.operations]);
+  const isOperationInProgress = useCallback(
+    (operation: string): boolean => {
+      return loadingStates.operations.has(operation);
+    },
+    [loadingStates.operations],
+  );
 
   // Category management
   const getCategories = useCallback(async (): Promise<ServiceCategory[]> => {
@@ -881,11 +1034,11 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
     try {
       // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       return await serviceCanisterService.getAllCategories();
     } catch (error) {
-      handleError(error, 'get categories');
+      handleError(error, "get categories");
       return [];
     }
   }, [isInitialized, handleError]);
@@ -895,61 +1048,81 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [fetchCategories]);
 
   // Provider functions
-  const getProviderServices = useCallback(async (providerId?: string): Promise<EnhancedService[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      return [];
-    }
+  const getProviderServices = useCallback(
+    async (providerId?: string): Promise<EnhancedService[]> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return [];
+      }
 
-    try {
-      const targetProviderId = providerId || getCurrentUserId();
-      if (!targetProviderId) return [];
+      try {
+        const targetProviderId = providerId || getCurrentUserId();
+        if (!targetProviderId) return [];
 
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const providerServices = await serviceCanisterService.getServicesByProvider(targetProviderId);
-      return await Promise.all(
-        providerServices.map(service => enrichServiceWithProviderData(service))
-      );
-    } catch (error) {
-      handleError(error, 'get provider services');
-      return [];
-    }
-  }, [isInitialized, getCurrentUserId, handleError, enrichServiceWithProviderData]);
+        const providerServices =
+          await serviceCanisterService.getServicesByProvider(targetProviderId);
+        return await Promise.all(
+          providerServices.map((service) =>
+            enrichServiceWithProviderData(service),
+          ),
+        );
+      } catch (error) {
+        handleError(error, "get provider services");
+        return [];
+      }
+    },
+    [
+      isInitialized,
+      getCurrentUserId,
+      handleError,
+      enrichServiceWithProviderData,
+    ],
+  );
 
-  const getProviderStats = useCallback(async (providerId?: string): Promise<{
-    totalServices: number;
-    activeServices: number;
-    totalBookings: number;
-    averageRating: number;
-  }> => {
-    try {
-      const providerServices = await getProviderServices(providerId);
-      
-      const totalServices = providerServices.length;
-      const activeServices = providerServices.filter(s => s.status === 'Available').length;
-      const totalBookings = 0; // This would need to be fetched from booking service
-      const averageRating = providerServices.length > 0 
-        ? providerServices.reduce((sum, s) => sum + (s.rating || 0), 0) / providerServices.length
-        : 0;
+  const getProviderStats = useCallback(
+    async (
+      providerId?: string,
+    ): Promise<{
+      totalServices: number;
+      activeServices: number;
+      totalBookings: number;
+      averageRating: number;
+    }> => {
+      try {
+        const providerServices = await getProviderServices(providerId);
 
-      return {
-        totalServices,
-        activeServices,
-        totalBookings,
-        averageRating
-      };
-    } catch (error) {
-      handleError(error, 'get provider stats');
-      return {
-        totalServices: 0,
-        activeServices: 0,
-        totalBookings: 0,
-        averageRating: 0
-      };
-    }
-  }, [getProviderServices, handleError]);
+        const totalServices = providerServices.length;
+        const activeServices = providerServices.filter(
+          (s) => s.status === "Available",
+        ).length;
+        const totalBookings = 0; // This would need to be fetched from booking service
+        const averageRating =
+          providerServices.length > 0
+            ? providerServices.reduce((sum, s) => sum + (s.rating || 0), 0) /
+              providerServices.length
+            : 0;
+
+        return {
+          totalServices,
+          activeServices,
+          totalBookings,
+          averageRating,
+        };
+      } catch (error) {
+        handleError(error, "get provider stats");
+        return {
+          totalServices: 0,
+          activeServices: 0,
+          totalBookings: 0,
+          averageRating: 0,
+        };
+      }
+    },
+    [getProviderServices, handleError],
+  );
 
   // Effects
   useEffect(() => {
@@ -966,62 +1139,68 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [isInitialized, fetchServices, fetchCategories]);
 
   // Availability management functions
-  const getServiceAvailability = useCallback(async (serviceId: string): Promise<ProviderAvailability | null> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      return null;
-    }
+  const getServiceAvailability = useCallback(
+    async (serviceId: string): Promise<ProviderAvailability | null> => {
+      // Wait for initialization before making canister calls
+      if (!isInitialized) {
+        return null;
+      }
 
-    try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      return await serviceCanisterService.getServiceAvailability(serviceId);
-    } catch (error) {
-      handleError(error, 'get service availability');
-      return null;
-    }
-  }, [isInitialized, handleError]);
+      try {
+        // Add delay to ensure agents are ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        return await serviceCanisterService.getServiceAvailability(serviceId);
+      } catch (error) {
+        handleError(error, "get service availability");
+        return null;
+      }
+    },
+    [isInitialized, handleError],
+  );
 
   // Add this function in the useServiceManagement hook, after the other utility functions
-  const organizeWeeklySchedule = useCallback((
-    weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>
-  ): OrganizedWeeklySchedule => {
-    const organized: OrganizedWeeklySchedule = {};
-    
-    if (!weeklySchedule || weeklySchedule.length === 0) {
-      return organized;
-    }
+  const organizeWeeklySchedule = useCallback(
+    (
+      weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+    ): OrganizedWeeklySchedule => {
+      const organized: OrganizedWeeklySchedule = {};
 
-    // Map each day to its corresponding property
-    weeklySchedule.forEach(({ day, availability }) => {
-      switch (day) {
-        case 'Monday':
-          organized.monday = availability;
-          break;
-        case 'Tuesday':
-          organized.tuesday = availability;
-          break;
-        case 'Wednesday':
-          organized.wednesday = availability;
-          break;
-        case 'Thursday':
-          organized.thursday = availability;
-          break;
-        case 'Friday':
-          organized.friday = availability;
-          break;
-        case 'Saturday':
-          organized.saturday = availability;
-          break;
-        case 'Sunday':
-          organized.sunday = availability;
-          break;
+      if (!weeklySchedule || weeklySchedule.length === 0) {
+        return organized;
       }
-    });
 
-    return organized;
-  }, []);
+      // Map each day to its corresponding property
+      weeklySchedule.forEach(({ day, availability }) => {
+        switch (day) {
+          case "Monday":
+            organized.monday = availability;
+            break;
+          case "Tuesday":
+            organized.tuesday = availability;
+            break;
+          case "Wednesday":
+            organized.wednesday = availability;
+            break;
+          case "Thursday":
+            organized.thursday = availability;
+            break;
+          case "Friday":
+            organized.friday = availability;
+            break;
+          case "Saturday":
+            organized.saturday = availability;
+            break;
+          case "Sunday":
+            organized.sunday = availability;
+            break;
+        }
+      });
+
+      return organized;
+    },
+    [],
+  );
   // Return the hook interface
   return {
     // Core data states
@@ -1030,46 +1209,46 @@ export const useServiceManagement = (): ServiceManagementHook => {
     providerProfiles,
     categories,
     userServices,
-    
+
     // Loading states
     loading,
     loadingProfiles,
     loadingCategories,
     refreshing,
-    
+
     // Error state
     error,
-    
+
     // Service CRUD operations
     createService,
     updateService,
     deleteService,
     getService,
-    
+
     // Service status management
     updateServiceStatus,
     activateService,
     suspendService,
     deactivateService,
-    
+
     // Package management
     createPackage,
     updatePackage,
     deletePackage,
     getServicePackages,
-    
+
     // Availability management
     updateAvailability,
     getServiceAvailability,
     getAvailableSlots,
     toggleInstantBooking,
-    
+
     // Search and filtering
     searchServices,
     getServicesByCategory,
     getServicesByLocation,
     getNearbyServices,
-    
+
     // Utility functions
     servicesByStatus,
     refreshServices,
@@ -1088,7 +1267,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     // Category management
     getCategories,
     refreshCategories,
-    
+
     // Provider functions
     getProviderServices,
     getProviderStats,

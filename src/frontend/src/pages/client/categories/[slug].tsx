@@ -1,23 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
-import Link from 'next/link';
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import Head from "next/head";
+import Link from "next/link";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useAuth } from "@bundly/ares-react";
 
 // Components
-import SearchBar from '@app/components/client/SearchBarNextjs';
-import ServiceListItem from '@app/components/client/ServiceListItemNextjs';
-import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
+import SearchBar from "../../../components/client/SearchBarNextjs";
+import ServiceListItem from "../../../components/client/ServiceListItemNextjs";
+import BottomNavigation from "../../../components/client/BottomNavigationNextjs";
 
 // Hooks
-import { useServicesByCategory, useAllServicesWithProviders, EnrichedService } from '@app/hooks/serviceInformation';
+import {
+  useServicesByCategory,
+  useAllServicesWithProviders,
+  EnrichedService,
+} from "../../../hooks/serviceInformation";
 
 // Services
-import serviceCanisterService from '@app/services/serviceCanisterService';
+import serviceCanisterService from "../../../services/serviceCanisterService";
 
 // Utilities
-import { getCategoryIcon } from '@app/utils/serviceHelpers';
+import { getCategoryIcon } from "../../../utils/serviceHelpers";
 
 interface CategoryState {
   id: string;
@@ -31,52 +35,60 @@ const CategoryPage: React.FC = () => {
   const router = useRouter();
   const { slug } = router.query;
   const { isAuthenticated, currentIdentity } = useAuth();
-  
+
   const [category, setCategory] = useState<CategoryState | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Determine which hook to use based on the category
-  const categoryId = category?.id || '';
-  const isAllServices = slug === 'all-service-types';
-  
+  const categoryId = category?.id || "";
+  const isAllServices = slug === "all-service-types";
+
   // Use appropriate hook based on category
   const allServicesHook = useAllServicesWithProviders();
   const categoryServicesHook = useServicesByCategory(categoryId);
-  
+
   // Choose the appropriate data based on the route
-  const { services, loading: servicesLoading, error: servicesError, refetch } = isAllServices 
-    ? allServicesHook 
-    : categoryServicesHook;
+  const {
+    services,
+    loading: servicesLoading,
+    error: servicesError,
+    refetch,
+  } = isAllServices ? allServicesHook : categoryServicesHook;
 
   useEffect(() => {
     if (!slug) return;
 
     const loadCategory = async () => {
       try {
-        const canisterCategories = await serviceCanisterService.getAllCategories();
-        
+        const canisterCategories =
+          await serviceCanisterService.getAllCategories();
+
         let foundCategory: CategoryState | null = null;
-        
+
         if (canisterCategories && canisterCategories.length > 0) {
           // Look for the specific category by slug
-          const matchedCategory = canisterCategories.find(cat => cat.slug === slug);
-          
+          const matchedCategory = canisterCategories.find(
+            (cat) => cat.slug === slug,
+          );
+
           if (matchedCategory) {
             foundCategory = {
               id: matchedCategory.id,
               name: matchedCategory.name,
-              description: matchedCategory.description || `Services in ${matchedCategory.name} category`,
+              description:
+                matchedCategory.description ||
+                `Services in ${matchedCategory.name} category`,
               slug: matchedCategory.slug,
-              icon: getCategoryIcon(matchedCategory.name)
+              icon: getCategoryIcon(matchedCategory.name),
             };
             setCategory(foundCategory);
-          } else if (slug === 'all-service-types') {
+          } else if (slug === "all-service-types") {
             // Special case for all services
             foundCategory = {
-              id: 'all',
-              name: 'All Service Types',
-              description: 'Browse all available service types',
-              slug: 'all-service-types'
+              id: "all",
+              name: "All Service Types",
+              description: "Browse all available service types",
+              slug: "all-service-types",
             };
             setCategory(foundCategory);
           } else {
@@ -84,11 +96,11 @@ const CategoryPage: React.FC = () => {
             setCategory(null);
           }
         } else {
-          console.warn('No categories found in service canister');
+          console.warn("No categories found in service canister");
           setCategory(null);
         }
       } catch (error) {
-        console.error('Failed to load category data from canister:', error);
+        console.error("Failed to load category data from canister:", error);
         setCategory(null);
       }
     };
@@ -104,25 +116,26 @@ const CategoryPage: React.FC = () => {
     setSearchTerm(term);
   };
 
-  const filteredServices = services.filter(service => 
-    service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredServices = services.filter(
+    (service) =>
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.category.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (servicesLoading || !category) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-green-500"></div>
       </div>
     );
   }
 
   if (!category) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <p className="text-xl text-red-600 mb-4">Category not found</p>
+          <p className="mb-4 text-xl text-red-600">Category not found</p>
           <Link href="/client/home" className="text-blue-500 hover:underline">
             Return to Home
           </Link>
@@ -140,19 +153,19 @@ const CategoryPage: React.FC = () => {
 
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header */}
-        <div className="bg-white px-4 py-4 shadow-sm sticky top-0 z-40">
-          <div className="flex items-center gap-3 mb-4">
-            <button 
+        <div className="sticky top-0 z-40 bg-white px-4 py-4 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <button
               onClick={handleBackClick}
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="rounded-full p-2 hover:bg-gray-100"
               aria-label="Go back"
             >
               <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
             </button>
-            <h1 className="text-xl font-bold truncate">{category.name}</h1>
+            <h1 className="truncate text-xl font-bold">{category.name}</h1>
           </div>
-          
-          <SearchBar 
+
+          <SearchBar
             placeholder={`Search in ${category.name}`}
             className="mb-2"
             onSearch={handleSearch}
@@ -162,23 +175,25 @@ const CategoryPage: React.FC = () => {
         {/* Services List */}
         <div className="p-2 sm:p-4">
           {servicesError && (
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            <div className="mb-4 rounded border border-yellow-400 bg-yellow-100 px-4 py-3 text-yellow-700">
               <span className="block sm:inline">{servicesError.message}</span>
             </div>
           )}
-          
+
           {filteredServices.length === 0 && !servicesError ? (
-            <div className="text-center py-10">
+            <div className="py-10 text-center">
               <p className="text-gray-500">
-                {searchTerm ? `No services found for "${searchTerm}" in this category.` : "No services found in this category."}
+                {searchTerm
+                  ? `No services found for "${searchTerm}" in this category.`
+                  : "No services found in this category."}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
               {filteredServices.map((service) => (
-                <ServiceListItem 
-                  key={service.id} 
-                  service={service} 
+                <ServiceListItem
+                  key={service.id}
+                  service={service}
                   isGridItem={true}
                   retainMobileLayout={true}
                 />

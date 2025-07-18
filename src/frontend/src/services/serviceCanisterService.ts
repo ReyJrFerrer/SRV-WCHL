@@ -1,9 +1,9 @@
 // Service Canister Service
-import { Actor } from '@dfinity/agent';
-import { Principal } from '@dfinity/principal';
-import { idlFactory } from '../../../declarations/service/service.did.js';
-import { getHttpAgent, getAdminHttpAgent } from '../utils/icpClient';
-import type { 
+import { Actor } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
+import { idlFactory } from "../../../declarations/service/service.did.js";
+import { getHttpAgent, getAdminHttpAgent } from "../utils/icpClient";
+import type {
   _SERVICE as ServiceService,
   Service as CanisterService,
   ServiceCategory as CanisterServiceCategory,
@@ -23,11 +23,12 @@ import type {
   Result_4,
   Result_5,
   Result_6,
-  Result_7
-} from '../../../declarations/service/service.did';
+  Result_7,
+} from "../../../declarations/service/service.did";
 
 // Canister configuration
-const SERVICE_CANISTER_ID = process.env.NEXT_PUBLIC_SERVICE_CANISTER_ID || 'rdmx6-jaaaa-aaaaa-aaadq-cai';
+const SERVICE_CANISTER_ID =
+  process.env.NEXT_PUBLIC_SERVICE_CANISTER_ID || "rdmx6-jaaaa-aaaaa-aaadq-cai";
 
 // Create actor
 let serviceActor: ServiceService | null = null;
@@ -44,19 +45,16 @@ const getServiceActor = async (): Promise<ServiceService> => {
 };
 
 // Type mappings for frontend compatibility
-export type ServiceStatus = 
-  | 'Available'
-  | 'Suspended'
-  | 'Unavailable';
+export type ServiceStatus = "Available" | "Suspended" | "Unavailable";
 
-export type DayOfWeek = 
-  | 'Monday'
-  | 'Tuesday'
-  | 'Wednesday'
-  | 'Thursday'
-  | 'Friday'
-  | 'Saturday'
-  | 'Sunday';
+export type DayOfWeek =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday"
+  | "Sunday";
 
 export interface TimeSlot {
   startTime: string;
@@ -139,43 +137,59 @@ export interface ServicePackage {
 }
 
 // Helper functions to convert between canister and frontend types
-const convertCanisterServiceStatus = (status: CanisterServiceStatus): ServiceStatus => {
-  if ('Available' in status) return 'Available';
-  if ('Suspended' in status) return 'Suspended';
-  if ('Unavailable' in status) return 'Unavailable';
-  return 'Available';
+const convertCanisterServiceStatus = (
+  status: CanisterServiceStatus,
+): ServiceStatus => {
+  if ("Available" in status) return "Available";
+  if ("Suspended" in status) return "Suspended";
+  if ("Unavailable" in status) return "Unavailable";
+  return "Available";
 };
 
-const convertToCanisterServiceStatus = (status: ServiceStatus): CanisterServiceStatus => {
+const convertToCanisterServiceStatus = (
+  status: ServiceStatus,
+): CanisterServiceStatus => {
   switch (status) {
-    case 'Available': return { Available: null };
-    case 'Suspended': return { Suspended: null };
-    case 'Unavailable': return { Unavailable: null };
-    default: return { Available: null };
+    case "Available":
+      return { Available: null };
+    case "Suspended":
+      return { Suspended: null };
+    case "Unavailable":
+      return { Unavailable: null };
+    default:
+      return { Available: null };
   }
 };
 
 const convertCanisterDayOfWeek = (day: CanisterDayOfWeek): DayOfWeek => {
-  if ('Monday' in day) return 'Monday';
-  if ('Tuesday' in day) return 'Tuesday';
-  if ('Wednesday' in day) return 'Wednesday';
-  if ('Thursday' in day) return 'Thursday';
-  if ('Friday' in day) return 'Friday';
-  if ('Saturday' in day) return 'Saturday';
-  if ('Sunday' in day) return 'Sunday';
-  return 'Monday';
+  if ("Monday" in day) return "Monday";
+  if ("Tuesday" in day) return "Tuesday";
+  if ("Wednesday" in day) return "Wednesday";
+  if ("Thursday" in day) return "Thursday";
+  if ("Friday" in day) return "Friday";
+  if ("Saturday" in day) return "Saturday";
+  if ("Sunday" in day) return "Sunday";
+  return "Monday";
 };
 
 const convertToCanisterDayOfWeek = (day: DayOfWeek): CanisterDayOfWeek => {
   switch (day) {
-    case 'Monday': return { Monday: null };
-    case 'Tuesday': return { Tuesday: null };
-    case 'Wednesday': return { Wednesday: null };
-    case 'Thursday': return { Thursday: null };
-    case 'Friday': return { Friday: null };
-    case 'Saturday': return { Saturday: null };
-    case 'Sunday': return { Sunday: null };
-    default: return { Monday: null };
+    case "Monday":
+      return { Monday: null };
+    case "Tuesday":
+      return { Tuesday: null };
+    case "Wednesday":
+      return { Wednesday: null };
+    case "Thursday":
+      return { Thursday: null };
+    case "Friday":
+      return { Friday: null };
+    case "Saturday":
+      return { Saturday: null };
+    case "Sunday":
+      return { Sunday: null };
+    default:
+      return { Monday: null };
   }
 };
 
@@ -189,17 +203,23 @@ const convertToCanisterTimeSlot = (slot: TimeSlot): CanisterTimeSlot => ({
   endTime: slot.endTime,
 });
 
-const convertCanisterDayAvailability = (availability: CanisterDayAvailability): DayAvailability => ({
+const convertCanisterDayAvailability = (
+  availability: CanisterDayAvailability,
+): DayAvailability => ({
   isAvailable: availability.isAvailable,
   slots: availability.slots.map(convertCanisterTimeSlot),
 });
 
-const convertToCanisterDayAvailability = (availability: DayAvailability): CanisterDayAvailability => ({
+const convertToCanisterDayAvailability = (
+  availability: DayAvailability,
+): CanisterDayAvailability => ({
   isAvailable: availability.isAvailable,
   slots: availability.slots.map(convertToCanisterTimeSlot),
 });
 
-const convertCanisterProviderAvailability = (availability: CanisterProviderAvailability): ProviderAvailability => ({
+const convertCanisterProviderAvailability = (
+  availability: CanisterProviderAvailability,
+): ProviderAvailability => ({
   providerId: availability.providerId,
   isActive: availability.isActive,
   instantBookingEnabled: availability.instantBookingEnabled,
@@ -213,7 +233,9 @@ const convertCanisterProviderAvailability = (availability: CanisterProviderAvail
   updatedAt: new Date(Number(availability.updatedAt) / 1000000).toISOString(),
 });
 
-const convertCanisterAvailableSlot = (slot: CanisterAvailableSlot): AvailableSlot => ({
+const convertCanisterAvailableSlot = (
+  slot: CanisterAvailableSlot,
+): AvailableSlot => ({
   date: new Date(Number(slot.date) / 1000000).toISOString(),
   timeSlot: convertCanisterTimeSlot(slot.timeSlot),
   isAvailable: slot.isAvailable,
@@ -240,7 +262,9 @@ const convertToCanisterLocation = (location: Location): CanisterLocation => ({
   postalCode: location.postalCode,
 });
 
-const convertCanisterServiceCategory = (category: CanisterServiceCategory): ServiceCategory => ({
+const convertCanisterServiceCategory = (
+  category: CanisterServiceCategory,
+): ServiceCategory => ({
   id: category.id,
   name: category.name,
   slug: category.slug,
@@ -265,13 +289,19 @@ const convertCanisterService = (service: CanisterService): Service => ({
     availability: convertCanisterDayAvailability(avail),
   })),
   instantBookingEnabled: service.instantBookingEnabled[0],
-  bookingNoticeHours: service.bookingNoticeHours[0] ? Number(service.bookingNoticeHours[0]) : undefined,
-  maxBookingsPerDay: service.maxBookingsPerDay[0] ? Number(service.maxBookingsPerDay[0]) : undefined,
+  bookingNoticeHours: service.bookingNoticeHours[0]
+    ? Number(service.bookingNoticeHours[0])
+    : undefined,
+  maxBookingsPerDay: service.maxBookingsPerDay[0]
+    ? Number(service.maxBookingsPerDay[0])
+    : undefined,
   createdAt: new Date(Number(service.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(service.updatedAt) / 1000000).toISOString(),
 });
 
-const convertCanisterServicePackage = (pkg: CanisterServicePackage): ServicePackage => ({
+const convertCanisterServicePackage = (
+  pkg: CanisterServicePackage,
+): ServicePackage => ({
   id: pkg.id,
   serviceId: pkg.serviceId,
   title: pkg.title,
@@ -295,7 +325,7 @@ export const serviceCanisterService = {
     weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
     instantBookingEnabled?: boolean,
     bookingNoticeHours?: number,
-    maxBookingsPerDay?: number
+    maxBookingsPerDay?: number,
   ): Promise<Service | null> {
     try {
       const actor = await getServiceActor();
@@ -305,23 +335,27 @@ export const serviceCanisterService = {
         categoryId,
         BigInt(price),
         convertToCanisterLocation(location),
-        weeklySchedule ? [weeklySchedule.map(({ day, availability }) => [
-          convertToCanisterDayOfWeek(day),
-          convertToCanisterDayAvailability(availability)
-        ])] : [],
+        weeklySchedule
+          ? [
+              weeklySchedule.map(({ day, availability }) => [
+                convertToCanisterDayOfWeek(day),
+                convertToCanisterDayAvailability(availability),
+              ]),
+            ]
+          : [],
         instantBookingEnabled ? [instantBookingEnabled] : [],
         bookingNoticeHours ? [BigInt(bookingNoticeHours)] : [],
-        maxBookingsPerDay ? [BigInt(maxBookingsPerDay)] : []
+        maxBookingsPerDay ? [BigInt(maxBookingsPerDay)] : [],
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error('Error creating service:', result.err);
+        console.error("Error creating service:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error creating service:', error);
+      console.error("Error creating service:", error);
       throw new Error(`Failed to create service: ${error}`);
     }
   },
@@ -334,14 +368,14 @@ export const serviceCanisterService = {
       const actor = await getServiceActor();
       const result = await actor.getService(serviceId);
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error('Error fetching service:', result.err);
+        console.error("Error fetching service:", result.err);
         return null;
       }
     } catch (error) {
-      console.error('Error fetching service:', error);
+      console.error("Error fetching service:", error);
       throw new Error(`Failed to fetch service: ${error}`);
     }
   },
@@ -352,11 +386,13 @@ export const serviceCanisterService = {
   async getServicesByProvider(providerId: string): Promise<Service[]> {
     try {
       const actor = await getServiceActor();
-      const services = await actor.getServicesByProvider(Principal.fromText(providerId));
-      
+      const services = await actor.getServicesByProvider(
+        Principal.fromText(providerId),
+      );
+
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error('Error fetching services by provider:', error);
+      console.error("Error fetching services by provider:", error);
       throw new Error(`Failed to fetch services by provider: ${error}`);
     }
   },
@@ -368,10 +404,10 @@ export const serviceCanisterService = {
     try {
       const actor = await getServiceActor();
       const services = await actor.getServicesByCategory(categoryId);
-      
+
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error('Error fetching services by category:', error);
+      console.error("Error fetching services by category:", error);
       throw new Error(`Failed to fetch services by category: ${error}`);
     }
   },
@@ -379,19 +415,25 @@ export const serviceCanisterService = {
   /**
    * Update service status
    */
-  async updateServiceStatus(serviceId: string, status: ServiceStatus): Promise<Service | null> {
+  async updateServiceStatus(
+    serviceId: string,
+    status: ServiceStatus,
+  ): Promise<Service | null> {
     try {
       const actor = await getServiceActor();
-      const result = await actor.updateServiceStatus(serviceId, convertToCanisterServiceStatus(status));
+      const result = await actor.updateServiceStatus(
+        serviceId,
+        convertToCanisterServiceStatus(status),
+      );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error('Error updating service status:', result.err);
+        console.error("Error updating service status:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error updating service status:', error);
+      console.error("Error updating service status:", error);
       throw new Error(`Failed to update service status: ${error}`);
     }
   },
@@ -402,19 +444,19 @@ export const serviceCanisterService = {
   async searchServicesByLocation(
     location: Location,
     radiusKm: number,
-    categoryId?: string
+    categoryId?: string,
   ): Promise<Service[]> {
     try {
       const actor = await getServiceActor();
       const services = await actor.searchServicesByLocation(
         convertToCanisterLocation(location),
         radiusKm,
-        categoryId ? [categoryId] : []
+        categoryId ? [categoryId] : [],
       );
-      
+
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error('Error searching services by location:', error);
+      console.error("Error searching services by location:", error);
       throw new Error(`Failed to search services by location: ${error}`);
     }
   },
@@ -426,7 +468,7 @@ export const serviceCanisterService = {
     location: Location,
     radiusKm: number,
     categoryId?: string,
-    minTrustScore?: number
+    minTrustScore?: number,
   ): Promise<Service[]> {
     try {
       const actor = await getServiceActor();
@@ -434,13 +476,15 @@ export const serviceCanisterService = {
         convertToCanisterLocation(location),
         radiusKm,
         categoryId ? [categoryId] : [],
-        minTrustScore ? [minTrustScore] : []
+        minTrustScore ? [minTrustScore] : [],
       );
-      
+
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error('Error searching services with reputation filter:', error);
-      throw new Error(`Failed to search services with reputation filter: ${error}`);
+      console.error("Error searching services with reputation filter:", error);
+      throw new Error(
+        `Failed to search services with reputation filter: ${error}`,
+      );
     }
   },
 
@@ -450,20 +494,24 @@ export const serviceCanisterService = {
   async updateServiceRating(
     serviceId: string,
     newRating: number,
-    newReviewCount: number
+    newReviewCount: number,
   ): Promise<Service | null> {
     try {
       const actor = await getServiceActor();
-      const result = await actor.updateServiceRating(serviceId, newRating, BigInt(newReviewCount));
+      const result = await actor.updateServiceRating(
+        serviceId,
+        newRating,
+        BigInt(newReviewCount),
+      );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error('Error updating service rating:', result.err);
+        console.error("Error updating service rating:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error updating service rating:', error);
+      console.error("Error updating service rating:", error);
       throw new Error(`Failed to update service rating: ${error}`);
     }
   },
@@ -476,7 +524,7 @@ export const serviceCanisterService = {
     slug: string,
     parentId: string | undefined,
     description: string,
-    imageUrl: string
+    imageUrl: string,
   ): Promise<ServiceCategory | null> {
     try {
       const actor = await getServiceActor();
@@ -485,17 +533,17 @@ export const serviceCanisterService = {
         slug,
         parentId ? [parentId] : [],
         description,
-        imageUrl
+        imageUrl,
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterServiceCategory(result.ok);
       } else {
-        console.error('Error adding category:', result.err);
+        console.error("Error adding category:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error adding category:', error);
+      console.error("Error adding category:", error);
       throw new Error(`Failed to add category: ${error}`);
     }
   },
@@ -507,10 +555,10 @@ export const serviceCanisterService = {
     try {
       const actor = await getServiceActor();
       const categories = await actor.getAllCategories();
-      
+
       return categories.map(convertCanisterServiceCategory);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
       throw new Error(`Failed to fetch categories: ${error}`);
     }
   },
@@ -522,10 +570,10 @@ export const serviceCanisterService = {
     try {
       const actor = await getServiceActor();
       const services = await actor.getAllServices();
-      
+
       return services.map(convertCanisterService);
     } catch (error) {
-      console.error('Error fetching all services:', error);
+      console.error("Error fetching all services:", error);
       throw new Error(`Failed to fetch all services: ${error}`);
     }
   },
@@ -538,7 +586,7 @@ export const serviceCanisterService = {
     weeklySchedule: Array<{ day: DayOfWeek; availability: DayAvailability }>,
     instantBookingEnabled: boolean,
     bookingNoticeHours: number,
-    maxBookingsPerDay: number
+    maxBookingsPerDay: number,
   ): Promise<ProviderAvailability | null> {
     try {
       const actor = await getServiceActor();
@@ -546,21 +594,21 @@ export const serviceCanisterService = {
         serviceId,
         weeklySchedule.map(({ day, availability }) => [
           convertToCanisterDayOfWeek(day),
-          convertToCanisterDayAvailability(availability)
+          convertToCanisterDayAvailability(availability),
         ]),
         instantBookingEnabled,
         BigInt(bookingNoticeHours),
-        BigInt(maxBookingsPerDay)
+        BigInt(maxBookingsPerDay),
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error('Error setting service availability:', result.err);
+        console.error("Error setting service availability:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error setting service availability:', error);
+      console.error("Error setting service availability:", error);
       throw new Error(`Failed to set service availability: ${error}`);
     }
   },
@@ -568,19 +616,23 @@ export const serviceCanisterService = {
   /**
    * Get provider availability
    */
-  async getProviderAvailability(providerId: string): Promise<ProviderAvailability | null> {
+  async getProviderAvailability(
+    providerId: string,
+  ): Promise<ProviderAvailability | null> {
     try {
       const actor = await getServiceActor();
-      const result = await actor.getProviderAvailability(Principal.fromText(providerId));
+      const result = await actor.getProviderAvailability(
+        Principal.fromText(providerId),
+      );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error('Error fetching provider availability:', result.err);
+        console.error("Error fetching provider availability:", result.err);
         return null;
       }
     } catch (error) {
-      console.error('Error fetching provider availability:', error);
+      console.error("Error fetching provider availability:", error);
       throw new Error(`Failed to fetch provider availability: ${error}`);
     }
   },
@@ -588,19 +640,21 @@ export const serviceCanisterService = {
   /**
    * Get service availability
    */
-  async getServiceAvailability(serviceId: string): Promise<ProviderAvailability | null> {
+  async getServiceAvailability(
+    serviceId: string,
+  ): Promise<ProviderAvailability | null> {
     try {
       const actor = await getServiceActor();
       const result = await actor.getServiceAvailability(serviceId);
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error('Error fetching service availability:', result.err);
+        console.error("Error fetching service availability:", result.err);
         return null;
       }
     } catch (error) {
-      console.error('Error fetching service availability:', error);
+      console.error("Error fetching service availability:", error);
       throw new Error(`Failed to fetch service availability: ${error}`);
     }
   },
@@ -610,23 +664,23 @@ export const serviceCanisterService = {
    */
   async getAvailableTimeSlots(
     serviceId: string,
-    date: Date
+    date: Date,
   ): Promise<AvailableSlot[]> {
     try {
       const actor = await getServiceActor();
       const result = await actor.getAvailableTimeSlots(
         serviceId,
-        BigInt(date.getTime() * 1000000) // Convert to nanoseconds
+        BigInt(date.getTime() * 1000000), // Convert to nanoseconds
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return result.ok.map(convertCanisterAvailableSlot);
       } else {
-        console.error('Error fetching available time slots:', result.err);
+        console.error("Error fetching available time slots:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error fetching available time slots:', error);
+      console.error("Error fetching available time slots:", error);
       throw new Error(`Failed to fetch available time slots: ${error}`);
     }
   },
@@ -636,23 +690,23 @@ export const serviceCanisterService = {
    */
   async isProviderAvailable(
     providerId: string,
-    requestedDateTime: Date
+    requestedDateTime: Date,
   ): Promise<boolean> {
     try {
       const actor = await getServiceActor();
       const result = await actor.isProviderAvailable(
         Principal.fromText(providerId),
-        BigInt(requestedDateTime.getTime() * 1000000) // Convert to nanoseconds
+        BigInt(requestedDateTime.getTime() * 1000000), // Convert to nanoseconds
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return result.ok;
       } else {
-        console.error('Error checking provider availability:', result.err);
+        console.error("Error checking provider availability:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error checking provider availability:', error);
+      console.error("Error checking provider availability:", error);
       throw new Error(`Failed to check provider availability: ${error}`);
     }
   },
@@ -662,23 +716,23 @@ export const serviceCanisterService = {
    */
   async isServiceAvailable(
     serviceId: string,
-    requestedDateTime: Date
+    requestedDateTime: Date,
   ): Promise<boolean> {
     try {
       const actor = await getServiceActor();
       const result = await actor.isServiceAvailable(
         serviceId,
-        BigInt(requestedDateTime.getTime() * 1000000) // Convert to nanoseconds
+        BigInt(requestedDateTime.getTime() * 1000000), // Convert to nanoseconds
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return result.ok;
       } else {
-        console.error('Error checking service availability:', result.err);
+        console.error("Error checking service availability:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error checking service availability:', error);
+      console.error("Error checking service availability:", error);
       throw new Error(`Failed to check service availability: ${error}`);
     }
   },
@@ -690,7 +744,7 @@ export const serviceCanisterService = {
     authCanisterId?: string,
     bookingCanisterId?: string,
     reviewCanisterId?: string,
-    reputationCanisterId?: string
+    reputationCanisterId?: string,
   ): Promise<string | null> {
     try {
       // Use admin agent for setup operations
@@ -704,17 +758,17 @@ export const serviceCanisterService = {
         authCanisterId ? [Principal.fromText(authCanisterId)] : [],
         bookingCanisterId ? [Principal.fromText(bookingCanisterId)] : [],
         reviewCanisterId ? [Principal.fromText(reviewCanisterId)] : [],
-        reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : []
+        reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : [],
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return result.ok;
       } else {
-        console.error('Error setting canister references:', result.err);
+        console.error("Error setting canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error setting canister references:', error);
+      console.error("Error setting canister references:", error);
       throw new Error(`Failed to set canister references: ${error}`);
     }
   },
@@ -726,7 +780,7 @@ export const serviceCanisterService = {
     serviceId: string,
     title: string,
     description: string,
-    price: number
+    price: number,
   ): Promise<ServicePackage | null> {
     try {
       const actor = await getServiceActor();
@@ -734,17 +788,17 @@ export const serviceCanisterService = {
         serviceId,
         title,
         description,
-        BigInt(price)
+        BigInt(price),
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterServicePackage(result.ok);
       } else {
-        console.error('Error creating service package:', result.err);
+        console.error("Error creating service package:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error creating service package:', error);
+      console.error("Error creating service package:", error);
       throw new Error(`Failed to create service package: ${error}`);
     }
   },
@@ -757,14 +811,14 @@ export const serviceCanisterService = {
       const actor = await getServiceActor();
       const result = await actor.getServicePackages(serviceId);
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return result.ok.map(convertCanisterServicePackage);
       } else {
-        console.error('Error fetching service packages:', result.err);
+        console.error("Error fetching service packages:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error fetching service packages:', error);
+      console.error("Error fetching service packages:", error);
       throw new Error(`Failed to fetch service packages: ${error}`);
     }
   },
@@ -777,14 +831,14 @@ export const serviceCanisterService = {
       const actor = await getServiceActor();
       const result = await actor.getPackage(packageId);
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterServicePackage(result.ok);
       } else {
-        console.error('Error fetching package:', result.err);
+        console.error("Error fetching package:", result.err);
         return null;
       }
     } catch (error) {
-      console.error('Error fetching package:', error);
+      console.error("Error fetching package:", error);
       throw new Error(`Failed to fetch package: ${error}`);
     }
   },
@@ -796,7 +850,7 @@ export const serviceCanisterService = {
     packageId: string,
     title?: string,
     description?: string,
-    price?: number
+    price?: number,
   ): Promise<ServicePackage | null> {
     try {
       const actor = await getServiceActor();
@@ -804,17 +858,17 @@ export const serviceCanisterService = {
         packageId,
         title ? [title] : [],
         description ? [description] : [],
-        price ? [BigInt(price)] : []
+        price ? [BigInt(price)] : [],
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterServicePackage(result.ok);
       } else {
-        console.error('Error updating service package:', result.err);
+        console.error("Error updating service package:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error updating service package:', error);
+      console.error("Error updating service package:", error);
       throw new Error(`Failed to update service package: ${error}`);
     }
   },
@@ -827,14 +881,14 @@ export const serviceCanisterService = {
       const actor = await getServiceActor();
       const result = await actor.deleteServicePackage(packageId);
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return result.ok;
       } else {
-        console.error('Error deleting service package:', result.err);
+        console.error("Error deleting service package:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error deleting service package:', error);
+      console.error("Error deleting service package:", error);
       throw new Error(`Failed to delete service package: ${error}`);
     }
   },
@@ -846,7 +900,7 @@ export const serviceCanisterService = {
     serviceId: string,
     title?: string,
     description?: string,
-    price?: number
+    price?: number,
   ): Promise<Service | null> {
     try {
       const actor = await getServiceActor();
@@ -854,17 +908,17 @@ export const serviceCanisterService = {
         serviceId,
         title ? [title] : [],
         description ? [description] : [],
-        price ? [BigInt(price)] : []
+        price ? [BigInt(price)] : [],
       );
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return convertCanisterService(result.ok);
       } else {
-        console.error('Error updating service:', result.err);
+        console.error("Error updating service:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error updating service:', error);
+      console.error("Error updating service:", error);
       throw new Error(`Failed to update service: ${error}`);
     }
   },
@@ -877,14 +931,14 @@ export const serviceCanisterService = {
       const actor = await getServiceActor();
       const result = await actor.deleteService(serviceId);
 
-      if ('ok' in result) {
+      if ("ok" in result) {
         return result.ok;
       } else {
-        console.error('Error deleting service:', result.err);
+        console.error("Error deleting service:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error deleting service:', error);
+      console.error("Error deleting service:", error);
       throw new Error(`Failed to delete service: ${error}`);
     }
   },
@@ -893,7 +947,6 @@ export const serviceCanisterService = {
 // Reset functions for authentication state changes
 export const resetServiceActor = () => {
   serviceActor = null;
-
 };
 
 export const refreshServiceActor = async () => {

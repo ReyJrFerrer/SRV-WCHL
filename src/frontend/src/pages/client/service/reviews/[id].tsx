@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import Image from 'next/image';
-import { ArrowLeftIcon, StarIcon as StarSolid, UserIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
-import { useServiceReviews } from '../../../../hooks/reviewManagement';
-import { useServiceById } from '../../../../hooks/serviceInformation';
-import { review } from '@app/declarations/review';
+import React, { useEffect, useState } from "react";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import Image from "next/image";
+import {
+  ArrowLeftIcon,
+  StarIcon as StarSolid,
+  UserIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/solid";
+import { useServiceReviews } from "../../../../hooks/reviewManagement";
+import { useServiceById } from "../../../../hooks/serviceInformation";
+import { review } from "@app/declarations/review";
 
-const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({ 
-  rating, 
-  maxStars = 5 
+const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
+  rating,
+  maxStars = 5,
 }) => {
   return (
     <div className="flex items-center">
@@ -18,7 +23,7 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
         return (
           <StarSolid
             key={index}
-            className={`h-5 w-5 ${starValue <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+            className={`h-5 w-5 ${starValue <= rating ? "text-yellow-400" : "text-gray-300"}`}
           />
         );
       })}
@@ -31,10 +36,10 @@ const ServiceReviewsPage: React.FC = () => {
   const { id: serviceId } = router.query;
 
   // Get service data with provider information
-  const { 
-    service, 
-    loading: serviceLoading, 
-    error: serviceError 
+  const {
+    service,
+    loading: serviceLoading,
+    error: serviceError,
   } = useServiceById(serviceId as string);
 
   // Get reviews using the review management hook
@@ -47,32 +52,34 @@ const ServiceReviewsPage: React.FC = () => {
     getRatingDistribution,
     formatReviewDate,
     getRelativeTime,
-    refreshReviews
+    refreshReviews,
   } = useServiceReviews(serviceId as string);
 
   // Local state for filtering and sorting
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
+  const [sortBy, setSortBy] = useState<
+    "newest" | "oldest" | "highest" | "lowest"
+  >("newest");
   const [filterRating, setFilterRating] = useState<number | null>(null);
 
   // Computed values
   const sortedAndFilteredReviews = React.useMemo(() => {
-    let filtered = reviews.filter(review => review.status === 'Visible');
-    
+    let filtered = reviews.filter((review) => review.status === "Visible");
+
     // Filter by rating if selected
     if (filterRating) {
-      filtered = filtered.filter(review => review.rating === filterRating);
+      filtered = filtered.filter((review) => review.rating === filterRating);
     }
 
     // Sort reviews
     return filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'newest':
+        case "newest":
           return b.createdAt - a.createdAt;
-        case 'oldest':
+        case "oldest":
           return a.createdAt - b.createdAt;
-        case 'highest':
+        case "highest":
           return b.rating - a.rating;
-        case 'lowest':
+        case "lowest":
           return a.rating - b.rating;
         default:
           return b.createdAt - a.createdAt;
@@ -85,8 +92,8 @@ const ServiceReviewsPage: React.FC = () => {
 
   if (serviceLoading || reviewsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
         <p className="ml-4 text-gray-700">Loading reviews...</p>
       </div>
     );
@@ -94,12 +101,14 @@ const ServiceReviewsPage: React.FC = () => {
 
   if (serviceError || reviewsError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-        <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Reviews</h1>
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
+        <h1 className="mb-4 text-2xl font-bold text-red-600">
+          Error Loading Reviews
+        </h1>
         {/* <p className="text-gray-600 mb-6">{serviceError! || reviewsError!}</p> */}
         <button
           onClick={() => router.back()}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
         >
           Go Back
         </button>
@@ -109,12 +118,16 @@ const ServiceReviewsPage: React.FC = () => {
 
   if (!service) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-        <h1 className="text-2xl font-bold text-red-600 mb-4">Service Not Found</h1>
-        <p className="text-gray-600 mb-6">We couldn't find the service you were looking for.</p>
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
+        <h1 className="mb-4 text-2xl font-bold text-red-600">
+          Service Not Found
+        </h1>
+        <p className="mb-6 text-gray-600">
+          We couldn't find the service you were looking for.
+        </p>
         <button
-          onClick={() => router.push('/client/home')}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          onClick={() => router.push("/client/home")}
+          className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
         >
           Back to Home
         </button>
@@ -122,34 +135,39 @@ const ServiceReviewsPage: React.FC = () => {
     );
   }
 
-  const providerName =  service.providerName || 'Service Provider';
-  const providerAvatar = '/images/rey.png';
+  const providerName = service.providerName || "Service Provider";
+  const providerAvatar = "/images/rey.png";
 
   return (
     <>
       <Head>
-        <title>SRV | Reviews for {service.name} by {providerName}</title>
-        <meta name="description" content={`Read reviews for ${service.name} offered by ${providerName}`} />
+        <title>
+          SRV | Reviews for {service.name} by {providerName}
+        </title>
+        <meta
+          name="description"
+          content={`Read reviews for ${service.name} offered by ${providerName}`}
+        />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
         {/* Header for navigation */}
-        <header className="bg-white shadow-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <header className="sticky top-0 z-50 bg-white shadow-sm">
+          <div className="container mx-auto flex items-center justify-between px-4 py-3">
             <div className="flex items-center">
               <button
                 onClick={() => router.back()}
-                className="p-2 rounded-full hover:bg-gray-100 mr-3"
+                className="mr-3 rounded-full p-2 hover:bg-gray-100"
               >
                 <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
               </button>
-              <h1 className="text-lg font-semibold text-gray-800 truncate">
+              <h1 className="truncate text-lg font-semibold text-gray-800">
                 Reviews for {service.name}
               </h1>
             </div>
             <button
               onClick={refreshReviews}
-              className="p-2 rounded-full hover:bg-gray-100 text-gray-600"
+              className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
               title="Refresh reviews"
             >
               🔄
@@ -160,10 +178,10 @@ const ServiceReviewsPage: React.FC = () => {
         {/* Main Content */}
         <main className="container mx-auto p-4">
           {/* Service Info Card */}
-          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md mb-6 flex items-center space-x-4"> 
-            <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+          <div className="mb-6 flex items-center space-x-4 rounded-lg bg-white p-4 shadow-md md:p-6">
+            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 md:h-20 md:w-20">
               <Image
-                src={providerAvatar} 
+                src={providerAvatar}
                 alt={providerName}
                 fill
                 className="object-cover"
@@ -171,36 +189,46 @@ const ServiceReviewsPage: React.FC = () => {
             </div>
 
             <div className="flex-grow">
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800">{providerName}</h2>
-              <p className="text-sm md:text-md text-gray-600 mb-1">{service.name}</p>
-              <div className="flex items-center space-x-1 text-xs md:text-sm text-gray-700">
+              <h2 className="text-xl font-bold text-gray-800 md:text-2xl">
+                {providerName}
+              </h2>
+              <p className="md:text-md mb-1 text-sm text-gray-600">
+                {service.name}
+              </p>
+              <div className="flex items-center space-x-1 text-xs text-gray-700 md:text-sm">
                 <StarRatingDisplay rating={averageRating} />
-                <span className="font-semibold">{averageRating.toFixed(1)}</span>
+                <span className="font-semibold">
+                  {averageRating.toFixed(1)}
+                </span>
                 <span>({reviews.length} reviews)</span>
               </div>
             </div>
           </div>
 
           {/* Rating Summary and Filters */}
-          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Rating Breakdown</h3>
-            
+          <div className="mb-6 rounded-lg bg-white p-4 shadow-md md:p-6">
+            <h3 className="mb-4 text-lg font-semibold text-gray-800">
+              Rating Breakdown
+            </h3>
+
             {/* Rating Distribution */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Rating Distribution</h4>
-                {[5, 4, 3, 2, 1].map(rating => (
-                  <div key={rating} className="flex items-center mb-2">
-                    <span className="text-sm w-8">{rating}★</span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2 mx-3">
-                      <div 
-                        className="bg-yellow-400 h-2 rounded-full"
-                        style={{ 
-                          width: `${reviews.length > 0 ? (ratingDistribution[rating] / reviews.length) * 100 : 0}%` 
+                <h4 className="mb-3 font-medium text-gray-700">
+                  Rating Distribution
+                </h4>
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <div key={rating} className="mb-2 flex items-center">
+                    <span className="w-8 text-sm">{rating}★</span>
+                    <div className="mx-3 h-2 flex-1 rounded-full bg-gray-200">
+                      <div
+                        className="h-2 rounded-full bg-yellow-400"
+                        style={{
+                          width: `${reviews.length > 0 ? (ratingDistribution[rating] / reviews.length) * 100 : 0}%`,
                         }}
                       ></div>
                     </div>
-                    <span className="text-sm text-gray-600 w-12">
+                    <span className="w-12 text-sm text-gray-600">
                       {ratingDistribution[rating] || 0}
                     </span>
                   </div>
@@ -208,7 +236,7 @@ const ServiceReviewsPage: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Quick Stats</h4>
+                <h4 className="mb-3 font-medium text-gray-700">Quick Stats</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Total Reviews:</span>
@@ -216,28 +244,36 @@ const ServiceReviewsPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Average Rating:</span>
-                    <span className="font-semibold">{averageRating.toFixed(1)}/5</span>
+                    <span className="font-semibold">
+                      {averageRating.toFixed(1)}/5
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>5-Star Reviews:</span>
-                    <span className="font-semibold">{ratingDistribution[5] || 0}</span>
+                    <span className="font-semibold">
+                      {ratingDistribution[5] || 0}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Recent Reviews (7 days):</span>
-                    <span className="font-semibold">{analytics?.recentReviews || 0}</span>
+                    <span className="font-semibold">
+                      {analytics?.recentReviews || 0}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Filters and Sorting */}
-            <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Sort by:
+                </label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="newest">Newest</option>
                   <option value="oldest">Oldest</option>
@@ -247,11 +283,17 @@ const ServiceReviewsPage: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Filter by rating:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Filter by rating:
+                </label>
                 <select
-                  value={filterRating || ''}
-                  onChange={(e) => setFilterRating(e.target.value ? Number(e.target.value) : null)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={filterRating || ""}
+                  onChange={(e) =>
+                    setFilterRating(
+                      e.target.value ? Number(e.target.value) : null,
+                    )
+                  }
+                  className="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="">All Ratings</option>
                   <option value="5">5 Stars</option>
@@ -268,13 +310,13 @@ const ServiceReviewsPage: React.FC = () => {
           {sortedAndFilteredReviews.length > 0 ? (
             <div className="space-y-4">
               {sortedAndFilteredReviews.map((review) => (
-                <div key={review.id} className="bg-white p-4 rounded-lg shadow">
-                  <div className="flex items-start mb-3"> 
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3 flex-shrink-0 border border-gray-100 bg-gray-200 flex items-center justify-center">
+                <div key={review.id} className="rounded-lg bg-white p-4 shadow">
+                  <div className="mb-3 flex items-start">
+                    <div className="relative mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-100 bg-gray-200">
                       {review.clientProfile?.profilePicture?.imageUrl ? (
                         <Image
-                          src={review.clientProfile.profilePicture.imageUrl} 
-                          alt={review.clientName || 'Client'}
+                          src={review.clientProfile.profilePicture.imageUrl}
+                          alt={review.clientName || "Client"}
                           fill
                           className="object-cover"
                         />
@@ -285,11 +327,11 @@ const ServiceReviewsPage: React.FC = () => {
                     <div className="flex-grow">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-gray-800">
-                          {review.clientName || 'Anonymous User'}
+                          {review.clientName || "Anonymous User"}
                         </h4>
-                        {review.status !== 'Visible' && (
+                        {review.status !== "Visible" && (
                           <div className="flex items-center text-xs text-gray-500">
-                            <EyeSlashIcon className="h-4 w-4 mr-1" />
+                            <EyeSlashIcon className="mr-1 h-4 w-4" />
                             {review.status}
                           </div>
                         )}
@@ -305,23 +347,27 @@ const ServiceReviewsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mb-2">
                     <StarRatingDisplay rating={review.rating} />
                   </div>
-                  
-                  <p className="text-gray-700 text-sm leading-relaxed mb-3">{review.comment}</p>
-                  
+
+                  <p className="mb-3 text-sm leading-relaxed text-gray-700">
+                    {review.comment}
+                  </p>
+
                   {/* Quality Score */}
                   {review.qualityScore && (
-                    <div className="flex items-center text-xs text-gray-500 mb-2">
-                      <span>Quality Score: {(review.qualityScore * 100).toFixed(0)}%</span>
+                    <div className="mb-2 flex items-center text-xs text-gray-500">
+                      <span>
+                        Quality Score: {(review.qualityScore * 100).toFixed(0)}%
+                      </span>
                     </div>
                   )}
 
                   {/* Review Actions (if owned by current user) */}
                   {review.canEdit && (
-                    <div className="flex items-center space-x-2 pt-2 border-t border-gray-100">
+                    <div className="flex items-center space-x-2 border-t border-gray-100 pt-2">
                       <button className="text-xs text-blue-600 hover:underline">
                         Edit Review
                       </button>
@@ -335,17 +381,16 @@ const ServiceReviewsPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 bg-white rounded-lg shadow">
+            <div className="rounded-lg bg-white py-10 text-center shadow">
               <p className="text-gray-600">
-                {filterRating 
+                {filterRating
                   ? `No ${filterRating}-star reviews found.`
-                  : 'No reviews yet for this service.'
-                }
+                  : "No reviews yet for this service."}
               </p>
               {filterRating && (
                 <button
                   onClick={() => setFilterRating(null)}
-                  className="mt-2 text-blue-600 hover:underline text-sm"
+                  className="mt-2 text-sm text-blue-600 hover:underline"
                 >
                   Clear filter
                 </button>

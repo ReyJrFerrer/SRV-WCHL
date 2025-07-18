@@ -11,25 +11,22 @@ export const useLogout = () => {
   const logout = useCallback(async () => {
     try {
       setIsLoggingOut(true);
-    
-      
+
       // Clear local authentication state
       clearAuthState();
-      
+
       // Clear any local storage that might persist auth state
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         localStorage.clear();
         sessionStorage.clear();
       }
-      
-      
+
       // Force a hard redirect to clear any cached state
-      window.location.href = '/';
-      
+      window.location.href = "/";
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       // Even if there's an error, force redirect
-      window.location.href = '/';
+      window.location.href = "/";
     } finally {
       setIsLoggingOut(false);
     }
@@ -37,6 +34,6 @@ export const useLogout = () => {
 
   return {
     logout,
-    isLoggingOut
+    isLoggingOut,
   };
 };

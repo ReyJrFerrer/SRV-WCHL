@@ -1,12 +1,9 @@
 // Review Canister Service
-import { Actor } from '@dfinity/agent';
-import { Principal } from '@dfinity/principal';
-import { 
-  idlFactory, 
-  canisterId
-} from '../../../declarations/review';
-import { getHttpAgent, getAdminHttpAgent } from '../utils/icpClient';
-import type { 
+import { Actor } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
+import { idlFactory, canisterId } from "../../../declarations/review";
+import { getHttpAgent, getAdminHttpAgent } from "../utils/icpClient";
+import type {
   _SERVICE as ReviewService,
   Review as CanisterReview,
   ReviewStatus,
@@ -14,11 +11,14 @@ import type {
   Result_1,
   Result_2,
   Result_3,
-  Time
-} from '../../../declarations/review/review.did';
+  Time,
+} from "../../../declarations/review/review.did";
 
 // Canister configuration
-const REVIEW_CANISTER_ID = canisterId || process.env.NEXT_PUBLIC_REVIEW_CANISTER_ID || 'rkp4c-7iaaa-aaaaa-aaaca-cai';
+const REVIEW_CANISTER_ID =
+  canisterId ||
+  process.env.NEXT_PUBLIC_REVIEW_CANISTER_ID ||
+  "rkp4c-7iaaa-aaaaa-aaaca-cai";
 
 // Create actor
 let reviewActor: ReviewService | null = null;
@@ -45,7 +45,7 @@ export interface Review {
   comment: string;
   createdAt: number; // milliseconds
   updatedAt: number; // milliseconds
-  status: 'Visible' | 'Hidden' | 'Flagged';
+  status: "Visible" | "Hidden" | "Flagged";
   qualityScore?: number;
 }
 
@@ -59,7 +59,9 @@ export interface ReviewStatistics {
 }
 
 // Type conversion functions
-const convertCanisterReviewToFrontend = (canisterReview: CanisterReview): Review => {
+const convertCanisterReviewToFrontend = (
+  canisterReview: CanisterReview,
+): Review => {
   return {
     id: canisterReview.id,
     bookingId: canisterReview.bookingId,
@@ -70,37 +72,51 @@ const convertCanisterReviewToFrontend = (canisterReview: CanisterReview): Review
     comment: canisterReview.comment,
     createdAt: Number(canisterReview.createdAt) / 1_000_000, // Convert nanoseconds to milliseconds
     updatedAt: Number(canisterReview.updatedAt) / 1_000_000,
-    status: Object.keys(canisterReview.status)[0] as 'Visible' | 'Hidden' | 'Flagged',
-    qualityScore: canisterReview.qualityScore.length > 0 ? Number(canisterReview.qualityScore[0]) : undefined,
+    status: Object.keys(canisterReview.status)[0] as
+      | "Visible"
+      | "Hidden"
+      | "Flagged",
+    qualityScore:
+      canisterReview.qualityScore.length > 0
+        ? Number(canisterReview.qualityScore[0])
+        : undefined,
   };
 };
 
-const convertFrontendReviewToCanister = (review: Partial<Review>): Partial<CanisterReview> => {
+const convertFrontendReviewToCanister = (
+  review: Partial<Review>,
+): Partial<CanisterReview> => {
   const canisterReview: any = {};
-  
+
   if (review.id) canisterReview.id = review.id;
   if (review.bookingId) canisterReview.bookingId = review.bookingId;
-  if (review.clientId) canisterReview.clientId = Principal.fromText(review.clientId);
-  if (review.providerId) canisterReview.providerId = Principal.fromText(review.providerId);
+  if (review.clientId)
+    canisterReview.clientId = Principal.fromText(review.clientId);
+  if (review.providerId)
+    canisterReview.providerId = Principal.fromText(review.providerId);
   if (review.serviceId) canisterReview.serviceId = review.serviceId;
-  if (review.rating !== undefined) canisterReview.rating = BigInt(review.rating);
+  if (review.rating !== undefined)
+    canisterReview.rating = BigInt(review.rating);
   if (review.comment) canisterReview.comment = review.comment;
-  if (review.createdAt) canisterReview.createdAt = BigInt(review.createdAt * 1_000_000); // Convert milliseconds to nanoseconds
-  if (review.updatedAt) canisterReview.updatedAt = BigInt(review.updatedAt * 1_000_000);
+  if (review.createdAt)
+    canisterReview.createdAt = BigInt(review.createdAt * 1_000_000); // Convert milliseconds to nanoseconds
+  if (review.updatedAt)
+    canisterReview.updatedAt = BigInt(review.updatedAt * 1_000_000);
   if (review.status) {
     canisterReview.status = { [review.status]: null };
   }
   if (review.qualityScore !== undefined) {
-    canisterReview.qualityScore = review.qualityScore !== undefined ? [review.qualityScore] : [];
+    canisterReview.qualityScore =
+      review.qualityScore !== undefined ? [review.qualityScore] : [];
   }
-  
+
   return canisterReview;
 };
 
 // Create actor instance
 const createActor = async (): Promise<ReviewService> => {
   const agent = await getHttpAgent();
-  
+
   return Actor.createActor(idlFactory, {
     agent: agent,
     canisterId: REVIEW_CANISTER_ID,
@@ -121,19 +137,23 @@ class ReviewCanisterService {
   async submitReview(
     bookingId: string,
     rating: number,
-    comment: string
+    comment: string,
   ): Promise<Review> {
     try {
       const actor = await this.getActor();
-      const result = await actor.submitReview(bookingId, BigInt(rating), comment);
-      
-      if ('ok' in result) {
+      const result = await actor.submitReview(
+        bookingId,
+        BigInt(rating),
+        comment,
+      );
+
+      if ("ok" in result) {
         return convertCanisterReviewToFrontend(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error submitting review:', error);
+      console.error("Error submitting review:", error);
       throw error;
     }
   }
@@ -143,14 +163,14 @@ class ReviewCanisterService {
     try {
       const actor = await this.getActor();
       const result = await actor.getReview(reviewId);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return convertCanisterReviewToFrontend(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error getting review:', error);
+      console.error("Error getting review:", error);
       throw error;
     }
   }
@@ -160,10 +180,10 @@ class ReviewCanisterService {
     try {
       const actor = await this.getActor();
       const canisterReviews = await actor.getBookingReviews(bookingId);
-      
+
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error('Error getting booking reviews:', error);
+      console.error("Error getting booking reviews:", error);
       throw error;
     }
   }
@@ -174,10 +194,10 @@ class ReviewCanisterService {
       const actor = await this.getActor();
       const userPrincipal = Principal.fromText(userId);
       const canisterReviews = await actor.getUserReviews(userPrincipal);
-      
+
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error('Error getting user reviews:', error);
+      console.error("Error getting user reviews:", error);
       throw error;
     }
   }
@@ -186,19 +206,23 @@ class ReviewCanisterService {
   async updateReview(
     reviewId: string,
     rating: number,
-    comment: string
+    comment: string,
   ): Promise<Review> {
     try {
       const actor = await this.getActor();
-      const result = await actor.updateReview(reviewId, BigInt(rating), comment);
-      
-      if ('ok' in result) {
+      const result = await actor.updateReview(
+        reviewId,
+        BigInt(rating),
+        comment,
+      );
+
+      if ("ok" in result) {
         return convertCanisterReviewToFrontend(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error updating review:', error);
+      console.error("Error updating review:", error);
       throw error;
     }
   }
@@ -208,12 +232,12 @@ class ReviewCanisterService {
     try {
       const actor = await this.getActor();
       const result = await actor.deleteReview(reviewId);
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error deleting review:', error);
+      console.error("Error deleting review:", error);
       throw error;
     }
   }
@@ -224,14 +248,14 @@ class ReviewCanisterService {
       const actor = await this.getActor();
       const providerPrincipal = Principal.fromText(providerId);
       const result = await actor.calculateProviderRating(providerPrincipal);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return Number(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error calculating provider rating:', error);
+      console.error("Error calculating provider rating:", error);
       throw error;
     }
   }
@@ -241,14 +265,14 @@ class ReviewCanisterService {
     try {
       const actor = await this.getActor();
       const result = await actor.calculateServiceRating(serviceId);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return Number(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error calculating service rating:', error);
+      console.error("Error calculating service rating:", error);
       throw error;
     }
   }
@@ -259,14 +283,14 @@ class ReviewCanisterService {
       const actor = await this.getActor();
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.calculateUserAverageRating(userPrincipal);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return Number(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error calculating user average rating:', error);
+      console.error("Error calculating user average rating:", error);
       throw error;
     }
   }
@@ -276,10 +300,10 @@ class ReviewCanisterService {
     try {
       const actor = await this.getActor();
       const canisterReviews = await actor.getAllReviews();
-      
+
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error('Error getting all reviews:', error);
+      console.error("Error getting all reviews:", error);
       throw error;
     }
   }
@@ -289,7 +313,7 @@ class ReviewCanisterService {
     try {
       const actor = await this.getActor();
       const stats = await actor.getReviewStatistics();
-      
+
       return {
         totalReviews: Number(stats.totalReviews),
         activeReviews: Number(stats.activeReviews),
@@ -298,7 +322,7 @@ class ReviewCanisterService {
         deletedReviews: Number(stats.deletedReviews),
       };
     } catch (error) {
-      console.error('Error getting review statistics:', error);
+      console.error("Error getting review statistics:", error);
       throw error;
     }
   }
@@ -308,37 +332,37 @@ class ReviewCanisterService {
     booking: string,
     service: string,
     reputation: string,
-    auth: string
+    auth: string,
   ): Promise<string | null> {
     try {
       // Use admin agent for setup operations
       const agent = await getAdminHttpAgent();
-      
+
       // Create a fresh actor instance with proper error handling
       const actor = Actor.createActor(idlFactory, {
         agent: agent,
         canisterId: REVIEW_CANISTER_ID,
       }) as ReviewService;
-      
+
       if (!actor) {
-        throw new Error('Failed to create actor instance');
+        throw new Error("Failed to create actor instance");
       }
-      
+
       const result = await actor.setCanisterReferences(
         Principal.fromText(booking),
         Principal.fromText(service),
         Principal.fromText(reputation),
-        Principal.fromText(auth)
+        Principal.fromText(auth),
       );
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return result.ok;
       } else {
-        console.error('Error setting canister references:', result.err);
+        console.error("Error setting canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error setting canister references:', error);
+      console.error("Error setting canister references:", error);
       // Reset the actor to force recreation on next call
       reviewActor = null;
       throw new Error(`Failed to set canister references: ${error}`);
@@ -350,14 +374,14 @@ class ReviewCanisterService {
     try {
       const actor = await this.getActor();
       const result = await actor.initializeStaticReviewsManually();
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return result.ok;
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error initializing static reviews:', error);
+      console.error("Error initializing static reviews:", error);
       throw error;
     }
   }
@@ -366,11 +390,12 @@ class ReviewCanisterService {
   async getProviderReviews(providerId: string): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      return allReviews.filter(review => 
-        review.providerId === providerId && review.status === 'Visible'
+      return allReviews.filter(
+        (review) =>
+          review.providerId === providerId && review.status === "Visible",
       );
     } catch (error) {
-      console.error('Error getting provider reviews:', error);
+      console.error("Error getting provider reviews:", error);
       throw error;
     }
   }
@@ -379,26 +404,32 @@ class ReviewCanisterService {
   async getServiceReviews(serviceId: string): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      return allReviews.filter(review => 
-        review.serviceId === serviceId && review.status === 'Visible'
+      return allReviews.filter(
+        (review) =>
+          review.serviceId === serviceId && review.status === "Visible",
       );
     } catch (error) {
-      console.error('Error getting service reviews:', error);
+      console.error("Error getting service reviews:", error);
       throw error;
     }
   }
 
   // Helper method to check if user can review a booking
-  async canUserReviewBooking(bookingId: string, userId: string): Promise<boolean> {
+  async canUserReviewBooking(
+    bookingId: string,
+    userId: string,
+  ): Promise<boolean> {
     try {
       // Get existing reviews for this booking by this user
       const bookingReviews = await this.getBookingReviews(bookingId);
-      const userReview = bookingReviews.find(review => review.clientId === userId);
-      
+      const userReview = bookingReviews.find(
+        (review) => review.clientId === userId,
+      );
+
       // User can review if they haven't already reviewed this booking
       return !userReview;
     } catch (error) {
-      console.error('Error checking if user can review booking:', error);
+      console.error("Error checking if user can review booking:", error);
       return false;
     }
   }
@@ -407,14 +438,16 @@ class ReviewCanisterService {
   async getRecentReviews(limit: number = 10): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      const visibleReviews = allReviews.filter(review => review.status === 'Visible');
-      
+      const visibleReviews = allReviews.filter(
+        (review) => review.status === "Visible",
+      );
+
       // Sort by creation date (most recent first)
       visibleReviews.sort((a, b) => b.createdAt - a.createdAt);
-      
+
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error('Error getting recent reviews:', error);
+      console.error("Error getting recent reviews:", error);
       throw error;
     }
   }
@@ -423,8 +456,10 @@ class ReviewCanisterService {
   async getTopRatedReviews(limit: number = 10): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      const visibleReviews = allReviews.filter(review => review.status === 'Visible');
-      
+      const visibleReviews = allReviews.filter(
+        (review) => review.status === "Visible",
+      );
+
       // Sort by rating (highest first) and then by quality score
       visibleReviews.sort((a, b) => {
         if (a.rating !== b.rating) {
@@ -435,10 +470,10 @@ class ReviewCanisterService {
         const scoreB = b.qualityScore || 0;
         return scoreB - scoreA;
       });
-      
+
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error('Error getting top rated reviews:', error);
+      console.error("Error getting top rated reviews:", error);
       throw error;
     }
   }
@@ -458,19 +493,23 @@ export const reviewCanisterService = {
   async submitReview(
     bookingId: string,
     rating: number,
-    comment: string
+    comment: string,
   ): Promise<Review> {
     try {
       const actor = await getReviewActor();
-      const result = await actor.submitReview(bookingId, BigInt(rating), comment);
-      
-      if ('ok' in result) {
+      const result = await actor.submitReview(
+        bookingId,
+        BigInt(rating),
+        comment,
+      );
+
+      if ("ok" in result) {
         return convertCanisterReviewToFrontend(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error submitting review:', error);
+      console.error("Error submitting review:", error);
       throw error;
     }
   },
@@ -482,14 +521,14 @@ export const reviewCanisterService = {
     try {
       const actor = await getReviewActor();
       const result = await actor.getReview(reviewId);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return convertCanisterReviewToFrontend(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error getting review:', error);
+      console.error("Error getting review:", error);
       throw error;
     }
   },
@@ -501,10 +540,10 @@ export const reviewCanisterService = {
     try {
       const actor = await getReviewActor();
       const canisterReviews = await actor.getBookingReviews(bookingId);
-      
+
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error('Error getting booking reviews:', error);
+      console.error("Error getting booking reviews:", error);
       throw error;
     }
   },
@@ -517,10 +556,10 @@ export const reviewCanisterService = {
       const actor = await getReviewActor();
       const userPrincipal = Principal.fromText(userId);
       const canisterReviews = await actor.getUserReviews(userPrincipal);
-      
+
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error('Error getting user reviews:', error);
+      console.error("Error getting user reviews:", error);
       throw error;
     }
   },
@@ -531,19 +570,23 @@ export const reviewCanisterService = {
   async updateReview(
     reviewId: string,
     rating: number,
-    comment: string
+    comment: string,
   ): Promise<Review> {
     try {
       const actor = await getReviewActor();
-      const result = await actor.updateReview(reviewId, BigInt(rating), comment);
-      
-      if ('ok' in result) {
+      const result = await actor.updateReview(
+        reviewId,
+        BigInt(rating),
+        comment,
+      );
+
+      if ("ok" in result) {
         return convertCanisterReviewToFrontend(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error updating review:', error);
+      console.error("Error updating review:", error);
       throw error;
     }
   },
@@ -555,12 +598,12 @@ export const reviewCanisterService = {
     try {
       const actor = await getReviewActor();
       const result = await actor.deleteReview(reviewId);
-      
-      if ('err' in result) {
+
+      if ("err" in result) {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error deleting review:', error);
+      console.error("Error deleting review:", error);
       throw error;
     }
   },
@@ -573,14 +616,14 @@ export const reviewCanisterService = {
       const actor = await getReviewActor();
       const providerPrincipal = Principal.fromText(providerId);
       const result = await actor.calculateProviderRating(providerPrincipal);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return Number(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error calculating provider rating:', error);
+      console.error("Error calculating provider rating:", error);
       throw error;
     }
   },
@@ -592,14 +635,14 @@ export const reviewCanisterService = {
     try {
       const actor = await getReviewActor();
       const result = await actor.calculateServiceRating(serviceId);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return Number(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error calculating service rating:', error);
+      console.error("Error calculating service rating:", error);
       throw error;
     }
   },
@@ -612,14 +655,14 @@ export const reviewCanisterService = {
       const actor = await getReviewActor();
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.calculateUserAverageRating(userPrincipal);
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return Number(result.ok);
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error calculating user average rating:', error);
+      console.error("Error calculating user average rating:", error);
       throw error;
     }
   },
@@ -631,18 +674,17 @@ export const reviewCanisterService = {
     try {
       const actor = await getReviewActor();
       const result = await actor.initializeStaticReviewsManually();
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return result.ok;
       } else {
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error initializing static reviews:', error);
+      console.error("Error initializing static reviews:", error);
       throw error;
     }
   },
-
 
   /**
    * Get all reviews
@@ -651,10 +693,10 @@ export const reviewCanisterService = {
     try {
       const actor = await getReviewActor();
       const canisterReviews = await actor.getAllReviews();
-      
+
       return canisterReviews.map(convertCanisterReviewToFrontend);
     } catch (error) {
-      console.error('Error getting all reviews:', error);
+      console.error("Error getting all reviews:", error);
       throw error;
     }
   },
@@ -666,7 +708,7 @@ export const reviewCanisterService = {
     try {
       const actor = await getReviewActor();
       const stats = await actor.getReviewStatistics();
-      
+
       return {
         totalReviews: Number(stats.totalReviews),
         activeReviews: Number(stats.activeReviews),
@@ -675,11 +717,10 @@ export const reviewCanisterService = {
         deletedReviews: Number(stats.deletedReviews),
       };
     } catch (error) {
-      console.error('Error getting review statistics:', error);
+      console.error("Error getting review statistics:", error);
       throw error;
     }
   },
-
 
   /**
    * Set canister references (admin function)
@@ -688,40 +729,40 @@ export const reviewCanisterService = {
     booking: string,
     service: string,
     reputation: string,
-    auth: string
+    auth: string,
   ): Promise<string | null> {
     try {
       // Add agent validation
       const agent = await getHttpAgent();
       if (!agent) {
-        throw new Error('Failed to get HTTP agent - agent is undefined');
+        throw new Error("Failed to get HTTP agent - agent is undefined");
       }
-      
+
       // Create a fresh actor instance with proper error handling
       const actor = Actor.createActor(idlFactory, {
         agent: agent,
         canisterId: REVIEW_CANISTER_ID,
       }) as ReviewService;
-      
+
       if (!actor) {
-        throw new Error('Failed to create actor instance');
+        throw new Error("Failed to create actor instance");
       }
-      
+
       const result = await actor.setCanisterReferences(
         Principal.fromText(booking),
         Principal.fromText(service),
         Principal.fromText(reputation),
-        Principal.fromText(auth)
+        Principal.fromText(auth),
       );
-      
-      if ('ok' in result) {
+
+      if ("ok" in result) {
         return result.ok;
       } else {
-        console.error('Error setting canister references:', result.err);
+        console.error("Error setting canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error setting canister references:', error);
+      console.error("Error setting canister references:", error);
       // Reset the actor to force recreation on next call
       reviewActor = null;
       throw new Error(`Failed to set canister references: ${error}`);
@@ -734,14 +775,16 @@ export const reviewCanisterService = {
   async getRecentReviews(limit: number = 10): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      const visibleReviews = allReviews.filter(review => review.status === 'Visible');
-      
+      const visibleReviews = allReviews.filter(
+        (review) => review.status === "Visible",
+      );
+
       // Sort by creation date (most recent first)
       visibleReviews.sort((a, b) => b.createdAt - a.createdAt);
-      
+
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error('Error getting recent reviews:', error);
+      console.error("Error getting recent reviews:", error);
       throw error;
     }
   },
@@ -752,8 +795,10 @@ export const reviewCanisterService = {
   async getTopRatedReviews(limit: number = 10): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      const visibleReviews = allReviews.filter(review => review.status === 'Visible');
-      
+      const visibleReviews = allReviews.filter(
+        (review) => review.status === "Visible",
+      );
+
       // Sort by rating (highest first) and then by quality score
       visibleReviews.sort((a, b) => {
         if (a.rating !== b.rating) {
@@ -764,10 +809,10 @@ export const reviewCanisterService = {
         const scoreB = b.qualityScore || 0;
         return scoreB - scoreA;
       });
-      
+
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      console.error('Error getting top rated reviews:', error);
+      console.error("Error getting top rated reviews:", error);
       throw error;
     }
   },
@@ -778,11 +823,12 @@ export const reviewCanisterService = {
   async getProviderReviews(providerId: string): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      return allReviews.filter(review => 
-        review.providerId === providerId && review.status === 'Visible'
+      return allReviews.filter(
+        (review) =>
+          review.providerId === providerId && review.status === "Visible",
       );
     } catch (error) {
-      console.error('Error getting provider reviews:', error);
+      console.error("Error getting provider reviews:", error);
       throw error;
     }
   },
@@ -793,11 +839,12 @@ export const reviewCanisterService = {
   async getServiceReviews(serviceId: string): Promise<Review[]> {
     try {
       const allReviews = await this.getAllReviews();
-      return allReviews.filter(review => 
-        review.serviceId === serviceId && review.status === 'Visible'
+      return allReviews.filter(
+        (review) =>
+          review.serviceId === serviceId && review.status === "Visible",
       );
     } catch (error) {
-      console.error('Error getting service reviews:', error);
+      console.error("Error getting service reviews:", error);
       throw error;
     }
   },
@@ -805,19 +852,24 @@ export const reviewCanisterService = {
   /**
    * Check if user can review a booking
    */
-  async canUserReviewBooking(bookingId: string, userId: string): Promise<boolean> {
+  async canUserReviewBooking(
+    bookingId: string,
+    userId: string,
+  ): Promise<boolean> {
     try {
       // Get existing reviews for this booking by this user
       const bookingReviews = await this.getBookingReviews(bookingId);
-      const userReview = bookingReviews.find(review => review.clientId === userId);
-      
+      const userReview = bookingReviews.find(
+        (review) => review.clientId === userId,
+      );
+
       // User can review if they haven't already reviewed this booking
       return !userReview;
     } catch (error) {
-      console.error('Error checking if user can review booking:', error);
+      console.error("Error checking if user can review booking:", error);
       return false;
     }
-  }
+  },
 };
 
 // Reset functions for authentication state changes

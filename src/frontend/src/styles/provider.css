@@ -6,11 +6,11 @@
 @layer components {
   /* Header styles */
   .provider-header {
-    @apply bg-white shadow-md p-4 rounded-b-lg;
+    @apply rounded-b-lg bg-white p-4 shadow-md;
   }
 
   .location-badge {
-    @apply flex items-center text-gray-700 bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors;
+    @apply flex items-center rounded-full bg-gray-100 px-3 py-1 text-gray-700 transition-colors hover:bg-gray-200;
   }
 
   .welcome-section {
@@ -19,28 +19,28 @@
 
   /* Dashboard stat cards */
   .stats-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6;
+    @apply my-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3;
   }
 
   .stat-card {
-    @apply flex items-center p-4 bg-white rounded-lg shadow-md overflow-hidden;
+    @apply flex items-center overflow-hidden rounded-lg bg-white p-4 shadow-md;
   }
 
   .stat-icon {
-    @apply p-3 rounded-full mr-4 flex-shrink-0;
+    @apply mr-4 flex-shrink-0 rounded-full p-3;
   }
 
   /* Booking section */
   .booking-cards {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-4 my-6;
+    @apply my-6 grid grid-cols-1 gap-4 md:grid-cols-2;
   }
 
   .booking-card {
-    @apply flex flex-col p-5 rounded-lg shadow-md;
+    @apply flex flex-col rounded-lg p-5 shadow-md;
   }
 
   .booking-card-header {
-    @apply flex justify-between items-center mb-3;
+    @apply mb-3 flex items-center justify-between;
   }
 
   /* Services section */
@@ -49,15 +49,15 @@
   }
 
   .section-header {
-    @apply flex justify-between items-center mb-4;
+    @apply mb-4 flex items-center justify-between;
   }
 
   .add-button {
-    @apply bg-teal-500 text-white p-2 rounded-full hover:bg-teal-600 transition-colors;
+    @apply rounded-full bg-teal-500 p-2 text-white transition-colors hover:bg-teal-600;
   }
 
   .service-card {
-    @apply bg-white p-4 rounded-lg shadow-md my-2;
+    @apply my-2 rounded-lg bg-white p-4 shadow-md;
   }
 
   .service-status {
@@ -65,7 +65,7 @@
   }
 
   .status-dot {
-    @apply w-2 h-2 rounded-full mr-2;
+    @apply mr-2 h-2 w-2 rounded-full;
   }
 
   /* Availability section */
@@ -74,7 +74,7 @@
   }
 
   .day-item {
-    @apply flex justify-between items-center p-3 border-b border-gray-200;
+    @apply flex items-center justify-between border-b border-gray-200 p-3;
   }
 
   .day-status {
@@ -82,7 +82,7 @@
   }
 
   .vacation-button {
-    @apply bg-orange-500 text-white flex items-center justify-center p-3 rounded-lg mt-4 hover:bg-orange-600 transition-colors;
+    @apply mt-4 flex items-center justify-center rounded-lg bg-orange-500 p-3 text-white transition-colors hover:bg-orange-600;
   }
 
   /* Credentials section */
@@ -91,20 +91,20 @@
   }
 
   .credential-card {
-    @apply bg-white p-4 rounded-lg shadow-md my-2;
+    @apply my-2 rounded-lg bg-white p-4 shadow-md;
   }
 
   .verification-badges {
-    @apply flex flex-wrap gap-2 mb-4;
+    @apply mb-4 flex flex-wrap gap-2;
   }
 
   .verification-badge {
-    @apply flex items-center bg-gray-100 px-3 py-1 rounded-full;
+    @apply flex items-center rounded-full bg-gray-100 px-3 py-1;
   }
 
   /* Bottom Navigation */
   .bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-blue-900 text-white flex justify-around items-center p-3 z-10;
+    @apply fixed right-0 bottom-0 left-0 z-10 flex items-center justify-around bg-blue-900 p-3 text-white;
   }
 
   .nav-item {

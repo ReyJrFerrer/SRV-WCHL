@@ -1,6 +1,6 @@
-import { Service } from '@app/services/serviceCanisterService';
-import { FrontendProfile } from '@app/services/authCanisterService';
-import { Principal } from '@dfinity/principal';
+import { Service } from "@app/services/serviceCanisterService";
+import { FrontendProfile } from "@app/services/authCanisterService";
+import { Principal } from "@dfinity/principal";
 
 export interface EnrichedService extends Service {
   providerName: string;
@@ -16,11 +16,11 @@ export interface EnrichedService extends Service {
  */
 export const enrichServiceWithProvider = (
   service: Service,
-  provider: FrontendProfile | null
+  provider: FrontendProfile | null,
 ): EnrichedService => {
   return {
     ...service,
-    providerName: provider?.name || 'Unknown Provider',
+    providerName: provider?.name || "Unknown Provider",
     providerAvatar: provider?.profilePicture?.thumbnailUrl,
     priceDisplay: formatPrice(service.price),
   };
@@ -34,7 +34,7 @@ export const enrichServiceWithProvider = (
 export const formatPrice = (price: number): string => {
   // Check if price is a valid number before using toFixed
   if (price === undefined || price === null) {
-    return '$0.00';
+    return "$0.00";
   }
   return `$${Number(price).toFixed(2)}`;
 };
@@ -55,24 +55,33 @@ export const principalToString = (principal: Principal): string => {
  */
 export const getCategoryIcon = (categoryName: string): string => {
   const lowerName = categoryName.toLowerCase();
-  
+
   // Handle the specified categories with consistent mapping
-  if (lowerName.includes('home') || lowerName.includes('house')) return 'home';
-  if (lowerName.includes('clean')) return 'broom';
-  if (lowerName.includes('auto') || lowerName.includes('car')) return 'car'; 
-  if (lowerName.includes('gadget') || lowerName.includes('tech') || lowerName.includes('computer')) return 'computer';
-  if (lowerName.includes('beauty') && lowerName.includes('wellness')) return 'sparkles';
-  if (lowerName.includes('beauty') && lowerName.includes('services')) return 'scissors';
-  if (lowerName.includes('photographer')) return 'camera';
-  if (lowerName.includes('tutoring')) return 'acads';
-  
+  if (lowerName.includes("home") || lowerName.includes("house")) return "home";
+  if (lowerName.includes("clean")) return "broom";
+  if (lowerName.includes("auto") || lowerName.includes("car")) return "car";
+  if (
+    lowerName.includes("gadget") ||
+    lowerName.includes("tech") ||
+    lowerName.includes("computer")
+  )
+    return "computer";
+  if (lowerName.includes("beauty") && lowerName.includes("wellness"))
+    return "sparkles";
+  if (lowerName.includes("beauty") && lowerName.includes("services"))
+    return "scissors";
+  if (lowerName.includes("photographer")) return "camera";
+  if (lowerName.includes("tutoring")) return "acads";
+
   // Additional categories
-  if (lowerName.includes('delivery') || lowerName.includes('courier')) return 'truck';
-  if (lowerName.includes('electric')) return 'bolt';
-  if (lowerName.includes('repair') || lowerName.includes('maintenance')) return 'wrench';
-  
+  if (lowerName.includes("delivery") || lowerName.includes("courier"))
+    return "truck";
+  if (lowerName.includes("electric")) return "bolt";
+  if (lowerName.includes("repair") || lowerName.includes("maintenance"))
+    return "wrench";
+
   // Default
-  return 'default';
+  return "default";
 };
 
 /**
@@ -82,25 +91,27 @@ export const getCategoryIcon = (categoryName: string): string => {
  */
 export const getCategoryImage = (categoryName: string): string => {
   const lowerName = categoryName.toLowerCase();
-  
-  if (lowerName.includes('home') || lowerName.includes('house')) 
-    return '/images/HomeServices-CoverImage.jpg';
-  if (lowerName.includes('clean')) 
-    return '/images/CleaningServices-CoverImage.jpeg';
-  if (lowerName.includes('auto') || lowerName.includes('car')) 
-    return '/images/AutomobileRepairs-CoverImage.jpg';
-  if (lowerName.includes('gadget') || lowerName.includes('tech') || lowerName.includes('computer')) 
-    return '/images/GadgetTechnician-CoverImage1.jpg';
-  if (lowerName.includes('beauty') && lowerName.includes('wellness')) 
-    return '/images/Beauty&Wellness-CoverImage.jpg';
-  if (lowerName.includes('delivery')) 
-    return '/images/Delivery-CoverImage.jpg';
-  if (lowerName.includes('beauty') && lowerName.includes('services')) 
-    return '/images/BeautyServices-CoverImage.jpg'
-  if (lowerName.includes('photography'))
-    return '/images/Photographer-CoverImage.jpg' 
-  if (lowerName.includes('tutoring'))
-    return '/images/Tutoring-CoverImage.jpg'
+
+  if (lowerName.includes("home") || lowerName.includes("house"))
+    return "/images/HomeServices-CoverImage.jpg";
+  if (lowerName.includes("clean"))
+    return "/images/CleaningServices-CoverImage.jpeg";
+  if (lowerName.includes("auto") || lowerName.includes("car"))
+    return "/images/AutomobileRepairs-CoverImage.jpg";
+  if (
+    lowerName.includes("gadget") ||
+    lowerName.includes("tech") ||
+    lowerName.includes("computer")
+  )
+    return "/images/GadgetTechnician-CoverImage1.jpg";
+  if (lowerName.includes("beauty") && lowerName.includes("wellness"))
+    return "/images/Beauty&Wellness-CoverImage.jpg";
+  if (lowerName.includes("delivery")) return "/images/Delivery-CoverImage.jpg";
+  if (lowerName.includes("beauty") && lowerName.includes("services"))
+    return "/images/BeautyServices-CoverImage.jpg";
+  if (lowerName.includes("photography"))
+    return "/images/Photographer-CoverImage.jpg";
+  if (lowerName.includes("tutoring")) return "/images/Tutoring-CoverImage.jpg";
   // Default image
-  return '/images/default-service.jpg';
+  return "/images/default-service.jpg";
 };

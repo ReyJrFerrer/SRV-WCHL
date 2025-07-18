@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/router';
-import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { EnrichedService } from '@app/utils/serviceHelpers';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/router";
+import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { EnrichedService } from "@app/utils/serviceHelpers";
 
 // Generic service interface for search functionality
 interface SearchableService {
@@ -26,11 +26,11 @@ interface SearchBarProps {
 
 const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
-  placeholder = 'Search for service',
-  className = '',
+  placeholder = "Search for service",
+  className = "",
   redirectToSearchResultsPage = true,
-  initialQuery = '',
-  servicesList = []
+  initialQuery = "",
+  servicesList = [],
 }) => {
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<SearchableService[]>([]);
@@ -40,24 +40,35 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
-  const fetchSuggestions = useCallback((currentQuery: string) => {
-    if (currentQuery.trim().length > 1) { // Fetch suggestions if query is at least 2 chars
-      const lowerCaseQuery = currentQuery.toLowerCase();
-      const filteredSuggestions = servicesList.filter(service =>
-        (service.title && service.title.toLowerCase().includes(lowerCaseQuery)) ||
-        (service.description && service.description.toLowerCase().includes(lowerCaseQuery)) ||
-        service.category.name.toLowerCase().includes(lowerCaseQuery) ||
-        (service.providerName && service.providerName.toLowerCase().includes(lowerCaseQuery)) ||
-        (service.name && service.name.toLowerCase().includes(lowerCaseQuery))
-      ).slice(0, 5); // Limit to 5 suggestions
-      
-      setSuggestions(filteredSuggestions);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  }, [servicesList]);
+  const fetchSuggestions = useCallback(
+    (currentQuery: string) => {
+      if (currentQuery.trim().length > 1) {
+        // Fetch suggestions if query is at least 2 chars
+        const lowerCaseQuery = currentQuery.toLowerCase();
+        const filteredSuggestions = servicesList
+          .filter(
+            (service) =>
+              (service.title &&
+                service.title.toLowerCase().includes(lowerCaseQuery)) ||
+              (service.description &&
+                service.description.toLowerCase().includes(lowerCaseQuery)) ||
+              service.category.name.toLowerCase().includes(lowerCaseQuery) ||
+              (service.providerName &&
+                service.providerName.toLowerCase().includes(lowerCaseQuery)) ||
+              (service.name &&
+                service.name.toLowerCase().includes(lowerCaseQuery)),
+          )
+          .slice(0, 5); // Limit to 5 suggestions
+
+        setSuggestions(filteredSuggestions);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    },
+    [servicesList],
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
@@ -65,7 +76,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
     fetchSuggestions(newQuery);
   };
 
-  const handleSubmit = (e?: React.FormEvent, submissionQuery: string = query) => {
+  const handleSubmit = (
+    e?: React.FormEvent,
+    submissionQuery: string = query,
+  ) => {
     e?.preventDefault();
     setShowSuggestions(false);
     inputRef.current?.blur();
@@ -75,22 +89,28 @@ const SearchBar: React.FC<SearchBarProps> = ({
       if (onSearch) {
         onSearch(finalQuery);
       }
-      
+
       if (redirectToSearchResultsPage) {
-        router.push(`/client/search-results?q=${encodeURIComponent(finalQuery)}`);
+        router.push(
+          `/client/search-results?q=${encodeURIComponent(finalQuery)}`,
+        );
       }
     }
   };
 
   const handleSuggestionClick = (service: SearchableService) => {
-    const suggestionText = service.title || service.name || service.providerName || service.category.name;
-    setQuery(suggestionText || '');
+    const suggestionText =
+      service.title ||
+      service.name ||
+      service.providerName ||
+      service.category.name;
+    setQuery(suggestionText || "");
     setShowSuggestions(false);
     handleSubmit(undefined, suggestionText);
   };
 
   const handleClearSearch = () => {
-    setQuery('');
+    setQuery("");
     setSuggestions([]);
     setShowSuggestions(false);
     inputRef.current?.focus();
@@ -98,21 +118,21 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (showSuggestions) {
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        setFocusedSuggestionIndex(prev => 
-          prev < suggestions.length - 1 ? prev + 1 : prev
+        setFocusedSuggestionIndex((prev) =>
+          prev < suggestions.length - 1 ? prev + 1 : prev,
         );
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setFocusedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
-      } else if (e.key === 'Enter' && focusedSuggestionIndex >= 0) {
+        setFocusedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      } else if (e.key === "Enter" && focusedSuggestionIndex >= 0) {
         e.preventDefault();
         const selectedService = suggestions[focusedSuggestionIndex];
         if (selectedService) {
           handleSuggestionClick(selectedService);
         }
-      } else if (e.key === 'Escape') {
+      } else if (e.key === "Escape") {
         setShowSuggestions(false);
       }
     }
@@ -121,24 +141,27 @@ const SearchBar: React.FC<SearchBarProps> = ({
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+      if (
+        searchBarRef.current &&
+        !searchBarRef.current.contains(event.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   return (
     <div ref={searchBarRef} className="relative">
-      <form 
+      <form
         onSubmit={handleSubmit}
-        className={`search-bar group rounded-lg bg-white border border-gray-200 px-3 py-2 flex items-center shadow-sm hover:shadow focus-within:shadow-md hover:border-gray-300 focus-within:border-green-400 transition-all ${className}`}
+        className={`search-bar group flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm transition-all focus-within:border-green-400 focus-within:shadow-md hover:border-gray-300 hover:shadow ${className}`}
       >
-        <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 mr-3" />
+        <MagnifyingGlassIcon className="mr-3 h-5 w-5 text-gray-400" />
         <input
           ref={inputRef}
           type="text"
@@ -147,34 +170,38 @@ const SearchBar: React.FC<SearchBarProps> = ({
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length > 1 && fetchSuggestions(query)}
           placeholder={placeholder}
-          className="w-full py-1 bg-transparent outline-none text-gray-700"
+          className="w-full bg-transparent py-1 text-gray-700 outline-none"
           aria-label="Search"
         />
         {query && (
-          <button 
+          <button
             type="button"
             onClick={handleClearSearch}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 transition-colors hover:text-gray-600"
             aria-label="Clear search"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
         )}
       </form>
-      
+
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
+        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg">
           <ul className="py-1">
             {suggestions.map((service, index) => (
-              <li 
+              <li
                 key={service.id}
                 onClick={() => handleSuggestionClick(service)}
-                className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
-                  index === focusedSuggestionIndex ? 'bg-gray-100' : ''
+                className={`cursor-pointer px-4 py-2 hover:bg-gray-100 ${
+                  index === focusedSuggestionIndex ? "bg-gray-100" : ""
                 }`}
               >
-                <div className="font-medium">{service.title || service.name || service.providerName || ''}</div>
-                <div className="text-sm text-gray-500">{service.category.name}</div>
+                <div className="font-medium">
+                  {service.title || service.name || service.providerName || ""}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {service.category.name}
+                </div>
               </li>
             ))}
           </ul>

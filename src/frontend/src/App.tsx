@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import { canisterId, createActor } from "../../declarations/auth";
-import type { Result_1 as ProfileResult } from "../../declarations/auth/auth.did";
+import authCanisterService from "./services/authCanisterService";
 import Hero from "./components/shared/Hero";
 import Features from "./components/shared/Features";
 import WhyChooseSRV from "./components/shared/WhyChooseSRV";
@@ -10,40 +9,22 @@ import AboutUs from "./components/shared/AboutUs";
 import SDGSection from "./components/shared/SDGSection";
 import Footer from "./components/shared/Footer";
 
-// Service function for profile operations
-const useProfileService = (identity) => {
-  const getMyProfile = async (): Promise<ProfileResult> => {
-    if (!identity) {
-      throw new Error("User not authenticated");
-    }
-
-    try {
-      const authActor = createActor(canisterId, {
-        agentOptions: {
-          identity,
-          host:
-            process.env.DFX_NETWORK === "ic"
-              ? "https://ic0.app"
-              : "http://localhost:4943",
-        },
-      });
-
-      return await authActor.getMyProfile();
-    } catch (error) {
-      console.error("Failed to fetch profile:", error);
-      throw error;
-    }
-  };
-
-  return { getMyProfile };
-};
-
 export default function App() {
   const navigate = useNavigate();
   const { isAuthenticated, identity, login, isLoading, error } = useAuth();
-  const profileService = useProfileService(identity);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+
+  // Reset auth actor when identity changes
+  // useEffect(() => {
+  //   if (identity) {
+  //     // Refresh the actor with new identity
+  //     refreshAuthActor(identity);
+  //   } else {
+  //     // Reset actor when no identity is present
+  //     resetAuthActor();
+  //   }
+  // }, [identity]);
 
   // Check profile and redirect when authenticated
   useEffect(() => {
@@ -53,25 +34,19 @@ export default function App() {
         setProfileError(null);
 
         try {
-          const profileResult = await profileService.getMyProfile();
+          // Pass identity from AuthContext to the service
+          const profile = await authCanisterService.getMyProfile(identity);
 
-          if ("ok" in profileResult) {
-            const profile = profileResult.ok;
-            if ("Client" in profile.role) {
+          if (profile) {
+            if (profile.role === "Client") {
               navigate("/client/home");
-            } else if ("ServiceProvider" in profile.role) {
+            } else if (profile.role === "ServiceProvider") {
               navigate("/provider/home");
             } else {
               navigate("/create-profile");
             }
           } else {
-            if (profileResult.err === "Profile not found") {
-              navigate("/create-profile");
-            } else {
-              throw new Error(
-                profileResult.err || "Failed to retrieve profile.",
-              );
-            }
+            navigate("/create-profile");
           }
         } catch (error) {
           console.error("Profile check error:", error);
@@ -119,7 +94,8 @@ export default function App() {
               disabled={isLoading}
               className={`transform rounded-lg bg-blue-600 px-8 py-3 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700 hover:shadow-xl ${
                 isLoading ? "cursor-not-allowed opacity-70" : ""
-              }`}>
+              }`}
+            >
               {isLoading ? "Connecting..." : "Retry Login"}
             </button>
           </div>
@@ -130,4 +106,3 @@ export default function App() {
     </main>
   );
 }
-

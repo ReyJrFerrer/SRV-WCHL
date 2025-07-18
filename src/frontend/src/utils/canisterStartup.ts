@@ -1,9 +1,9 @@
 // utils/canisterStartup.ts
-import authCanisterService from '../services/authCanisterService';
-import serviceCanisterService from '../services/serviceCanisterService';
-import reviewCanisterService from '../services/reviewCanisterService';
-import bookingCanisterService from '../services/bookingCanisterService';
-import reputationCanisterService from '../services/reputationCanisterService';
+import authCanisterService from "../services/authCanisterService";
+import serviceCanisterService from "../services/serviceCanisterService";
+import reviewCanisterService from "../services/reviewCanisterService";
+import bookingCanisterService from "../services/bookingCanisterService";
+import reputationCanisterService from "../services/reputationCanisterService";
 
 let isInitialized = false;
 let initializationPromise: Promise<void> | null = null;
@@ -14,12 +14,12 @@ let initializationPromise: Promise<void> | null = null;
  */
 export const initializeCanisterNetwork = async (): Promise<void> => {
   if (isInitialized) {
-    console.log('🔄 Canisters already initialized');
+    console.log("🔄 Canisters already initialized");
     return;
   }
 
   if (initializationPromise) {
-    console.log('🔄 Initialization already in progress, waiting...');
+    console.log("🔄 Initialization already in progress, waiting...");
     return initializationPromise;
   }
 
@@ -28,8 +28,8 @@ export const initializeCanisterNetwork = async (): Promise<void> => {
 };
 
 async function performInitialization(): Promise<void> {
-  console.log('🚀 Initializing canister network...');
-  
+  console.log("🚀 Initializing canister network...");
+
   try {
     const config = {
       authCanisterId: process.env.NEXT_PUBLIC_AUTH_CANISTER_ID!,
@@ -40,8 +40,14 @@ async function performInitialization(): Promise<void> {
     };
 
     // Validate required environment variables
-    if (!config.authCanisterId || !config.bookingCanisterId || !config.serviceCanisterId || !config.reviewCanisterId || !config.reputationCanisterId) {
-      throw new Error('Missing required canister IDs in environment variables');
+    if (
+      !config.authCanisterId ||
+      !config.bookingCanisterId ||
+      !config.serviceCanisterId ||
+      !config.reviewCanisterId ||
+      !config.reputationCanisterId
+    ) {
+      throw new Error("Missing required canister IDs in environment variables");
     }
 
     // Set canister references in parallel
@@ -50,28 +56,26 @@ async function performInitialization(): Promise<void> {
         config.bookingCanisterId,
         config.serviceCanisterId,
         config.reputationCanisterId,
-        config.authCanisterId
+        config.authCanisterId,
       ),
       serviceCanisterService.setCanisterReferences(
         config.authCanisterId,
         config.bookingCanisterId,
         config.reviewCanisterId,
-        config.reputationCanisterId
+        config.reputationCanisterId,
       ),
-      authCanisterService.setCanisterReferences(
-        config.reputationCanisterId
-      ),
+      authCanisterService.setCanisterReferences(config.reputationCanisterId),
       bookingCanisterService.setCanisterReferences(
         config.authCanisterId,
         config.serviceCanisterId,
         config.reviewCanisterId,
-        config.reputationCanisterId 
+        config.reputationCanisterId,
       ),
       reputationCanisterService.setCanisterReferences(
         config.authCanisterId,
         config.bookingCanisterId,
         config.reviewCanisterId,
-        config.serviceCanisterId
+        config.serviceCanisterId,
       ),
     ]);
 
@@ -82,19 +86,21 @@ async function performInitialization(): Promise<void> {
     ]);
 
     isInitialized = true;
-    console.log('✅ Canister network initialized successfully');
+    console.log("✅ Canister network initialized successfully");
   } catch (error) {
-    console.error('❌ Failed to initialize canister network:', error);
-    
+    console.error("❌ Failed to initialize canister network:", error);
+
     // Reset for retry
     isInitialized = false;
     initializationPromise = null;
-    
+
     // Only throw in development, in production we'll try to continue
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       throw error;
     } else {
-      console.warn('⚠️ Continuing without full canister initialization in production');
+      console.warn(
+        "⚠️ Continuing without full canister initialization in production",
+      );
     }
   }
 }

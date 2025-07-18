@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react'; 
-import Head from 'next/head';
-import SPHeaderNextjs from '@app/components/provider/SPHeaderNextjs';
-import ProviderStatsNextjs from '@app/components/provider/ProviderStatsNextjs';
-import BookingRequestsNextjs from '@app/components/provider/BookingRequestsNextjs';
-import ServiceManagementNextjs from '@app/components/provider/ServiceManagementNextjs';
-import CredentialsDisplayNextjs from '@app/components/provider/CredentialsDisplayNextjs';
-import BottomNavigationNextjs from '@app/components/provider/BottomNavigationNextjs';
-import { useServiceManagement } from '@app/hooks/serviceManagement';
-import { useProviderBookingManagement } from '@app/hooks/useProviderBookingManagement';
+import React, { useState, useEffect, useMemo } from "react";
+import Head from "next/head";
+import SPHeaderNextjs from "../../components/provider/SPHeaderNextjs";
+import ProviderStatsNextjs from "../../components/provider/ProviderStatsNextjs";
+import BookingRequestsNextjs from "../../components/provider/BookingRequestsNextjs";
+import ServiceManagementNextjs from "../../components/provider/ServiceManagementNextjs";
+import CredentialsDisplayNextjs from "../../components/provider/CredentialsDisplayNextjs";
+import BottomNavigationNextjs from "../../components/provider/BottomNavigationNextjs";
+import { useServiceManagement } from "../../hooks/serviceManagement";
+import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
 interface ProviderHomePageProps {
   // Props if needed
@@ -25,7 +25,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     loading: servicesLoading,
     error: servicesError,
     refreshServices,
-    isUserAuthenticated
+    isUserAuthenticated,
   } = useServiceManagement();
 
   // Use the provider booking management hook
@@ -36,7 +36,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     getPendingBookings,
     getUpcomingBookings,
     refreshBookings,
-    isProviderAuthenticated
+    isProviderAuthenticated,
   } = useProviderBookingManagement();
 
   // Provider stats state
@@ -44,44 +44,42 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     totalServices: 0,
     activeServices: 0,
     totalBookings: 0,
-    averageRating: 0
+    averageRating: 0,
   });
 
   // Only create a legacy provider object for components that still need the old interface
   const legacyProvider = useMemo(() => {
     if (!userProfile) return null;
-    
-    const nameParts = userProfile.name.split(' ');
-    
+
+    const nameParts = userProfile.name.split(" ");
+
     return {
       id: userProfile.id,
       name: userProfile.name,
-      firstName: nameParts[0] || '',
-      lastName: nameParts.slice(1).join(' ') || '',
+      firstName: nameParts[0] || "",
+      lastName: nameParts.slice(1).join(" ") || "",
       email: userProfile.email,
-      phone: userProfile.phone || '',
-      profilePicture: userProfile.profilePicture || '',
+      phone: userProfile.phone || "",
+      profilePicture: userProfile.profilePicture || "",
       isVerified: userProfile.isVerified || false,
       rating: 0,
       totalReviews: 0,
       joinDate: userProfile.createdAt || new Date().toISOString(),
       servicesOffered: [],
       credentials: [],
-      isActive: true
+      isActive: true,
     };
   }, [userProfile]);
 
   useEffect(() => {
     const loadProviderData = async () => {
       try {
-
         // Check authentication first
         if (!isUserAuthenticated()) {
-          
           // Retry authentication check up to 3 times with delays
           if (initializationAttempts < 3) {
             setTimeout(() => {
-              setInitializationAttempts(prev => prev + 1);
+              setInitializationAttempts((prev) => prev + 1);
             }, 1000);
             return;
           } else {
@@ -96,10 +94,8 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
         // Load provider stats
         const stats = await getProviderStats();
         setProviderStats(stats);
-        
-
       } catch (error) {
-        console.error('Error loading provider data:', error);
+        console.error("Error loading provider data:", error);
       } finally {
         setPageLoading(false);
       }
@@ -112,7 +108,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
   const bookingCounts = useMemo(() => {
     const pendingBookings = getPendingBookings();
     const upcomingBookings = getUpcomingBookings();
-    
+
     const pendingCount = pendingBookings.length;
     const upcomingCount = upcomingBookings.length;
 
@@ -126,12 +122,12 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
   // Show loading state while authentication is being established
   if (pageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
         <p className="ml-3 text-gray-700">
-          {initializationAttempts > 0 
+          {initializationAttempts > 0
             ? `Establishing connection... (${initializationAttempts}/3)`
-            : 'Loading Provider Dashboard...'}
+            : "Loading Provider Dashboard..."}
         </p>
       </div>
     );
@@ -140,20 +136,22 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
   // Show error state if authentication failed after retries
   if (!isUserAuthenticated()) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Authentication Required</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="mb-4 text-2xl font-bold text-gray-800">
+            Authentication Required
+          </h1>
+          <p className="mb-6 text-gray-600">
             Please log in to access your provider dashboard.
           </p>
           {hasError && (
-            <p className="text-red-600 text-sm mb-4">
+            <p className="mb-4 text-sm text-red-600">
               Error: {servicesError || bookingsError}
             </p>
           )}
-          <button 
+          <button
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
           >
             Retry
           </button>
@@ -166,41 +164,38 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     <>
       <Head>
         <title>Provider Dashboard | SRV-ICP</title>
-        <meta name="description" content="Manage your services, bookings, and earnings" />
-      </Head>
-      
-      <div className="pb-20 bg-gray-50 min-h-screen">
-        {/* Use userProfile directly for SPHeaderNextjs */}
-        <SPHeaderNextjs 
-          provider={userProfile} 
-          notificationCount={bookingCounts.pendingCount} 
+        <meta
+          name="description"
+          content="Manage your services, bookings, and earnings"
         />
-        
-        <div className="p-4 max-w-7xl mx-auto"> 
+      </Head>
+
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* Use userProfile directly for SPHeaderNextjs */}
+        <SPHeaderNextjs
+          provider={userProfile}
+          notificationCount={bookingCounts.pendingCount}
+        />
+
+        <div className="mx-auto max-w-7xl p-4">
           {/* Use legacyProvider for components that still need the old interface */}
-          {legacyProvider && (
-            <ProviderStatsNextjs 
-              loading={isDataLoading}
-            />
-          )}
-          
-          <BookingRequestsNextjs 
+          {legacyProvider && <ProviderStatsNextjs loading={isDataLoading} />}
+
+          <BookingRequestsNextjs
             pendingRequests={bookingCounts.pendingCount}
             upcomingJobs={bookingCounts.upcomingCount}
           />
-          
-          <ServiceManagementNextjs 
+
+          <ServiceManagementNextjs
             services={userServices}
             loading={servicesLoading}
             error={servicesError}
             onRefresh={refreshServices}
           />
 
-          {userProfile && (
-            <CredentialsDisplayNextjs provider={userProfile} />
-          )}
+          {userProfile && <CredentialsDisplayNextjs provider={userProfile} />}
         </div>
-        
+
         <BottomNavigationNextjs />
       </div>
     </>
