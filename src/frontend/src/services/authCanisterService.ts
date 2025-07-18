@@ -35,8 +35,11 @@ const createAuthActor = (identity?: Identity | null): AuthService => {
   return createActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,
-      host: process.env.DFX_NETWORK !== "ic" ? "http://localhost:4943" : "https://ic0.app",
-    }
+      host:
+        process.env.DFX_NETWORK !== "ic"
+          ? "http://localhost:4943"
+          : "https://ic0.app",
+    },
   }) as AuthService;
 };
 
@@ -46,7 +49,9 @@ export const authCanisterService = {
    * Get all service providers from the auth canister
    * @param identity The user's identity from AuthContext
    */
-  async getAllServiceProviders(identity?: Identity | null): Promise<FrontendProfile[]> {
+  async getAllServiceProviders(
+    identity?: Identity | null,
+  ): Promise<FrontendProfile[]> {
     try {
       const actor = createAuthActor(identity);
       const profiles = await actor.getAllServiceProviders();
@@ -64,7 +69,10 @@ export const authCanisterService = {
    * @param userId The principal ID of the user to fetch
    * @param identity The user's identity from AuthContext
    */
-  async getProfile(userId: string, identity?: Identity | null): Promise<FrontendProfile | null> {
+  async getProfile(
+    userId: string,
+    identity?: Identity | null,
+  ): Promise<FrontendProfile | null> {
     try {
       const actor = createAuthActor(identity);
 
@@ -224,7 +232,7 @@ export const authCanisterService = {
     try {
       // Use admin agent for setup operations
       const agent = await getAdminHttpAgent();
-      
+
       // Use the imported createActor with admin agent
       const adminActor = createActor(canisterId, {
         agent,

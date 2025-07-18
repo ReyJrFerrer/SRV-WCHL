@@ -199,7 +199,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         // Reset state when navigating away
         hasLoadedSuccessfully.current = false;
         currentServiceId.current = null;
-        router.push("/provider/services");
+        navigate("/provider/services");
       } catch (error) {
         console.error("Failed to delete service:", error);
         alert("Failed to delete service. Please try again.");

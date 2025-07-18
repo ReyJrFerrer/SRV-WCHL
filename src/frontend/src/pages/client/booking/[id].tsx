@@ -25,7 +25,6 @@ import { reviewCanisterService } from "../../../services/reviewCanisterService";
 import { authCanisterService } from "../../../services/authCanisterService"; // ✅ Add this import
 import BottomNavigationNextjs from "../../../components/client/BottomNavigationNextjs";
 
-
 // Import BookingStatus from the hook's types if it's exported, or define it locally
 type BookingStatus =
   | "Requested"

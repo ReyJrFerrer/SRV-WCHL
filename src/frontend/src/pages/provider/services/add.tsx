@@ -1,7 +1,7 @@
 // SRV-ICP-ver2-jdMain/frontend/src/pages/provider/services/add.tsx
 import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import Head from "next/head";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   PlusCircleIcon,
@@ -101,7 +101,7 @@ const initialServiceState = {
 };
 
 const AddServicePage: React.FC = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { isAuthenticated, currentIdentity } = useAuth();
 
   // Initialize service management hook
@@ -683,7 +683,7 @@ const AddServicePage: React.FC = () => {
 
         setTimeout(() => {
           setSuccessMessage(null);
-          router.push("/provider/home");
+          navigate("/provider/home");
         }, 2500);
       }
     } catch (err) {

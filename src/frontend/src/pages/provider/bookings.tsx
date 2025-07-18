@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import { useNavigate} from "react-router-dom";
 import BottomNavigation from "../../components/provider/BottomNavigationNextjs";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
 import {
@@ -23,8 +22,8 @@ const TAB_ITEMS: BookingStatusTab[] = [
 ];
 
 const ProviderBookingsPage: React.FC = () => {
-  const router = useRouter();
-  const { tab: queryTab } = router.query;
+  const navigate = useNavigate();
+  const { tab: queryTab } = navigate.query;
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("Pending");
 
@@ -103,7 +102,7 @@ const ProviderBookingsPage: React.FC = () => {
             magpatuloy
           </p>
           <button
-            onClick={() => router.push("/provider/login")}
+            onClick={() => navigate("/provider/login")}
             className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
           >
             Balik sa Login
@@ -136,7 +135,7 @@ const ProviderBookingsPage: React.FC = () => {
           <p className="mb-4 text-gray-600">{error}</p>
           <div className="space-x-3">
             <button
-              onClick={() => router.push("/provider/dashboard")}
+              onClick={() => navigate("/provider/dashboard")}
               className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
             >
               Balik sa Dashboard
@@ -155,10 +154,6 @@ const ProviderBookingsPage: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <title>My Bookings | SRV Provider</title>
-        <meta name="description" content="Manage your service bookings" />
-      </Head>
       <div className="flex min-h-screen flex-col bg-gray-100">
         {/* Error Display */}
         {error && (
@@ -249,7 +244,7 @@ const ProviderBookingsPage: React.FC = () => {
                       activeTab === "InProgress" &&
                       booking.status === "InProgress"
                     ) {
-                      router.push(`/provider/active-service/${booking.id}`);
+                      navigate(`/provider/active-service/${booking.id}`);
                     }
                   }}
                   className={`w-full ${activeTab === "InProgress" ? "cursor-pointer transition-shadow hover:shadow-lg" : ""}`}

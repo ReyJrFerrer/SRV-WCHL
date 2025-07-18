@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import Head from "next/head";
 import SPHeaderNextjs from "../../components/provider/SPHeaderNextjs";
 import ProviderStatsNextjs from "../../components/provider/ProviderStatsNextjs";
 import BookingRequestsNextjs from "../../components/provider/BookingRequestsNextjs";
@@ -58,7 +57,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
       name: userProfile.name,
       firstName: nameParts[0] || "",
       lastName: nameParts.slice(1).join(" ") || "",
-      email: userProfile.email,
       phone: userProfile.phone || "",
       profilePicture: userProfile.profilePicture || "",
       isVerified: userProfile.isVerified || false,
@@ -162,14 +160,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
 
   return (
     <>
-      <Head>
-        <title>Provider Dashboard | SRV-ICP</title>
-        <meta
-          name="description"
-          content="Manage your services, bookings, and earnings"
-        />
-      </Head>
-
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Use userProfile directly for SPHeaderNextjs */}
         <SPHeaderNextjs

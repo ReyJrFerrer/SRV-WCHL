@@ -6,8 +6,6 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
 import {
   ArrowLeftIcon,
   CheckCircleIcon,
@@ -38,6 +36,7 @@ import {
 
 // Import AvailabilityConfiguration component
 import AvailabilityConfiguration from "../../../../components/provider/AvailabilityConfiguration";
+import { useNavigate } from "react-router-dom";
 
 // Interfaces for form data (same as add.tsx)
 interface TimeSlotUIData {
@@ -259,7 +258,7 @@ const convertBackendSlotsToUI = (
 };
 
 const EditServicePage: React.FC = () => {
-  const router = useRouter();
+  const navigate= useNavigate();;
   const { id } = router.query; // Changed from slug to id
   const { isAuthenticated, currentIdentity } = useAuth();
 
@@ -856,7 +855,7 @@ const EditServicePage: React.FC = () => {
       setSuccessMessage("Service updated successfully!");
       setTimeout(() => {
         setSuccessMessage(null);
-        router.push("/provider/services");
+        navigate("/provider/services");
       }, 2500);
     } catch (err) {
       console.error("Failed to update service:", err);
@@ -944,7 +943,7 @@ const EditServicePage: React.FC = () => {
               Try Again
             </button>
             <button
-              onClick={() => router.push("/provider/services")}
+              onClick={() => navigate("/provider/services")}
               className="rounded-md bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
             >
               Back to Services
@@ -975,7 +974,7 @@ const EditServicePage: React.FC = () => {
             The service you're looking for doesn't exist or has been removed.
           </p>
           <button
-            onClick={() => router.push("/provider/services")}
+            onClick={() => navigate("/provider/services")}
             className="rounded-md bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
           >
             Back to Services
@@ -987,20 +986,11 @@ const EditServicePage: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <title>
-          SRV | Edit Service: {formData.serviceOfferingTitle || "Loading..."}
-        </title>
-        <meta
-          name="description"
-          content={`Edit details for service: ${formData.serviceOfferingTitle}`}
-        />
-      </Head>
       <div className="flex min-h-screen flex-col bg-gray-100">
         <header className="sticky top-0 z-20 bg-white shadow-sm">
           <div className="container mx-auto flex items-center px-4 py-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => navigate}
               className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
               aria-label="Go back"
             >

@@ -1,5 +1,5 @@
 import React, { useState, FormEvent, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import { useAuth, useClient } from "../context/AuthContext"; // Import useClient
 
 import {
@@ -16,7 +16,7 @@ import { idlFactory } from "../../../declarations/auth/auth.did.js";
 import type { Profile, Result } from "../../../declarations/auth/auth.did.js";
 
 export default function CreateProfilePage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { isAuthenticated, currentIdentity } = useAuth();
   const client = useClient(); // Initialize the bundly client
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +32,8 @@ export default function CreateProfilePage() {
   });
   const [reauthRequired, setReauthRequired] = useState(false);
 
-  // Setting document title 
-    // Set document title using React 19 approach
+  // Setting document title
+  // Set document title using React 19 approach
   useEffect(() => {
     document.title = "description";
     // You could add a meta description here too if needed
@@ -43,12 +43,11 @@ export default function CreateProfilePage() {
     // }
   }, []);
 
-
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isAuthenticated) {
         console.warn("Not authenticated, redirecting to login...");
-        router.push("/client");
+        navigate("/client");
       } else {
         setReauthRequired(false);
         setError(null);
@@ -56,7 +55,7 @@ export default function CreateProfilePage() {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -149,7 +148,7 @@ export default function CreateProfilePage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push(
+        navigate(
           selectedRole === "Client" ? "/client/home" : "/provider/home",
         );
       }, 2000);
@@ -169,8 +168,8 @@ export default function CreateProfilePage() {
       setIsLoading(false);
     }
   };
-
-  if (!isAuthenticated && !router.isReady) {
+  //TODO: Fix the isReady
+  if (!isAuthenticated && !navigate.isReady) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 text-center">
         <div className="mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>

@@ -1,5 +1,5 @@
 // ICP Client Utility for Authentication
-import { HttpAgent, Identity } from '@dfinity/agent';
+import { HttpAgent, Identity } from "@dfinity/agent";
 
 // Global variables to store the current authentication state
 let currentIdentity: Identity | null = null;
@@ -34,10 +34,10 @@ export const initializeIdentity = async (): Promise<void> => {
   // Try to get identity from your auth context/provider
   // This will depend on your authentication setup (ICP Connect, Internet Identity, etc.)
   // You might need to access your auth context here
-  
+
   // For now, we'll mark as initialized to prevent infinite loops
   identityInitialized = true;
-  
+
   // If you're using ICP Connect or similar, you would do something like:
   // const authClient = await AuthClient.create();
   // const identity = authClient.getIdentity();
@@ -52,25 +52,27 @@ export const initializeIdentity = async (): Promise<void> => {
 export const getHttpAgent = async (): Promise<HttpAgent> => {
   // Initialize identity if not already done
   await initializeIdentity();
-  
+
   if (!httpAgent) {
     // Check if we're in development or production
-    const isDevelopment = process.env.NODE_ENV === 'development' || 
-                         process.env.NEXT_PUBLIC_IC_HOST?.includes('localhost');
-    
+    const isDevelopment =
+      process.env.NODE_ENV === "development" ||
+      process.env.NEXT_PUBLIC_IC_HOST?.includes("localhost");
+
     // Create agent with current identity if available
     const agentOptions: any = {
-      host: isDevelopment 
-        ? 'http://localhost:4943' 
-        : 'https://ic0.app',
+      host: isDevelopment ? "http://localhost:4943" : "https://ic0.app",
     };
 
     // Add identity if authenticated
     if (currentIdentity) {
       agentOptions.identity = currentIdentity;
-      console.log('Creating HTTP agent with authenticated identity:', currentIdentity.getPrincipal().toString());
+      console.log(
+        "Creating HTTP agent with authenticated identity:",
+        currentIdentity.getPrincipal().toString(),
+      );
     } else {
-      console.log('Creating HTTP agent with anonymous identity');
+      console.log("Creating HTTP agent with anonymous identity");
     }
 
     httpAgent = new HttpAgent(agentOptions);
@@ -79,18 +81,20 @@ export const getHttpAgent = async (): Promise<HttpAgent> => {
     if (isDevelopment) {
       try {
         await httpAgent.fetchRootKey();
-        console.log('Root key fetched successfully for development');
+        console.log("Root key fetched successfully for development");
       } catch (error) {
-        console.warn('Failed to fetch root key:', error);
-        throw new Error('Failed to initialize HTTP agent for local development');
+        console.warn("Failed to fetch root key:", error);
+        throw new Error(
+          "Failed to initialize HTTP agent for local development",
+        );
       }
     }
   }
-  
+
   if (!httpAgent) {
-    throw new Error('HTTP agent initialization failed');
+    throw new Error("HTTP agent initialization failed");
   }
-  
+
   return httpAgent;
 };
 
@@ -99,13 +103,12 @@ export const getHttpAgent = async (): Promise<HttpAgent> => {
  * Use this only for initial setup operations
  */
 export const getAdminHttpAgent = async (): Promise<HttpAgent> => {
-  const isDevelopment = process.env.NODE_ENV === 'development' || 
-                       process.env.NEXT_PUBLIC_IC_HOST?.includes('localhost');
-  
+  const isDevelopment =
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_IC_HOST?.includes("localhost");
+
   const adminAgent = new HttpAgent({
-    host: isDevelopment 
-      ? 'http://localhost:4943' 
-      : 'https://ic0.app',
+    host: isDevelopment ? "http://localhost:4943" : "https://ic0.app",
   });
 
   // Fetch root key for local development
@@ -113,11 +116,13 @@ export const getAdminHttpAgent = async (): Promise<HttpAgent> => {
     try {
       await adminAgent.fetchRootKey();
     } catch (error) {
-      console.warn('Failed to fetch root key for admin agent:', error);
-      throw new Error('Failed to initialize admin HTTP agent for local development');
+      console.warn("Failed to fetch root key for admin agent:", error);
+      throw new Error(
+        "Failed to initialize admin HTTP agent for local development",
+      );
     }
   }
-  
+
   return adminAgent;
 };
 
@@ -135,24 +140,24 @@ export const resetAgent = () => {
  */
 export const logout = (): string | null => {
   let principalId = null;
-  
+
   // Get the principal ID before clearing identity
-  if (currentIdentity && typeof currentIdentity.getPrincipal === 'function') {
+  if (currentIdentity && typeof currentIdentity.getPrincipal === "function") {
     try {
       principalId = currentIdentity.getPrincipal().toString();
-      console.log('Logging out user with principal:', principalId);
+      console.log("Logging out user with principal:", principalId);
     } catch (error) {
-      console.warn('Could not get principal ID during logout:', error);
+      console.warn("Could not get principal ID during logout:", error);
     }
   }
-  
+
   // Clear the current identity
   currentIdentity = null;
-  
+
   // Reset agent and initialization state
   resetAgent();
-  
-  console.log('User logged out successfully');
+
+  console.log("User logged out successfully");
   return principalId;
 };
 
@@ -163,16 +168,18 @@ export const clearAuthState = () => {
   currentIdentity = null;
   httpAgent = null;
   identityInitialized = false;
-  console.log('All authentication state cleared');
+  console.log("All authentication state cleared");
 };
 
 /**
  * Check if user is currently authenticated
  */
 export const isAuthenticated = (): boolean => {
-  return currentIdentity !== null && 
-         typeof currentIdentity.getPrincipal === 'function' &&
-         !currentIdentity.getPrincipal().isAnonymous();
+  return (
+    currentIdentity !== null &&
+    typeof currentIdentity.getPrincipal === "function" &&
+    !currentIdentity.getPrincipal().isAnonymous()
+  );
 };
 
 /**
