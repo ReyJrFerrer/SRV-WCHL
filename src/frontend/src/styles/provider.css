@@ -1,0 +1,117 @@
+/* Provider module specific styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Header styles */
+  .provider-header {
+    @apply bg-white shadow-md p-4 rounded-b-lg;
+  }
+
+  .location-badge {
+    @apply flex items-center text-gray-700 bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors;
+  }
+
+  .welcome-section {
+    @apply mt-3;
+  }
+
+  /* Dashboard stat cards */
+  .stats-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6;
+  }
+
+  .stat-card {
+    @apply flex items-center p-4 bg-white rounded-lg shadow-md overflow-hidden;
+  }
+
+  .stat-icon {
+    @apply p-3 rounded-full mr-4 flex-shrink-0;
+  }
+
+  /* Booking section */
+  .booking-cards {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4 my-6;
+  }
+
+  .booking-card {
+    @apply flex flex-col p-5 rounded-lg shadow-md;
+  }
+
+  .booking-card-header {
+    @apply flex justify-between items-center mb-3;
+  }
+
+  /* Services section */
+  .services-section {
+    @apply my-6;
+  }
+
+  .section-header {
+    @apply flex justify-between items-center mb-4;
+  }
+
+  .add-button {
+    @apply bg-teal-500 text-white p-2 rounded-full hover:bg-teal-600 transition-colors;
+  }
+
+  .service-card {
+    @apply bg-white p-4 rounded-lg shadow-md my-2;
+  }
+
+  .service-status {
+    @apply flex items-center;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full mr-2;
+  }
+
+  /* Availability section */
+  .availability-section {
+    @apply my-6;
+  }
+
+  .day-item {
+    @apply flex justify-between items-center p-3 border-b border-gray-200;
+  }
+
+  .day-status {
+    @apply flex items-center;
+  }
+
+  .vacation-button {
+    @apply bg-orange-500 text-white flex items-center justify-center p-3 rounded-lg mt-4 hover:bg-orange-600 transition-colors;
+  }
+
+  /* Credentials section */
+  .credentials-section {
+    @apply my-6;
+  }
+
+  .credential-card {
+    @apply bg-white p-4 rounded-lg shadow-md my-2;
+  }
+
+  .verification-badges {
+    @apply flex flex-wrap gap-2 mb-4;
+  }
+
+  .verification-badge {
+    @apply flex items-center bg-gray-100 px-3 py-1 rounded-full;
+  }
+
+  /* Bottom Navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-blue-900 text-white flex justify-around items-center p-3 z-10;
+  }
+
+  .nav-item {
+    @apply flex flex-col items-center justify-center;
+  }
+
+  .nav-item.active {
+    @apply text-teal-400;
+  }
+}

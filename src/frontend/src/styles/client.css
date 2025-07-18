@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .service-card {
+    @apply relative bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:transform hover:scale-105;
+  }
+  
+  .service-image {
+    @apply w-full h-48 object-cover;
+  }
+  
+  .service-content {
+    @apply p-4 flex flex-col h-full;
+  }
+  
+  .category-icon {
+    @apply flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-700 mx-auto mb-2;
+  }
+
+  .search-bar {
+    @apply flex items-center w-full px-4 py-2 bg-gray-100 rounded-full shadow-sm;
+  }
+  
+  .bottom-sheet {
+    @apply fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-lg transform transition-transform duration-300 ease-in-out z-50;
+  }
+  
+  .bottom-sheet-handle {
+    @apply w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-3;
+  }
+  
+  .location-badge {
+    @apply flex items-center text-green-700 font-medium;
+  }
+}

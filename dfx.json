@@ -8,6 +8,22 @@
       "type": "motoko",
       "main": "src/backend/function/auth.mo"
     },
+    "booking": {
+      "type": "motoko",
+      "main": "src/backend/function/booking.mo"
+    },
+    "reputation": {
+      "type": "motoko",
+      "main": "src/backend/function/reputation.mo"
+    },
+    "review": {
+      "type": "motoko",
+      "main": "src/backend/function/review.mo"
+    },
+    "service": {
+      "type": "motoko",
+      "main": "src/backend/function/service.mo"
+    },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "type": "custom",
@@ -20,12 +36,12 @@
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
     },
     "backend": {
-      "dependencies": ["llm", "auth"],
+      "dependencies": ["llm", "auth", "booking", "reputation", "review", "service"],
       "type": "motoko",
       "main": "src/backend/main.mo"
     },
     "frontend": {
-      "dependencies": ["backend", "auth"],
+      "dependencies": ["backend", "auth", "internet_identity", "booking", "reputation", "review", "service"],
       "type": "assets",
       "source": ["src/frontend/dist/"]
     }
