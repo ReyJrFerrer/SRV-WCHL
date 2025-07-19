@@ -1,54 +1,9 @@
 import { Principal } from "@dfinity/principal";
-import { Actor } from "@dfinity/agent";
-
-// Import the generated interface and factory
-import { _SERVICE as ReputationService } from "../../../declarations/reputation/reputation.did";
-import { idlFactory } from "../../../declarations/reputation/reputation.did.js";
-import { getHttpAgent } from "../utils/icpClient";
-
-// Use environment variable directly with fallback
-const REPUTATION_CANISTER_ID =
-  process.env.NEXT_PUBLIC_REPUTATION_CANISTER_ID ||
-  "rdmx6-jaaaa-aaaaa-aaadq-cai";
+import { canisterId, createActor } from "../../../declarations/reputation";
+import { getAdminHttpAgent } from "../utils/icpClient";
+import type { _SERVICE as ReputationService } from "../../../declarations/reputation/reputation.did";
 
 class ReputationCanisterService {
-  private actor: ReputationService | null = null;
-
-  constructor() {
-    this.initializeActor();
-  }
-
-  private async initializeActor() {
-    try {
-      if (!REPUTATION_CANISTER_ID) {
-        throw new Error("Reputation canister ID is not configured");
-      }
-
-      const agent = await getHttpAgent();
-
-      this.actor = Actor.createActor(idlFactory, {
-        agent,
-        canisterId: REPUTATION_CANISTER_ID,
-      }) as ReputationService;
-    } catch (error) {
-      console.error(
-        "❌ Failed to initialize reputation canister actor:",
-        error,
-      );
-    }
-  }
-
-  private async getActor(): Promise<ReputationService> {
-    if (!this.actor) {
-      await this.initializeActor();
-    }
-
-    if (!this.actor) {
-      throw new Error("Failed to initialize reputation canister actor");
-    }
-
-    return this.actor;
-  }
 
   // Set canister references - this is the main function needed
   async setCanisterReferences(
@@ -58,9 +13,15 @@ class ReputationCanisterService {
     serviceCanisterId: string,
   ): Promise<void> {
     try {
-      const actor = await this.getActor();
+      // Use admin agent for setup operations
+      const agent = await getAdminHttpAgent();
 
-      const result = await actor.setCanisterReferences(
+      // Use the imported createActor with admin agent
+      const adminActor = createActor(canisterId, {
+        agent,
+      }) as ReputationService;
+
+      const result = await adminActor.setCanisterReferences(
         Principal.fromText(authCanisterId),
         Principal.fromText(bookingCanisterId),
         Principal.fromText(reviewCanisterId),

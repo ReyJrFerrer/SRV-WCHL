@@ -990,7 +990,7 @@ const EditServicePage: React.FC = () => {
         <header className="sticky top-0 z-20 bg-white shadow-sm">
           <div className="container mx-auto flex items-center px-4 py-3">
             <button
-              onClick={() => navigate}
+              onClick={() => navigate.back()}
               className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
               aria-label="Go back"
             >

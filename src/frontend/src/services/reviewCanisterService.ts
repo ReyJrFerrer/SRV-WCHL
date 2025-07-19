@@ -1,35 +1,40 @@
 // Review Canister Service
-import { Actor } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory, canisterId } from "../../../declarations/review";
-import { getHttpAgent, getAdminHttpAgent } from "../utils/icpClient";
+import { canisterId, createActor as createReviewActor } from "../../../declarations/review";
+import { getAdminHttpAgent } from "../utils/icpClient";
+import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as ReviewService,
   Review as CanisterReview,
-  ReviewStatus,
-  Result,
-  Result_1,
-  Result_2,
-  Result_3,
-  Time,
 } from "../../../declarations/review/review.did";
 
-// Canister configuration
-const REVIEW_CANISTER_ID =
-  canisterId ||
-  process.env.NEXT_PUBLIC_REVIEW_CANISTER_ID ||
-  "rkp4c-7iaaa-aaaaa-aaaca-cai";
+/**
+ * Creates a review actor with the provided identity
+ * @param identity The user's identity from AuthContext
+ * @returns An authenticated ReviewService actor
+ */
+const createReviewActorWithIdentity = (identity?: Identity | null): ReviewService => {
+  return createReviewActor(canisterId, {
+    agentOptions: {
+      identity: identity || undefined,
+      host:
+        process.env.DFX_NETWORK !== "ic"
+          ? "http://localhost:4943"
+          : "https://ic0.app",
+    },
+  }) as ReviewService;
+};
 
-// Create actor
+// Singleton actor instance
 let reviewActor: ReviewService | null = null;
 
+/**
+ * Get or create the review actor instance
+ * @returns The review service actor
+ */
 const getReviewActor = async (): Promise<ReviewService> => {
   if (!reviewActor) {
-    const agent = await getHttpAgent();
-    reviewActor = Actor.createActor(idlFactory, {
-      agent: agent,
-      canisterId: REVIEW_CANISTER_ID,
-    }) as ReviewService;
+    reviewActor = createReviewActorWithIdentity();
   }
   return reviewActor;
 };
@@ -81,46 +86,6 @@ const convertCanisterReviewToFrontend = (
         ? Number(canisterReview.qualityScore[0])
         : undefined,
   };
-};
-
-const convertFrontendReviewToCanister = (
-  review: Partial<Review>,
-): Partial<CanisterReview> => {
-  const canisterReview: any = {};
-
-  if (review.id) canisterReview.id = review.id;
-  if (review.bookingId) canisterReview.bookingId = review.bookingId;
-  if (review.clientId)
-    canisterReview.clientId = Principal.fromText(review.clientId);
-  if (review.providerId)
-    canisterReview.providerId = Principal.fromText(review.providerId);
-  if (review.serviceId) canisterReview.serviceId = review.serviceId;
-  if (review.rating !== undefined)
-    canisterReview.rating = BigInt(review.rating);
-  if (review.comment) canisterReview.comment = review.comment;
-  if (review.createdAt)
-    canisterReview.createdAt = BigInt(review.createdAt * 1_000_000); // Convert milliseconds to nanoseconds
-  if (review.updatedAt)
-    canisterReview.updatedAt = BigInt(review.updatedAt * 1_000_000);
-  if (review.status) {
-    canisterReview.status = { [review.status]: null };
-  }
-  if (review.qualityScore !== undefined) {
-    canisterReview.qualityScore =
-      review.qualityScore !== undefined ? [review.qualityScore] : [];
-  }
-
-  return canisterReview;
-};
-
-// Create actor instance
-const createActor = async (): Promise<ReviewService> => {
-  const agent = await getHttpAgent();
-
-  return Actor.createActor(idlFactory, {
-    agent: agent,
-    canisterId: REVIEW_CANISTER_ID,
-  }) as ReviewService;
 };
 
 class ReviewCanisterService {
@@ -338,17 +303,16 @@ class ReviewCanisterService {
       // Use admin agent for setup operations
       const agent = await getAdminHttpAgent();
 
-      // Create a fresh actor instance with proper error handling
-      const actor = Actor.createActor(idlFactory, {
-        agent: agent,
-        canisterId: REVIEW_CANISTER_ID,
+      // Use the imported createActor with admin agent
+      const adminActor = createReviewActor(canisterId, {
+        agent,
       }) as ReviewService;
 
-      if (!actor) {
+      if (!adminActor) {
         throw new Error("Failed to create actor instance");
       }
 
-      const result = await actor.setCanisterReferences(
+      const result = await adminActor.setCanisterReferences(
         Principal.fromText(booking),
         Principal.fromText(service),
         Principal.fromText(reputation),
@@ -481,9 +445,6 @@ class ReviewCanisterService {
 
 // Export the class for advanced usage
 export { ReviewCanisterService };
-
-// Create a singleton instance for the default export
-const serviceInstance = new ReviewCanisterService();
 
 // Review Canister Service Functions (consistent with other services)
 export const reviewCanisterService = {
@@ -732,23 +693,22 @@ export const reviewCanisterService = {
     auth: string,
   ): Promise<string | null> {
     try {
-      // Add agent validation
-      const agent = await getHttpAgent();
+      // Use admin agent for setup operations
+      const agent = await getAdminHttpAgent();
       if (!agent) {
-        throw new Error("Failed to get HTTP agent - agent is undefined");
+        throw new Error("Failed to get admin HTTP agent - agent is undefined");
       }
 
-      // Create a fresh actor instance with proper error handling
-      const actor = Actor.createActor(idlFactory, {
-        agent: agent,
-        canisterId: REVIEW_CANISTER_ID,
+      // Use the imported createActor with admin agent
+      const adminActor = createReviewActor(canisterId, {
+        agent,
       }) as ReviewService;
 
-      if (!actor) {
+      if (!adminActor) {
         throw new Error("Failed to create actor instance");
       }
 
-      const result = await actor.setCanisterReferences(
+      const result = await adminActor.setCanisterReferences(
         Principal.fromText(booking),
         Principal.fromText(service),
         Principal.fromText(reputation),

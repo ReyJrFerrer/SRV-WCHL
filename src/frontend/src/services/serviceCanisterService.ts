@@ -1,8 +1,8 @@
 // Service Canister Service
-import { Actor } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory } from "../../../declarations/service/service.did.js";
-import { getHttpAgent, getAdminHttpAgent } from "../utils/icpClient";
+import { canisterId, createActor } from "../../../declarations/service";
+import { getAdminHttpAgent } from "../utils/icpClient";
+import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as ServiceService,
   Service as CanisterService,
@@ -15,31 +15,35 @@ import type {
   DayAvailability as CanisterDayAvailability,
   DayOfWeek as CanisterDayOfWeek,
   ServicePackage as CanisterServicePackage,
-  Time,
-  Result,
-  Result_1,
-  Result_2,
-  Result_3,
-  Result_4,
-  Result_5,
-  Result_6,
-  Result_7,
 } from "../../../declarations/service/service.did";
 
-// Canister configuration
-const SERVICE_CANISTER_ID =
-  process.env.NEXT_PUBLIC_SERVICE_CANISTER_ID || "rdmx6-jaaaa-aaaaa-aaadq-cai";
+/**
+ * Creates a service actor with the provided identity
+ * @param identity The user's identity from AuthContext
+ * @returns An authenticated ServiceService actor
+ */
+const createServiceActor = (identity?: Identity | null): ServiceService => {
+  return createActor(canisterId, {
+    agentOptions: {
+      identity: identity || undefined,
+      host:
+        process.env.DFX_NETWORK !== "ic"
+          ? "http://localhost:4943"
+          : "https://ic0.app",
+    },
+  }) as ServiceService;
+};
 
-// Create actor
+// Singleton actor instance
 let serviceActor: ServiceService | null = null;
 
+/**
+ * Get or create the service actor instance
+ * @returns The service service actor
+ */
 const getServiceActor = async (): Promise<ServiceService> => {
   if (!serviceActor) {
-    const agent = await getHttpAgent();
-    serviceActor = Actor.createActor(idlFactory, {
-      agent: agent,
-      canisterId: SERVICE_CANISTER_ID,
-    }) as ServiceService;
+    serviceActor = createServiceActor();
   }
   return serviceActor;
 };
@@ -749,12 +753,13 @@ export const serviceCanisterService = {
     try {
       // Use admin agent for setup operations
       const agent = await getAdminHttpAgent();
-      const actor = Actor.createActor(idlFactory, {
-        agent: agent,
-        canisterId: SERVICE_CANISTER_ID,
+      
+      // Use the imported createActor with admin agent
+      const adminActor = createActor(canisterId, {
+        agent,
       }) as ServiceService;
 
-      const result = await actor.setCanisterReferences(
+      const result = await adminActor.setCanisterReferences(
         authCanisterId ? [Principal.fromText(authCanisterId)] : [],
         bookingCanisterId ? [Principal.fromText(bookingCanisterId)] : [],
         reviewCanisterId ? [Principal.fromText(reviewCanisterId)] : [],

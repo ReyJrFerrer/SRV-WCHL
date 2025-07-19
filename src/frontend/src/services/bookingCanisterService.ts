@@ -1,8 +1,8 @@
 // Booking Canister Service
-import { Actor } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory } from "../../../declarations/booking/booking.did.js";
-import { getHttpAgent, getAdminHttpAgent } from "../utils/icpClient";
+import { canisterId, createActor } from "../../../declarations/booking";
+import { getAdminHttpAgent } from "../utils/icpClient";
+import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as BookingService,
   Booking as CanisterBooking,
@@ -15,23 +15,35 @@ import type {
   TimeSlot as CanisterTimeSlot,
   DayOfWeek as CanisterDayOfWeek,
   DayAvailability as CanisterDayAvailability,
-  Result_4,
 } from "../../../declarations/booking/booking.did";
 
-// Canister configuration
-const BOOKING_CANISTER_ID =
-  process.env.NEXT_PUBLIC_BOOKING_CANISTER_ID || "bkyz2-fmaaa-aaaaa-qaaaq-cai";
+/**
+ * Creates a booking actor with the provided identity
+ * @param identity The user's identity from AuthContext
+ * @returns An authenticated BookingService actor
+ */
+const createBookingActor = (identity?: Identity | null): BookingService => {
+  return createActor(canisterId, {
+    agentOptions: {
+      identity: identity || undefined,
+      host:
+        process.env.DFX_NETWORK !== "ic"
+          ? "http://localhost:4943"
+          : "https://ic0.app",
+    },
+  }) as BookingService;
+};
 
-// Create actor
+// Singleton actor instance
 let bookingActor: BookingService | null = null;
 
+/**
+ * Get or create the booking actor instance
+ * @returns The booking service actor
+ */
 const getBookingActor = async (): Promise<BookingService> => {
   if (!bookingActor) {
-    const agent = await getHttpAgent();
-    bookingActor = Actor.createActor(idlFactory, {
-      agent: agent,
-      canisterId: BOOKING_CANISTER_ID,
-    }) as BookingService;
+    bookingActor = createBookingActor();
   }
   return bookingActor;
 };
@@ -329,10 +341,6 @@ export const bookingCanisterService = {
       const actor = await getBookingActor();
       const canisterLocation = convertToCanisterLocation(location);
       const requestedTimestamp = BigInt(requestedDate.getTime() * 1000000); // Convert to nanoseconds
-
-      // Get the agent to check the principal being used
-      const agent = await getHttpAgent();
-      const principal = await agent.getPrincipal();
 
       const result = await actor.createBooking(
         serviceId,
@@ -967,12 +975,13 @@ export const bookingCanisterService = {
     try {
       // Use admin agent for setup operations
       const agent = await getAdminHttpAgent();
-      const actor = Actor.createActor(idlFactory, {
-        agent: agent,
-        canisterId: BOOKING_CANISTER_ID,
+
+      // Use the imported createActor with admin agent
+      const adminActor = createActor(canisterId, {
+        agent,
       }) as BookingService;
 
-      const result = await actor.setCanisterReferences(
+      const result = await adminActor.setCanisterReferences(
         [Principal.fromText(auth)],
         [Principal.fromText(service)],
         [Principal.fromText(review)],

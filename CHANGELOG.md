@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Decouple service canister with dedicated type system and interface definitions
 - Add profile switching functionality for seamless client/provider role transitions
 - Add enhanced security measures with user suspension, verification management, and activity tracking
+- Refactor canister services with consistent actor creation and authentication handling
 
 ### Changed
 

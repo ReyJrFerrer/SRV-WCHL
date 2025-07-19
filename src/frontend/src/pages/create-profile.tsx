@@ -148,9 +148,7 @@ export default function CreateProfilePage() {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate(
-          selectedRole === "Client" ? "/client/home" : "/provider/home",
-        );
+        navigate(selectedRole === "Client" ? "/client/home" : "/provider/home");
       }, 2000);
     } catch (err) {
       const errorMessage =
