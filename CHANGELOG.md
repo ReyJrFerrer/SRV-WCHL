@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactor profile creation page to use centralized AuthContext and authCanisterService
+- Refactor logout hook to use centralized AuthContext and React Router navigation
+
 - Refactor frontend from Next.js to React with react-router-dom for improved performance and simplified architecture
 - Update dependencies to latest versions
 - Switched the template to Motoko for writing the backend canister

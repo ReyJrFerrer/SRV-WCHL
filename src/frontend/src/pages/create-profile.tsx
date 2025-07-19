@@ -1,24 +1,19 @@
 import React, { useState, FormEvent, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, useClient } from "../context/AuthContext"; // Import useClient
-
+import { useAuth } from "../context/AuthContext";
+import { authCanisterService } from "../services/authCanisterService";
 import {
   UserIcon,
   WrenchScrewdriverIcon,
   UserPlusIcon,
-  EnvelopeIcon,
   PhoneIcon,
   ExclamationTriangleIcon,
   FingerPrintIcon,
 } from "@heroicons/react/24/outline";
-import { Actor, HttpAgent } from "@dfinity/agent";
-import { idlFactory } from "../../../declarations/auth/auth.did.js";
-import type { Profile, Result } from "../../../declarations/auth/auth.did.js";
 
 export default function CreateProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, currentIdentity } = useAuth();
-  const client = useClient(); // Initialize the bundly client
+  const { isAuthenticated, identity, login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -27,7 +22,6 @@ export default function CreateProfilePage() {
   >(null);
   const [formData, setFormData] = useState({
     name: "",
-    // email: '',
     phone: "",
   });
   const [reauthRequired, setReauthRequired] = useState(false);
@@ -67,9 +61,7 @@ export default function CreateProfilePage() {
     try {
       setIsLoading(true);
       setError("");
-      const provider = client.getProvider("internet-identity");
-      if (!provider) throw new Error("Internet Identity provider not found");
-      await provider.connect();
+      await login();
       // On success, clear the error and hide the re-auth prompt
       setReauthRequired(false);
       setError(null);
@@ -93,15 +85,12 @@ export default function CreateProfilePage() {
       setError("Please select a role.");
       return;
     }
-    // Removed email from all fields are required - rey
+    
     if (!formData.name.trim() || !formData.phone.trim()) {
       setError("All fields are required.");
       return;
     }
-    // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i;
-    // if (!emailRegex.test(formData.email.trim())) {
-    //   setError('Please enter a valid email address ending in .com.'); return;
-    // }
+    
     const phoneRegex = /^09\d{9}$/;
     if (!phoneRegex.test(formData.phone.trim())) {
       setError("Please enter a valid 11-digit phone number starting with 09.");
@@ -111,7 +100,7 @@ export default function CreateProfilePage() {
     setIsLoading(true);
     setSuccess(false);
 
-    if (!isAuthenticated || !currentIdentity) {
+    if (!isAuthenticated || !identity) {
       setError("Authentication session not found.");
       setReauthRequired(true);
       setIsLoading(false);
@@ -119,31 +108,15 @@ export default function CreateProfilePage() {
     }
 
     try {
-      const host =
-        process.env.NEXT_PUBLIC_IC_HOST_URL || "http://localhost:4943";
-      const agent = new HttpAgent({ identity: currentIdentity, host });
-
-      if (process.env.NODE_ENV === "development") await agent.fetchRootKey();
-
-      const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
-      if (!authCanisterId) throw new Error("Auth canister ID not found");
-
-      const authActor = Actor.createActor(idlFactory, {
-        agent,
-        canisterId: authCanisterId,
-      });
-
-      const result = (await authActor.createProfile(
+      const result = await authCanisterService.createProfile(
         formData.name.trim(),
-        // formData.email.trim(),
         formData.phone.trim(),
-        selectedRole === "Client"
-          ? { Client: null }
-          : { ServiceProvider: null },
-      )) as Result;
+        selectedRole,
+        identity
+      );
 
-      if ("err" in result) {
-        throw new Error(result.err || "Failed to create profile");
+      if (!result) {
+        throw new Error("Failed to create profile");
       }
 
       setSuccess(true);
@@ -153,7 +126,8 @@ export default function CreateProfilePage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An unknown error occurred.";
-      if (errorMessage.includes("Invalid delegation expiry")) {
+      if (errorMessage.includes("Invalid delegation expiry") || 
+          errorMessage.includes("Authentication required")) {
         setError(
           "Your secure session has expired for security. Please re-authenticate to continue.",
         );
@@ -167,7 +141,7 @@ export default function CreateProfilePage() {
     }
   };
   //TODO: Fix the isReady
-  if (!isAuthenticated && !navigate.isReady) {
+  if (!isAuthenticated) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 text-center">
         <div className="mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
