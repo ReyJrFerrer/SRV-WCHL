@@ -16,15 +16,15 @@ export default function App() {
   const [profileError, setProfileError] = useState<string | null>(null);
 
   // Reset auth actor when identity changes
-    // useEffect(() => {
-    //   if (identity) {
-    //     // Refresh the actor with new identity
-    //     refreshAuthActor(identity);
-    //   } else {
-    //     // Reset actor when no identity is present
-    //     resetAuthActor();
-    //   }
-    // }, [identity]);
+  // useEffect(() => {
+  //   if (identity) {
+  //     // Refresh the actor with new identity
+  //     refreshAuthActor(identity);
+  //   } else {
+  //     // Reset actor when no identity is present
+  //     resetAuthActor();
+  //   }
+  // }, [identity]);
 
   // Check profile and redirect when authenticated
   useEffect(() => {

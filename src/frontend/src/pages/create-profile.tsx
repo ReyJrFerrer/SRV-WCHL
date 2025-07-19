@@ -85,12 +85,12 @@ export default function CreateProfilePage() {
       setError("Please select a role.");
       return;
     }
-    
+
     if (!formData.name.trim() || !formData.phone.trim()) {
       setError("All fields are required.");
       return;
     }
-    
+
     const phoneRegex = /^09\d{9}$/;
     if (!phoneRegex.test(formData.phone.trim())) {
       setError("Please enter a valid 11-digit phone number starting with 09.");
@@ -112,7 +112,7 @@ export default function CreateProfilePage() {
         formData.name.trim(),
         formData.phone.trim(),
         selectedRole,
-        identity
+        identity,
       );
 
       if (!result) {
@@ -126,8 +126,10 @@ export default function CreateProfilePage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An unknown error occurred.";
-      if (errorMessage.includes("Invalid delegation expiry") || 
-          errorMessage.includes("Authentication required")) {
+      if (
+        errorMessage.includes("Invalid delegation expiry") ||
+        errorMessage.includes("Authentication required")
+      ) {
         setError(
           "Your secure session has expired for security. Please re-authenticate to continue.",
         );
