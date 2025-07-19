@@ -1,6 +1,9 @@
 // Review Canister Service
 import { Principal } from "@dfinity/principal";
-import { canisterId, createActor as createReviewActor } from "../../../declarations/review";
+import {
+  canisterId,
+  createActor as createReviewActor,
+} from "../../../declarations/review";
 import { getAdminHttpAgent } from "../utils/icpClient";
 import { Identity } from "@dfinity/agent";
 import type {
@@ -13,7 +16,9 @@ import type {
  * @param identity The user's identity from AuthContext
  * @returns An authenticated ReviewService actor
  */
-const createReviewActorWithIdentity = (identity?: Identity | null): ReviewService => {
+const createReviewActorWithIdentity = (
+  identity?: Identity | null,
+): ReviewService => {
   return createReviewActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,

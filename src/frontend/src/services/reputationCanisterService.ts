@@ -4,7 +4,6 @@ import { getAdminHttpAgent } from "../utils/icpClient";
 import type { _SERVICE as ReputationService } from "../../../declarations/reputation/reputation.did";
 
 class ReputationCanisterService {
-
   // Set canister references - this is the main function needed
   async setCanisterReferences(
     authCanisterId: string,

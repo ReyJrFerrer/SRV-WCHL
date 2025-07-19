@@ -258,7 +258,7 @@ const convertBackendSlotsToUI = (
 };
 
 const EditServicePage: React.FC = () => {
-  const navigate= useNavigate();;
+  const navigate = useNavigate();
   const { id } = router.query; // Changed from slug to id
   const { isAuthenticated, currentIdentity } = useAuth();
 

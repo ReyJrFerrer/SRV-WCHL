@@ -753,7 +753,7 @@ export const serviceCanisterService = {
     try {
       // Use admin agent for setup operations
       const agent = await getAdminHttpAgent();
-      
+
       // Use the imported createActor with admin agent
       const adminActor = createActor(canisterId, {
         agent,
