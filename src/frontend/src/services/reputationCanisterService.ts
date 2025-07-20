@@ -12,7 +12,9 @@ import type { _SERVICE as ReputationService } from "../../../declarations/reputa
  * @param identity The user's identity from AuthContext
  * @returns An authenticated ReputationService actor
  */
-const createReputationActor = (identity?: Identity | null): ReputationService => {
+const createReputationActor = (
+  identity?: Identity | null,
+): ReputationService => {
   return createActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,
@@ -43,15 +45,19 @@ export const updateReputationActor = (identity: Identity | null) => {
  * Gets the current reputation actor
  * Throws error if no authenticated identity is available for auth-required operations
  */
-const getReputationActor = (requireAuth: boolean = false): ReputationService => {
+const getReputationActor = (
+  requireAuth: boolean = false,
+): ReputationService => {
   if (requireAuth && !currentIdentity) {
-    throw new Error("Authentication required: Please log in to perform this action");
+    throw new Error(
+      "Authentication required: Please log in to perform this action",
+    );
   }
-  
+
   if (!reputationActor) {
     reputationActor = createReputationActor(currentIdentity);
   }
-  
+
   return reputationActor;
 };
 

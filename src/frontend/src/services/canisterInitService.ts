@@ -29,7 +29,7 @@ export const initializeCanisterReferences = async (): Promise<{
       task: authCanisterService.setCanisterReferences(),
     },
     {
-      name: "Booking", 
+      name: "Booking",
       task: bookingCanisterService.setCanisterReferences(),
     },
     {
@@ -58,23 +58,27 @@ export const initializeCanisterReferences = async (): Promise<{
           error instanceof Error ? error.message : "Unknown error occurred";
         console.warn(
           `⚠️ Failed to initialize ${name} canister references:`,
-          errorMessage
+          errorMessage,
         );
         return { name, success: false, error: errorMessage };
       }
-    })
+    }),
   );
 
   // Process results
-  const results = settledResults.map((result) => 
-    result.status === 'fulfilled' ? result.value : { name: 'Unknown', success: false, error: 'Promise rejected' }
+  const results = settledResults.map((result) =>
+    result.status === "fulfilled"
+      ? result.value
+      : { name: "Unknown", success: false, error: "Promise rejected" },
   );
   const overallSuccess = results.every((result) => result.success);
 
   if (overallSuccess) {
     console.log("🎉 All canister references initialized instantly!");
   } else {
-    console.warn("⚠️ Some canister references failed to initialize - check warnings above");
+    console.warn(
+      "⚠️ Some canister references failed to initialize - check warnings above",
+    );
   }
 
   return { success: overallSuccess, results };
@@ -86,7 +90,7 @@ export const initializeCanisterReferences = async (): Promise<{
  */
 export const shouldInitializeCanisters = (
   isAuthenticated: boolean,
-  identity: any
+  identity: any,
 ): boolean => {
   return isAuthenticated && identity && !identity.getPrincipal().isAnonymous();
 };

@@ -7,7 +7,10 @@ import "./src/index.css";
 // Layout Components
 import ClientLayout from "./src/components/layout/ClientLayout";
 import ProviderLayout from "./src/components/layout/ProviderLayout";
-import { ClientRedirect, ProviderRedirect } from "./src/components/layout/Redirects";
+import {
+  ClientRedirect,
+  ProviderRedirect,
+} from "./src/components/layout/Redirects";
 
 // Auth Pages
 import CreateProfile from "./src/pages/create-profile";
@@ -71,18 +74,24 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="home" element={<ClientHome />} />
             <Route path="chat" element={<ClientChat />} />
             <Route path="search-results" element={<SearchResults />} />
-            
+
             {/* Service Routes */}
             <Route path="service/view-all" element={<ClientServiceViewAll />} />
             <Route path="service/:id" element={<ClientServiceDetails />} />
-            <Route path="service/reviews/:id" element={<ClientServiceReviews />} />
-            
+            <Route
+              path="service/reviews/:id"
+              element={<ClientServiceReviews />}
+            />
+
             {/* Booking Routes */}
             <Route path="booking" element={<ClientBookingIndex />} />
             <Route path="booking/:id" element={<ClientBookingDetails />} />
-            <Route path="booking/confirmation" element={<ClientBookingConfirmation />} />
+            <Route
+              path="booking/confirmation"
+              element={<ClientBookingConfirmation />}
+            />
             <Route path="book/:id" element={<ClientBookService />} />
-            
+
             {/* Category & Review Routes */}
             <Route path="categories/:slug" element={<ClientCategory />} />
             <Route path="review/:id" element={<ClientReview />} />
@@ -93,22 +102,34 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route index element={<ProviderRedirect />} />
             <Route path="home" element={<ProviderHome />} />
             <Route path="bookings" element={<ProviderBookings />} />
-            
+
             {/* Service Management Routes */}
             <Route path="services" element={<ProviderServices />} />
             <Route path="services/add" element={<ProviderAddService />} />
             <Route path="services/edit/:id" element={<ProviderEditService />} />
-            
+
             {/* Service Details Routes */}
-            <Route path="service-details/:id" element={<ProviderServiceDetails />} />
-            <Route path="service-details/reviews/:id" element={<ProviderServiceReviews />} />
-            
+            <Route
+              path="service-details/:id"
+              element={<ProviderServiceDetails />}
+            />
+            <Route
+              path="service-details/reviews/:id"
+              element={<ProviderServiceReviews />}
+            />
+
             {/* Booking Management Routes */}
             <Route path="booking/:id" element={<ProviderBookingDetails />} />
-            <Route path="active-service/:bookingId" element={<ProviderActiveService />} />
-            <Route path="complete-service/:bookingId" element={<ProviderCompleteService />} />
+            <Route
+              path="active-service/:bookingId"
+              element={<ProviderActiveService />}
+            />
+            <Route
+              path="complete-service/:bookingId"
+              element={<ProviderCompleteService />}
+            />
             <Route path="receipt/:bookingId" element={<ProviderReceipt />} />
-            
+
             {/* Review Routes */}
             <Route path="review/:id" element={<ProviderReview />} />
           </Route>

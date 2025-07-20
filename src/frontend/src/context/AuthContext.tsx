@@ -12,9 +12,9 @@ import { updateBookingActor } from "../services/bookingCanisterService";
 import { updateServiceActor } from "../services/serviceCanisterService";
 import { updateReviewActor } from "../services/reviewCanisterService";
 import { updateReputationActor } from "../services/reputationCanisterService";
-import { 
-  initializeCanisterReferences, 
-  shouldInitializeCanisters 
+import {
+  initializeCanisterReferences,
+  shouldInitializeCanisters,
 } from "../services/canisterInitService";
 
 interface AuthContextType {
@@ -37,7 +37,10 @@ const updateAllActors = (identity: Identity | null) => {
   updateReputationActor(identity);
 };
 
-const initializeCanisters = async (isAuthenticated: boolean, identity: Identity | null) => {
+const initializeCanisters = async (
+  isAuthenticated: boolean,
+  identity: Identity | null,
+) => {
   if (shouldInitializeCanisters(isAuthenticated, identity)) {
     try {
       await initializeCanisterReferences();
@@ -137,7 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(false);
     setIdentity(null);
     // Update auth actor to anonymous
-    updateAllActors(null)
+    updateAllActors(null);
   };
 
   const value = {

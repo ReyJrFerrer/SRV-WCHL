@@ -7,7 +7,7 @@ import {
 import { canisterId as authCanisterId } from "../../../declarations/auth";
 import { canisterId as bookingCanisterId } from "../../../declarations/booking";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
-import {canisterId as serviceCanisterId} from "../../../declarations/service"
+import { canisterId as serviceCanisterId } from "../../../declarations/service";
 import { getAdminHttpAgent } from "../utils/icpClient";
 import { Identity } from "@dfinity/agent";
 import type {
@@ -55,13 +55,15 @@ export const updateReviewActor = (identity: Identity | null) => {
  */
 const getReviewActor = (requireAuth: boolean = false): ReviewService => {
   if (requireAuth && !currentIdentity) {
-    throw new Error("Authentication required: Please log in to perform this action");
+    throw new Error(
+      "Authentication required: Please log in to perform this action",
+    );
   }
-  
+
   if (!reviewActor) {
     reviewActor = createReviewActorWithIdentity(currentIdentity);
   }
-  
+
   return reviewActor;
 };
 
@@ -312,8 +314,6 @@ class ReviewCanisterService {
       throw error;
     }
   }
-
-
 
   // Initialize static reviews manually (admin function)
   async initializeStaticReviewsManually(): Promise<string> {
@@ -766,7 +766,7 @@ export const reviewCanisterService = {
       return false;
     }
   },
-    // Set canister references (admin function)
+  // Set canister references (admin function)
   async setCanisterReferences(): Promise<string | null> {
     try {
       const actor = getReviewActor(true);
@@ -789,9 +789,8 @@ export const reviewCanisterService = {
       reviewActor = null;
       throw new Error(`Failed to set canister references: ${error}`);
     }
-  }
+  },
 };
-
 
 // Reset functions for authentication state changes
 export const resetReviewActor = () => {

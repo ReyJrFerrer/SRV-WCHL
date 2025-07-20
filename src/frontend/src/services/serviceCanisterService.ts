@@ -41,7 +41,6 @@ const createServiceActor = (identity?: Identity | null): ServiceService => {
 let serviceActor: ServiceService | null = null;
 let currentIdentity: Identity | null = null;
 
-
 export const updateServiceActor = (identity: Identity | null) => {
   if (currentIdentity !== identity) {
     serviceActor = createServiceActor(identity);
@@ -51,13 +50,15 @@ export const updateServiceActor = (identity: Identity | null) => {
 
 const getServiceActor = (requireAuth: boolean = false): ServiceService => {
   if (requireAuth && !currentIdentity) {
-    throw new Error("Authentication required: Please log in to perform this action");
+    throw new Error(
+      "Authentication required: Please log in to perform this action",
+    );
   }
-  
+
   if (!serviceActor) {
     serviceActor = createServiceActor(currentIdentity);
   }
-  
+
   return serviceActor;
 };
 

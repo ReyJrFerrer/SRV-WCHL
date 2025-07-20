@@ -55,9 +55,7 @@ export const updateAuthActor = (identity: Identity | null) => {
   if (currentIdentity !== identity) {
     authActor = createAuthActor(identity);
     currentIdentity = identity;
-    
   }
-  
 };
 
 /**
@@ -66,13 +64,15 @@ export const updateAuthActor = (identity: Identity | null) => {
  */
 const getAuthActor = (requireAuth: boolean = false): AuthService => {
   if (requireAuth && !currentIdentity) {
-    throw new Error("Authentication required: Please log in to perform this action");
+    throw new Error(
+      "Authentication required: Please log in to perform this action",
+    );
   }
-  
+
   if (!authActor) {
     authActor = createAuthActor(currentIdentity);
   }
-  
+
   return authActor;
 };
 // Auth Canister Service Functions
@@ -224,7 +224,7 @@ export const authCanisterService = {
    */
   async setCanisterReferences(): Promise<string | null> {
     try {
-      const actor = getAuthActor(true)
+      const actor = getAuthActor(true);
       const result = await actor.setCanisterReferences(
         reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : [],
       );

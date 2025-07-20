@@ -1,10 +1,10 @@
 // Booking Canister Service
 import { Principal } from "@dfinity/principal";
 import { canisterId as authCanisterId } from "../../../declarations/auth";
-import { createActor,canisterId } from "../../../declarations/booking";
+import { createActor, canisterId } from "../../../declarations/booking";
 import { canisterId as reviewCanisterId } from "../../../declarations/review";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
-import {canisterId as serviceCanisterId} from "../../../declarations/service"
+import { canisterId as serviceCanisterId } from "../../../declarations/service";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as BookingService,
@@ -58,13 +58,15 @@ export const updateBookingActor = (identity: Identity | null) => {
  */
 const getBookingActor = (requireAuth: boolean = false): BookingService => {
   if (requireAuth && !currentIdentity) {
-    throw new Error("Authentication required: Please log in to perform this action");
+    throw new Error(
+      "Authentication required: Please log in to perform this action",
+    );
   }
-  
+
   if (!bookingActor) {
     bookingActor = createBookingActor(currentIdentity);
   }
-  
+
   return bookingActor;
 };
 

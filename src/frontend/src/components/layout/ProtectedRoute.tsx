@@ -8,7 +8,10 @@ interface ProtectedRouteProps {
   requiredRole?: "Client" | "ServiceProvider";
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+}: ProtectedRouteProps) {
   const { isAuthenticated, identity, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +35,8 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 
           if (profile.role !== requiredRole) {
             // Redirect to correct role's home page
-            const redirectPath = profile.role === "Client" ? "/client/home" : "/provider/home";
+            const redirectPath =
+              profile.role === "Client" ? "/client/home" : "/provider/home";
             navigate(redirectPath);
             return;
           }
