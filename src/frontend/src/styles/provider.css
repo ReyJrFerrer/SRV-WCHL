@@ -1,7 +1,7 @@
-/* Provider module specific styles */
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
+@reference "tailwindcss";
+/* Provider module specific styles */
+
 
 @layer components {
   /* Header styles */

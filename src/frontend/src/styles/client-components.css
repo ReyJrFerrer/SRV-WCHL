@@ -1,3 +1,5 @@
+@reference "tailwindcss";
+@tailwind utilities;
 /* Client Components Styles */
 .service-card {
   position: relative;
