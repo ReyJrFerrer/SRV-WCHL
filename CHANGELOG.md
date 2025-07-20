@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Replace bundly/ares-react with custom AuthContext in service management for better authentication control
 - Add set_count update method to allow setting the counter to a specific value
 - Add frontend development server scripts (`npm run start`)
 - Add LLM canister implementation

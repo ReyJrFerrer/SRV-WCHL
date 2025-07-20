@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Principal } from "@dfinity/principal";
-import { useAuth } from "@bundly/ares-react";
+import { useAuth } from "../context/AuthContext";
 import {
   Service,
   ServiceStatus,
@@ -213,8 +212,8 @@ export interface OrganizedWeeklySchedule {
 }
 
 export const useServiceManagement = (): ServiceManagementHook => {
-  // Authentication - Fixed: using currentIdentity instead of user
-  const { isAuthenticated, currentIdentity } = useAuth();
+  // Authentication - Using identity from custom AuthContext
+  const { isAuthenticated, identity } = useAuth();
 
   // Core state management
   const [services, setServices] = useState<EnhancedService[]>([]);
@@ -259,12 +258,12 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // User services filtered from all services
   const userServices = useMemo(() => {
-    if (!currentIdentity) return [];
-    const currentUserIdString = currentIdentity.getPrincipal().toString();
+    if (!identity) return [];
+    const currentUserIdString = identity.getPrincipal().toString();
     return services.filter(
       (service) => service.providerId.toString() === currentUserIdString,
     );
-  }, [services, currentIdentity]);
+  }, [services, identity]);
 
   // Helper function to update loading state
   const setLoadingState = useCallback(
@@ -304,7 +303,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   // Fetch user profile
   const fetchUserProfile = useCallback(async () => {
     // Wait for authentication context to be properly initialized
-    if (!isAuthenticated || !currentIdentity || !isInitialized) return;
+    if (!isAuthenticated || !identity || !isInitialized) return;
 
     try {
       setLoadingState("profile", true);
@@ -312,7 +311,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const profileData = await authCanisterService.getProfile(
-        currentIdentity.getPrincipal().toString(),
+        identity.getPrincipal().toString(),
       );
       setUserProfile(profileData);
     } catch (error) {
@@ -322,7 +321,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [
     isAuthenticated,
-    currentIdentity,
+    identity,
     isInitialized,
     setLoadingState,
     handleError,
@@ -991,12 +990,12 @@ export const useServiceManagement = (): ServiceManagementHook => {
   );
 
   const getCurrentUserId = useCallback((): string | null => {
-    return currentIdentity ? currentIdentity.getPrincipal().toString() : null;
-  }, [currentIdentity]);
+    return identity ? identity.getPrincipal().toString() : null;
+  }, [identity]);
 
   const isUserAuthenticated = useCallback((): boolean => {
-    return isAuthenticated && currentIdentity !== null;
-  }, [isAuthenticated, currentIdentity]);
+    return isAuthenticated && identity !== null;
+  }, [isAuthenticated, identity]);
 
   const retryOperation = useCallback(
     async (operation: string): Promise<void> => {
@@ -1126,10 +1125,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Effects
   useEffect(() => {
-    if (isAuthenticated && currentIdentity) {
+    if (isAuthenticated && identity) {
       fetchUserProfile();
     }
-  }, [isAuthenticated, currentIdentity, fetchUserProfile]);
+  }, [isAuthenticated, identity, fetchUserProfile]);
 
   useEffect(() => {
     if (isInitialized) {

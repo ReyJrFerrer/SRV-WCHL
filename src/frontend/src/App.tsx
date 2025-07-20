@@ -35,7 +35,7 @@ export default function App() {
 
         try {
           // Pass identity from AuthContext to the service
-          const profile = await authCanisterService.getMyProfile(identity);
+          const profile = await authCanisterService.getMyProfile();
 
           if (profile) {
             if (profile.role === "Client") {

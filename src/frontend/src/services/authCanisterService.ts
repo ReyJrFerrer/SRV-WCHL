@@ -43,17 +43,26 @@ const createAuthActor = (identity?: Identity | null): AuthService => {
   }) as AuthService;
 };
 
+// Singleton actor instance
+let authActor: AuthService | null = null;
+
+const getAuthActor = async (): Promise<AuthService> => {
+  if (!authActor) {
+    authActor = createAuthActor();
+  
+  }
+  return authActor;
+
+};
 // Auth Canister Service Functions
 export const authCanisterService = {
   /**
    * Get all service providers from the auth canister
    * @param identity The user's identity from AuthContext
    */
-  async getAllServiceProviders(
-    identity?: Identity | null,
-  ): Promise<FrontendProfile[]> {
+  async getAllServiceProviders(): Promise<FrontendProfile[]> {
     try {
-      const actor = createAuthActor(identity);
+      const actor = await getAuthActor();
       const profiles = await actor.getAllServiceProviders();
 
       // Convert backend profiles to frontend-compatible format
@@ -69,12 +78,9 @@ export const authCanisterService = {
    * @param userId The principal ID of the user to fetch
    * @param identity The user's identity from AuthContext
    */
-  async getProfile(
-    userId: string,
-    identity?: Identity | null,
-  ): Promise<FrontendProfile | null> {
+  async getProfile(userId: string): Promise<FrontendProfile | null> {
     try {
-      const actor = createAuthActor(identity);
+      const actor = await getAuthActor();
 
       // Convert string to Principal
       const userPrincipal = Principal.fromText(userId);
@@ -97,14 +103,9 @@ export const authCanisterService = {
    * Get the current user's profile
    * @param identity The user's identity from AuthContext (required for this call)
    */
-  async getMyProfile(identity: Identity): Promise<FrontendProfile | null> {
-    if (!identity) {
-      console.error("Identity required to fetch user's own profile");
-      throw new Error("Authentication required");
-    }
-
+  async getMyProfile(): Promise<FrontendProfile | null> {
     try {
-      const actor = createAuthActor(identity);
+      const actor = await getAuthActor();
       const result = await actor.getMyProfile();
 
       if ("ok" in result) {
@@ -131,15 +132,9 @@ export const authCanisterService = {
     // email: string,
     phone: string,
     role: "Client" | "ServiceProvider",
-    identity: Identity,
   ): Promise<FrontendProfile | null> {
-    if (!identity) {
-      console.error("Identity required to create profile");
-      throw new Error("Authentication required");
-    }
-
     try {
-      const actor = createAuthActor(identity);
+      const actor = await getAuthActor();
       const userRole: UserRole = { [role]: null } as UserRole;
       const result = await actor.createProfile(name, phone, userRole);
 
@@ -163,20 +158,12 @@ export const authCanisterService = {
    */
   async updateProfile(
     name?: string,
-    // email?: string,
     phone?: string,
-    identity?: Identity,
   ): Promise<FrontendProfile | null> {
-    if (!identity) {
-      console.error("Identity required to update profile");
-      throw new Error("Authentication required");
-    }
-
     try {
-      const actor = createAuthActor(identity);
+      const actor = await getAuthActor();
       const result = await actor.updateProfile(
         name ? [name] : [],
-        // email ? [email] : [],
         phone ? [phone] : [],
       );
 
@@ -197,15 +184,9 @@ export const authCanisterService = {
    * @param userId The principal ID of the user to verify
    * @param identity The user's identity from AuthContext (required for this call)
    */
-  async verifyUser(userId: string, identity?: Identity): Promise<boolean> {
-    if (!identity) {
-      console.error("Identity required to verify user");
-      throw new Error("Authentication required");
-    }
-
+  async verifyUser(userId: string): Promise<boolean> {
     try {
-      const actor = createAuthActor(identity);
-
+      const actor = await getAuthActor();
       // Convert string to Principal
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.verifyUser(userPrincipal);
