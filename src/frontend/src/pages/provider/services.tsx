@@ -42,13 +42,8 @@ const iconMap: { [key: string]: React.ElementType } = {
 
 const MyServicesPage: React.FC = () => {
   // Use the service management hook
-  const {
-    userServices,
-    loading,
-    error,
-    refreshServices,
-    isUserAuthenticated,
-  } = useServiceManagement();
+  const { userServices, loading, error, refreshServices, isUserAuthenticated } =
+    useServiceManagement();
 
   const [pageLoading, setPageLoading] = useState(true);
 
@@ -144,7 +139,10 @@ const MyServicesPage: React.FC = () => {
             <h1 className="text-xl font-bold text-gray-800 sm:text-2xl">
               My Services
             </h1>
-            <Link to="/provider/services/add" className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4">
+            <Link
+              to="/provider/services/add"
+              className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
+            >
               <PlusIcon className="mr-1.5 h-5 w-5" />
               Add New Service
             </Link>
@@ -178,7 +176,10 @@ const MyServicesPage: React.FC = () => {
               <p className="mb-6 text-sm text-gray-600">
                 Get started by adding your first service offering.
               </p>
-              <Link to="/provider/services/add" className="inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700">
+              <Link
+                to="/provider/services/add"
+                className="inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700"
+              >
                 <PlusIcon className="mr-2 h-5 w-5" />
                 Add Your First Service
               </Link>

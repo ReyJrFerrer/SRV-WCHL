@@ -27,7 +27,10 @@ export default function ProviderReviewView() {
   // Set document title
   useEffect(() => {
     if (booking) {
-      const serviceName = booking?.serviceDetails?.description || booking?.packageName || "Service";
+      const serviceName =
+        booking?.serviceDetails?.description ||
+        booking?.packageName ||
+        "Service";
       document.title = `Client Review: ${serviceName} | SRV Provider`;
     } else {
       document.title = "Client Review | SRV Provider";
@@ -228,134 +231,134 @@ export default function ProviderReviewView() {
         </div>
       </header>
 
-        <main className="container mx-auto space-y-6 p-4 sm:p-6">
-          {/* Booking Information Card */}
-          <div className="rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">
-              Booking Details
-            </h3>
-            <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-              <div className="flex items-center">
-                <UserCircleIcon className="mr-2 h-5 w-5 text-blue-500" />
-                <span>
-                  <strong>Client:</strong> {clientName}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <CalendarDaysIcon className="mr-2 h-5 w-5 text-blue-500" />
-                <span>
-                  <strong>Date:</strong>{" "}
-                  {formatBookingDate(
-                    booking?.requestedDate || booking?.createdAt,
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <MapPinIcon className="mr-2 h-5 w-5 text-blue-500" />
-                <span>
-                  <strong>Location:</strong> {bookingLocation}
-                </span>
-              </div>
-              {price !== undefined && (
-                <div className="flex items-center">
-                  <CurrencyDollarIcon className="mr-2 h-5 w-5 text-green-500" />
-                  <span>
-                    <strong>Price:</strong> ₱{price.toFixed(2)}
-                  </span>
-                </div>
-              )}
+      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+        {/* Booking Information Card */}
+        <div className="rounded-xl bg-white p-6 shadow-lg">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            Booking Details
+          </h3>
+          <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+            <div className="flex items-center">
+              <UserCircleIcon className="mr-2 h-5 w-5 text-blue-500" />
+              <span>
+                <strong>Client:</strong> {clientName}
+              </span>
             </div>
-
-            <div className="mt-4 border-t border-gray-200 pt-4">
-              <p className="text-sm text-gray-600">
-                <strong>Service:</strong> {serviceName}
-              </p>
-              {packageName && (
-                <p className="text-sm text-gray-600">
-                  <strong>Package:</strong> {packageName}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Review Card */}
-          <div className="rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">
-              Client Review
-            </h3>
-
-            {clientReview ? (
-              <div className="space-y-4">
-                {/* Rating */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">
-                      Rating
-                    </span>
-                    <span className="text-lg font-semibold text-gray-900">
-                      {getRatingLabel(clientReview.rating)}
-                    </span>
-                  </div>
-                  {renderStarRating(clientReview.rating)}
-                </div>
-
-                {/* Review Date */}
-                <div className="text-sm text-gray-500">
-                  <strong>Reviewed:</strong>{" "}
-                  {formatReviewDate(clientReview.createdAt)}
-                  <span className="ml-2">
-                    ({getRelativeTime(clientReview.createdAt)})
-                  </span>
-                </div>
-
-                {/* Comment */}
-                {clientReview.comment && clientReview.comment.trim() && (
-                  <div>
-                    <div className="mb-2 flex items-center">
-                      <ChatBubbleBottomCenterTextIcon className="mr-2 h-5 w-5 text-blue-500" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Client Feedback
-                      </span>
-                    </div>
-                    <div className="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-4">
-                      <p className="text-gray-800 italic">
-                        "{clientReview.comment}"
-                      </p>
-                    </div>
-                  </div>
+            <div className="flex items-center">
+              <CalendarDaysIcon className="mr-2 h-5 w-5 text-blue-500" />
+              <span>
+                <strong>Date:</strong>{" "}
+                {formatBookingDate(
+                  booking?.requestedDate || booking?.createdAt,
                 )}
-
-                {/* Review Status */}
-                <div className="border-t border-gray-200 pt-4">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      clientReview.status === "Visible"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {clientReview.status}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="py-8 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                  <StarIcon className="h-6 w-6 text-gray-400" />
-                </div>
-                <h4 className="mb-2 text-lg font-medium text-gray-900">
-                  No Review Yet
-                </h4>
-                <p className="mx-auto max-w-sm text-sm text-gray-500">
-                  The client has not left a review for this booking yet. Reviews
-                  can be submitted for up to 30 days after service completion.
-                </p>
+              </span>
+            </div>
+            <div className="flex items-center">
+              <MapPinIcon className="mr-2 h-5 w-5 text-blue-500" />
+              <span>
+                <strong>Location:</strong> {bookingLocation}
+              </span>
+            </div>
+            {price !== undefined && (
+              <div className="flex items-center">
+                <CurrencyDollarIcon className="mr-2 h-5 w-5 text-green-500" />
+                <span>
+                  <strong>Price:</strong> ₱{price.toFixed(2)}
+                </span>
               </div>
             )}
           </div>
 
-          {/* Action Buttons */}
-          {/* <div className="flex justify-center space-x-3">
+          <div className="mt-4 border-t border-gray-200 pt-4">
+            <p className="text-sm text-gray-600">
+              <strong>Service:</strong> {serviceName}
+            </p>
+            {packageName && (
+              <p className="text-sm text-gray-600">
+                <strong>Package:</strong> {packageName}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Review Card */}
+        <div className="rounded-xl bg-white p-6 shadow-lg">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            Client Review
+          </h3>
+
+          {clientReview ? (
+            <div className="space-y-4">
+              {/* Rating */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">
+                    Rating
+                  </span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    {getRatingLabel(clientReview.rating)}
+                  </span>
+                </div>
+                {renderStarRating(clientReview.rating)}
+              </div>
+
+              {/* Review Date */}
+              <div className="text-sm text-gray-500">
+                <strong>Reviewed:</strong>{" "}
+                {formatReviewDate(clientReview.createdAt)}
+                <span className="ml-2">
+                  ({getRelativeTime(clientReview.createdAt)})
+                </span>
+              </div>
+
+              {/* Comment */}
+              {clientReview.comment && clientReview.comment.trim() && (
+                <div>
+                  <div className="mb-2 flex items-center">
+                    <ChatBubbleBottomCenterTextIcon className="mr-2 h-5 w-5 text-blue-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Client Feedback
+                    </span>
+                  </div>
+                  <div className="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-4">
+                    <p className="text-gray-800 italic">
+                      "{clientReview.comment}"
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Review Status */}
+              <div className="border-t border-gray-200 pt-4">
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    clientReview.status === "Visible"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {clientReview.status}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                <StarIcon className="h-6 w-6 text-gray-400" />
+              </div>
+              <h4 className="mb-2 text-lg font-medium text-gray-900">
+                No Review Yet
+              </h4>
+              <p className="mx-auto max-w-sm text-sm text-gray-500">
+                The client has not left a review for this booking yet. Reviews
+                can be submitted for up to 30 days after service completion.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        {/* <div className="flex justify-center space-x-3">
             <button
               onClick={() => router.push('/provider/bookings')}
               className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
@@ -369,11 +372,11 @@ export default function ProviderReviewView() {
               View All Reviews
             </button>
           </div> */}
-        </main>
+      </main>
 
-        <div className="md:hidden">
-          <BottomNavigationNextjs />
-        </div>
+      <div className="md:hidden">
+        <BottomNavigationNextjs />
       </div>
+    </div>
   );
 }

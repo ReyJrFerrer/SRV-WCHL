@@ -24,7 +24,7 @@ const TAB_ITEMS: BookingStatusTab[] = [
 const ProviderBookingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const queryTab = searchParams.get('tab');
+  const queryTab = searchParams.get("tab");
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("Pending");
 

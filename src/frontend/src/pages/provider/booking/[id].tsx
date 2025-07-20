@@ -30,7 +30,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // Set document title
   useEffect(() => {
     if (specificBooking) {
-      const serviceName = specificBooking?.serviceDetails?.description || specificBooking?.packageName || "Service";
+      const serviceName =
+        specificBooking?.serviceDetails?.description ||
+        specificBooking?.packageName ||
+        "Service";
       document.title = `Booking: ${serviceName} | SRV Provider`;
     } else {
       document.title = "Booking Details | SRV Provider";
@@ -247,7 +250,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
           </h1>
           <p className="mb-4 text-gray-600">{displayError}</p>
           <div className="space-x-3">
-            <Link to="/provider/booking" className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700">
+            <Link
+              to="/provider/booking"
+              className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700"
+            >
               Back to My Bookings
             </Link>
             <button
@@ -272,7 +278,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
         <h1 className="mb-4 text-xl font-semibold text-red-600">
           Booking Not Found
         </h1>
-        <Link to="/provider/booking" className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+        <Link
+          to="/provider/booking"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
           Back to My Bookings
         </Link>
       </div>
@@ -320,205 +329,189 @@ const ProviderBookingDetailsPage: React.FC = () => {
         </div>
       </header>
 
-        <main className="container mx-auto space-y-6 p-4 sm:p-6">
-          <div className="rounded-xl bg-white p-6 shadow-lg">
-            <div className="mb-4 flex items-start justify-between">
-              <h2 className="text-2xl font-bold text-slate-800">
-                {clientName}
-              </h2>
-              <span
-                className={`rounded-full px-3 py-1 text-sm font-semibold ${getStatusPillStyle(specificBooking?.status || "")}`}
-              >
-                {specificBooking?.status === "InProgress"
-                  ? "In Progress"
-                  : specificBooking?.status?.replace("_", " ") || "Unknown"}
-              </span>
-            </div>
-
-            {packageName && (
-              <h3 className="mb-2 text-xl font-semibold text-slate-700">
-                {clientContact}
-              </h3>
-            )}
-
-            <p className="mb-1 flex items-center text-sm text-gray-500">
-              Service:{" "}
-              <span className="ml-1 font-medium text-gray-700">
-                {serviceName}
-              </span>
-            </p>
-
-            {clientContact && clientContact !== "Contact not available" && (
-              <p className="mb-4 text-sm text-gray-500">
-                Package: {packageName}
-              </p>
-            )}
-
-            <div className="space-y-3 border-t border-gray-200 pt-4 text-sm">
-              <div className="flex items-start">
-                <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-500" />
-                <span>
-                  <strong className="font-medium text-gray-700">
-                    Requested:
-                  </strong>{" "}
-                  {formatDate(
-                    specificBooking?.requestedDate ||
-                      specificBooking?.createdAt,
-                  )}
-                </span>
-              </div>
-
-              <div className="flex items-start">
-                <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-500" />
-                <span>
-                  <strong className="font-medium text-gray-700">
-                    Location:
-                  </strong>{" "}
-                  {bookingLocation}
-                </span>
-              </div>
-
-              {price !== undefined && (
-                <div className="flex items-start">
-                  <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-green-500" />
-                  <span>
-                    <strong className="font-medium text-gray-700">
-                      Payment:
-                    </strong>{" "}
-                    ₱{price.toFixed(2)}
-                  </span>
-                </div>
-              )}
-
-              {duration !== "N/A" && (
-                <div className="flex items-start">
-                  <ClockIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-purple-500" />
-                  <span>
-                    <strong className="font-medium text-gray-700">
-                      Duration:
-                    </strong>{" "}
-                    {duration}
-                  </span>
-                </div>
-              )}
-
-              {specificBooking?.packageDetails?.description && (
-                <div className="flex items-start">
-                  <InformationCircleIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-indigo-500" />
-                  <span>
-                    <strong className="font-medium text-gray-700">
-                      Package Details:
-                    </strong>{" "}
-                    {specificBooking.packageDetails.description}
-                  </span>
-                </div>
-              )}
-            </div>
+      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+        <div className="rounded-xl bg-white p-6 shadow-lg">
+          <div className="mb-4 flex items-start justify-between">
+            <h2 className="text-2xl font-bold text-slate-800">{clientName}</h2>
+            <span
+              className={`rounded-full px-3 py-1 text-sm font-semibold ${getStatusPillStyle(specificBooking?.status || "")}`}
+            >
+              {specificBooking?.status === "InProgress"
+                ? "In Progress"
+                : specificBooking?.status?.replace("_", " ") || "Unknown"}
+            </span>
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3 rounded-xl bg-white p-4 shadow-lg sm:flex sm:space-y-0 sm:space-x-3">
-            {/* Contact Client - Always available for non-declined bookings */}
-            {!isDeclined && (
-              <button
-                onClick={handleContactClient}
-                className="flex w-full items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-700 sm:flex-1"
-              >
-                <PhoneIcon className="mr-2 h-5 w-5" /> Contact Client
-              </button>
+          {packageName && (
+            <h3 className="mb-2 text-xl font-semibold text-slate-700">
+              {clientContact}
+            </h3>
+          )}
+
+          <p className="mb-1 flex items-center text-sm text-gray-500">
+            Service:{" "}
+            <span className="ml-1 font-medium text-gray-700">
+              {serviceName}
+            </span>
+          </p>
+
+          {clientContact && clientContact !== "Contact not available" && (
+            <p className="mb-4 text-sm text-gray-500">Package: {packageName}</p>
+          )}
+
+          <div className="space-y-3 border-t border-gray-200 pt-4 text-sm">
+            <div className="flex items-start">
+              <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-500" />
+              <span>
+                <strong className="font-medium text-gray-700">
+                  Requested:
+                </strong>{" "}
+                {formatDate(
+                  specificBooking?.requestedDate || specificBooking?.createdAt,
+                )}
+              </span>
+            </div>
+
+            <div className="flex items-start">
+              <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-500" />
+              <span>
+                <strong className="font-medium text-gray-700">Location:</strong>{" "}
+                {bookingLocation}
+              </span>
+            </div>
+
+            {price !== undefined && (
+              <div className="flex items-start">
+                <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-green-500" />
+                <span>
+                  <strong className="font-medium text-gray-700">
+                    Payment:
+                  </strong>{" "}
+                  ₱{price.toFixed(2)}
+                </span>
+              </div>
             )}
 
-            {/* Accept/Decline buttons for pending bookings */}
-            {canAcceptOrDecline && (
-              <>
-                <button
-                  onClick={handleDeclineBooking}
-                  disabled={isBookingActionInProgress(
-                    specificBooking?.id || "",
-                    "decline",
-                  )}
-                  className="flex w-full items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50 sm:flex-1"
-                >
-                  <XCircleIcon className="mr-2 h-5 w-5" />
-                  {isBookingActionInProgress(
-                    specificBooking?.id || "",
-                    "decline",
-                  )
-                    ? "Declining..."
-                    : "Decline"}
-                </button>
-                <button
-                  onClick={handleAcceptBooking}
-                  disabled={isBookingActionInProgress(
-                    specificBooking?.id || "",
-                    "accept",
-                  )}
-                  className="flex w-full items-center justify-center rounded-lg bg-green-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-600 disabled:opacity-50 sm:flex-1"
-                >
-                  <CheckCircleIcon className="mr-2 h-5 w-5" />
-                  {isBookingActionInProgress(
-                    specificBooking?.id || "",
-                    "accept",
-                  )
-                    ? "Accepting..."
-                    : "Accept"}
-                </button>
-              </>
+            {duration !== "N/A" && (
+              <div className="flex items-start">
+                <ClockIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-purple-500" />
+                <span>
+                  <strong className="font-medium text-gray-700">
+                    Duration:
+                  </strong>{" "}
+                  {duration}
+                </span>
+              </div>
             )}
 
-            {/* Start Service button for accepted bookings */}
-            {canStart && (
+            {specificBooking?.packageDetails?.description && (
+              <div className="flex items-start">
+                <InformationCircleIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-indigo-500" />
+                <span>
+                  <strong className="font-medium text-gray-700">
+                    Package Details:
+                  </strong>{" "}
+                  {specificBooking.packageDetails.description}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3 rounded-xl bg-white p-4 shadow-lg sm:flex sm:space-y-0 sm:space-x-3">
+          {/* Contact Client - Always available for non-declined bookings */}
+          {!isDeclined && (
+            <button
+              onClick={handleContactClient}
+              className="flex w-full items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-700 sm:flex-1"
+            >
+              <PhoneIcon className="mr-2 h-5 w-5" /> Contact Client
+            </button>
+          )}
+
+          {/* Accept/Decline buttons for pending bookings */}
+          {canAcceptOrDecline && (
+            <>
               <button
-                onClick={handleStartService}
+                onClick={handleDeclineBooking}
                 disabled={isBookingActionInProgress(
                   specificBooking?.id || "",
-                  "start",
+                  "decline",
                 )}
-                className="flex w-full items-center justify-center rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:opacity-50 sm:flex-1"
+                className="flex w-full items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50 sm:flex-1"
               >
-                <ArrowPathIcon className="mr-2 h-5 w-5" />
-                {isBookingActionInProgress(specificBooking?.id || "", "start")
-                  ? "Starting..."
-                  : "Start Service"}
+                <XCircleIcon className="mr-2 h-5 w-5" />
+                {isBookingActionInProgress(specificBooking?.id || "", "decline")
+                  ? "Declining..."
+                  : "Decline"}
               </button>
-            )}
-
-            {/* Complete Service button for in-progress bookings */}
-            {canComplete && (
               <button
-                onClick={handleCompleteService}
+                onClick={handleAcceptBooking}
                 disabled={isBookingActionInProgress(
                   specificBooking?.id || "",
-                  "complete",
+                  "accept",
                 )}
-                className="flex w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-teal-600 disabled:opacity-50 sm:flex-1"
+                className="flex w-full items-center justify-center rounded-lg bg-green-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-600 disabled:opacity-50 sm:flex-1"
               >
                 <CheckCircleIcon className="mr-2 h-5 w-5" />
-                {isBookingActionInProgress(
-                  specificBooking?.id || "",
-                  "complete",
-                )
-                  ? "Completing..."
-                  : "Mark Completed"}
+                {isBookingActionInProgress(specificBooking?.id || "", "accept")
+                  ? "Accepting..."
+                  : "Accept"}
               </button>
-            )}
+            </>
+          )}
 
-            {/* View Reviews for completed bookings */}
-            {isCompleted && (
-              <Link
-                to={`/provider/review/${specificBooking?.id}`}
-                className="flex w-full items-center justify-center rounded-lg bg-yellow-500 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-yellow-600 sm:flex-1"
-              >
-                <StarIcon className="mr-2 h-5 w-5" /> View Review
-              </Link>
-            )}
-          </div>
-        </main>
+          {/* Start Service button for accepted bookings */}
+          {canStart && (
+            <button
+              onClick={handleStartService}
+              disabled={isBookingActionInProgress(
+                specificBooking?.id || "",
+                "start",
+              )}
+              className="flex w-full items-center justify-center rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:opacity-50 sm:flex-1"
+            >
+              <ArrowPathIcon className="mr-2 h-5 w-5" />
+              {isBookingActionInProgress(specificBooking?.id || "", "start")
+                ? "Starting..."
+                : "Start Service"}
+            </button>
+          )}
 
-        <div className="md:hidden">
-          <BottomNavigationNextjs />
+          {/* Complete Service button for in-progress bookings */}
+          {canComplete && (
+            <button
+              onClick={handleCompleteService}
+              disabled={isBookingActionInProgress(
+                specificBooking?.id || "",
+                "complete",
+              )}
+              className="flex w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-teal-600 disabled:opacity-50 sm:flex-1"
+            >
+              <CheckCircleIcon className="mr-2 h-5 w-5" />
+              {isBookingActionInProgress(specificBooking?.id || "", "complete")
+                ? "Completing..."
+                : "Mark Completed"}
+            </button>
+          )}
+
+          {/* View Reviews for completed bookings */}
+          {isCompleted && (
+            <Link
+              to={`/provider/review/${specificBooking?.id}`}
+              className="flex w-full items-center justify-center rounded-lg bg-yellow-500 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-yellow-600 sm:flex-1"
+            >
+              <StarIcon className="mr-2 h-5 w-5" /> View Review
+            </Link>
+          )}
         </div>
+      </main>
+
+      <div className="md:hidden">
+        <BottomNavigationNextjs />
       </div>
+    </div>
   );
 };
 

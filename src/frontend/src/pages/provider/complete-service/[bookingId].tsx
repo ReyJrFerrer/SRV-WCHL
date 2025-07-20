@@ -11,9 +11,7 @@ import {
   CurrencyDollarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
-import {
-  useProviderBookingManagement,
-} from "../../../hooks/useProviderBookingManagement";
+import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 
 const CompleteServicePage: React.FC = () => {
   const navigate = useNavigate();
@@ -164,92 +162,91 @@ const CompleteServicePage: React.FC = () => {
         </div>
       </header>
 
-        <main className="container mx-auto flex flex-grow items-start justify-center p-4 sm:items-center sm:p-6">
-          <div className="w-full max-w-md space-y-6 rounded-xl bg-white p-6 shadow-lg sm:p-8">
-            <div>
-              <h2 className="mb-1 text-center text-2xl font-bold text-gray-800">
-                Payment Collection
-              </h2>
-              <p className="mb-6 text-center text-sm text-gray-500">
-                Finalize service for "{booking.serviceName}" with{" "}
-                {booking.clientName}.
-              </p>
+      <main className="container mx-auto flex flex-grow items-start justify-center p-4 sm:items-center sm:p-6">
+        <div className="w-full max-w-md space-y-6 rounded-xl bg-white p-6 shadow-lg sm:p-8">
+          <div>
+            <h2 className="mb-1 text-center text-2xl font-bold text-gray-800">
+              Payment Collection
+            </h2>
+            <p className="mb-6 text-center text-sm text-gray-500">
+              Finalize service for "{booking.serviceName}" with{" "}
+              {booking.clientName}.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <span className="text-sm font-medium text-blue-700">
+                Service Total:
+              </span>
+              <span className="text-xl font-bold text-blue-700">
+                ₱{servicePrice.toFixed(2)}
+              </span>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <span className="text-sm font-medium text-blue-700">
-                  Service Total:
-                </span>
-                <span className="text-xl font-bold text-blue-700">
-                  ₱{servicePrice.toFixed(2)}
-                </span>
+            <form onSubmit={handleSubmitPayment} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="cashReceived"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Cash Received from Client:
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text" // Use text to allow decimal input more easily, parse to float
+                    id="cashReceived"
+                    name="cashReceived"
+                    value={cashReceived}
+                    onChange={handleCashReceivedChange}
+                    className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="0.00"
+                    inputMode="decimal" // Helps mobile keyboards
+                    required
+                  />
+                </div>
               </div>
 
-              <form onSubmit={handleSubmitPayment} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="cashReceived"
-                    className="mb-1 block text-sm font-medium text-gray-700"
-                  >
-                    Cash Received from Client:
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text" // Use text to allow decimal input more easily, parse to float
-                      id="cashReceived"
-                      name="cashReceived"
-                      value={cashReceived}
-                      onChange={handleCashReceivedChange}
-                      className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="0.00"
-                      inputMode="decimal" // Helps mobile keyboards
-                      required
-                    />
-                  </div>
+              {parseFloat(cashReceived) >= servicePrice && servicePrice > 0 && (
+                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
+                  <span className="text-sm font-medium text-green-700">
+                    Change Due:
+                  </span>
+                  <span className="text-lg font-semibold text-green-700">
+                    ₱{changeDue.toFixed(2)}
+                  </span>
                 </div>
+              )}
 
-                {parseFloat(cashReceived) >= servicePrice &&
-                  servicePrice > 0 && (
-                    <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
-                      <span className="text-sm font-medium text-green-700">
-                        Change Due:
-                      </span>
-                      <span className="text-lg font-semibold text-green-700">
-                        ₱{changeDue.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
+              {error && (
+                <p className="text-center text-sm text-red-600">{error}</p>
+              )}
 
-                {error && (
-                  <p className="text-center text-sm text-red-600">{error}</p>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none disabled:bg-gray-400"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircleIcon className="h-5 w-5" /> Confirm Payment &
+                    Complete
+                  </>
                 )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none disabled:bg-gray-400"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircleIcon className="h-5 w-5" /> Confirm Payment &
-                      Complete
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
+              </button>
+            </form>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
+    </div>
   );
 };
 
