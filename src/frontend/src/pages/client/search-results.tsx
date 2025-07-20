@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeftIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import ServiceListItem from "../../components/client/ServiceListItem";
 import BottomNavigation from "../../components/client/BottomNavigation";
@@ -13,8 +12,9 @@ import {
 } from "../../hooks/serviceInformation";
 
 const SearchResultsPage: React.FC = () => {
-  const router = useRouter();
-  const { q: queryParam } = router.query;
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryParam = searchParams.get("q");
   // const { isAuthenticated, currentIdentity } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -57,13 +57,7 @@ const SearchResultsPage: React.FC = () => {
 
   // Update search query when URL parameter changes
   useEffect(() => {
-    let currentQ = "";
-    if (Array.isArray(queryParam)) {
-      currentQ = queryParam[0] || "";
-    } else if (typeof queryParam === "string") {
-      currentQ = queryParam;
-    }
-
+    const currentQ = queryParam || "";
     setSearchQuery(currentQ);
 
     if (currentQ) {
@@ -73,36 +67,28 @@ const SearchResultsPage: React.FC = () => {
     }
   }, [queryParam, performSearch]);
 
+  // Update document title when search query changes
+  useEffect(() => {
+    document.title = searchQuery 
+      ? `SRV | Search: ${searchQuery}` 
+      : "SRV | Search Results";
+  }, [searchQuery]);
+
   // Handle search on page
   const handleSearchOnPage = (newQuery: string) => {
     const trimmedNewQuery = newQuery.trim();
     if (trimmedNewQuery !== searchQuery.trim()) {
-      router.replace(
-        `/client/search-results?q=${encodeURIComponent(trimmedNewQuery)}`,
-        undefined,
-        { shallow: true },
-      );
+      setSearchParams({ q: trimmedNewQuery });
     }
   };
 
   return (
-    <>
-      <Head>
-        <title>
-          SRV | {searchQuery ? `Search: ${searchQuery}` : "Search Results"}
-        </title>
-        <meta
-          name="description"
-          content={`Search results for services ${searchQuery ? `related to ${searchQuery}` : ""}`}
-        />
-      </Head>
-
-      <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-gray-50">
         {/* Header */}
         <header className="sticky top-0 z-40 bg-white px-4 py-3 shadow-sm">
           <div className="mb-3 flex items-center gap-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => navigate(-1)}
               className="rounded-full p-2 transition-colors hover:bg-gray-100"
               aria-label="Go back"
             >
@@ -177,7 +163,6 @@ const SearchResultsPage: React.FC = () => {
           <BottomNavigation />
         </div>
       </div>
-    </>
   );
 };
 

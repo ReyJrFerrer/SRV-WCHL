@@ -66,7 +66,11 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
             {service.category.name}
           </p>
           {/* MODIFICATION: Make title a link */}
-          <Link to={`/provider/service-details/${service.id}`} className="transition-colors hover:text-blue-600" title="View service details">
+          <Link
+            to={`/provider/service-details/${service.id}`}
+            className="transition-colors hover:text-blue-600"
+            title="View service details"
+          >
             <h3 className="mb-2 truncate text-lg font-bold text-gray-800 md:text-xl">
               {service.title || service.name}
             </h3>
@@ -87,7 +91,10 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-start gap-2 border-t border-gray-200 pt-4">
-          <Link to={`/provider/services/edit/${service.id}`} className="flex items-center rounded-lg bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:text-sm">
+          <Link
+            to={`/provider/services/edit/${service.id}`}
+            className="flex items-center rounded-lg bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:text-sm"
+          >
             <PencilIcon className="mr-1.5 h-4 w-4" /> Edit
           </Link>
           <button

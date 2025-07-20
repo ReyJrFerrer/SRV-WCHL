@@ -1,22 +1,19 @@
-import React from "react";
-import { useAuth } from "@bundly/ares-react";
-import Head from "next/head";
+import React, { useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 // Components
-import BottomNavigation from "../../components/client/BottomNavigationNextjs";
+import BottomNavigation from "../../components/client/BottomNavigation";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
-  return (
-    <>
-      <Head>
-        <title>Chat | Service Provider App</title>
-        <meta name="description" content="Chat with your service providers" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+  // Set document title
+  useEffect(() => {
+    document.title = "Chat | Service Provider App";
+  }, []);
 
-      <div className="min-h-screen bg-gray-50 pb-20">
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
         {/* Status bar */}
 
         <div className="px-4 pt-4">
@@ -66,7 +63,6 @@ const ClientChatPage: React.FC = () => {
 
         <BottomNavigation />
       </div>
-    </>
   );
 };
 

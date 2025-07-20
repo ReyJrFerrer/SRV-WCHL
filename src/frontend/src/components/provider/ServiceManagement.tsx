@@ -141,12 +141,19 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
       <div className="section-header mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-bold text-gray-800">Aking mga Serbisyo</h2>
         {services.length > maxItemsToShow && (
-          <Link to="/provider/services" className="flex items-center text-sm font-medium text-blue-600 transition-colors hover:text-blue-700">
+          <Link
+            to="/provider/services"
+            className="flex items-center text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+          >
             View All ({services.length})
             <ArrowRightIcon className="ml-1 h-4 w-4" />
           </Link>
         )}
-        <Link to="/provider/services/add" className="add-button ml-auto rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 sm:ml-0" aria-label="Add new service">
+        <Link
+          to="/provider/services/add"
+          className="add-button ml-auto rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 sm:ml-0"
+          aria-label="Add new service"
+        >
           <PlusIcon className="h-5 w-5" />
         </Link>
       </div>
@@ -162,51 +169,51 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 to={`/provider/service-details/${service.id}`}
                 className="service-card-item block cursor-pointer rounded-lg bg-gray-50 p-4 shadow-sm transition-shadow hover:shadow-md"
               >
-                  <div className="flex flex-col md:flex-row md:items-start md:space-x-4">
-                    {/* Service Icon */}
-                    <div className="mb-3 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 md:mb-0">
-                      {renderIcon(service)}
+                <div className="flex flex-col md:flex-row md:items-start md:space-x-4">
+                  {/* Service Icon */}
+                  <div className="mb-3 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 md:mb-0">
+                    {renderIcon(service)}
+                  </div>
+
+                  {/* Service Details */}
+                  <div className="flex-grow">
+                    <div className="flex flex-col justify-between md:flex-row md:items-start">
+                      <div className="flex-grow">
+                        <h4 className="text-base font-semibold text-black md:text-lg">
+                          {service.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 md:text-sm">
+                          {service.category?.name || "Service"}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                          {service.formattedLocation ||
+                            "Location not specified"}
+                        </p>
+                      </div>
+                      <span
+                        className={`mt-2 w-fit rounded-full px-2 py-0.5 text-xs font-semibold md:mt-0 ${statusDisplay.className}`}
+                      >
+                        {statusDisplay.text}
+                      </span>
                     </div>
 
-                    {/* Service Details */}
-                    <div className="flex-grow">
-                      <div className="flex flex-col justify-between md:flex-row md:items-start">
-                        <div className="flex-grow">
-                          <h4 className="text-base font-semibold text-black md:text-lg">
-                            {service.title}
-                          </h4>
-                          <p className="text-xs text-gray-500 md:text-sm">
-                            {service.category?.name || "Service"}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-400">
-                            {service.formattedLocation ||
-                              "Location not specified"}
-                          </p>
-                        </div>
-                        <span
-                          className={`mt-2 w-fit rounded-full px-2 py-0.5 text-xs font-semibold md:mt-0 ${statusDisplay.className}`}
-                        >
-                          {statusDisplay.text}
+                    <div className="mt-2 flex items-center space-x-3 text-xs text-gray-600 md:text-sm">
+                      <div className="flex items-center">
+                        {/* <CurrencyDollarIcon className="h-4 w-4 text-gray-400 mr-1" /> */}
+                        <span>
+                          {service.formattedPrice || `₱${service.price}`}
                         </span>
                       </div>
-
-                      <div className="mt-2 flex items-center space-x-3 text-xs text-gray-600 md:text-sm">
-                        <div className="flex items-center">
-                          {/* <CurrencyDollarIcon className="h-4 w-4 text-gray-400 mr-1" /> */}
-                          <span>
-                            {service.formattedPrice || `₱${service.price}`}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <StarIcon className="mr-1 h-4 w-4 text-yellow-400" />
-                          <span>
-                            {service.averageRating || "N/A"} (
-                            {service.totalReviews || 0} reviews)
-                          </span>
-                        </div>
+                      <div className="flex items-center">
+                        <StarIcon className="mr-1 h-4 w-4 text-yellow-400" />
+                        <span>
+                          {service.averageRating || "N/A"} (
+                          {service.totalReviews || 0} reviews)
+                        </span>
                       </div>
                     </div>
                   </div>
+                </div>
               </Link>
             );
           })}
@@ -215,7 +222,10 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         <div className="py-10 text-center text-gray-500">
           <WrenchScrewdriverIcon className="mx-auto mb-3 h-12 w-12 text-gray-300" />
           <p className="mb-1">You haven't listed any services yet.</p>
-                    <Link to="/provider/services/add" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+          <Link
+            to="/provider/services/add"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+          >
             Add your first service
           </Link>
         </div>

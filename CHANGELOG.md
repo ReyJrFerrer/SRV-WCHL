@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Convert Next.js client components to React Router DOM for improved navigation and routing
+- Replace Next.js Head component with native document.title manipulation in search results page
+- Replace Next.js Head component with native document.title manipulation in chat page
 - Replace bundly/ares-react with custom AuthContext in service management for better authentication control
 - Add set_count update method to allow setting the counter to a specific value
 - Add frontend development server scripts (`npm run start`)
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactor profile creation page to use centralized AuthContext and authCanisterService
 - Refactor logout hook to use centralized AuthContext and React Router navigation
+- Replace @bundly/ares-react with local AuthContext in chat page for better authentication control
 
 - Refactor frontend from Next.js to React with react-router-dom for improved performance and simplified architecture
 - Update dependencies to latest versions

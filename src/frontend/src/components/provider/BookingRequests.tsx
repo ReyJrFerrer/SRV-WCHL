@@ -33,7 +33,10 @@ const BookingRequests: React.FC<BookingRequestsProps> = ({
           {pendingRequests === 1 ? "request" : "requests"} na kailangan ng iyong
           sagot.
         </p>
-        <Link to="/provider/bookings?tab=Pending" className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400">
+        <Link
+          to="/provider/bookings?tab=Pending"
+          className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400"
+        >
           <span>Tignan ang mga Requests</span>
           <ArrowRightIcon className="h-4 w-4" />
         </Link>
@@ -51,7 +54,10 @@ const BookingRequests: React.FC<BookingRequestsProps> = ({
           <span className="text-2xl font-bold">{upcomingJobs}</span>{" "}
           {upcomingJobs === 1 ? "service" : "services"} na nakaiskedyul.
         </p>
-        <Link to="/provider/bookings?tab=Upcoming" className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400">
+        <Link
+          to="/provider/bookings?tab=Upcoming"
+          className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400"
+        >
           <span>Tignan ang mga Requests</span>
           <ArrowRightIcon className="h-4 w-4" />
         </Link>
