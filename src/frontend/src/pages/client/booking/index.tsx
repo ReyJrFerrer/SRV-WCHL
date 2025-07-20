@@ -1,12 +1,9 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { NextPage } from "next";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import BottomNavigationNextjs from "../../../components/client/BottomNavigationNextjs";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import BottomNavigationNextjs from "../../../components/client/BottomNavigation";
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard";
 import {
   useBookingManagement,
-  EnhancedBooking,
 } from "../../../hooks/bookingManagement";
 import {
   ArrowLeftIcon,
@@ -30,12 +27,18 @@ const TAB_ITEMS: BookingStatusTab[] = [
   "CANCELLED",
 ];
 
-const MyBookingsPage: NextPage = () => {
-  const router = useRouter();
-  const { tab: queryTab } = router.query;
+const MyBookingsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryTab = searchParams.get("tab");
   const bookingManagement = useBookingManagement();
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
+
+  // Set document title
+  useEffect(() => {
+    document.title = "My Bookings - SRV";
+  }, []);
 
   useEffect(() => {
     let targetTab: BookingStatusTab = "ALL";
@@ -43,23 +46,11 @@ const MyBookingsPage: NextPage = () => {
     let redirectTabQuery = "all";
 
     if (queryTab) {
-      let singleQueryTab: string | undefined = undefined;
-      if (typeof queryTab === "string") {
-        singleQueryTab = queryTab;
-      } else if (Array.isArray(queryTab) && queryTab.length > 0) {
-        singleQueryTab = queryTab[0];
-      }
-
-      if (singleQueryTab) {
-        const upperCaseQueryTab =
-          singleQueryTab.toUpperCase() as BookingStatusTab;
-        if (TAB_ITEMS.includes(upperCaseQueryTab)) {
-          targetTab = upperCaseQueryTab;
-        } else {
-          shouldRedirect = true;
-        }
+      const upperCaseQueryTab = queryTab.toUpperCase() as BookingStatusTab;
+      if (TAB_ITEMS.includes(upperCaseQueryTab)) {
+        targetTab = upperCaseQueryTab;
       } else {
-        if (queryTab !== undefined) shouldRedirect = true;
+        shouldRedirect = true;
       }
     }
 
@@ -67,18 +58,10 @@ const MyBookingsPage: NextPage = () => {
       setActiveTab(targetTab);
     }
 
-    if (
-      shouldRedirect &&
-      (typeof queryTab !== "string" ||
-        queryTab.toLowerCase() !== redirectTabQuery)
-    ) {
-      router.push(
-        { pathname: "/client/booking", query: { tab: redirectTabQuery } },
-        undefined,
-        { shallow: true },
-      );
+    if (shouldRedirect && queryTab !== redirectTabQuery) {
+      setSearchParams({ tab: redirectTabQuery });
     }
-  }, [queryTab, router, activeTab]);
+  }, [queryTab, setSearchParams, activeTab]);
 
   // Filter bookings based on active tab
   const filteredBookings = useMemo(() => {
@@ -167,18 +150,12 @@ const MyBookingsPage: NextPage = () => {
   };
 
   return (
-    <>
-      <Head>
-        <title>My Bookings - SRV</title>
-        <meta name="description" content="View and manage your bookings" />
-      </Head>
-
-      <div className="flex min-h-screen flex-col bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-gray-100">
         {/* Header */}
         <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
           <div className="container mx-auto flex items-center">
             <button
-              onClick={() => router.push("/client/home")}
+              onClick={() => navigate("/client/home")}
               className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100 md:hidden"
               aria-label="Back to Home"
             >
@@ -191,20 +168,23 @@ const MyBookingsPage: NextPage = () => {
         </header>
 
         {/* Tabs */}
-        <div className="hide-scrollbar sticky top-[57px] z-10 overflow-x-auto border-b border-gray-200 bg-white whitespace-nowrap">
+        <div className="booking-tabs sticky top-[57px] z-10 overflow-x-auto border-b border-gray-200 bg-white whitespace-nowrap" style={{
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none'
+        }}>
+          <style>
+            {`
+              .booking-tabs::-webkit-scrollbar {
+                display: none;
+              }
+            `}
+          </style>
           <nav className="flex justify-start space-x-1 p-1.5 sm:justify-around sm:p-2">
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
-                  router.push(
-                    {
-                      pathname: "/client/booking",
-                      query: { tab: tab.toLowerCase() },
-                    },
-                    undefined,
-                    { shallow: true },
-                  );
+                  setSearchParams({ tab: tab.toLowerCase() });
                 }}
                 className={`flex-shrink-0 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-150 sm:text-sm ${
                   activeTab === tab
@@ -261,21 +241,8 @@ const MyBookingsPage: NextPage = () => {
           )}
         </main>
 
-        {/* Bottom Navigation */}
-        <BottomNavigationNextjs />
-      </div>
-
-      <style jsx global>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none; /* IE and Edge */
-          scrollbar-width: none; /* Firefox */
-        }
-      `}</style>
-    </>
+      {/* Bottom Navigation */}
+      <BottomNavigationNextjs />
+    </div>
   );
-};
-
-export default MyBookingsPage;
+};export default MyBookingsPage;

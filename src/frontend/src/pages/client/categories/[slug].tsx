@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import Head from "next/head";
-import Link from "next/link";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { useAuth } from "@bundly/ares-react";
 
 // Components
-import SearchBar from "../../../components/client/SearchBarNextjs";
-import ServiceListItem from "../../../components/client/ServiceListItemNextjs";
-import BottomNavigation from "../../../components/client/BottomNavigationNextjs";
+import SearchBar from "../../../components/client/SearchBar";
+import ServiceListItem from "../../../components/client/ServiceListItem";
+import BottomNavigation from "../../../components/client/BottomNavigation";
 
 // Hooks
 import {
   useServicesByCategory,
   useAllServicesWithProviders,
-  EnrichedService,
 } from "../../../hooks/serviceInformation";
 
 // Services
@@ -32,9 +28,8 @@ interface CategoryState {
 }
 
 const CategoryPage: React.FC = () => {
-  const router = useRouter();
-  const { slug } = router.query;
-  const { isAuthenticated, currentIdentity } = useAuth();
+  const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
 
   const [category, setCategory] = useState<CategoryState | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,8 +47,16 @@ const CategoryPage: React.FC = () => {
     services,
     loading: servicesLoading,
     error: servicesError,
-    refetch,
   } = isAllServices ? allServicesHook : categoryServicesHook;
+
+  // Set document title
+  useEffect(() => {
+    if (category) {
+      document.title = `${category.name} | SRV`;
+    } else {
+      document.title = "Category | SRV";
+    }
+  }, [category]);
 
   useEffect(() => {
     if (!slug) return;
@@ -109,7 +112,7 @@ const CategoryPage: React.FC = () => {
   }, [slug]);
 
   const handleBackClick = () => {
-    router.back();
+    navigate(-1);
   };
 
   const handleSearch = (term: string) => {
@@ -136,7 +139,7 @@ const CategoryPage: React.FC = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <p className="mb-4 text-xl text-red-600">Category not found</p>
-          <Link href="/client/home" className="text-blue-500 hover:underline">
+          <Link to="/client/home" className="text-blue-500 hover:underline">
             Return to Home
           </Link>
         </div>
@@ -145,13 +148,7 @@ const CategoryPage: React.FC = () => {
   }
 
   return (
-    <>
-      <Head>
-        <title>{category.name} | Service Provider App</title>
-        <meta name="description" content={category.description} />
-      </Head>
-
-      <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header */}
         <div className="sticky top-0 z-40 bg-white px-4 py-4 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
@@ -204,7 +201,6 @@ const CategoryPage: React.FC = () => {
 
         <BottomNavigation />
       </div>
-    </>
   );
 };
 

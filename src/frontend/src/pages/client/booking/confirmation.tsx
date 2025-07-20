@@ -1,7 +1,5 @@
-import React from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import Link from "next/link";
+import React, { useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 
 interface BookingDetails {
   serviceName: string;
@@ -15,10 +13,15 @@ interface BookingDetails {
 }
 
 const BookingConfirmationPage: React.FC = () => {
-  const router = useRouter();
-  const { details } = router.query;
+  const [searchParams] = useSearchParams();
+  const details = searchParams.get("details");
 
   let bookingDetails: BookingDetails | null = null;
+
+  // Set document title
+  useEffect(() => {
+    document.title = "Booking Confirmed - SRV Client";
+  }, []);
 
   if (details && typeof details === "string") {
     try {
@@ -30,13 +33,6 @@ const BookingConfirmationPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <Head>
-        <title>Booking Confirmed - SRV Client</title>
-        <meta
-          name="description"
-          content="Your booking request has been sent."
-        />
-      </Head>
 
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-3">
@@ -116,10 +112,8 @@ const BookingConfirmationPage: React.FC = () => {
             </div>
 
             {/* Action Button */}
-            <Link href="/client" legacyBehavior>
-              <a className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700">
-                Back to Home
-              </a>
+            <Link to="/client" className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700">
+              Back to Home
             </Link>
           </div>
         ) : (
@@ -128,10 +122,8 @@ const BookingConfirmationPage: React.FC = () => {
               Loading booking details or an error occurred while parsing
               details.
             </p>
-            <Link href="/client" legacyBehavior>
-              <a className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700">
-                Back to Home
-              </a>
+            <Link to="/client" className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700">
+              Back to Home
             </Link>
           </div>
         )}

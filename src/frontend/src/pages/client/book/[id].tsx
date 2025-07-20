@@ -1,15 +1,19 @@
-import React from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import React, { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import ClientBookingPageComponent from "../../../components/client/ClientBookingPageComponent";
 
 const BookingPage: React.FC = () => {
-  const router = useRouter();
-  const { id } = router.query;
-  const serviceSlug = id as string;
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const serviceSlug = id;
 
-  // Show loading state while router is not ready
-  if (!router.isReady || !serviceSlug) {
+  // Set document title
+  useEffect(() => {
+    document.title = "Book Service - SRV Client";
+  }, []);
+
+  // Show loading state while there's no serviceSlug
+  if (!serviceSlug) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -19,16 +23,11 @@ const BookingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Head>
-        <title>Book Service - SRV Client</title>
-        <meta name="description" content="Book a service with SRV" />
-      </Head>
-
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-3">
           <button
-            onClick={() => router.back()}
+            onClick={() => navigate(-1)}
             className="text-2xl text-gray-600 hover:text-gray-800"
           >
             ←

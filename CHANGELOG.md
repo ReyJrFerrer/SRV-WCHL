@@ -1,6 +1,12 @@
-# Changelog
+# Changel### Added
 
-All notable changes to this project will be documented in this file.
+- Convert Next.js client components to React Router DOM for improved navigation and routing
+- Replace Next.js Head component with native document.title manipulation in search results page
+- Replace Next.js Head component with native document.title manipulation in chat page
+- Replace Next.js Head component with native document.title manipulation in service pages (view-all, service detail, service reviews)
+- Replace Next.js router with React Router DOM in booking review page
+- Replace Next.js router with React Router DOM in category pages and AuthContext integration
+- Replace Next.js router with React Router DOM in all booking-related pages (index, details, confirmation, book)notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -13,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace Next.js Head component with native document.title manipulation in search results page
 - Replace Next.js Head component with native document.title manipulation in chat page
 - Replace Next.js Head component with native document.title manipulation in service pages (view-all, service detail, service reviews)
+- Replace Next.js router with React Router DOM in booking review page
+- Replace Next.js components with React Router DOM in category pages
 - Replace bundly/ares-react with custom AuthContext in service management for better authentication control
 - Add set_count update method to allow setting the counter to a specific value
 - Add frontend development server scripts (`npm run start`)
@@ -27,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor profile creation page to use centralized AuthContext and authCanisterService
 - Refactor logout hook to use centralized AuthContext and React Router navigation
 - Replace @bundly/ares-react with local AuthContext in chat page for better authentication control
+- Replace @bundly/ares-react with local AuthContext in category pages for better authentication control
 
 - Refactor frontend from Next.js to React with react-router-dom for improved performance and simplified architecture
 - Update dependencies to latest versions

@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/router";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon, StarIcon } from "@heroicons/react/24/outline";
 import { useBookingRating } from "../../../hooks/reviewManagement";
 import { useBookingManagement } from "../../../hooks/bookingManagement";
 
 export default function BookingRating() {
-  const router = useRouter();
-  const { id: bookingId } = router.query; // Get bookingId from URL params
+  const navigate = useNavigate();
+  const { id: bookingId } = useParams<{ id: string }>(); // Get bookingId from URL params
 
   // State for the rating form
   const [rating, setRating] = useState(0);
@@ -38,6 +38,11 @@ export default function BookingRating() {
     error: reviewError,
     clearError,
   } = useBookingRating(bookingId as string); // Pass bookingId to the hook
+
+  // Set document title
+  useEffect(() => {
+    document.title = "SRV | Rate Service";
+  }, []);
 
   const handleRating = useCallback((value: number) => {
     setRating(value);
@@ -109,7 +114,7 @@ export default function BookingRating() {
 
       if (result) {
         // Success - navigate back to bookings
-        router.push("/client/booking");
+        navigate("/client/booking");
       }
     } catch (error) {
       console.error("Error submitting review:", error);
@@ -125,7 +130,7 @@ export default function BookingRating() {
     updateReview,
     submitReview,
     clearError,
-    router,
+    navigate,
   ]);
 
   // Pre-fill form if editing existing review
@@ -181,7 +186,7 @@ export default function BookingRating() {
         <h2 className="mb-2 text-lg font-semibold text-red-800">Error</h2>
         <p className="mb-4 text-red-600">{bookingError || reviewError}</p>
         <button
-          onClick={() => router.back()}
+          onClick={() => navigate(-1)}
           className="text-blue-600 hover:underline"
         >
           Go Back
@@ -202,7 +207,7 @@ export default function BookingRating() {
           to review it.
         </p>
         <button
-          onClick={() => router.back()}
+          onClick={() => navigate(-1)}
           className="text-blue-600 hover:underline"
         >
           Go Back
@@ -227,7 +232,7 @@ export default function BookingRating() {
           <li>You are not the client for this booking</li>
         </ul>
         <button
-          onClick={() => router.back()}
+          onClick={() => navigate(-1)}
           className="text-blue-600 hover:underline"
         >
           Go Back
@@ -240,7 +245,7 @@ export default function BookingRating() {
     <div className="mx-auto mt-6 max-w-2xl rounded-lg bg-white p-6 shadow">
       {/* Back Button */}
       <button
-        onClick={() => router.back()}
+        onClick={() => navigate(-1)}
         className="mb-4 flex items-center text-sm text-blue-600 hover:underline"
       >
         <ArrowLeftIcon className="mr-1 h-4 w-4" /> Back
@@ -317,7 +322,7 @@ export default function BookingRating() {
       {/* Submit Button */}
       <div className="mt-6 flex justify-end space-x-3">
         <button
-          onClick={() => router.back()}
+          onClick={() => navigate(-1)}
           disabled={isSubmitting}
           className="rounded-lg bg-gray-100 px-4 py-2 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
         >

@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { NextPage } from "next";
-import { useRouter } from "next/router";
-import Head from "next/head";
-import Link from "next/link";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
@@ -12,8 +9,6 @@ import {
   ChatBubbleLeftEllipsisIcon,
   XCircleIcon,
   ArrowPathIcon,
-  ClockIcon,
-  InformationCircleIcon,
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
@@ -23,7 +18,7 @@ import {
 } from "../../../hooks/bookingManagement";
 import { reviewCanisterService } from "../../../services/reviewCanisterService"; // ✅ Add this import
 import { authCanisterService } from "../../../services/authCanisterService"; // ✅ Add this import
-import BottomNavigationNextjs from "../../../components/client/BottomNavigationNextjs";
+import BottomNavigationNextjs from "../../../components/client/BottomNavigation";
 
 // Import BookingStatus from the hook's types if it's exported, or define it locally
 type BookingStatus =
@@ -35,9 +30,9 @@ type BookingStatus =
   | "Declined"
   | "Disputed";
 
-const BookingDetailsPage: NextPage = () => {
-  const router = useRouter();
-  const { id } = router.query;
+const BookingDetailsPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
@@ -79,6 +74,15 @@ const BookingDetailsPage: NextPage = () => {
       }
     }
   }, [id, bookings, hookLoading]);
+
+  // Set document title
+  useEffect(() => {
+    if (specificBooking) {
+      document.title = `Booking Details - ${specificBooking.serviceName || 'Service'} - SRV Client`;
+    } else {
+      document.title = "Booking Details - SRV Client";
+    }
+  }, [specificBooking]);
 
   // ✅ Check review status when booking is found
   useEffect(() => {
@@ -193,7 +197,7 @@ const BookingDetailsPage: NextPage = () => {
   // ✅ Add handler for viewing reviews when already reviewed
   const handleViewReviews = () => {
     if (specificBooking?.serviceId) {
-      router.push(`/client/service/reviews/${specificBooking.serviceId}`);
+      navigate(`/client/service/reviews/${specificBooking.serviceId}`);
     } else {
       alert("Service information not available.");
     }
@@ -317,9 +321,6 @@ const BookingDetailsPage: NextPage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Head>
-            <title>Booking Not Found</title>
-          </Head>
           <h1 className="mb-2 text-2xl font-bold text-gray-900">
             {localError === "Booking not found"
               ? "Booking Not Found"
@@ -327,10 +328,8 @@ const BookingDetailsPage: NextPage = () => {
           </h1>
           <p className="mb-4 text-gray-600">{displayError}</p>
           <div className="space-x-3">
-            <Link href="/client/booking" legacyBehavior>
-              <a className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700">
-                Back to My Bookings
-              </a>
+            <Link to="/client/booking" className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700">
+              Back to My Bookings
             </Link>
             <button
               onClick={handleRetry}
@@ -351,16 +350,11 @@ const BookingDetailsPage: NextPage = () => {
   if (!specificBooking && !isLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-        <Head>
-          <title>Booking Not Found</title>
-        </Head>
         <h1 className="mb-4 text-xl font-semibold text-red-600">
           Booking Not Found
         </h1>
-        <Link href="/client/booking" legacyBehavior>
-          <a className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-            Back to My Bookings
-          </a>
+        <Link to="/client/booking" className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+          Back to My Bookings
         </Link>
       </div>
     );
@@ -388,20 +382,11 @@ const BookingDetailsPage: NextPage = () => {
   // Show booking details
   return (
     <>
-      <Head>
-        <title>Booking: {serviceName} | SRV Client</title>
-        <meta
-          name="description"
-          content={`Booking details for ${serviceName}`}
-        />
-        <meta name="robots" content="noindex" />
-      </Head>
-
       <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
         <header className="sticky top-0 z-30 bg-white shadow-sm">
           <div className="container mx-auto flex items-center px-4 py-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => navigate(-1)}
               className="mr-2 rounded-full p-2 hover:bg-gray-100"
             >
               <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
@@ -506,25 +491,26 @@ const BookingDetailsPage: NextPage = () => {
                 {/* ✅ Keep "Book Again" button for both completed and cancelled bookings */}
                 {specificBooking?.serviceId && (
                   <Link
-                    href={`/client/book/${specificBooking.serviceId}`}
-                    legacyBehavior
+                    to={`/client/book/${specificBooking.serviceId}`}
+                    className="flex w-full items-center justify-center rounded-lg bg-green-500 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-green-600 sm:flex-1"
                   >
-                    <a className="flex w-full items-center justify-center rounded-lg bg-green-500 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-green-600 sm:flex-1">
-                      <ArrowPathIcon className="mr-2 h-5 w-5" /> Book Again
-                    </a>
+                    <ArrowPathIcon className="mr-2 h-5 w-5" /> Book Again
                   </Link>
                 )}
 
                 {/* ✅ Enhanced review button with validation */}
                 {reviewButtonContent && (
                   <div className="w-full sm:flex-1">
-                    {reviewButtonContent.href ? (
-                      <Link href={reviewButtonContent.href} legacyBehavior>
-                        <a
-                          className={`flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-center text-sm font-medium text-white transition-colors ${reviewButtonContent.className}`}
-                        >
-                          {reviewButtonContent.icon} {reviewButtonContent.text}
-                        </a>
+                    {(reviewButtonContent as any).href ? (
+                      <Link 
+                        to={
+                          typeof (reviewButtonContent as any).href === 'string' 
+                            ? (reviewButtonContent as any).href 
+                            : `${(reviewButtonContent as any).href.pathname}${(reviewButtonContent as any).href.query?.providerName ? `?providerName=${encodeURIComponent((reviewButtonContent as any).href.query.providerName)}` : ''}`
+                        }
+                        className={`flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-center text-sm font-medium text-white transition-colors ${reviewButtonContent.className}`}
+                      >
+                        {reviewButtonContent.icon} {reviewButtonContent.text}
                       </Link>
                     ) : (
                       <button

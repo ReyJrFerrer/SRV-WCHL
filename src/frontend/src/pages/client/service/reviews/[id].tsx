@@ -147,252 +147,250 @@ const ServiceReviewsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-        {/* Header for navigation */}
-        <header className="sticky top-0 z-50 bg-white shadow-sm">
-          <div className="container mx-auto flex items-center justify-between px-4 py-3">
-            <div className="flex items-center">
-              <button
-                onClick={() => navigate(-1)}
-                className="mr-3 rounded-full p-2 hover:bg-gray-100"
-              >
-                <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-              </button>
-              <h1 className="truncate text-lg font-semibold text-gray-800">
-                Reviews for {service.name}
-              </h1>
-            </div>
+      {/* Header for navigation */}
+      <header className="sticky top-0 z-50 bg-white shadow-sm">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+          <div className="flex items-center">
             <button
-              onClick={refreshReviews}
-              className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
-              title="Refresh reviews"
+              onClick={() => navigate(-1)}
+              className="mr-3 rounded-full p-2 hover:bg-gray-100"
             >
-              🔄
+              <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
             </button>
+            <h1 className="truncate text-lg font-semibold text-gray-800">
+              Reviews for {service.name}
+            </h1>
           </div>
-        </header>
+          <button
+            onClick={refreshReviews}
+            className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
+            title="Refresh reviews"
+          >
+            🔄
+          </button>
+        </div>
+      </header>
 
-        {/* Main Content */}
-        <main className="container mx-auto p-4">
-          {/* Service Info Card */}
-          <div className="mb-6 flex items-center space-x-4 rounded-lg bg-white p-4 shadow-md md:p-6">
-            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 md:h-20 md:w-20">
-              <img
-                src={providerAvatar}
-                alt={providerName}
-                className="h-full w-full object-cover"
-              />
-            </div>
-
-            <div className="flex-grow">
-              <h2 className="text-xl font-bold text-gray-800 md:text-2xl">
-                {providerName}
-              </h2>
-              <p className="md:text-md mb-1 text-sm text-gray-600">
-                {service.name}
-              </p>
-              <div className="flex items-center space-x-1 text-xs text-gray-700 md:text-sm">
-                <StarRatingDisplay rating={averageRating} />
-                <span className="font-semibold">
-                  {averageRating.toFixed(1)}
-                </span>
-                <span>({reviews.length} reviews)</span>
-              </div>
-            </div>
+      {/* Main Content */}
+      <main className="container mx-auto p-4">
+        {/* Service Info Card */}
+        <div className="mb-6 flex items-center space-x-4 rounded-lg bg-white p-4 shadow-md md:p-6">
+          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 md:h-20 md:w-20">
+            <img
+              src={providerAvatar}
+              alt={providerName}
+              className="h-full w-full object-cover"
+            />
           </div>
 
-          {/* Rating Summary and Filters */}
-          <div className="mb-6 rounded-lg bg-white p-4 shadow-md md:p-6">
-            <h3 className="mb-4 text-lg font-semibold text-gray-800">
-              Rating Breakdown
-            </h3>
-
-            {/* Rating Distribution */}
-            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <h4 className="mb-3 font-medium text-gray-700">
-                  Rating Distribution
-                </h4>
-                {[5, 4, 3, 2, 1].map((rating) => (
-                  <div key={rating} className="mb-2 flex items-center">
-                    <span className="w-8 text-sm">{rating}★</span>
-                    <div className="mx-3 h-2 flex-1 rounded-full bg-gray-200">
-                      <div
-                        className="h-2 rounded-full bg-yellow-400"
-                        style={{
-                          width: `${reviews.length > 0 ? (ratingDistribution[rating] / reviews.length) * 100 : 0}%`,
-                        }}
-                      ></div>
-                    </div>
-                    <span className="w-12 text-sm text-gray-600">
-                      {ratingDistribution[rating] || 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <h4 className="mb-3 font-medium text-gray-700">Quick Stats</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Total Reviews:</span>
-                    <span className="font-semibold">{reviews.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Average Rating:</span>
-                    <span className="font-semibold">
-                      {averageRating.toFixed(1)}/5
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>5-Star Reviews:</span>
-                    <span className="font-semibold">
-                      {ratingDistribution[5] || 0}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Recent Reviews (7 days):</span>
-                    <span className="font-semibold">
-                      {analytics?.recentReviews || 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Filters and Sorting */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Sort by:
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <option value="newest">Newest</option>
-                  <option value="oldest">Oldest</option>
-                  <option value="highest">Highest Rating</option>
-                  <option value="lowest">Lowest Rating</option>
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Filter by rating:
-                </label>
-                <select
-                  value={filterRating || ""}
-                  onChange={(e) =>
-                    setFilterRating(
-                      e.target.value ? Number(e.target.value) : null,
-                    )
-                  }
-                  className="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <option value="">All Ratings</option>
-                  <option value="5">5 Stars</option>
-                  <option value="4">4 Stars</option>
-                  <option value="3">3 Stars</option>
-                  <option value="2">2 Stars</option>
-                  <option value="1">1 Star</option>
-                </select>
-              </div>
+          <div className="flex-grow">
+            <h2 className="text-xl font-bold text-gray-800 md:text-2xl">
+              {providerName}
+            </h2>
+            <p className="md:text-md mb-1 text-sm text-gray-600">
+              {service.name}
+            </p>
+            <div className="flex items-center space-x-1 text-xs text-gray-700 md:text-sm">
+              <StarRatingDisplay rating={averageRating} />
+              <span className="font-semibold">{averageRating.toFixed(1)}</span>
+              <span>({reviews.length} reviews)</span>
             </div>
           </div>
+        </div>
 
-          {/* Reviews List */}
-          {sortedAndFilteredReviews.length > 0 ? (
-            <div className="space-y-4">
-              {sortedAndFilteredReviews.map((review) => (
-                <div key={review.id} className="rounded-lg bg-white p-4 shadow">
-                  <div className="mb-3 flex items-start">
-                    <div className="relative mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-100 bg-gray-200">
-                      {review.clientProfile?.profilePicture?.imageUrl ? (
-                        <img
-                          src={review.clientProfile.profilePicture.imageUrl}
-                          alt={review.clientName || "Client"}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <UserIcon className="h-6 w-6 text-gray-500" />
-                      )}
-                    </div>
-                    <div className="flex-grow">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-gray-800">
-                          {review.clientName || "Anonymous User"}
-                        </h4>
-                        {review.status !== "Visible" && (
-                          <div className="flex items-center text-xs text-gray-500">
-                            <EyeSlashIcon className="mr-1 h-4 w-4" />
-                            {review.status}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <p className="text-xs text-gray-500">
-                          {formatReviewDate(review.createdAt)}
-                        </p>
-                        <span className="text-xs text-gray-400">•</span>
-                        <p className="text-xs text-gray-500">
-                          {getRelativeTime(review.createdAt)}
-                        </p>
-                      </div>
-                    </div>
+        {/* Rating Summary and Filters */}
+        <div className="mb-6 rounded-lg bg-white p-4 shadow-md md:p-6">
+          <h3 className="mb-4 text-lg font-semibold text-gray-800">
+            Rating Breakdown
+          </h3>
+
+          {/* Rating Distribution */}
+          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <h4 className="mb-3 font-medium text-gray-700">
+                Rating Distribution
+              </h4>
+              {[5, 4, 3, 2, 1].map((rating) => (
+                <div key={rating} className="mb-2 flex items-center">
+                  <span className="w-8 text-sm">{rating}★</span>
+                  <div className="mx-3 h-2 flex-1 rounded-full bg-gray-200">
+                    <div
+                      className="h-2 rounded-full bg-yellow-400"
+                      style={{
+                        width: `${reviews.length > 0 ? (ratingDistribution[rating] / reviews.length) * 100 : 0}%`,
+                      }}
+                    ></div>
                   </div>
-
-                  <div className="mb-2">
-                    <StarRatingDisplay rating={review.rating} />
-                  </div>
-
-                  <p className="mb-3 text-sm leading-relaxed text-gray-700">
-                    {review.comment}
-                  </p>
-
-                  {/* Quality Score */}
-                  {review.qualityScore && (
-                    <div className="mb-2 flex items-center text-xs text-gray-500">
-                      <span>
-                        Quality Score: {(review.qualityScore * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Review Actions (if owned by current user) */}
-                  {review.canEdit && (
-                    <div className="flex items-center space-x-2 border-t border-gray-100 pt-2">
-                      <button className="text-xs text-blue-600 hover:underline">
-                        Edit Review
-                      </button>
-                      <span className="text-xs text-gray-300">•</span>
-                      <button className="text-xs text-red-600 hover:underline">
-                        Delete Review
-                      </button>
-                    </div>
-                  )}
+                  <span className="w-12 text-sm text-gray-600">
+                    {ratingDistribution[rating] || 0}
+                  </span>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="rounded-lg bg-white py-10 text-center shadow">
-              <p className="text-gray-600">
-                {filterRating
-                  ? `No ${filterRating}-star reviews found.`
-                  : "No reviews yet for this service."}
-              </p>
-              {filterRating && (
-                <button
-                  onClick={() => setFilterRating(null)}
-                  className="mt-2 text-sm text-blue-600 hover:underline"
-                >
-                  Clear filter
-                </button>
-              )}
+
+            <div>
+              <h4 className="mb-3 font-medium text-gray-700">Quick Stats</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Total Reviews:</span>
+                  <span className="font-semibold">{reviews.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Average Rating:</span>
+                  <span className="font-semibold">
+                    {averageRating.toFixed(1)}/5
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>5-Star Reviews:</span>
+                  <span className="font-semibold">
+                    {ratingDistribution[5] || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Recent Reviews (7 days):</span>
+                  <span className="font-semibold">
+                    {analytics?.recentReviews || 0}
+                  </span>
+                </div>
+              </div>
             </div>
-          )}
-        </main>
-      </div>
+          </div>
+
+          {/* Filters and Sorting */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">
+                Sort by:
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="highest">Highest Rating</option>
+                <option value="lowest">Lowest Rating</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">
+                Filter by rating:
+              </label>
+              <select
+                value={filterRating || ""}
+                onChange={(e) =>
+                  setFilterRating(
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
+                className="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="">All Ratings</option>
+                <option value="5">5 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="3">3 Stars</option>
+                <option value="2">2 Stars</option>
+                <option value="1">1 Star</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews List */}
+        {sortedAndFilteredReviews.length > 0 ? (
+          <div className="space-y-4">
+            {sortedAndFilteredReviews.map((review) => (
+              <div key={review.id} className="rounded-lg bg-white p-4 shadow">
+                <div className="mb-3 flex items-start">
+                  <div className="relative mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-100 bg-gray-200">
+                    {review.clientProfile?.profilePicture?.imageUrl ? (
+                      <img
+                        src={review.clientProfile.profilePicture.imageUrl}
+                        alt={review.clientName || "Client"}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon className="h-6 w-6 text-gray-500" />
+                    )}
+                  </div>
+                  <div className="flex-grow">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-gray-800">
+                        {review.clientName || "Anonymous User"}
+                      </h4>
+                      {review.status !== "Visible" && (
+                        <div className="flex items-center text-xs text-gray-500">
+                          <EyeSlashIcon className="mr-1 h-4 w-4" />
+                          {review.status}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <p className="text-xs text-gray-500">
+                        {formatReviewDate(review.createdAt)}
+                      </p>
+                      <span className="text-xs text-gray-400">•</span>
+                      <p className="text-xs text-gray-500">
+                        {getRelativeTime(review.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  <StarRatingDisplay rating={review.rating} />
+                </div>
+
+                <p className="mb-3 text-sm leading-relaxed text-gray-700">
+                  {review.comment}
+                </p>
+
+                {/* Quality Score */}
+                {review.qualityScore && (
+                  <div className="mb-2 flex items-center text-xs text-gray-500">
+                    <span>
+                      Quality Score: {(review.qualityScore * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                )}
+
+                {/* Review Actions (if owned by current user) */}
+                {review.canEdit && (
+                  <div className="flex items-center space-x-2 border-t border-gray-100 pt-2">
+                    <button className="text-xs text-blue-600 hover:underline">
+                      Edit Review
+                    </button>
+                    <span className="text-xs text-gray-300">•</span>
+                    <button className="text-xs text-red-600 hover:underline">
+                      Delete Review
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg bg-white py-10 text-center shadow">
+            <p className="text-gray-600">
+              {filterRating
+                ? `No ${filterRating}-star reviews found.`
+                : "No reviews yet for this service."}
+            </p>
+            {filterRating && (
+              <button
+                onClick={() => setFilterRating(null)}
+                className="mt-2 text-sm text-blue-600 hover:underline"
+              >
+                Clear filter
+              </button>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
   );
 };
 
