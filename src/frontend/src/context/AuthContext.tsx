@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Identity } from "@dfinity/agent";
+import { updateAuthActor } from "../services/authCanisterService";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -47,7 +48,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const isAuth = await client.isAuthenticated();
         setIsAuthenticated(isAuth);
         if (isAuth) {
-          setIdentity(client.getIdentity());
+          const identity = client.getIdentity();
+          setIdentity(identity);
+          // Update auth actor with the authenticated identity
+          updateAuthActor(identity);
+        } else {
+          // Update auth actor with no identity (anonymous)
+          updateAuthActor(null);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "An unknown error occurred");
@@ -72,8 +79,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             ? "https://identity.ic0.app"
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
         onSuccess: () => {
+          const identity = authClient.getIdentity();
           setIsAuthenticated(true);
-          setIdentity(authClient.getIdentity());
+          setIdentity(identity);
+          // Update auth actor with the authenticated identity
+          updateAuthActor(identity);
           setIsLoading(false);
         },
         onError: (err?: string) => {
@@ -96,6 +106,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await authClient.logout();
     setIsAuthenticated(false);
     setIdentity(null);
+    // Update auth actor to anonymous
+    updateAuthActor(null);
   };
 
   const value = {

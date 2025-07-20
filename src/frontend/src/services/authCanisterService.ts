@@ -43,24 +43,44 @@ const createAuthActor = (identity?: Identity | null): AuthService => {
   }) as AuthService;
 };
 
-// Singleton actor instance
+// Singleton actor instance with identity tracking
 let authActor: AuthService | null = null;
+let currentIdentity: Identity | null = null;
 
-const getAuthActor = async (): Promise<AuthService> => {
-  if (!authActor) {
-    authActor = createAuthActor();
+/**
+ * Updates the auth actor with a new identity
+ * This should be called when the user's authentication state changes
+ */
+export const updateAuthActor = (identity: Identity | null) => {
+  if (currentIdentity !== identity) {
+    authActor = createAuthActor(identity);
+    currentIdentity = identity;
   }
+};
+
+/**
+ * Gets the current auth actor
+ * Throws error if no authenticated identity is available for auth-required operations
+ */
+const getAuthActor = (requireAuth: boolean = false): AuthService => {
+  if (requireAuth && !currentIdentity) {
+    throw new Error("Authentication required: Please log in to perform this action");
+  }
+  
+  if (!authActor) {
+    authActor = createAuthActor(currentIdentity);
+  }
+  
   return authActor;
 };
 // Auth Canister Service Functions
 export const authCanisterService = {
   /**
    * Get all service providers from the auth canister
-   * @param identity The user's identity from AuthContext
    */
   async getAllServiceProviders(): Promise<FrontendProfile[]> {
     try {
-      const actor = await getAuthActor();
+      const actor = getAuthActor();
       const profiles = await actor.getAllServiceProviders();
 
       // Convert backend profiles to frontend-compatible format
@@ -74,11 +94,10 @@ export const authCanisterService = {
   /**
    * Get a specific profile by Principal ID
    * @param userId The principal ID of the user to fetch
-   * @param identity The user's identity from AuthContext
    */
   async getProfile(userId: string): Promise<FrontendProfile | null> {
     try {
-      const actor = await getAuthActor();
+      const actor = getAuthActor();
 
       // Convert string to Principal
       const userPrincipal = Principal.fromText(userId);
@@ -98,12 +117,11 @@ export const authCanisterService = {
   },
 
   /**
-   * Get the current user's profile
-   * @param identity The user's identity from AuthContext (required for this call)
+   * Get the current user's profile (requires authentication)
    */
   async getMyProfile(): Promise<FrontendProfile | null> {
     try {
-      const actor = await getAuthActor();
+      const actor = getAuthActor(true); // Requires authentication
       const result = await actor.getMyProfile();
 
       if ("ok" in result) {
@@ -119,11 +137,10 @@ export const authCanisterService = {
   },
 
   /**
-   * Create a new profile
+   * Create a new profile (requires authentication)
    * @param name User's name
    * @param phone User's phone number
    * @param role User's role (Client or ServiceProvider)
-   * @param identity The user's identity from AuthContext (required for this call)
    */
   async createProfile(
     name: string,
@@ -132,7 +149,7 @@ export const authCanisterService = {
     role: "Client" | "ServiceProvider",
   ): Promise<FrontendProfile | null> {
     try {
-      const actor = await getAuthActor();
+      const actor = getAuthActor(true); // Requires authentication
       const userRole: UserRole = { [role]: null } as UserRole;
       const result = await actor.createProfile(name, phone, userRole);
 
@@ -149,17 +166,16 @@ export const authCanisterService = {
   },
 
   /**
-   * Update an existing profile
+   * Update an existing profile (requires authentication)
    * @param name Optional new name
    * @param phone Optional new phone number
-   * @param identity The user's identity from AuthContext (required for this call)
    */
   async updateProfile(
     name?: string,
     phone?: string,
   ): Promise<FrontendProfile | null> {
     try {
-      const actor = await getAuthActor();
+      const actor = getAuthActor(true); // Requires authentication
       const result = await actor.updateProfile(
         name ? [name] : [],
         phone ? [phone] : [],
@@ -178,13 +194,12 @@ export const authCanisterService = {
   },
 
   /**
-   * Verify a user
+   * Verify a user (requires authentication)
    * @param userId The principal ID of the user to verify
-   * @param identity The user's identity from AuthContext (required for this call)
    */
   async verifyUser(userId: string): Promise<boolean> {
     try {
-      const actor = await getAuthActor();
+      const actor = getAuthActor(true); // Requires authentication
       // Convert string to Principal
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.verifyUser(userPrincipal);

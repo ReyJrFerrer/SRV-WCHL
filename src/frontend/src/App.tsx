@@ -34,7 +34,7 @@ export default function App() {
         setProfileError(null);
 
         try {
-          // Pass identity from AuthContext to the service
+          // The identity is now automatically managed by the auth service
           const profile = await authCanisterService.getMyProfile();
 
           if (profile) {

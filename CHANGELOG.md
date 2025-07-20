@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Fix authentication bug preventing authenticated canister calls by implementing identity-aware auth service
 - Convert Next.js client components to React Router DOM for improved navigation and routing
 - Replace Next.js Head component with native document.title manipulation in search results page
 - Replace Next.js Head component with native document.title manipulation in chat page
