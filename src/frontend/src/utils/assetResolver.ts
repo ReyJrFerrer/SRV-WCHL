@@ -1,12 +1,12 @@
 // Asset resolver utility for handling backend image references
-// This bridges the gap between backend image paths and frontend asset requirements
+// This bridges the gap between backend image paths and frontend asset URLs
 
 /**
- * Resolves backend image paths to frontend require() statements
+ * Resolves backend image paths to frontend asset URLs
  * @param imagePath - Path from backend (e.g., "/images/Maid1.jpg")
- * @returns Resolved asset path for frontend use
+ * @returns Resolved asset URL for frontend use
  */
-export function resolveAssetPath(imagePath: string): any {
+export function resolveAssetPath(imagePath: string): string | null {
   if (!imagePath) return null;
 
   // Remove leading slash if present
@@ -14,26 +14,14 @@ export function resolveAssetPath(imagePath: string): any {
     ? imagePath.substring(1)
     : imagePath;
 
-  // Map common image paths to their require() equivalents
-  const assetMap: { [key: string]: any } = {
-    "images/Maid1.jpg": require("../../assets/images/Maid1.jpg"),
-    "images/Maid2.jpg": require("../../assets/images/maid2.jpg"),
-    "images/Plumber1.jpg": require("../../assets/images/Plumber1.jpg"),
-    "images/Plumber2.jpg": require("../../assets/images/Plumber2.jpg"),
-    "images/Technician1.jpg": require("../../assets/images/Technician1.jpg"),
-    "images/Technician2.jpg": require("../../assets/images/Technician2.jpg"),
-    "images/BeautyServices-Hairstylist1.jpg": require("../../assets/images/BeautyServices-Hairstylist1.jpg"),
-    "images/BeautyServices-Hairstylist2.jpg": require("../../assets/images/BeautyServices-Hairstylist2.jpg"),
-    "images/BeautyServices-Hairstylist3.jpg": require("../../assets/images/BeautyServices-Hairstylist3.jpg"),
-    "images/Photographer-ProPhotographer1.jpg": require("../../assets/images/Photographer-ProPhotographer.jpg"),
-    "images/Photographer-ProPhotographer2.jpg": require("../../assets/images/Photographer-ProPhotographer2.jpg"),
-    "images/Photographer-ProPhotographer3.jpg": require("../../assets/images/Photographer-ProPhotographer3.jpg"),
-    "images/DeliveryService-Courier1.jpg": require("../../assets/images/Delivery-Courier1.jpg"),
-    "images/DeliveryService-Courier2.jpg": require("../../assets/images/Delivery-Courier2.jpg"),
-    // Add more mappings as needed
-  };
+  // For Vite, we can directly use public assets via their path
+  // Check if the path corresponds to a public asset
+  if (cleanPath.startsWith("images/")) {
+    return `/${cleanPath}`;
+  }
 
-  return assetMap[cleanPath] || imagePath;
+  // If no mapping found, return the original path (might be from public directory)
+  return `/${cleanPath}`;
 }
 
 /**
@@ -90,6 +78,6 @@ export function adaptBackendProfile(backendProfile: any): any {
  * Helper function to get asset path for a specific image name
  * Useful for dynamic asset loading
  */
-export function getAssetByName(imageName: string): any {
+export function getAssetByName(imageName: string): string | null {
   return resolveAssetPath(`images/${imageName}`);
 }

@@ -1,7 +1,10 @@
 // Service Canister Service
 import { Principal } from "@dfinity/principal";
 import { canisterId, createActor } from "../../../declarations/service";
-import { getAdminHttpAgent } from "../utils/icpClient";
+import { canisterId as authCanisterId } from "../../../declarations/auth";
+import { canisterId as bookingCanisterId } from "../../../declarations/booking";
+import { canisterId as reviewCanisterId } from "../../../declarations/review";
+import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as ServiceService,
@@ -36,15 +39,25 @@ const createServiceActor = (identity?: Identity | null): ServiceService => {
 
 // Singleton actor instance
 let serviceActor: ServiceService | null = null;
+let currentIdentity: Identity | null = null;
 
-/**
- * Get or create the service actor instance
- * @returns The service service actor
- */
-const getServiceActor = async (): Promise<ServiceService> => {
-  if (!serviceActor) {
-    serviceActor = createServiceActor();
+
+export const updateServiceActor = (identity: Identity | null) => {
+  if (currentIdentity !== identity) {
+    serviceActor = createServiceActor(identity);
+    currentIdentity = identity;
   }
+};
+
+const getServiceActor = (requireAuth: boolean = false): ServiceService => {
+  if (requireAuth && !currentIdentity) {
+    throw new Error("Authentication required: Please log in to perform this action");
+  }
+  
+  if (!serviceActor) {
+    serviceActor = createServiceActor(currentIdentity);
+  }
+  
   return serviceActor;
 };
 
@@ -332,7 +345,7 @@ export const serviceCanisterService = {
     maxBookingsPerDay?: number,
   ): Promise<Service | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.createService(
         title,
         description,
@@ -424,7 +437,7 @@ export const serviceCanisterService = {
     status: ServiceStatus,
   ): Promise<Service | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.updateServiceStatus(
         serviceId,
         convertToCanisterServiceStatus(status),
@@ -451,7 +464,7 @@ export const serviceCanisterService = {
     categoryId?: string,
   ): Promise<Service[]> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const services = await actor.searchServicesByLocation(
         convertToCanisterLocation(location),
         radiusKm,
@@ -475,7 +488,7 @@ export const serviceCanisterService = {
     minTrustScore?: number,
   ): Promise<Service[]> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const services = await actor.searchServicesWithReputationFilter(
         convertToCanisterLocation(location),
         radiusKm,
@@ -501,7 +514,7 @@ export const serviceCanisterService = {
     newReviewCount: number,
   ): Promise<Service | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.updateServiceRating(
         serviceId,
         newRating,
@@ -531,7 +544,7 @@ export const serviceCanisterService = {
     imageUrl: string,
   ): Promise<ServiceCategory | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.addCategory(
         name,
         slug,
@@ -557,7 +570,7 @@ export const serviceCanisterService = {
    */
   async getAllCategories(): Promise<ServiceCategory[]> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const categories = await actor.getAllCategories();
 
       return categories.map(convertCanisterServiceCategory);
@@ -572,7 +585,7 @@ export const serviceCanisterService = {
    */
   async getAllServices(): Promise<Service[]> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const services = await actor.getAllServices();
 
       return services.map(convertCanisterService);
@@ -593,7 +606,7 @@ export const serviceCanisterService = {
     maxBookingsPerDay: number,
   ): Promise<ProviderAvailability | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.setServiceAvailability(
         serviceId,
         weeklySchedule.map(({ day, availability }) => [
@@ -624,7 +637,7 @@ export const serviceCanisterService = {
     providerId: string,
   ): Promise<ProviderAvailability | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const result = await actor.getProviderAvailability(
         Principal.fromText(providerId),
       );
@@ -648,7 +661,7 @@ export const serviceCanisterService = {
     serviceId: string,
   ): Promise<ProviderAvailability | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const result = await actor.getServiceAvailability(serviceId);
 
       if ("ok" in result) {
@@ -671,7 +684,7 @@ export const serviceCanisterService = {
     date: Date,
   ): Promise<AvailableSlot[]> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const result = await actor.getAvailableTimeSlots(
         serviceId,
         BigInt(date.getTime() * 1000000), // Convert to nanoseconds
@@ -697,7 +710,7 @@ export const serviceCanisterService = {
     requestedDateTime: Date,
   ): Promise<boolean> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const result = await actor.isProviderAvailable(
         Principal.fromText(providerId),
         BigInt(requestedDateTime.getTime() * 1000000), // Convert to nanoseconds
@@ -723,7 +736,7 @@ export const serviceCanisterService = {
     requestedDateTime: Date,
   ): Promise<boolean> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const result = await actor.isServiceAvailable(
         serviceId,
         BigInt(requestedDateTime.getTime() * 1000000), // Convert to nanoseconds
@@ -744,26 +757,14 @@ export const serviceCanisterService = {
   /**
    * Set canister references
    */
-  async setCanisterReferences(
-    authCanisterId?: string,
-    bookingCanisterId?: string,
-    reviewCanisterId?: string,
-    reputationCanisterId?: string,
-  ): Promise<string | null> {
+  async setCanisterReferences(): Promise<string | null> {
     try {
-      // Use admin agent for setup operations
-      const agent = await getAdminHttpAgent();
-
-      // Use the imported createActor with admin agent
-      const adminActor = createActor(canisterId, {
-        agent,
-      }) as ServiceService;
-
-      const result = await adminActor.setCanisterReferences(
-        authCanisterId ? [Principal.fromText(authCanisterId)] : [],
-        bookingCanisterId ? [Principal.fromText(bookingCanisterId)] : [],
-        reviewCanisterId ? [Principal.fromText(reviewCanisterId)] : [],
-        reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : [],
+      const actor = getServiceActor(true);
+      const result = await actor.setCanisterReferences(
+        [Principal.fromText(authCanisterId)],
+        [Principal.fromText(bookingCanisterId)],
+        [Principal.fromText(reviewCanisterId)],
+        [Principal.fromText(reputationCanisterId)],
       );
 
       if ("ok" in result) {
@@ -788,7 +789,7 @@ export const serviceCanisterService = {
     price: number,
   ): Promise<ServicePackage | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.createServicePackage(
         serviceId,
         title,
@@ -813,7 +814,7 @@ export const serviceCanisterService = {
    */
   async getServicePackages(serviceId: string): Promise<ServicePackage[]> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const result = await actor.getServicePackages(serviceId);
 
       if ("ok" in result) {
@@ -833,7 +834,7 @@ export const serviceCanisterService = {
    */
   async getPackage(packageId: string): Promise<ServicePackage | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(false);
       const result = await actor.getPackage(packageId);
 
       if ("ok" in result) {
@@ -858,7 +859,7 @@ export const serviceCanisterService = {
     price?: number,
   ): Promise<ServicePackage | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.updateServicePackage(
         packageId,
         title ? [title] : [],
@@ -883,7 +884,7 @@ export const serviceCanisterService = {
    */
   async deleteServicePackage(packageId: string): Promise<string | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.deleteServicePackage(packageId);
 
       if ("ok" in result) {
@@ -908,7 +909,7 @@ export const serviceCanisterService = {
     price?: number,
   ): Promise<Service | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.updateService(
         serviceId,
         title ? [title] : [],
@@ -933,7 +934,7 @@ export const serviceCanisterService = {
    */
   async deleteService(serviceId: string): Promise<string | null> {
     try {
-      const actor = await getServiceActor();
+      const actor = await getServiceActor(true);
       const result = await actor.deleteService(serviceId);
 
       if ("ok" in result) {
@@ -956,7 +957,7 @@ export const resetServiceActor = () => {
 
 export const refreshServiceActor = async () => {
   resetServiceActor();
-  return await getServiceActor();
+  return await getServiceActor(true);
 };
 
 export default serviceCanisterService;

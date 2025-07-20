@@ -1,7 +1,7 @@
 // Auth Canister Service
 import { Principal } from "@dfinity/principal";
 import { canisterId, createActor } from "../../../declarations/auth";
-import { getAdminHttpAgent } from "../utils/icpClient";
+import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import type {
   _SERVICE as AuthService,
   UserRole,
@@ -18,8 +18,8 @@ export interface FrontendProfile {
   role: "Client" | "ServiceProvider";
   isVerified: boolean;
   profilePicture?: {
-    imageUrl: any; // Frontend require() result
-    thumbnailUrl: any; // Frontend require() result
+    imageUrl: string | null; // Asset URL or null
+    thumbnailUrl: string | null; // Asset URL or null
   };
   biography?: string;
   createdAt: Date;
@@ -55,7 +55,9 @@ export const updateAuthActor = (identity: Identity | null) => {
   if (currentIdentity !== identity) {
     authActor = createAuthActor(identity);
     currentIdentity = identity;
+    
   }
+  
 };
 
 /**
@@ -220,19 +222,10 @@ export const authCanisterService = {
    * Set canister references for auth canister (ADMIN FUNCTION)
    * @param reputationCanisterId Optional reputation canister ID to set
    */
-  async setCanisterReferences(
-    reputationCanisterId?: string,
-  ): Promise<string | null> {
+  async setCanisterReferences(): Promise<string | null> {
     try {
-      // Use admin agent for setup operations
-      const agent = await getAdminHttpAgent();
-
-      // Use the imported createActor with admin agent
-      const adminActor = createActor(canisterId, {
-        agent,
-      }) as AuthService;
-
-      const result = await adminActor.setCanisterReferences(
+      const actor = getAuthActor(true)
+      const result = await actor.setCanisterReferences(
         reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : [],
       );
 

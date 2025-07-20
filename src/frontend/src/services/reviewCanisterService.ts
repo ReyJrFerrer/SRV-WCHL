@@ -4,6 +4,10 @@ import {
   canisterId,
   createActor as createReviewActor,
 } from "../../../declarations/review";
+import { canisterId as authCanisterId } from "../../../declarations/auth";
+import { canisterId as bookingCanisterId } from "../../../declarations/booking";
+import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
+import {canisterId as serviceCanisterId} from "../../../declarations/service"
 import { getAdminHttpAgent } from "../utils/icpClient";
 import { Identity } from "@dfinity/agent";
 import type {
@@ -30,17 +34,34 @@ const createReviewActorWithIdentity = (
   }) as ReviewService;
 };
 
-// Singleton actor instance
+// Singleton actor instance with identity tracking
 let reviewActor: ReviewService | null = null;
+let currentIdentity: Identity | null = null;
 
 /**
- * Get or create the review actor instance
- * @returns The review service actor
+ * Updates the review actor with a new identity
+ * This should be called when the user's authentication state changes
  */
-const getReviewActor = async (): Promise<ReviewService> => {
-  if (!reviewActor) {
-    reviewActor = createReviewActorWithIdentity();
+export const updateReviewActor = (identity: Identity | null) => {
+  if (currentIdentity !== identity) {
+    reviewActor = createReviewActorWithIdentity(identity);
+    currentIdentity = identity;
   }
+};
+
+/**
+ * Gets the current review actor
+ * Throws error if no authenticated identity is available for auth-required operations
+ */
+const getReviewActor = (requireAuth: boolean = false): ReviewService => {
+  if (requireAuth && !currentIdentity) {
+    throw new Error("Authentication required: Please log in to perform this action");
+  }
+  
+  if (!reviewActor) {
+    reviewActor = createReviewActorWithIdentity(currentIdentity);
+  }
+  
   return reviewActor;
 };
 
@@ -94,13 +115,8 @@ const convertCanisterReviewToFrontend = (
 };
 
 class ReviewCanisterService {
-  private actor: ReviewService | null = null;
-
-  private async getActor(): Promise<ReviewService> {
-    if (!this.actor) {
-      this.actor = await getReviewActor();
-    }
-    return this.actor;
+  private getActor(): ReviewService {
+    return getReviewActor();
   }
 
   // Submit a review for a booking
@@ -110,7 +126,7 @@ class ReviewCanisterService {
     comment: string,
   ): Promise<Review> {
     try {
-      const actor = await this.getActor();
+      const actor = getReviewActor(true); // Requires authentication
       const result = await actor.submitReview(
         bookingId,
         BigInt(rating),
@@ -131,7 +147,7 @@ class ReviewCanisterService {
   // Get review by ID
   async getReview(reviewId: string): Promise<Review> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const result = await actor.getReview(reviewId);
 
       if ("ok" in result) {
@@ -148,7 +164,7 @@ class ReviewCanisterService {
   // Get reviews for a booking
   async getBookingReviews(bookingId: string): Promise<Review[]> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const canisterReviews = await actor.getBookingReviews(bookingId);
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
@@ -161,7 +177,7 @@ class ReviewCanisterService {
   // Get reviews by a user
   async getUserReviews(userId: string): Promise<Review[]> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const userPrincipal = Principal.fromText(userId);
       const canisterReviews = await actor.getUserReviews(userPrincipal);
 
@@ -179,7 +195,7 @@ class ReviewCanisterService {
     comment: string,
   ): Promise<Review> {
     try {
-      const actor = await this.getActor();
+      const actor = getReviewActor(true); // Requires authentication
       const result = await actor.updateReview(
         reviewId,
         BigInt(rating),
@@ -200,7 +216,7 @@ class ReviewCanisterService {
   // Delete a review (actually hides it)
   async deleteReview(reviewId: string): Promise<void> {
     try {
-      const actor = await this.getActor();
+      const actor = getReviewActor(true); // Requires authentication
       const result = await actor.deleteReview(reviewId);
 
       if ("err" in result) {
@@ -215,7 +231,7 @@ class ReviewCanisterService {
   // Calculate average rating for a provider
   async calculateProviderRating(providerId: string): Promise<number> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const providerPrincipal = Principal.fromText(providerId);
       const result = await actor.calculateProviderRating(providerPrincipal);
 
@@ -233,7 +249,7 @@ class ReviewCanisterService {
   // Calculate average rating for a service
   async calculateServiceRating(serviceId: string): Promise<number> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const result = await actor.calculateServiceRating(serviceId);
 
       if ("ok" in result) {
@@ -250,7 +266,7 @@ class ReviewCanisterService {
   // Calculate user average rating
   async calculateUserAverageRating(userId: string): Promise<number> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.calculateUserAverageRating(userPrincipal);
 
@@ -268,7 +284,7 @@ class ReviewCanisterService {
   // Get all reviews (for admin or analytics purposes)
   async getAllReviews(): Promise<Review[]> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const canisterReviews = await actor.getAllReviews();
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
@@ -281,7 +297,7 @@ class ReviewCanisterService {
   // Get review statistics
   async getReviewStatistics(): Promise<ReviewStatistics> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const stats = await actor.getReviewStatistics();
 
       return {
@@ -297,51 +313,12 @@ class ReviewCanisterService {
     }
   }
 
-  // Set canister references (admin function)
-  async setCanisterReferences(
-    booking: string,
-    service: string,
-    reputation: string,
-    auth: string,
-  ): Promise<string | null> {
-    try {
-      // Use admin agent for setup operations
-      const agent = await getAdminHttpAgent();
 
-      // Use the imported createActor with admin agent
-      const adminActor = createReviewActor(canisterId, {
-        agent,
-      }) as ReviewService;
-
-      if (!adminActor) {
-        throw new Error("Failed to create actor instance");
-      }
-
-      const result = await adminActor.setCanisterReferences(
-        Principal.fromText(booking),
-        Principal.fromText(service),
-        Principal.fromText(reputation),
-        Principal.fromText(auth),
-      );
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        console.error("Error setting canister references:", result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      console.error("Error setting canister references:", error);
-      // Reset the actor to force recreation on next call
-      reviewActor = null;
-      throw new Error(`Failed to set canister references: ${error}`);
-    }
-  }
 
   // Initialize static reviews manually (admin function)
   async initializeStaticReviewsManually(): Promise<string> {
     try {
-      const actor = await this.getActor();
+      const actor = this.getActor();
       const result = await actor.initializeStaticReviewsManually();
 
       if ("ok" in result) {
@@ -462,7 +439,7 @@ export const reviewCanisterService = {
     comment: string,
   ): Promise<Review> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor(true); // Requires authentication
       const result = await actor.submitReview(
         bookingId,
         BigInt(rating),
@@ -485,7 +462,7 @@ export const reviewCanisterService = {
    */
   async getReview(reviewId: string): Promise<Review> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const result = await actor.getReview(reviewId);
 
       if ("ok" in result) {
@@ -504,7 +481,7 @@ export const reviewCanisterService = {
    */
   async getBookingReviews(bookingId: string): Promise<Review[]> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const canisterReviews = await actor.getBookingReviews(bookingId);
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
@@ -519,7 +496,7 @@ export const reviewCanisterService = {
    */
   async getUserReviews(userId: string): Promise<Review[]> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const userPrincipal = Principal.fromText(userId);
       const canisterReviews = await actor.getUserReviews(userPrincipal);
 
@@ -539,7 +516,7 @@ export const reviewCanisterService = {
     comment: string,
   ): Promise<Review> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor(true); // Requires authentication
       const result = await actor.updateReview(
         reviewId,
         BigInt(rating),
@@ -562,7 +539,7 @@ export const reviewCanisterService = {
    */
   async deleteReview(reviewId: string): Promise<void> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor(true); // Requires authentication
       const result = await actor.deleteReview(reviewId);
 
       if ("err" in result) {
@@ -579,7 +556,7 @@ export const reviewCanisterService = {
    */
   async calculateProviderRating(providerId: string): Promise<number> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const providerPrincipal = Principal.fromText(providerId);
       const result = await actor.calculateProviderRating(providerPrincipal);
 
@@ -599,7 +576,7 @@ export const reviewCanisterService = {
    */
   async calculateServiceRating(serviceId: string): Promise<number> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const result = await actor.calculateServiceRating(serviceId);
 
       if ("ok" in result) {
@@ -618,7 +595,7 @@ export const reviewCanisterService = {
    */
   async calculateUserAverageRating(userId: string): Promise<number> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const userPrincipal = Principal.fromText(userId);
       const result = await actor.calculateUserAverageRating(userPrincipal);
 
@@ -638,7 +615,7 @@ export const reviewCanisterService = {
    */
   async initializeStaticReviewsManually(): Promise<string> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const result = await actor.initializeStaticReviewsManually();
 
       if ("ok" in result) {
@@ -657,7 +634,7 @@ export const reviewCanisterService = {
    */
   async getAllReviews(): Promise<Review[]> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const canisterReviews = await actor.getAllReviews();
 
       return canisterReviews.map(convertCanisterReviewToFrontend);
@@ -672,7 +649,7 @@ export const reviewCanisterService = {
    */
   async getReviewStatistics(): Promise<ReviewStatistics> {
     try {
-      const actor = await getReviewActor();
+      const actor = getReviewActor();
       const stats = await actor.getReviewStatistics();
 
       return {
@@ -685,52 +662,6 @@ export const reviewCanisterService = {
     } catch (error) {
       console.error("Error getting review statistics:", error);
       throw error;
-    }
-  },
-
-  /**
-   * Set canister references (admin function)
-   */
-  async setCanisterReferences(
-    booking: string,
-    service: string,
-    reputation: string,
-    auth: string,
-  ): Promise<string | null> {
-    try {
-      // Use admin agent for setup operations
-      const agent = await getAdminHttpAgent();
-      if (!agent) {
-        throw new Error("Failed to get admin HTTP agent - agent is undefined");
-      }
-
-      // Use the imported createActor with admin agent
-      const adminActor = createReviewActor(canisterId, {
-        agent,
-      }) as ReviewService;
-
-      if (!adminActor) {
-        throw new Error("Failed to create actor instance");
-      }
-
-      const result = await adminActor.setCanisterReferences(
-        Principal.fromText(booking),
-        Principal.fromText(service),
-        Principal.fromText(reputation),
-        Principal.fromText(auth),
-      );
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        console.error("Error setting canister references:", result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      console.error("Error setting canister references:", error);
-      // Reset the actor to force recreation on next call
-      reviewActor = null;
-      throw new Error(`Failed to set canister references: ${error}`);
     }
   },
 
@@ -835,7 +766,32 @@ export const reviewCanisterService = {
       return false;
     }
   },
+    // Set canister references (admin function)
+  async setCanisterReferences(): Promise<string | null> {
+    try {
+      const actor = getReviewActor(true);
+      const result = await actor.setCanisterReferences(
+        Principal.fromText(bookingCanisterId),
+        Principal.fromText(serviceCanisterId),
+        Principal.fromText(reputationCanisterId),
+        Principal.fromText(authCanisterId),
+      );
+
+      if ("ok" in result) {
+        return result.ok;
+      } else {
+        console.error("Error setting canister references:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error setting canister references:", error);
+      // Reset the actor to force recreation on next call
+      reviewActor = null;
+      throw new Error(`Failed to set canister references: ${error}`);
+    }
+  }
 };
+
 
 // Reset functions for authentication state changes
 export const resetReviewActor = () => {

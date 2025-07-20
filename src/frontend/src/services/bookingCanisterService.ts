@@ -1,7 +1,10 @@
 // Booking Canister Service
 import { Principal } from "@dfinity/principal";
-import { canisterId, createActor } from "../../../declarations/booking";
-import { getAdminHttpAgent } from "../utils/icpClient";
+import { canisterId as authCanisterId } from "../../../declarations/auth";
+import { createActor,canisterId } from "../../../declarations/booking";
+import { canisterId as reviewCanisterId } from "../../../declarations/review";
+import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
+import {canisterId as serviceCanisterId} from "../../../declarations/service"
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as BookingService,
@@ -34,17 +37,34 @@ const createBookingActor = (identity?: Identity | null): BookingService => {
   }) as BookingService;
 };
 
-// Singleton actor instance
+// Singleton actor instance with identity tracking
 let bookingActor: BookingService | null = null;
+let currentIdentity: Identity | null = null;
 
 /**
- * Get or create the booking actor instance
- * @returns The booking service actor
+ * Updates the booking actor with a new identity
+ * This should be called when the user's authentication state changes
  */
-const getBookingActor = async (): Promise<BookingService> => {
-  if (!bookingActor) {
-    bookingActor = createBookingActor();
+export const updateBookingActor = (identity: Identity | null) => {
+  if (currentIdentity !== identity) {
+    bookingActor = createBookingActor(identity);
+    currentIdentity = identity;
   }
+};
+
+/**
+ * Gets the current booking actor
+ * Throws error if no authenticated identity is available for auth-required operations
+ */
+const getBookingActor = (requireAuth: boolean = false): BookingService => {
+  if (requireAuth && !currentIdentity) {
+    throw new Error("Authentication required: Please log in to perform this action");
+  }
+  
+  if (!bookingActor) {
+    bookingActor = createBookingActor(currentIdentity);
+  }
+  
   return bookingActor;
 };
 
@@ -338,7 +358,7 @@ export const bookingCanisterService = {
     servicePackageId?: string,
   ): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor(true); // Requires authentication
       const canisterLocation = convertToCanisterLocation(location);
       const requestedTimestamp = BigInt(requestedDate.getTime() * 1000000); // Convert to nanoseconds
 
@@ -368,7 +388,7 @@ export const bookingCanisterService = {
    */
   async getBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.getBooking(bookingId);
 
       if ("ok" in result) {
@@ -388,7 +408,7 @@ export const bookingCanisterService = {
    */
   async getClientBookings(clientId: Principal): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getClientBookings(clientId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -402,7 +422,7 @@ export const bookingCanisterService = {
    */
   async getProviderBookings(providerId: Principal): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getProviderBookings(providerId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -416,7 +436,7 @@ export const bookingCanisterService = {
    */
   async getBookingsByStatus(status: BookingStatus): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const canisterStatus = convertToCanisterBookingStatus(status);
       const bookings = await actor.getBookingsByStatus(canisterStatus);
       return bookings.map(convertCanisterBooking);
@@ -434,7 +454,7 @@ export const bookingCanisterService = {
     scheduledDate: Date,
   ): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const scheduledTimestamp = BigInt(scheduledDate.getTime() * 1000000);
 
       const result = await actor.acceptBooking(bookingId, scheduledTimestamp);
@@ -456,7 +476,7 @@ export const bookingCanisterService = {
    */
   async declineBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.declineBooking(bookingId);
 
       if ("ok" in result) {
@@ -476,7 +496,7 @@ export const bookingCanisterService = {
    */
   async cancelBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.cancelBooking(bookingId);
 
       if ("ok" in result) {
@@ -496,7 +516,7 @@ export const bookingCanisterService = {
    */
   async startBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.startBooking(bookingId);
 
       if ("ok" in result) {
@@ -516,7 +536,7 @@ export const bookingCanisterService = {
    */
   async completeBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.completeBooking(bookingId);
 
       if ("ok" in result) {
@@ -536,7 +556,7 @@ export const bookingCanisterService = {
    */
   async disputeBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.disputeBooking(bookingId);
 
       if ("ok" in result) {
@@ -560,7 +580,7 @@ export const bookingCanisterService = {
     fileUrls: string[],
   ): Promise<Evidence | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.submitEvidence(
         bookingId,
         description,
@@ -587,7 +607,7 @@ export const bookingCanisterService = {
     reviewerId: Principal,
   ): Promise<boolean | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.isEligibleForReview(bookingId, reviewerId);
 
       if ("ok" in result) {
@@ -607,7 +627,7 @@ export const bookingCanisterService = {
    */
   async getClientActiveBookings(clientId: Principal): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getClientActiveBookings(clientId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -621,7 +641,7 @@ export const bookingCanisterService = {
    */
   async getProviderActiveBookings(providerId: Principal): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getProviderActiveBookings(providerId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -635,7 +655,7 @@ export const bookingCanisterService = {
    */
   async getClientCompletedBookings(clientId: Principal): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getClientCompletedBookings(clientId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -651,7 +671,7 @@ export const bookingCanisterService = {
     providerId: Principal,
   ): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getProviderCompletedBookings(providerId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -665,7 +685,7 @@ export const bookingCanisterService = {
    */
   async getDisputedBookings(): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getDisputedBookings();
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -682,7 +702,7 @@ export const bookingCanisterService = {
     endDate: Date,
   ): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const startTimestamp = BigInt(startDate.getTime() * 1000000);
       const endTimestamp = BigInt(endDate.getTime() * 1000000);
 
@@ -710,7 +730,7 @@ export const bookingCanisterService = {
       "getProviderAvailableSlots is deprecated. Use getServiceAvailableSlots instead for service-based availability.",
     );
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
 
       const result = await actor.getProviderAvailableSlots(
@@ -742,7 +762,7 @@ export const bookingCanisterService = {
       "getProviderAvailabilitySettings is deprecated. Use getServiceAvailabilitySettings instead for service-based availability.",
     );
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.getProviderAvailabilitySettings(providerId);
 
       if ("ok" in result) {
@@ -770,7 +790,7 @@ export const bookingCanisterService = {
       "checkProviderAvailability is deprecated. Use checkServiceAvailability instead for service-based availability.",
     );
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const timestamp = BigInt(requestedDateTime.getTime() * 1000000);
 
       const result = await actor.checkProviderAvailability(
@@ -800,7 +820,7 @@ export const bookingCanisterService = {
     date: Date,
   ): Promise<AvailableSlot[] | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
 
       const result = await actor.getServiceAvailableSlots(
@@ -827,7 +847,7 @@ export const bookingCanisterService = {
     serviceId: string,
   ): Promise<ProviderAvailability | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const result = await actor.getServiceAvailabilitySettings(serviceId);
 
       if ("ok" in result) {
@@ -855,7 +875,7 @@ export const bookingCanisterService = {
     requestedDateTime: Date,
   ): Promise<boolean | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const timestamp = BigInt(requestedDateTime.getTime() * 1000000);
 
       const result = await actor.checkServiceAvailability(serviceId, timestamp);
@@ -881,7 +901,7 @@ export const bookingCanisterService = {
     endDate: Date,
   ): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const startTimestamp = BigInt(startDate.getTime() * 1000000);
       const endTimestamp = BigInt(endDate.getTime() * 1000000);
 
@@ -905,7 +925,7 @@ export const bookingCanisterService = {
     date: Date,
   ): Promise<number> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
 
       const count = await actor.getServiceDailyBookingCount(
@@ -928,7 +948,7 @@ export const bookingCanisterService = {
     endDate: Date,
   ): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const startTimestamp = BigInt(startDate.getTime() * 1000000);
       const endTimestamp = BigInt(endDate.getTime() * 1000000);
 
@@ -952,7 +972,7 @@ export const bookingCanisterService = {
     date: Date,
   ): Promise<number> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
 
       const count = await actor.getDailyBookingCount(providerId, dateTimestamp);
@@ -966,26 +986,14 @@ export const bookingCanisterService = {
   /**
    * Set canister references (admin function)
    */
-  async setCanisterReferences(
-    auth: string,
-    service: string,
-    review: string,
-    reputation: string,
-  ): Promise<string | null> {
+  async setCanisterReferences(): Promise<string | null> {
     try {
-      // Use admin agent for setup operations
-      const agent = await getAdminHttpAgent();
-
-      // Use the imported createActor with admin agent
-      const adminActor = createActor(canisterId, {
-        agent,
-      }) as BookingService;
-
-      const result = await adminActor.setCanisterReferences(
-        [Principal.fromText(auth)],
-        [Principal.fromText(service)],
-        [Principal.fromText(review)],
-        [Principal.fromText(reputation)],
+      const actor = getBookingActor(true);
+      const result = await actor.setCanisterReferences(
+        [Principal.fromText(authCanisterId)],
+        [Principal.fromText(serviceCanisterId)],
+        [Principal.fromText(reviewCanisterId)],
+        [Principal.fromText(reputationCanisterId)],
       );
 
       if ("ok" in result) {
@@ -1005,7 +1013,7 @@ export const bookingCanisterService = {
    */
   async getBookingsByPackage(packageId: string): Promise<Booking[]> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const bookings = await actor.getBookingsByPackage(packageId);
       return bookings.map(convertCanisterBooking);
     } catch (error) {
@@ -1023,7 +1031,7 @@ export const bookingCanisterService = {
     endDate?: Date,
   ): Promise<ProviderAnalytics | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const startTimestamp = startDate
         ? [BigInt(startDate.getTime() * 1000000)]
         : [];
@@ -1056,7 +1064,7 @@ export const bookingCanisterService = {
     endDate?: Date,
   ): Promise<ProviderAnalytics | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const startTimestamp = startDate
         ? [BigInt(startDate.getTime() * 1000000)]
         : [];
@@ -1089,7 +1097,7 @@ export const bookingCanisterService = {
     endDate?: Date,
   ): Promise<ProviderAnalytics | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const startTimestamp = startDate
         ? [BigInt(startDate.getTime() * 1000000)]
         : [];
@@ -1122,7 +1130,7 @@ export const bookingCanisterService = {
     endDate?: Date,
   ): Promise<ProviderAnalytics | null> {
     try {
-      const actor = await getBookingActor();
+      const actor = getBookingActor();
       const startTimestamp = startDate
         ? [BigInt(startDate.getTime() * 1000000)]
         : [];

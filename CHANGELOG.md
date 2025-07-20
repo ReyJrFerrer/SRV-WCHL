@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add automatic canister references initialization upon successful user login for improved system connectivity
+- Optimize setCanisterReferences functions to use singleton actors and direct canister ID imports
+- Implement comprehensive router navigation with nested layouts and protected routes for client and provider sections
 - Fix authentication bug preventing authenticated canister calls by implementing identity-aware auth service
 - Convert Next.js client components to React Router DOM for improved navigation and routing
 - Replace Next.js Head component with native document.title manipulation in search results page

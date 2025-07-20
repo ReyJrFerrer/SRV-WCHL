@@ -8,6 +8,14 @@ import React, {
 import { AuthClient } from "@dfinity/auth-client";
 import { Identity } from "@dfinity/agent";
 import { updateAuthActor } from "../services/authCanisterService";
+import { updateBookingActor } from "../services/bookingCanisterService";
+import { updateServiceActor } from "../services/serviceCanisterService";
+import { updateReviewActor } from "../services/reviewCanisterService";
+import { updateReputationActor } from "../services/reputationCanisterService";
+import { 
+  initializeCanisterReferences, 
+  shouldInitializeCanisters 
+} from "../services/canisterInitService";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -20,6 +28,24 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const updateAllActors = (identity: Identity | null) => {
+  updateAuthActor(identity);
+  updateBookingActor(identity);
+  updateServiceActor(identity);
+  updateReviewActor(identity);
+  updateReputationActor(identity);
+};
+
+const initializeCanisters = async (isAuthenticated: boolean, identity: Identity | null) => {
+  if (shouldInitializeCanisters(isAuthenticated, identity)) {
+    try {
+      await initializeCanisterReferences();
+    } catch (error) {
+      console.warn("Failed to initialize canister references:", error);
+    }
+  }
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -51,10 +77,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const identity = client.getIdentity();
           setIdentity(identity);
           // Update auth actor with the authenticated identity
-          updateAuthActor(identity);
+          updateAllActors(identity);
+          // Initialize canister references for authenticated users
+          await initializeCanisters(isAuth, identity);
         } else {
           // Update auth actor with no identity (anonymous)
-          updateAuthActor(null);
+          updateAllActors(null);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "An unknown error occurred");
@@ -78,12 +106,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           process.env.DFX_NETWORK === "ic"
             ? "https://identity.ic0.app"
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
-        onSuccess: () => {
+        onSuccess: async () => {
           const identity = authClient.getIdentity();
           setIsAuthenticated(true);
           setIdentity(identity);
           // Update auth actor with the authenticated identity
-          updateAuthActor(identity);
+          updateAllActors(identity);
+          // Initialize canister references for authenticated users
+          await initializeCanisters(true, identity);
           setIsLoading(false);
         },
         onError: (err?: string) => {
@@ -107,7 +137,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(false);
     setIdentity(null);
     // Update auth actor to anonymous
-    updateAuthActor(null);
+    updateAllActors(null)
   };
 
   const value = {

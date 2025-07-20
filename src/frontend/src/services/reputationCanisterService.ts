@@ -1,26 +1,66 @@
 import { Principal } from "@dfinity/principal";
 import { canisterId, createActor } from "../../../declarations/reputation";
-import { getAdminHttpAgent } from "../utils/icpClient";
+import { canisterId as authCanisterId } from "../../../declarations/auth";
+import { canisterId as bookingCanisterId } from "../../../declarations/booking";
+import { canisterId as reviewCanisterId } from "../../../declarations/review";
+import { canisterId as serviceCanisterId } from "../../../declarations/service";
+import { Identity } from "@dfinity/agent";
 import type { _SERVICE as ReputationService } from "../../../declarations/reputation/reputation.did";
+
+/**
+ * Creates a reputation actor with the provided identity
+ * @param identity The user's identity from AuthContext
+ * @returns An authenticated ReputationService actor
+ */
+const createReputationActor = (identity?: Identity | null): ReputationService => {
+  return createActor(canisterId, {
+    agentOptions: {
+      identity: identity || undefined,
+      host:
+        process.env.DFX_NETWORK !== "ic"
+          ? "http://localhost:4943"
+          : "https://ic0.app",
+    },
+  }) as ReputationService;
+};
+
+// Singleton actor instance with identity tracking
+let reputationActor: ReputationService | null = null;
+let currentIdentity: Identity | null = null;
+
+/**
+ * Updates the reputation actor with a new identity
+ * This should be called when the user's authentication state changes
+ */
+export const updateReputationActor = (identity: Identity | null) => {
+  if (currentIdentity !== identity) {
+    reputationActor = createReputationActor(identity);
+    currentIdentity = identity;
+  }
+};
+
+/**
+ * Gets the current reputation actor
+ * Throws error if no authenticated identity is available for auth-required operations
+ */
+const getReputationActor = (requireAuth: boolean = false): ReputationService => {
+  if (requireAuth && !currentIdentity) {
+    throw new Error("Authentication required: Please log in to perform this action");
+  }
+  
+  if (!reputationActor) {
+    reputationActor = createReputationActor(currentIdentity);
+  }
+  
+  return reputationActor;
+};
 
 class ReputationCanisterService {
   // Set canister references - this is the main function needed
-  async setCanisterReferences(
-    authCanisterId: string,
-    bookingCanisterId: string,
-    reviewCanisterId: string,
-    serviceCanisterId: string,
-  ): Promise<void> {
+  async setCanisterReferences(): Promise<void> {
     try {
-      // Use admin agent for setup operations
-      const agent = await getAdminHttpAgent();
-
-      // Use the imported createActor with admin agent
-      const adminActor = createActor(canisterId, {
-        agent,
-      }) as ReputationService;
-
-      const result = await adminActor.setCanisterReferences(
+      const actor = getReputationActor(true);
+      const result = await actor.setCanisterReferences(
         Principal.fromText(authCanisterId),
         Principal.fromText(bookingCanisterId),
         Principal.fromText(reviewCanisterId),
