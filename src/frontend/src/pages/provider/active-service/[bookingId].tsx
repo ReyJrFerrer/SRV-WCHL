@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
   ClockIcon,
@@ -17,7 +16,6 @@ import {
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
   useProviderBookingManagement,
-  ProviderEnhancedBooking,
 } from "../../../hooks/useProviderBookingManagement";
 
 const formatDuration = (seconds: number): string => {
@@ -28,15 +26,16 @@ const formatDuration = (seconds: number): string => {
 };
 
 const ActiveServicePage: React.FC = () => {
-  const router = useRouter();
-  const { bookingId, startTime: startTimeParam } = router.query;
+  const navigate = useNavigate();
+  const { bookingId } = useParams<{ bookingId: string }>();
+  const [searchParams] = useSearchParams();
+  const startTimeParam = searchParams.get('startTime');
   const [actualStartTime, setActualStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   // Use the enhanced hook instead of mock data
   const {
     getBookingById,
-    completeBookingById,
     loading,
     error,
     isProviderAuthenticated,
@@ -49,6 +48,15 @@ const ActiveServicePage: React.FC = () => {
     }
     return null;
   }, [bookingId, getBookingById]);
+
+  // Set document title
+  useEffect(() => {
+    if (booking) {
+      document.title = `Active Service: ${booking.serviceName || "Service"} | SRV Provider`;
+    } else {
+      document.title = "Active Service | SRV Provider";
+    }
+  }, [booking]);
 
   useEffect(() => {
     if (booking) {
@@ -81,7 +89,7 @@ const ActiveServicePage: React.FC = () => {
 
     // Just redirect to the complete service page without calling completeBookingById
     // The actual completion will be handled in the complete-service page
-    router.push(`/provider/complete-service/${booking.id}`);
+    navigate(`/provider/complete-service/${booking.id}`);
   };
 
   const handleUploadEvidence = () => {
@@ -140,27 +148,21 @@ const ActiveServicePage: React.FC = () => {
   }
 
   return (
-    <>
-      <Head>
-        <title>
-          Active Service: {booking.serviceName || "Service"} | SRV Provider
-        </title>
-      </Head>
-      <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
-          <div className="container mx-auto flex items-center">
-            <button
-              onClick={() => router.back()}
-              className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
-              aria-label="Go back"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="truncate text-xl font-semibold text-gray-800">
-              Service In Progress
-            </h1>
-          </div>
-        </header>
+    <div className="flex min-h-screen flex-col bg-gray-100">
+      <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
+        <div className="container mx-auto flex items-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+          </button>
+          <h1 className="truncate text-xl font-semibold text-gray-800">
+            Service In Progress
+          </h1>
+        </div>
+      </header>
 
         <main className="container mx-auto flex-grow space-y-6 p-4 pb-20 sm:p-6">
           {/* Timer Section - Prominent at the top */}
@@ -279,7 +281,6 @@ const ActiveServicePage: React.FC = () => {
           <BottomNavigation />{" "}
         </div>
       </div>
-    </>
   );
 };
 

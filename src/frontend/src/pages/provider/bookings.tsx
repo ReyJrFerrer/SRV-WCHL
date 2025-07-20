@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
 import {
@@ -23,7 +23,8 @@ const TAB_ITEMS: BookingStatusTab[] = [
 
 const ProviderBookingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { tab: queryTab } = navigate.query;
+  const [searchParams] = useSearchParams();
+  const queryTab = searchParams.get('tab');
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("Pending");
 
@@ -52,6 +53,11 @@ const ProviderBookingsPage: React.FC = () => {
       setActiveTab("Pending");
     }
   }, [queryTab]);
+
+  // Set document title
+  useEffect(() => {
+    document.title = "Aking Bookings - SRV Provider";
+  }, []);
 
   // Categorize bookings based on the hook's filtering functions
   const categorizedBookings = useMemo(() => {

@@ -6,12 +6,13 @@ import React, {
   useCallback,
   useRef,
 } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   CheckCircleIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
-import { useAuth } from "@bundly/ares-react";
+import { useAuth } from "../../../../context/AuthContext";
 import { nanoid } from "nanoid";
 
 // Service Management Hook
@@ -36,7 +37,6 @@ import {
 
 // Import AvailabilityConfiguration component
 import AvailabilityConfiguration from "../../../../components/provider/AvailabilityConfiguration";
-import { useNavigate } from "react-router-dom";
 
 // Interfaces for form data (same as add.tsx)
 interface TimeSlotUIData {
@@ -259,8 +259,8 @@ const convertBackendSlotsToUI = (
 
 const EditServicePage: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = router.query; // Changed from slug to id
-  const { isAuthenticated, currentIdentity } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const { isAuthenticated, identity } = useAuth();
 
   // Service Management Hook Integration
   const {
@@ -336,6 +336,15 @@ const EditServicePage: React.FC = () => {
   useEffect(() => {
     clearError();
   }, [clearError]);
+
+  // Set document title
+  useEffect(() => {
+    if (serviceToEdit) {
+      document.title = `Edit ${serviceToEdit.title} - SRV Provider`;
+    } else {
+      document.title = "Edit Service - SRV Provider";
+    }
+  }, [serviceToEdit]);
 
   const loadServiceDataRobust = useCallback(
     async (serviceId: string): Promise<void> => {
@@ -760,7 +769,7 @@ const EditServicePage: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
 
-    if (!isAuthenticated || !currentIdentity || !serviceToEdit) {
+    if (!isAuthenticated || !identity || !serviceToEdit) {
       setError("Authentication error or service not loaded.");
       setIsLoading(false);
       return;
@@ -927,9 +936,6 @@ const EditServicePage: React.FC = () => {
   if ((error || hookError) && !serviceToEdit) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <Head>
-          <title>Service Error | SRV Provider</title>
-        </Head>
         <div className="max-w-md text-center">
           <h1 className="mb-4 text-xl font-semibold text-red-600">
             Unable to Load Service
@@ -963,9 +969,6 @@ const EditServicePage: React.FC = () => {
   if (!serviceToEdit) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <Head>
-          <title>Service Not Found | SRV Provider</title>
-        </Head>
         <div className="max-w-md text-center">
           <h1 className="mb-4 text-xl font-semibold text-gray-800">
             Service Not Found
@@ -990,7 +993,7 @@ const EditServicePage: React.FC = () => {
         <header className="sticky top-0 z-20 bg-white shadow-sm">
           <div className="container mx-auto flex items-center px-4 py-3">
             <button
-              onClick={() => navigate.back()}
+              onClick={() => navigate(-1)}
               className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
               aria-label="Go back"
             >

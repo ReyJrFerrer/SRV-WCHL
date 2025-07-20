@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/router";
-import Head from "next/head";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   StarIcon,
@@ -16,8 +15,8 @@ import { useBookingRating } from "../../../hooks/reviewManagement";
 import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
 
 export default function ProviderReviewView() {
-  const router = useRouter();
-  const { id: bookingId } = router.query;
+  const navigate = useNavigate();
+  const { id: bookingId } = useParams<{ id: string }>();
 
   // State for booking and review data
   const [booking, setBooking] = useState<any>(null);
@@ -25,13 +24,22 @@ export default function ProviderReviewView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Set document title
+  useEffect(() => {
+    if (booking) {
+      const serviceName = booking?.serviceDetails?.description || booking?.packageName || "Service";
+      document.title = `Client Review: ${serviceName} | SRV Provider`;
+    } else {
+      document.title = "Client Review | SRV Provider";
+    }
+  }, [booking]);
+
   // Get booking data from provider booking management hook
   const {
     bookings,
     loading: bookingLoading,
     error: bookingError,
     formatBookingDate,
-    formatBookingTime,
   } = useProviderBookingManagement();
 
   // Get review functionality from review management hook
@@ -147,60 +155,50 @@ export default function ProviderReviewView() {
   // Loading state
   if (isLoading) {
     return (
-      <>
-        <Head>
-          <title>Loading Review | SRV Provider</title>
-        </Head>
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-            <p className="text-gray-600">Loading review details...</p>
-          </div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+          <p className="text-gray-600">Loading review details...</p>
         </div>
-      </>
+      </div>
     );
   }
 
   // Error state
   if (displayError) {
     return (
-      <>
-        <Head>
-          <title>Review Error | SRV Provider</title>
-        </Head>
-        <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
-          <header className="sticky top-0 z-30 bg-white shadow-sm">
-            <div className="container mx-auto flex items-center px-4 py-3">
-              <button
-                onClick={() => router.back()}
-                className="mr-2 rounded-full p-2 hover:bg-gray-100"
-              >
-                <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-              </button>
-              <h1 className="text-lg font-semibold text-slate-800">
-                Review Details
-              </h1>
-            </div>
-          </header>
-
-          <div className="container mx-auto p-4 sm:p-6">
-            <div className="mx-auto max-w-2xl rounded-lg border border-red-200 bg-red-50 p-6">
-              <h2 className="mb-2 text-lg font-semibold text-red-800">Error</h2>
-              <p className="mb-4 text-red-600">{displayError}</p>
-              <button
-                onClick={() => router.push("/provider/booking")}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              >
-                Back to Bookings
-              </button>
-            </div>
+      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+        <header className="sticky top-0 z-30 bg-white shadow-sm">
+          <div className="container mx-auto flex items-center px-4 py-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="mr-2 rounded-full p-2 hover:bg-gray-100"
+            >
+              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-semibold text-slate-800">
+              Review Details
+            </h1>
           </div>
+        </header>
 
-          <div className="md:hidden">
-            <BottomNavigationNextjs />
+        <div className="container mx-auto p-4 sm:p-6">
+          <div className="mx-auto max-w-2xl rounded-lg border border-red-200 bg-red-50 p-6">
+            <h2 className="mb-2 text-lg font-semibold text-red-800">Error</h2>
+            <p className="mb-4 text-red-600">{displayError}</p>
+            <button
+              onClick={() => navigate("/provider/booking")}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            >
+              Back to Bookings
+            </button>
           </div>
         </div>
-      </>
+
+        <div className="md:hidden">
+          <BottomNavigationNextjs />
+        </div>
+      </div>
     );
   }
 
@@ -214,31 +212,21 @@ export default function ProviderReviewView() {
   const price = booking?.price;
 
   return (
-    <>
-      <Head>
-        <title>Client Review: {serviceName} | SRV Provider</title>
-        <meta
-          name="description"
-          content={`View client review for ${serviceName}`}
-        />
-        <meta name="robots" content="noindex" />
-      </Head>
-
-      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-white shadow-sm">
-          <div className="container mx-auto flex items-center px-4 py-3">
-            <button
-              onClick={() => router.back()}
-              className="mr-2 rounded-full p-2 hover:bg-gray-100"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="text-lg font-semibold text-slate-800">
-              Client Review
-            </h1>
-          </div>
-        </header>
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white shadow-sm">
+        <div className="container mx-auto flex items-center px-4 py-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 rounded-full p-2 hover:bg-gray-100"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+          </button>
+          <h1 className="text-lg font-semibold text-slate-800">
+            Client Review
+          </h1>
+        </div>
+      </header>
 
         <main className="container mx-auto space-y-6 p-4 sm:p-6">
           {/* Booking Information Card */}
@@ -387,6 +375,5 @@ export default function ProviderReviewView() {
           <BottomNavigationNextjs />
         </div>
       </div>
-    </>
   );
 }

@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import React, { useMemo, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
   PrinterIcon,
@@ -9,24 +8,23 @@ import {
 } from "@heroicons/react/24/solid";
 import {
   useProviderBookingManagement,
-  ProviderEnhancedBooking,
 } from "../../../hooks/useProviderBookingManagement";
 
 const ReceiptPage: React.FC = () => {
-  const router = useRouter();
-  const { bookingId, price, paid, change, method } = router.query;
+  const navigate = useNavigate();
+  const { bookingId } = useParams<{ bookingId: string }>();
+  const [searchParams] = useSearchParams();
 
   // Payment details from query params
-  const serviceTotal = typeof price === "string" ? parseFloat(price) : 0;
-  const amountPaid = typeof paid === "string" ? parseFloat(paid) : 0;
-  const changeGiven = typeof change === "string" ? parseFloat(change) : 0;
-  const paymentMethod = typeof method === "string" ? method : "N/A";
+  const serviceTotal = parseFloat(searchParams.get('price') || '0');
+  const amountPaid = parseFloat(searchParams.get('paid') || '0');
+  const changeGiven = parseFloat(searchParams.get('change') || '0');
+  const paymentMethod = searchParams.get('method') || 'N/A';
 
   // Use the enhanced hook instead of mock data
   const {
     getBookingById,
     loading,
-    error: hookError,
     isProviderAuthenticated,
   } = useProviderBookingManagement();
 
@@ -38,8 +36,17 @@ const ReceiptPage: React.FC = () => {
     return null;
   }, [bookingId, getBookingById]);
 
+  // Set document title
+  useEffect(() => {
+    if (booking) {
+      document.title = `Receipt - ${booking.serviceName} | SRV Provider`;
+    } else {
+      document.title = "Receipt | SRV Provider";
+    }
+  }, [booking]);
+
   const handleDone = () => {
-    router.push("/provider/bookings?tab=Completed"); // Or provider home
+    navigate("/provider/bookings?tab=Completed"); // Or provider home
   };
 
   const handlePrint = () => {
@@ -91,15 +98,11 @@ const ReceiptPage: React.FC = () => {
     : new Date(booking.updatedAt);
 
   return (
-    <>
-      <Head>
-        <title>Receipt - {booking.serviceName} | SRV Provider</title>
-      </Head>
-      <div className="flex min-h-screen flex-col items-center bg-gray-100 py-6 sm:py-12 print:bg-white">
-        {/* Back button (hidden on print) */}
+    <div className="flex min-h-screen flex-col items-center bg-gray-100 py-6 sm:py-12 print:bg-white">
+      {/* Back button (hidden on print) */}
         <div className="container mx-auto mb-4 px-4 print:hidden">
           <button
-            onClick={() => router.push("/provider/bookings")} // Go to main bookings page
+            onClick={() => navigate("/provider/bookings")} // Go to main bookings page
             className="flex items-center text-sm text-blue-600 hover:underline"
           >
             <ArrowLeftIcon className="mr-1 h-4 w-4" />
@@ -205,7 +208,6 @@ const ReceiptPage: React.FC = () => {
           </button>
         </main>
       </div>
-    </>
   );
 };
 

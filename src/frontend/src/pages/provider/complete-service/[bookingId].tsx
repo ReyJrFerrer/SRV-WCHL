@@ -5,8 +5,7 @@ import React, {
   ChangeEvent,
   FormEvent,
 } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   CurrencyDollarIcon,
@@ -14,12 +13,11 @@ import {
 } from "@heroicons/react/24/solid";
 import {
   useProviderBookingManagement,
-  ProviderEnhancedBooking,
 } from "../../../hooks/useProviderBookingManagement";
 
 const CompleteServicePage: React.FC = () => {
-  const router = useRouter();
-  const { bookingId } = router.query;
+  const navigate = useNavigate();
+  const { bookingId } = useParams<{ bookingId: string }>();
 
   const [servicePrice, setServicePrice] = useState<number>(0);
   const [cashReceived, setCashReceived] = useState<string>("");
@@ -32,7 +30,6 @@ const CompleteServicePage: React.FC = () => {
     getBookingById,
     completeBookingById,
     loading,
-    error: hookError,
     isProviderAuthenticated,
   } = useProviderBookingManagement();
 
@@ -43,6 +40,15 @@ const CompleteServicePage: React.FC = () => {
     }
     return null;
   }, [bookingId, getBookingById]);
+
+  // Set document title
+  useEffect(() => {
+    if (booking) {
+      document.title = `Complete Service: ${booking.serviceName || "Service"} | SRV Provider`;
+    } else {
+      document.title = "Complete Service | SRV Provider";
+    }
+  }, [booking]);
 
   useEffect(() => {
     if (booking) {
@@ -95,16 +101,14 @@ const CompleteServicePage: React.FC = () => {
       const success = await completeBookingById(booking.id, finalPrice);
 
       if (success) {
-        // Navigate to the receipt page
-        router.push({
-          pathname: `/provider/receipt/${booking.id}`,
-          query: {
-            price: servicePrice.toFixed(2),
-            paid: receivedAmount.toFixed(2),
-            change: changeDue.toFixed(2),
-            method: "Cash",
-          },
+        // Navigate to the receipt page with query parameters
+        const searchParams = new URLSearchParams({
+          price: servicePrice.toFixed(2),
+          paid: receivedAmount.toFixed(2),
+          change: changeDue.toFixed(2),
+          method: "Cash",
         });
+        navigate(`/provider/receipt/${booking.id}?${searchParams.toString()}`);
       } else {
         setError("Failed to complete the booking. Please try again.");
       }
@@ -144,27 +148,21 @@ const CompleteServicePage: React.FC = () => {
   }
 
   return (
-    <>
-      <Head>
-        <title>
-          Complete Service: {booking.serviceName || "Service"} | SRV Provider
-        </title>
-      </Head>
-      <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
-          <div className="container mx-auto flex items-center">
-            <button
-              onClick={() => router.back()}
-              className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
-              aria-label="Go back"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="truncate text-xl font-semibold text-gray-800">
-              Complete Service
-            </h1>
-          </div>
-        </header>
+    <div className="flex min-h-screen flex-col bg-gray-100">
+      <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
+        <div className="container mx-auto flex items-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+          </button>
+          <h1 className="truncate text-xl font-semibold text-gray-800">
+            Complete Service
+          </h1>
+        </div>
+      </header>
 
         <main className="container mx-auto flex flex-grow items-start justify-center p-4 sm:items-center sm:p-6">
           <div className="w-full max-w-md space-y-6 rounded-xl bg-white p-6 shadow-lg sm:p-8">
@@ -252,7 +250,6 @@ const CompleteServicePage: React.FC = () => {
           </div>
         </main>
       </div>
-    </>
   );
 };
 

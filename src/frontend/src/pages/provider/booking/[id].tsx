@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { NextPage } from "next";
-import { useRouter } from "next/router";
-import Head from "next/head";
-import Link from "next/link";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
   MapPinIcon,
   CurrencyDollarIcon,
-  UserCircleIcon,
-  ChatBubbleLeftEllipsisIcon,
   XCircleIcon,
   ArrowPathIcon,
   ClockIcon,
@@ -24,13 +19,23 @@ import {
 } from "../../../hooks/useProviderBookingManagement";
 import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
 
-const ProviderBookingDetailsPage: NextPage = () => {
-  const router = useRouter();
-  const { id } = router.query;
+const ProviderBookingDetailsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [specificBooking, setSpecificBooking] =
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Set document title
+  useEffect(() => {
+    if (specificBooking) {
+      const serviceName = specificBooking?.serviceDetails?.description || specificBooking?.packageName || "Service";
+      document.title = `Booking: ${serviceName} | SRV Provider`;
+    } else {
+      document.title = "Booking Details | SRV Provider";
+    }
+  }, [specificBooking]);
 
   const {
     bookings,
@@ -43,8 +48,6 @@ const ProviderBookingDetailsPage: NextPage = () => {
     error: hookError,
     refreshBookings,
     clearError,
-    formatBookingDate,
-    formatBookingTime,
   } = useProviderBookingManagement();
 
   // Find specific booking from the hook's bookings array
@@ -137,7 +140,7 @@ const ProviderBookingDetailsPage: NextPage = () => {
     const success = await startBookingById(specificBooking.id);
     if (success) {
       const actualStartTime = new Date().toISOString();
-      router.push(
+      navigate(
         `/provider/active-service/${specificBooking.id}?startTime=${actualStartTime}`,
       );
     }
@@ -237,9 +240,6 @@ const ProviderBookingDetailsPage: NextPage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Head>
-            <title>Booking Not Found</title>
-          </Head>
           <h1 className="mb-2 text-2xl font-bold text-gray-900">
             {localError === "Booking not found"
               ? "Booking Not Found"
@@ -247,10 +247,8 @@ const ProviderBookingDetailsPage: NextPage = () => {
           </h1>
           <p className="mb-4 text-gray-600">{displayError}</p>
           <div className="space-x-3">
-            <Link href="/provider/booking" legacyBehavior>
-              <a className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700">
-                Back to My Bookings
-              </a>
+            <Link to="/provider/booking" className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700">
+              Back to My Bookings
             </Link>
             <button
               onClick={handleRetry}
@@ -271,16 +269,11 @@ const ProviderBookingDetailsPage: NextPage = () => {
   if (!specificBooking && !isLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-        <Head>
-          <title>Booking Not Found</title>
-        </Head>
         <h1 className="mb-4 text-xl font-semibold text-red-600">
           Booking Not Found
         </h1>
-        <Link href="/provider/booking" legacyBehavior>
-          <a className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-            Back to My Bookings
-          </a>
+        <Link to="/provider/booking" className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+          Back to My Bookings
         </Link>
       </div>
     );
@@ -308,36 +301,24 @@ const ProviderBookingDetailsPage: NextPage = () => {
   const canStart = specificBooking?.canStart;
   const canComplete = specificBooking?.canComplete;
   const isCompleted = specificBooking?.status === "Completed";
-  const isCancelled = specificBooking?.status === "Cancelled";
   const isDeclined = specificBooking?.status === "Declined";
-  const isFinished = isCompleted || isCancelled || isDeclined;
 
   // Show booking details
   return (
-    <>
-      <Head>
-        <title>Booking: {serviceName} | SRV Provider</title>
-        <meta
-          name="description"
-          content={`Provider booking details for ${serviceName}`}
-        />
-        <meta name="robots" content="noindex" />
-      </Head>
-
-      <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
-        <header className="sticky top-0 z-30 bg-white shadow-sm">
-          <div className="container mx-auto flex items-center px-4 py-3">
-            <button
-              onClick={() => router.back()}
-              className="mr-2 rounded-full p-2 hover:bg-gray-100"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="truncate text-lg font-semibold text-slate-800">
-              Booking Details
-            </h1>
-          </div>
-        </header>
+    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
+      <header className="sticky top-0 z-30 bg-white shadow-sm">
+        <div className="container mx-auto flex items-center px-4 py-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 rounded-full p-2 hover:bg-gray-100"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+          </button>
+          <h1 className="truncate text-lg font-semibold text-slate-800">
+            Booking Details
+          </h1>
+        </div>
+      </header>
 
         <main className="container mx-auto space-y-6 p-4 sm:p-6">
           <div className="rounded-xl bg-white p-6 shadow-lg">
@@ -525,12 +506,10 @@ const ProviderBookingDetailsPage: NextPage = () => {
             {/* View Reviews for completed bookings */}
             {isCompleted && (
               <Link
-                href={`/provider/review/${specificBooking?.id}`}
-                legacyBehavior
+                to={`/provider/review/${specificBooking?.id}`}
+                className="flex w-full items-center justify-center rounded-lg bg-yellow-500 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-yellow-600 sm:flex-1"
               >
-                <a className="flex w-full items-center justify-center rounded-lg bg-yellow-500 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-yellow-600 sm:flex-1">
-                  <StarIcon className="mr-2 h-5 w-5" /> View Review
-                </a>
+                <StarIcon className="mr-2 h-5 w-5" /> View Review
               </Link>
             )}
           </div>
@@ -540,7 +519,6 @@ const ProviderBookingDetailsPage: NextPage = () => {
           <BottomNavigationNextjs />
         </div>
       </div>
-    </>
   );
 };
 

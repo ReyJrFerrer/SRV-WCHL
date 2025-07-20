@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace Next.js router with React Router DOM in booking review page
 - Replace Next.js components with React Router DOM in category pages
 - Replace bundly/ares-react with custom AuthContext in service management for better authentication control
+- Convert Next.js provider components to React Router DOM for services and bookings pages
+- Replace bundly/ares-react with custom AuthContext in provider service forms (add/edit)
+- Convert provider workflow pages (active-service, complete-service, receipt, review) from Next.js to React Router DOM
 - Add set_count update method to allow setting the counter to a specific value
 - Add frontend development server scripts (`npm run start`)
 - Add LLM canister implementation

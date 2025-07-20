@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Head from "next/head";
-import Link from "next/link";
-import { useRouter } from "next/router";
+import { Link } from "react-router-dom";
 import {
   PlusIcon,
   WrenchScrewdriverIcon,
@@ -43,12 +41,9 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 const MyServicesPage: React.FC = () => {
-  const router = useRouter();
-
   // Use the service management hook
   const {
     userServices,
-    userProfile,
     loading,
     error,
     refreshServices,
@@ -70,6 +65,11 @@ const MyServicesPage: React.FC = () => {
 
     initializePage();
   }, [isUserAuthenticated]);
+
+  // Set document title
+  useEffect(() => {
+    document.title = "My Services | SRV Provider";
+  }, []);
 
   const renderIcon = (service: EnhancedService) => {
     const iconKey = getCategoryIcon(
@@ -101,29 +101,6 @@ const MyServicesPage: React.FC = () => {
           text: "Unknown",
           className: "bg-gray-100 text-gray-800",
         };
-    }
-  };
-
-  const handleToggleActive = async (
-    serviceId: string,
-    currentStatus: boolean,
-  ) => {
-    // TODO: Implement actual backend call
-    alert(
-      `Service ${serviceId} status would be toggled. Backend integration needed.`,
-    );
-  };
-
-  const handleDeleteService = async (serviceId: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this service? This action cannot be undone.",
-      )
-    ) {
-      // TODO: Implement actual backend call
-      alert(
-        `Service ${serviceId} would be deleted. Backend integration needed.`,
-      );
     }
   };
 
@@ -161,22 +138,15 @@ const MyServicesPage: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <title>My Services | SRV Provider</title>
-        <meta name="description" content="Manage your offered services." />
-      </Head>
-
       <div className="flex min-h-screen flex-col bg-gray-100 pb-16 md:pb-0">
         <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
           <div className="container mx-auto flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-800 sm:text-2xl">
               My Services
             </h1>
-            <Link href="/provider/services/add" legacyBehavior>
-              <a className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4">
-                <PlusIcon className="mr-1.5 h-5 w-5" />
-                Add New Service
-              </a>
+            <Link to="/provider/services/add" className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4">
+              <PlusIcon className="mr-1.5 h-5 w-5" />
+              Add New Service
             </Link>
           </div>
         </header>
@@ -208,11 +178,9 @@ const MyServicesPage: React.FC = () => {
               <p className="mb-6 text-sm text-gray-600">
                 Get started by adding your first service offering.
               </p>
-              <Link href="/provider/services/add" legacyBehavior>
-                <a className="inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700">
-                  <PlusIcon className="mr-2 h-5 w-5" />
-                  Add Your First Service
-                </a>
+              <Link to="/provider/services/add" className="inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700">
+                <PlusIcon className="mr-2 h-5 w-5" />
+                Add Your First Service
               </Link>
             </div>
           )}
@@ -278,13 +246,11 @@ const MyServicesPage: React.FC = () => {
                         {/* Action Buttons */}
                         <div className="mt-4 flex flex-wrap gap-2">
                           <Link
-                            href={`/provider/service-details/${service.id}`}
-                            legacyBehavior
+                            to={`/provider/service-details/${service.id}`}
+                            className="flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
                           >
-                            <a className="flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700">
-                              <ArrowRightIcon className="mr-1 h-4 w-4" />
-                              View Details
-                            </a>
+                            <ArrowRightIcon className="mr-1 h-4 w-4" />
+                            View Details
                           </Link>
                           {/* <button
                             onClick={() => handleToggleActive(service.id, service.status === 'Available')}

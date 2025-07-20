@@ -1,24 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import Image from "next/image";
-import Link from "next/link";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeftIcon,
   PencilIcon,
   TrashIcon,
-  StarIcon as StarSolid,
-  CheckCircleIcon,
-  XCircleIcon,
-  CurrencyDollarIcon,
   MapPinIcon,
   CalendarDaysIcon,
   ClockIcon,
-  DocumentTextIcon,
   TagIcon,
   BriefcaseIcon,
   CogIcon,
-  CameraIcon as CameraSolidIcon,
 } from "@heroicons/react/24/solid";
 
 import {
@@ -30,15 +21,14 @@ import { ServicePackage } from "../../../services/serviceCanisterService";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 
 const ProviderServiceDetailPage: React.FC = () => {
-  const router = useRouter();
-  const { id } = router.query;
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   // Use real hook instead of mock data
   const {
     getService,
     deleteService,
     updateServiceStatus,
-    formatServicePrice,
     getStatusColor,
     getServicePackages,
     loading: hookLoading,
@@ -51,6 +41,15 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Set document title
+  useEffect(() => {
+    if (service) {
+      document.title = `Details: ${service.title} | SRV Provider`;
+    } else {
+      document.title = "Service Details | SRV Provider";
+    }
+  }, [service]);
   const [retryCount, setRetryCount] = useState(0);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
 
@@ -68,29 +67,6 @@ const ProviderServiceDetailPage: React.FC = () => {
   }, []);
 
   // Wait for hook initialization before attempting to load service
-  const waitForInitialization = useCallback(
-    async (maxAttempts = 10): Promise<boolean> => {
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        // Simply check if we have the getService function available
-        // This is more reliable than checking loading states
-
-        setInitializationAttempts(attempt + 1);
-
-        // Shorter wait time since we're just checking function availability
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Check if component was unmounted
-        if (!mountedRef.current) {
-          return false;
-        }
-      }
-
-      console.warn("Hook initialization timeout");
-      return false;
-    },
-    [getService],
-  );
-
   // Robust service loading with initialization check
   const loadServiceDataRobust = useCallback(
     async (serviceId: string): Promise<void> => {
@@ -258,9 +234,6 @@ const ProviderServiceDetailPage: React.FC = () => {
   if ((error || hookError) && !service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <Head>
-          <title>Service Error | SRV Provider</title>
-        </Head>
         <div className="max-w-md text-center">
           <h1 className="mb-4 text-xl font-semibold text-red-600">
             Unable to Load Service
@@ -275,10 +248,11 @@ const ProviderServiceDetailPage: React.FC = () => {
             >
               Try Again
             </button>
-            <Link href="/provider/services" legacyBehavior>
-              <a className="rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700">
-                Back to Services
-              </a>
+            <Link
+              to="/provider/services"
+              className="rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700"
+            >
+              Back to Services
             </Link>
           </div>
           {retryCount > 0 && (
@@ -295,9 +269,6 @@ const ProviderServiceDetailPage: React.FC = () => {
   if (!service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <Head>
-          <title>Service Not Found | SRV Provider</title>
-        </Head>
         <div className="max-w-md text-center">
           <h1 className="mb-4 text-xl font-semibold text-red-600">
             Service Not Found
@@ -312,10 +283,11 @@ const ProviderServiceDetailPage: React.FC = () => {
             >
               Try Loading Again
             </button>
-            <Link href="/provider/services" legacyBehavior>
-              <a className="rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700">
-                Back to Services
-              </a>
+            <Link
+              to="/provider/services"
+              className="rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700"
+            >
+              Back to Services
             </Link>
           </div>
         </div>
@@ -328,20 +300,11 @@ const ProviderServiceDetailPage: React.FC = () => {
   //   : (service.heroImage as any)?.default?.src || (service.heroImage as any)?.src;
 
   return (
-    <>
-      <Head>
-        <title>Details: {service.title} | SRV Provider</title>
-        <meta
-          name="description"
-          content={`Detailed view of service: ${service.title}`}
-        />
-      </Head>
-
-      <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
+    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
         <header className="sticky top-0 z-30 bg-white shadow-sm">
           <div className="container mx-auto flex items-center justify-between px-4 py-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => navigate(-1)}
               className="rounded-full p-2 transition-colors hover:bg-gray-100"
               aria-label="Go back"
             >
@@ -407,10 +370,11 @@ const ProviderServiceDetailPage: React.FC = () => {
 
           {/* Action Buttons Card */}
           <div className="flex flex-col space-y-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:space-y-0 sm:space-x-3">
-            <Link href={`/provider/services/edit/${service.id}`} legacyBehavior>
-              <a className="flex flex-1 items-center justify-center rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600">
-                <PencilIcon className="mr-2 h-5 w-5" /> Edit Service
-              </a>
+            <Link
+              to={`/provider/services/edit/${service.id}`}
+              className="flex flex-1 items-center justify-center rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600"
+            >
+              <PencilIcon className="mr-2 h-5 w-5" /> Edit Service
             </Link>
             <button
               onClick={handleStatusToggle}
@@ -632,7 +596,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           <BottomNavigation />
         </div>
       </div>
-    </>
   );
 };
 

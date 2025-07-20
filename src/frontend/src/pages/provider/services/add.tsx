@@ -1,13 +1,12 @@
 // SRV-ICP-ver2-jdMain/frontend/src/pages/provider/services/add.tsx
 import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
-import Head from "next/head";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   PlusCircleIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
-import { useAuth } from "@bundly/ares-react";
+import { useAuth } from "../../../context/AuthContext";
 import { nanoid } from "nanoid";
 
 // Service Management Hook
@@ -102,7 +101,7 @@ const initialServiceState = {
 
 const AddServicePage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, currentIdentity } = useAuth();
+  const { isAuthenticated, identity } = useAuth();
 
   // Initialize service management hook
   const {
@@ -137,6 +136,11 @@ const AddServicePage: React.FC = () => {
     // Load categories using the hook
     getCategories();
   }, [getCategories]);
+
+  // Set document title
+  useEffect(() => {
+    document.title = "Add Service - SRV Provider";
+  }, []);
 
   useEffect(() => {
     // Set default category when categories are loaded
@@ -542,7 +546,7 @@ const AddServicePage: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
 
-    if (!isAuthenticated || !currentIdentity) {
+    if (!isAuthenticated || !identity) {
       setError("You must be logged in.");
       setIsLoading(false);
       return;
@@ -763,19 +767,12 @@ const AddServicePage: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <title>SRV | Add New Service</title>
-        <meta
-          name="description"
-          content="Detail your new service offering and packages."
-        />
-      </Head>
       <div className="flex min-h-screen flex-col bg-gray-100">
         <header className="sticky top-0 z-20 bg-white shadow-sm">
           {/* ... header JSX same as before ... */}
           <div className="container mx-auto flex items-center px-4 py-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => navigate(-1)}
               className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
               aria-label="Go back"
             >
