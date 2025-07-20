@@ -149,58 +149,58 @@ const CategoryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Header */}
-        <div className="sticky top-0 z-40 bg-white px-4 py-4 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <button
-              onClick={handleBackClick}
-              className="rounded-full p-2 hover:bg-gray-100"
-              aria-label="Go back"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
-            </button>
-            <h1 className="truncate text-xl font-bold">{category.name}</h1>
-          </div>
-
-          <SearchBar
-            placeholder={`Search in ${category.name}`}
-            className="mb-2"
-            onSearch={handleSearch}
-          />
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white px-4 py-4 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <button
+            onClick={handleBackClick}
+            className="rounded-full p-2 hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+          </button>
+          <h1 className="truncate text-xl font-bold">{category.name}</h1>
         </div>
 
-        {/* Services List */}
-        <div className="p-2 sm:p-4">
-          {servicesError && (
-            <div className="mb-4 rounded border border-yellow-400 bg-yellow-100 px-4 py-3 text-yellow-700">
-              <span className="block sm:inline">{servicesError.message}</span>
-            </div>
-          )}
-
-          {filteredServices.length === 0 && !servicesError ? (
-            <div className="py-10 text-center">
-              <p className="text-gray-500">
-                {searchTerm
-                  ? `No services found for "${searchTerm}" in this category.`
-                  : "No services found in this category."}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-              {filteredServices.map((service) => (
-                <ServiceListItem
-                  key={service.id}
-                  service={service}
-                  isGridItem={true}
-                  retainMobileLayout={true}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <BottomNavigation />
+        <SearchBar
+          placeholder={`Search in ${category.name}`}
+          className="mb-2"
+          onSearch={handleSearch}
+        />
       </div>
+
+      {/* Services List */}
+      <div className="p-2 sm:p-4">
+        {servicesError && (
+          <div className="mb-4 rounded border border-yellow-400 bg-yellow-100 px-4 py-3 text-yellow-700">
+            <span className="block sm:inline">{servicesError.message}</span>
+          </div>
+        )}
+
+        {filteredServices.length === 0 && !servicesError ? (
+          <div className="py-10 text-center">
+            <p className="text-gray-500">
+              {searchTerm
+                ? `No services found for "${searchTerm}" in this category.`
+                : "No services found in this category."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+            {filteredServices.map((service) => (
+              <ServiceListItem
+                key={service.id}
+                service={service}
+                isGridItem={true}
+                retainMobileLayout={true}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <BottomNavigation />
+    </div>
   );
 };
 

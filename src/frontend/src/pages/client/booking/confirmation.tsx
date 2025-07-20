@@ -33,7 +33,6 @@ const BookingConfirmationPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-3">
         <h1 className="text-center text-lg font-semibold text-gray-900">
@@ -112,7 +111,10 @@ const BookingConfirmationPage: React.FC = () => {
             </div>
 
             {/* Action Button */}
-            <Link to="/client" className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700">
+            <Link
+              to="/client"
+              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+            >
               Back to Home
             </Link>
           </div>
@@ -122,7 +124,10 @@ const BookingConfirmationPage: React.FC = () => {
               Loading booking details or an error occurred while parsing
               details.
             </p>
-            <Link to="/client" className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700">
+            <Link
+              to="/client"
+              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+            >
               Back to Home
             </Link>
           </div>

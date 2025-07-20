@@ -78,7 +78,7 @@ const BookingDetailsPage: React.FC = () => {
   // Set document title
   useEffect(() => {
     if (specificBooking) {
-      document.title = `Booking Details - ${specificBooking.serviceName || 'Service'} - SRV Client`;
+      document.title = `Booking Details - ${specificBooking.serviceName || "Service"} - SRV Client`;
     } else {
       document.title = "Booking Details - SRV Client";
     }
@@ -328,7 +328,10 @@ const BookingDetailsPage: React.FC = () => {
           </h1>
           <p className="mb-4 text-gray-600">{displayError}</p>
           <div className="space-x-3">
-            <Link to="/client/booking" className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700">
+            <Link
+              to="/client/booking"
+              className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700"
+            >
               Back to My Bookings
             </Link>
             <button
@@ -353,7 +356,10 @@ const BookingDetailsPage: React.FC = () => {
         <h1 className="mb-4 text-xl font-semibold text-red-600">
           Booking Not Found
         </h1>
-        <Link to="/client/booking" className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+        <Link
+          to="/client/booking"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
           Back to My Bookings
         </Link>
       </div>
@@ -502,11 +508,11 @@ const BookingDetailsPage: React.FC = () => {
                 {reviewButtonContent && (
                   <div className="w-full sm:flex-1">
                     {(reviewButtonContent as any).href ? (
-                      <Link 
+                      <Link
                         to={
-                          typeof (reviewButtonContent as any).href === 'string' 
-                            ? (reviewButtonContent as any).href 
-                            : `${(reviewButtonContent as any).href.pathname}${(reviewButtonContent as any).href.query?.providerName ? `?providerName=${encodeURIComponent((reviewButtonContent as any).href.query.providerName)}` : ''}`
+                          typeof (reviewButtonContent as any).href === "string"
+                            ? (reviewButtonContent as any).href
+                            : `${(reviewButtonContent as any).href.pathname}${(reviewButtonContent as any).href.query?.providerName ? `?providerName=${encodeURIComponent((reviewButtonContent as any).href.query.providerName)}` : ""}`
                         }
                         className={`flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-center text-sm font-medium text-white transition-colors ${reviewButtonContent.className}`}
                       >
