@@ -1,26 +1,31 @@
-import React from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import React, { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import { useAuth } from "@bundly/ares-react";
 
 // Components
 import ServiceDetailPageComponent from "../../../components/client/ServiceDetailPageComponent";
-import BottomNavigation from "../../../components/client/BottomNavigationNextjs";
+import BottomNavigation from "../../../components/client/BottomNavigation";
 
 // Custom hooks
-import { useServiceDetail } from "@app/hooks/serviceDetail";
+import { useServiceDetail } from "../../../hooks/serviceDetail";
 
 const ServiceDetailPage: React.FC = () => {
-  const router = useRouter();
-  const { id } = router.query;
-  const { isAuthenticated, currentIdentity } = useAuth();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   // Use our custom hook to fetch service details
   const { service, provider, loading, error } = useServiceDetail(id as string);
 
+  // Set document title
+  useEffect(() => {
+    const title = service 
+      ? `${service.name} - ${service.title} | SRV Client`
+      : "Service Details | SRV Client";
+    document.title = title;
+  }, [service]);
+
   const handleBackClick = () => {
-    router.back();
+    navigate(-1);
   };
 
   if (loading) {
@@ -32,19 +37,7 @@ const ServiceDetailPage: React.FC = () => {
   }
 
   return (
-    <>
-      <Head>
-        <title>
-          {service ? `${service.name} - ${service.title}` : "Service Details"} |
-          SRV Client
-        </title>
-        <meta
-          name="description"
-          content={service?.description || "Professional service details"}
-        />
-      </Head>
-
-      <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-gray-50">
         {/* Page Header */}
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 shadow-sm md:px-6 lg:px-8">
           <div className="flex flex-grow items-center">
@@ -80,13 +73,10 @@ const ServiceDetailPage: React.FC = () => {
           <ServiceDetailPageComponent service={service} provider={provider} />
         </main>
 
-        {/* Bottom Navigation - Hidden on large screens */}
-        <div className="lg:hidden">
-          <BottomNavigation />
-        </div>
+      {/* Bottom Navigation - Hidden on large screens */}
+      <div className="lg:hidden">
+        <BottomNavigation />
       </div>
-    </>
+    </div>
   );
-};
-
-export default ServiceDetailPage;
+};export default ServiceDetailPage;

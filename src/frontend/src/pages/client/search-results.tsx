@@ -69,8 +69,8 @@ const SearchResultsPage: React.FC = () => {
 
   // Update document title when search query changes
   useEffect(() => {
-    document.title = searchQuery 
-      ? `SRV | Search: ${searchQuery}` 
+    document.title = searchQuery
+      ? `SRV | Search: ${searchQuery}`
       : "SRV | Search Results";
   }, [searchQuery]);
 
@@ -84,85 +84,85 @@ const SearchResultsPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-white px-4 py-3 shadow-sm">
-          <div className="mb-3 flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="rounded-full p-2 transition-colors hover:bg-gray-100"
-              aria-label="Go back"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-            </button>
-            <h1 className="flex-grow truncate text-lg font-semibold text-gray-800">
-              {searchQuery ? `Results for "${searchQuery}"` : "Search Services"}
-            </h1>
-          </div>
-          <SearchBar
-            placeholder="Search for another service..."
-            onSearch={handleSearchOnPage}
-            initialQuery={searchQuery}
-            redirectToSearchResultsPage={false}
-            servicesList={allServices}
-          />
-        </header>
-
-        {/* Results List */}
-        <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
-          {loading && (
-            <div className="py-10 text-center text-gray-600">
-              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-              Searching...
-            </div>
-          )}
-          {error && (
-            <div className="py-16 text-center">
-              <p className="text-lg text-red-500">
-                Error loading services. Please try again.
-              </p>
-            </div>
-          )}
-          {!loading && !error && searchQuery && results.length === 0 && (
-            <div className="py-16 text-center">
-              <MagnifyingGlassIcon className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-lg text-gray-500">
-                {searchQuery
-                  ? `No services found matching "${searchQuery}".`
-                  : "Enter a term above to search for services."}
-              </p>
-              {searchQuery && (
-                <p className="mt-2 text-sm text-gray-400">
-                  Try a different search term or check your spelling.
-                </p>
-              )}
-            </div>
-          )}
-          {!loading && !error && !searchQuery && (
-            <div className="py-16 text-center">
-              <MagnifyingGlassIcon className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-lg text-gray-500">
-                Enter a term above to search for services.
-              </p>
-            </div>
-          )}
-          {!loading && !error && results.length > 0 && (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
-              {results.map((service) => (
-                <ServiceListItem
-                  key={service.id}
-                  service={service}
-                  isGridItem={true}
-                  retainMobileLayout={true}
-                />
-              ))}
-            </div>
-          )}
-        </main>
-
-        <div className="lg:hidden">
-          <BottomNavigation />
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white px-4 py-3 shadow-sm">
+        <div className="mb-3 flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+          </button>
+          <h1 className="flex-grow truncate text-lg font-semibold text-gray-800">
+            {searchQuery ? `Results for "${searchQuery}"` : "Search Services"}
+          </h1>
         </div>
+        <SearchBar
+          placeholder="Search for another service..."
+          onSearch={handleSearchOnPage}
+          initialQuery={searchQuery}
+          redirectToSearchResultsPage={false}
+          servicesList={allServices}
+        />
+      </header>
+
+      {/* Results List */}
+      <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
+        {loading && (
+          <div className="py-10 text-center text-gray-600">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+            Searching...
+          </div>
+        )}
+        {error && (
+          <div className="py-16 text-center">
+            <p className="text-lg text-red-500">
+              Error loading services. Please try again.
+            </p>
+          </div>
+        )}
+        {!loading && !error && searchQuery && results.length === 0 && (
+          <div className="py-16 text-center">
+            <MagnifyingGlassIcon className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <p className="text-lg text-gray-500">
+              {searchQuery
+                ? `No services found matching "${searchQuery}".`
+                : "Enter a term above to search for services."}
+            </p>
+            {searchQuery && (
+              <p className="mt-2 text-sm text-gray-400">
+                Try a different search term or check your spelling.
+              </p>
+            )}
+          </div>
+        )}
+        {!loading && !error && !searchQuery && (
+          <div className="py-16 text-center">
+            <MagnifyingGlassIcon className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <p className="text-lg text-gray-500">
+              Enter a term above to search for services.
+            </p>
+          </div>
+        )}
+        {!loading && !error && results.length > 0 && (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+            {results.map((service) => (
+              <ServiceListItem
+                key={service.id}
+                service={service}
+                isGridItem={true}
+                retainMobileLayout={true}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      <div className="lg:hidden">
+        <BottomNavigation />
       </div>
+    </div>
   );
 };
 

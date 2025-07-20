@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import Image from "next/image";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
   StarIcon as StarSolid,
@@ -10,7 +8,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceById } from "../../../../hooks/serviceInformation";
-import { review } from "@app/declarations/review";
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
@@ -32,8 +29,8 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
 };
 
 const ServiceReviewsPage: React.FC = () => {
-  const router = useRouter();
-  const { id: serviceId } = router.query;
+  const navigate = useNavigate();
+  const { id: serviceId } = useParams<{ id: string }>();
 
   // Get service data with provider information
   const {
@@ -90,6 +87,16 @@ const ServiceReviewsPage: React.FC = () => {
   const ratingDistribution = getRatingDistribution(reviews);
   const averageRating = getAverageRating(reviews);
 
+  // Set document title
+  useEffect(() => {
+    if (service) {
+      const providerName = service.providerName || "Service Provider";
+      document.title = `SRV | Reviews for ${service.name} by ${providerName}`;
+    } else {
+      document.title = "SRV | Service Reviews";
+    }
+  }, [service]);
+
   if (serviceLoading || reviewsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -107,7 +114,7 @@ const ServiceReviewsPage: React.FC = () => {
         </h1>
         {/* <p className="text-gray-600 mb-6">{serviceError! || reviewsError!}</p> */}
         <button
-          onClick={() => router.back()}
+          onClick={() => navigate(-1)}
           className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
         >
           Go Back
@@ -126,7 +133,7 @@ const ServiceReviewsPage: React.FC = () => {
           We couldn't find the service you were looking for.
         </p>
         <button
-          onClick={() => router.push("/client/home")}
+          onClick={() => navigate("/client/home")}
           className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
         >
           Back to Home
@@ -139,24 +146,13 @@ const ServiceReviewsPage: React.FC = () => {
   const providerAvatar = "/images/rey.png";
 
   return (
-    <>
-      <Head>
-        <title>
-          SRV | Reviews for {service.name} by {providerName}
-        </title>
-        <meta
-          name="description"
-          content={`Read reviews for ${service.name} offered by ${providerName}`}
-        />
-      </Head>
-
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
         {/* Header for navigation */}
         <header className="sticky top-0 z-50 bg-white shadow-sm">
           <div className="container mx-auto flex items-center justify-between px-4 py-3">
             <div className="flex items-center">
               <button
-                onClick={() => router.back()}
+                onClick={() => navigate(-1)}
                 className="mr-3 rounded-full p-2 hover:bg-gray-100"
               >
                 <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
@@ -180,11 +176,10 @@ const ServiceReviewsPage: React.FC = () => {
           {/* Service Info Card */}
           <div className="mb-6 flex items-center space-x-4 rounded-lg bg-white p-4 shadow-md md:p-6">
             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 md:h-20 md:w-20">
-              <Image
+              <img
                 src={providerAvatar}
                 alt={providerName}
-                fill
-                className="object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
 
@@ -314,11 +309,10 @@ const ServiceReviewsPage: React.FC = () => {
                   <div className="mb-3 flex items-start">
                     <div className="relative mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-100 bg-gray-200">
                       {review.clientProfile?.profilePicture?.imageUrl ? (
-                        <Image
+                        <img
                           src={review.clientProfile.profilePicture.imageUrl}
                           alt={review.clientName || "Client"}
-                          fill
-                          className="object-cover"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
                         <UserIcon className="h-6 w-6 text-gray-500" />
@@ -399,7 +393,6 @@ const ServiceReviewsPage: React.FC = () => {
           )}
         </main>
       </div>
-    </>
   );
 };
 

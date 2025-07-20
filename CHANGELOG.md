@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Convert Next.js client components to React Router DOM for improved navigation and routing
 - Replace Next.js Head component with native document.title manipulation in search results page
 - Replace Next.js Head component with native document.title manipulation in chat page
+- Replace Next.js Head component with native document.title manipulation in service pages (view-all, service detail, service reviews)
 - Replace bundly/ares-react with custom AuthContext in service management for better authentication control
 - Add set_count update method to allow setting the counter to a specific value
 - Add frontend development server scripts (`npm run start`)

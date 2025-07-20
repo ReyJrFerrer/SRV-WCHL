@@ -1,37 +1,34 @@
-import React from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 // Components
-import SearchBar from "../../../components/client/SearchBarNextjs";
-import ServiceListItem from "../../../components/client/ServiceListItemNextjs";
-import BottomNavigation from "../../../components/client/BottomNavigationNextjs";
+import SearchBar from "../../../components/client/SearchBar";
+import ServiceListItem from "../../../components/client/ServiceListItem";
+import BottomNavigation from "../../../components/client/BottomNavigation";
 
 // Hooks
 import {
   useAllServicesWithProviders,
-  EnrichedService,
 } from "../../../hooks/serviceInformation";
 
 const ViewAllServicesPage: React.FC = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // Use the hook to get all services with provider information
-  const { services, loading, error, refetch } = useAllServicesWithProviders();
+  const { services, loading, error } = useAllServicesWithProviders();
+
+  // Set document title
+  useEffect(() => {
+    document.title = "SRV | All Services";
+  }, []);
 
   const handleBackClick = () => {
-    router.back();
+    navigate(-1);
   };
 
   return (
-    <>
-      <Head>
-        <title>SRV | All Services</title>
-        <meta name="description" content="Browse all available services" />
-      </Head>
-
-      <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header */}
         <div className="sticky top-0 z-30 bg-white px-4 py-4 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
@@ -86,7 +83,6 @@ const ViewAllServicesPage: React.FC = () => {
 
         <BottomNavigation />
       </div>
-    </>
   );
 };
 
