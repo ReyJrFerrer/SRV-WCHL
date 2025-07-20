@@ -1,20 +1,17 @@
 import React from "react";
-import Link from "next/link";
-import { useRouter } from "next/router";
+import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
-  ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import {
   HomeIcon as HomeIconSolid,
-  ChatBubbleLeftRightIcon as ChatIconSolid,
   ClipboardDocumentListIcon as BookingIconSolid,
 } from "@heroicons/react/24/solid";
 
 const BottomNavigation: React.FC = () => {
-  const router = useRouter();
-  const currentPath = router.pathname;
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   const isActive = (path: string) => {
     return currentPath.startsWith(path);
@@ -24,7 +21,7 @@ const BottomNavigation: React.FC = () => {
     <div className="fixed right-0 bottom-0 left-0 z-40 bg-white shadow-lg">
       <div className="flex h-16 items-center justify-around">
         <Link
-          href="/client/home"
+          to="/client/home"
           className="flex h-full w-full flex-col items-center justify-center"
         >
           <div
@@ -40,7 +37,7 @@ const BottomNavigation: React.FC = () => {
         </Link>
 
         <Link
-          href="/client/booking"
+          to="/client/booking"
           className="flex h-full w-full flex-col items-center justify-center"
         >
           <div
@@ -55,7 +52,7 @@ const BottomNavigation: React.FC = () => {
           </div>
         </Link>
         {/* 
-        <Link href="/client/chat" className="flex flex-col items-center justify-center w-full h-full">
+        <Link to="/client/chat" className="flex flex-col items-center justify-center w-full h-full">
           <div className={`flex flex-col items-center ${isActive('/client/chat') ? 'text-green-600' : 'text-gray-500'}`}>
             {isActive('/client/chat') ? (
               <ChatIconSolid className="h-6 w-6" />

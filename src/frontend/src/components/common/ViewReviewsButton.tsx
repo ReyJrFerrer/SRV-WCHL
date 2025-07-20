@@ -1,5 +1,5 @@
 import React from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import { StarIcon, EyeIcon } from "@heroicons/react/24/outline";
 
 interface ViewReviewsButtonProps {
@@ -17,10 +17,10 @@ const ViewReviewsButton: React.FC<ViewReviewsButtonProps> = ({
   className = "",
   variant = "button",
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleViewReviews = () => {
-    router.push(`/provider/service-details/reviews/${serviceId}`);
+    navigate(`/provider/service-details/reviews/${serviceId}`);
   };
 
   if (variant === "card") {

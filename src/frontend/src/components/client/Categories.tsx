@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import {
   HomeIcon,
   BoltIcon,
@@ -79,7 +78,7 @@ const Categories: React.FC<CategoriesProps> = ({
   className = "",
   initialItemCount = 3,
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
 
   const categoriesToDisplay = showAll
@@ -98,7 +97,7 @@ const Categories: React.FC<CategoriesProps> = ({
   };
 
   const handleCategoryClick = (slug: string) => {
-    router.push(`/client/categories/${slug}`);
+    navigate(`/client/categories/${slug}`);
   };
 
   // Define responsive classes

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { EnrichedService } from "@app/utils/serviceHelpers";
 
 // Generic service interface for search functionality
 interface SearchableService {
@@ -36,7 +35,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [suggestions, setSuggestions] = useState<SearchableService[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
-  const router = useRouter();
+  const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
@@ -91,7 +90,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       }
 
       if (redirectToSearchResultsPage) {
-        router.push(
+        navigate(
           `/client/search-results?q=${encodeURIComponent(finalQuery)}`,
         );
       }

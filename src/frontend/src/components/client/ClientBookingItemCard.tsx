@@ -1,18 +1,15 @@
 // frontend/src/components/client/ClientBookingItemCard.tsx
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/router";
+import { Link, useNavigate } from "react-router-dom";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
-import { reviewCanisterService } from "../../services/reviewCanisterService"; // ✅ Add this import
-import { authCanisterService } from "../../services/authCanisterService"; // ✅ Add this import
+import { reviewCanisterService } from "../../services/reviewCanisterService";
+import { authCanisterService } from "../../services/authCanisterService";
 import {
   CalendarDaysIcon,
   MapPinIcon,
   CurrencyDollarIcon,
   XCircleIcon,
   ArrowPathIcon,
-  ExclamationTriangleIcon,
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
@@ -28,16 +25,16 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   onCancelBooking,
   onUpdateStatus,
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
-  // ✅ Add state for review status
+  // Add state for review status
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
 
-  // ✅ Check review status when booking is finished
+  // Check review status when booking is finished
   useEffect(() => {
     const checkReviewStatus = async () => {
-      // ✅ Only check for completed bookings (exclude cancelled)
+      // Only check for completed bookings (exclude cancelled)
       if (booking.status !== "Completed" || !booking.id) {
         // For cancelled bookings, explicitly set to false
         if (booking.status === "Cancelled") {
@@ -71,7 +68,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     };
 
     checkReviewStatus();
-  }, [booking.id, booking.status]); // ✅ Add booking.status to dependencies
+  }, [booking.id, booking.status]);
 
   // Extract booking data with fallbacks
   const serviceTitle = booking.serviceName;
@@ -154,20 +151,20 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     e.stopPropagation();
 
     if (booking.serviceId) {
-      router.push(`/client/book/${booking.serviceId}`);
+      navigate(`/client/book/${booking.serviceId}`);
     } else {
       alert("Service information not available to book again.");
-      router.push("/client/home");
+      navigate("/client/home");
     }
   };
 
-  // ✅ Add handler for viewing reviews when already reviewed
+  // Add handler for viewing reviews when already reviewed
   const handleViewReviews = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (booking.serviceId) {
-      router.push(`/client/service/reviews/${booking.serviceId}`);
+      navigate(`/client/service/reviews/${booking.serviceId}`);
     } else {
       alert("Service information not available.");
     }
@@ -183,9 +180,9 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const isCancelled = booking.status === "Cancelled";
   const isFinished = isCompleted || isCancelled;
 
-  // ✅ Update the review button content logic
+  // Update the review button content logic
   const getReviewButtonContent = () => {
-    // ✅ Handle cancelled bookings first
+    // Handle cancelled bookings first
     if (isCancelled) {
       return {
         text: "Service Cancelled",
@@ -261,122 +258,127 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   // Update the render logic for the buttons section
   return (
-    <Link href={`/client/booking/${booking.id}`} legacyBehavior>
-      <a className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        <div className="md:flex">
-          {serviceImage && (
-            <div className="md:flex-shrink-0">
-              <div className="relative h-48 w-full object-cover md:w-48">
-                <Image
-                  src={serviceImage}
-                  alt={serviceTitle!}
-                  layout="fill"
-                  objectFit="cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "/images/default-service.jpg";
-                  }}
-                />
-              </div>
+    <Link to={`/client/booking/${booking.id}`} className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      <div className="md:flex">
+        {serviceImage && (
+          <div className="md:flex-shrink-0">
+            <div className="relative h-48 w-full object-cover md:w-48">
+              <img
+                src={serviceImage}
+                alt={serviceTitle!}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    "/images/default-service.jpg";
+                }}
+              />
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
-            <div>
-              <div className="flex items-start justify-between">
-                <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
-                  {serviceTitle}
-                </p>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(booking.status)}`}
-                >
-                  {booking.status.replace("_", " ")}
-                </span>
-              </div>
-
-              <h3
-                className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
-                title={serviceTitle}
+        <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
+          <div>
+            <div className="flex items-start justify-between">
+              <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
+                {serviceTitle}
+              </p>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(booking.status)}`}
               >
-                {booking.packageName}
-              </h3>
-
-              <p className="mt-1 text-xs text-gray-500">
-                Provided by: {providerName}
-              </p>
-              <p className="mt-1 text-xs text-gray-500">
-                Contact: {booking.providerProfile?.phone}
-              </p>
-
-              <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-                <p className="flex items-center">
-                  <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  {formatDate(booking.requestedDate || booking.createdAt)}
-                </p>
-
-                <p className="flex items-center">
-                  <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                  {bookingLocation}
-                </p>
-
-                {booking.price && (
-                  <p className="flex items-center">
-                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    ₱{booking.price.toFixed(2)}
-                  </p>
-                )}
-              </div>
+                {booking.status.replace("_", " ")}
+              </span>
             </div>
 
-            <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
-              {canCancel && (
-                <button
-                  onClick={handleCancelClick}
-                  className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
-                >
-                  <XCircleIcon className="mr-1.5 h-4 w-4" /> Ikansela ang
-                  booking
-                </button>
-              )}
+            <h3
+              className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
+              title={serviceTitle}
+            >
+              {booking.packageName}
+            </h3>
 
-              {/* ✅ Only show "Book Again" for completed bookings, not cancelled */}
-              {isCompleted && booking.serviceId && (
-                <button
-                  onClick={handleBookAgainClick}
-                  className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 sm:w-auto"
-                >
-                  <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Magbook ulit
-                </button>
-              )}
+            <p className="mt-1 text-xs text-gray-500">
+              Provided by: {providerName}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Contact: {booking.providerProfile?.phone}
+            </p>
 
-              {/* ✅ Enhanced review button with validation for cancelled bookings */}
-              {isFinished && reviewButtonContent && (
-                <div className="relative">
-                  {reviewButtonContent.href ? (
-                    <Link href={reviewButtonContent.href} legacyBehavior>
-                      <a
-                        className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
-                        title={reviewButtonContent.tooltip}
-                      >
-                        {reviewButtonContent.icon} {reviewButtonContent.text}
-                      </a>
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={reviewButtonContent.onClick}
-                      disabled={reviewButtonContent.disabled}
-                      className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className} ${reviewButtonContent.disabled ? "cursor-not-allowed" : ""}`}
-                      title={reviewButtonContent.tooltip}
-                    >
-                      {reviewButtonContent.icon} {reviewButtonContent.text}
-                    </button>
-                  )}
-                </div>
+            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+              <p className="flex items-center">
+                <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                {formatDate(booking.requestedDate || booking.createdAt)}
+              </p>
+
+              <p className="flex items-center">
+                <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                <span className="truncate">{bookingLocation}</span>
+              </p>
+
+              {booking.price && (
+                <p className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                  <span className="font-semibold text-green-600">
+                    ₱{booking.price.toFixed(2)}
+                  </span>
+                </p>
               )}
             </div>
           </div>
+
+          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
+            {canCancel && (
+              <button
+                onClick={handleCancelClick}
+                className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
+              >
+                <XCircleIcon className="mr-1.5 h-4 w-4" /> Ikansela ang
+                booking
+              </button>
+            )}
+
+            {/* Only show "Book Again" for completed bookings, not cancelled */}
+            {isCompleted && booking.serviceId && (
+              <button
+                onClick={handleBookAgainClick}
+                className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 sm:w-auto"
+              >
+                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Magbook ulit
+              </button>
+            )}
+
+            {/* Enhanced review button with validation for cancelled bookings */}
+            {isFinished && reviewButtonContent && (
+              <div className="relative">
+                {reviewButtonContent.href ? (
+                  <Link
+                    to={reviewButtonContent.href.pathname}
+                    state={{ providerName }}
+                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
+                    onClick={(e) => {
+                      if (reviewButtonContent.disabled) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    {reviewButtonContent.icon}
+                    {reviewButtonContent.text}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={reviewButtonContent.onClick}
+                    disabled={reviewButtonContent.disabled}
+                    className={`flex w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-white transition-colors sm:w-auto ${reviewButtonContent.className}`}
+                    title={reviewButtonContent.tooltip}
+                  >
+                    {reviewButtonContent.icon}
+                    {reviewButtonContent.text}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </a>
+      </div>
     </Link>
   );
 };

@@ -3,10 +3,10 @@ import { useState, useEffect } from "react";
 // import { useAuth } from "../../context/AuthContext";
 
 // Components
-import Header from "../../components/client/HeaderNextjs";
-import Categories from "../../components/client/CategoriesNextjs";
-import TopPicks from "../../components/client/TopPicksNextjs";
-import BottomNavigation from "../../components/client/BottomNavigationNextjs";
+import Header from "../../components/client/Header";
+import Categories from "../../components/client/Categories";
+import TopPicks from "../../components/client/TopPicks";
+import BottomNavigation from "../../components/client/BottomNavigation";
 // Utilities
 import { getCategoryIcon } from "../../utils/serviceHelpers";
 

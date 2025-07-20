@@ -319,13 +319,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     } finally {
       setLoadingState("profile", false);
     }
-  }, [
-    isAuthenticated,
-    identity,
-    isInitialized,
-    setLoadingState,
-    handleError,
-  ]);
+  }, [isAuthenticated, identity, isInitialized, setLoadingState, handleError]);
 
   // Add initialization effect (add this after your existing useEffects)
   useEffect(() => {

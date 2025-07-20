@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import serviceCanisterService, {
-  Service,
-  ServicePackage,
-  ProviderAvailability,
-  DayOfWeek,
-  AvailableSlot,
-} from "../../services/serviceCanisterService";
+import { DayOfWeek } from "../../services/serviceCanisterService";
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
 
 // Helper functions
@@ -25,48 +19,12 @@ const dayIndexToName = (dayIndex: number): string => {
   return days[dayIndex] || "";
 };
 
-// TODO later
-// Map DayOfWeek enum to day index (for Date.getDay())
-const dayOfWeekToIndex = (day: DayOfWeek): number => {
-  const mapping: Record<DayOfWeek, number> = {
-    Sunday: 0,
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-  };
-  return mapping[day];
-};
-
-interface ParsedTimeSlot {
-  start: { h: number; m: number };
-  end: { h: number; m: number };
-}
-
-const parseTimeSlotString = (slotStr: string): ParsedTimeSlot | null => {
-  const parts = slotStr.split("-");
-  if (parts.length !== 2) return null;
-  const [startStr, endStr] = parts;
-  const [startH, startM] = startStr.split(":").map(Number);
-  const [endH, endM] = endStr.split(":").map(Number);
-
-  if (isNaN(startH) || isNaN(startM) || isNaN(endH) || isNaN(endM)) return null;
-  return { start: { h: startH, m: startM }, end: { h: endH, m: endM } };
-};
-
 interface SelectablePackage {
   id: string;
   title: string;
   description: string;
   price: number;
   checked: boolean;
-}
-
-// Extended service interface that includes packages
-interface ExtendedService extends Service {
-  packages?: ServicePackage[];
 }
 
 interface ClientBookingPageComponentProps {
@@ -76,7 +34,7 @@ interface ClientBookingPageComponentProps {
 const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   serviceSlug,
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // Use the booking hook
   const {
@@ -90,14 +48,12 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     loadServiceData,
     getAvailableSlots,
     createBookingRequest,
-    validateBookingRequest,
     calculateTotalPrice,
-    formatLocationForBooking,
   } = useBookRequest();
 
   // Local state for form management
   const [packages, setPackages] = useState<SelectablePackage[]>([]);
-  const [concerns, setConcerns] = useState<string>("");
+  const [concerns] = useState<string>("");
   const [bookingOption, setBookingOption] = useState<"sameday" | "scheduled">(
     "sameday",
   );
@@ -149,9 +105,10 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     const loadSlots = async () => {
       if (hookService && selectedDate) {
         try {
-          const slots = await getAvailableSlots(hookService.id, selectedDate);
-        } catch (error) {}
-      } else {
+          await getAvailableSlots(hookService.id, selectedDate);
+        } catch (error) {
+          console.error("Error loading slots:", error);
+        }
       }
     };
     loadSlots();
@@ -355,10 +312,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         };
 
         // Navigate to confirmation page with details
-        router.push({
-          pathname: "/client/booking/confirmation",
-          query: { details: JSON.stringify(confirmationDetails) },
-        });
+        navigate(`/client/booking/confirmation?details=${encodeURIComponent(JSON.stringify(confirmationDetails))}`);
       } else {
         setFormError("Nabigo ang paglikha ng reservasyon. Subukan muli.");
       }
@@ -388,7 +342,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         <div className="text-center">
           <p className="text-red-600">{hookError}</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => navigate(-1)}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Go Back
@@ -404,7 +358,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         <div className="text-center">
           <p className="text-gray-600">Hindi natagpuan ang serbisyo</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => navigate(-1)}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Bumalik

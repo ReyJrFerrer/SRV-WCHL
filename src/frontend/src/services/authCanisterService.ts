@@ -49,10 +49,8 @@ let authActor: AuthService | null = null;
 const getAuthActor = async (): Promise<AuthService> => {
   if (!authActor) {
     authActor = createAuthActor();
-  
   }
   return authActor;
-
 };
 // Auth Canister Service Functions
 export const authCanisterService = {

@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { useRouter } from "next/router";
-import { enrichServiceWithProvider } from "@app/utils/serviceHelpers";
-import { FrontendProfile } from "@app/services/authCanisterService";
-import { Service } from "@app/services/serviceCanisterService";
-import { FormattedServiceDetail } from "@app/hooks/serviceDetail";
-import { useServiceReviews } from "@app/hooks/reviewManagement";
+import { useNavigate } from "react-router-dom";
+import { FrontendProfile } from "../../services/authCanisterService";
+import { FormattedServiceDetail } from "../../hooks/serviceDetail";
+import { useServiceReviews } from "../../hooks/reviewManagement";
 
 interface ServiceDetailPageComponentProps {
   service: FormattedServiceDetail | null;
@@ -18,13 +15,10 @@ const ServiceHeroImage: React.FC<{
   provider?: FrontendProfile | null;
 }> = ({ service, provider }) => (
   <div className="relative h-48 w-full overflow-hidden md:h-64 lg:h-96">
-    <Image
+    <img
       src={"/images/Technician1.jpg"}
       alt={service.title || service.name}
-      width={1200}
-      height={400}
       className="h-full w-full object-cover"
-      priority
     />
     {/* Gradient overlay for better text readability */}
     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent lg:from-black/20"></div>
@@ -144,7 +138,7 @@ const ServiceAvailabilitySection: React.FC<{ service: any }> = ({
 
 // Service Rating Section Component
 const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // Use the review management hook to get real rating data
   const {
@@ -153,7 +147,6 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
     error: reviewsError,
     getAverageRating,
     getRatingDistribution,
-    calculateServiceRating,
   } = useServiceReviews(service?.id);
 
   // Local state for calculated rating data
@@ -194,7 +187,7 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
 
   const handleViewReviews = () => {
     // Navigate to reviews page with service ID
-    router.push(`/client/service/reviews/${service.id}`);
+    navigate(`/client/service/reviews/${service.id}`);
   };
 
   // Show loading state
@@ -533,7 +526,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
   service,
   provider,
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // Use placeholder service if no service is provided
   const placeholderService = createPlaceholderService();
@@ -543,7 +536,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
 
   const handleBookingRequest = () => {
     // Navigate to booking page with the service slug (works for both real and placeholder data)
-    router.push(`/client/book/${displayService.id}`);
+    navigate(`/client/book/${displayService.id}`);
   };
 
   return (
@@ -574,7 +567,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                   <div className="flex items-center">
                     {provider?.profilePicture?.imageUrl ||
                     displayService.providerAvatar ? (
-                      <Image
+                      <img
                         src={
                           provider?.profilePicture?.imageUrl ||
                           displayService.providerAvatar ||
@@ -585,9 +578,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                           displayService.providerName ||
                           "Service Provider"
                         }
-                        width={40}
-                        height={40}
-                        className="mr-3 rounded-full"
+                        className="mr-3 h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
                       <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">

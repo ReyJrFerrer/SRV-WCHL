@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import {
   StarIcon,
   MapPinIcon,
-  UserCircleIcon,
 } from "@heroicons/react/24/solid";
 import { EnrichedService } from "../../hooks/serviceInformation";
 import { useServiceReviews } from "../../hooks/reviewManagement";
@@ -18,14 +16,12 @@ interface ServiceListItemProps {
 
 const ServiceListItem: React.FC<ServiceListItemProps> = ({
   service,
-  inCategories = false,
   isGridItem = false,
   retainMobileLayout = false,
 }) => {
   // Use the review management hook for this specific service
   const {
     reviews,
-    loading: reviewsLoading,
     calculateServiceRating,
     getAverageRating,
     error: reviewsError,
@@ -141,120 +137,116 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
   };
 
   return (
-    <Link href={`/client/service/${service.id}`} legacyBehavior>
-      <a
-        className={`service-card block ${itemWidthClass} group flex flex-col overflow-hidden`}
-      >
-        <div className="relative">
-          {" "}
-          {/* Image container */}
-          <div className="aspect-video w-full">
-            <Image
-              src={service.providerAvatar || "/images/rey.png"}
-              alt={service.title}
-              className="service-image transition-transform duration-300 group-hover:scale-105"
-              style={{ objectFit: "cover" }}
-              fill
-              priority
-            />
-          </div>
-          {/* Category badge */}
-          {/* {service.category && (
+    <Link
+      to={`/client/service/${service.id}`}
+      className={`service-card block ${itemWidthClass} group flex flex-col overflow-hidden`}
+    >
+      <div className="relative">
+        {" "}
+        {/* Image container */}
+        <div className="aspect-video w-full">
+          <img
+            src={service.providerAvatar || "/images/rey.png"}
+            alt={service.title}
+            className="service-image w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+        {/* Category badge */}
+        {/* {service.category && (
             <div className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow bg-blue-600">
               {service.category.name}
             </div>
           )} */}
-          {/* Availability badge */}
-          <div
-            className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
-          >
-            {availabilityText}
-          </div>
+        {/* Availability badge */}
+        <div
+          className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
+        >
+          {availabilityText}
         </div>
+      </div>
 
-        <div className="service-content flex flex-grow flex-col p-3">
-          <div className="flex-grow">
-            {" "}
-            {/* This div helps push price/location to bottom */}
-            <div className={nameRatingContainerClass}>
-              <h3
-                className={`text-md leading-tight font-bold text-blue-800 transition-colors group-hover:text-green-600 ${nameMarginClass} truncate`}
-              >
-                {service.providerName}
-              </h3>
+      <div className="service-content flex flex-grow flex-col p-3">
+        <div className="flex-grow">
+          {" "}
+          {/* This div helps push price/location to bottom */}
+          <div className={nameRatingContainerClass}>
+            <h3
+              className={`text-md leading-tight font-bold text-blue-800 transition-colors group-hover:text-green-600 ${nameMarginClass} truncate`}
+            >
+              {service.providerName}
+            </h3>
 
-              {/* Enhanced rating display */}
-              <div
-                className={`flex flex-shrink-0 items-center text-xs text-blue-800 ${ratingMarginClass}`}
-              >
-                {serviceRating.loading ? (
-                  <div className="flex items-center">
-                    <div className="h-3 w-12 animate-pulse rounded bg-gray-300"></div>
-                    <span className="ml-1 text-gray-400">Loading...</span>
-                  </div>
-                ) : serviceRating.count > 0 ? (
-                  <>
-                    {renderRatingStars(serviceRating.average)}
-                    <span className="ml-1">
-                      {serviceRating.average.toFixed(1)} ({serviceRating.count})
-                    </span>
-                  </>
-                ) : (
-                  <div className="flex items-center text-gray-400">
-                    {renderRatingStars(0)}
-                    <span className="ml-1">No reviews</span>
-                  </div>
-                )}
-
-                {/* Show error indicator if reviews failed to load */}
-                {reviewsError && (
-                  <span
-                    className="ml-1 text-xs text-red-400"
-                    title={reviewsError}
-                  >
-                    ⚠️
+            {/* Enhanced rating display */}
+            <div
+              className={`flex flex-shrink-0 items-center text-xs text-blue-800 ${ratingMarginClass}`}
+            >
+              {serviceRating.loading ? (
+                <div className="flex items-center">
+                  <div className="h-3 w-12 animate-pulse rounded bg-gray-300"></div>
+                  <span className="ml-1 text-gray-400">Loading...</span>
+                </div>
+              ) : serviceRating.count > 0 ? (
+                <>
+                  {renderRatingStars(serviceRating.average)}
+                  <span className="ml-1">
+                    {serviceRating.average.toFixed(1)} ({serviceRating.count})
                   </span>
-                )}
-              </div>
-            </div>
-            {/* Display service title */}
-            <p className="mb-2 text-sm leading-snug text-blue-700">
-              {service.title}
-            </p>
-            {/* Location info - city/address if available */}
-            {service.location &&
-              (service.location.city || service.location.address) && (
-                <div className="mb-2 flex items-center text-xs text-blue-700">
-                  <MapPinIcon className="mr-0.5 h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">
-                    {service.location.city || service.location.address}
-                    {service.location.state
-                      ? `, ${service.location.state}`
-                      : ""}
-                  </span>
+                </>
+              ) : (
+                <div className="flex items-center text-gray-400">
+                  {renderRatingStars(0)}
+                  <span className="ml-1">No reviews</span>
                 </div>
               )}
-          </div>
 
-          <div className={priceLocationContainerClass}>
-            <p
-              className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}
-            >
-              {`₱${service.price.amount.toFixed(2)}`}
-              {/* <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span> */}
-            </p>
-            <div
-              className={`flex items-center text-xs text-blue-800 ${locationMarginClass}`}
-            >
-              <MapPinIcon className="mr-0.5 h-3 w-3" />
-              <span>
-                {service.location.serviceRadius}{" "}
-                {service.location.serviceRadiusUnit}
-              </span>
+              {/* Show error indicator if reviews failed to load */}
+              {reviewsError && (
+                <span
+                  className="ml-1 text-xs text-red-400"
+                  title={reviewsError}
+                >
+                  ⚠️
+                </span>
+              )}
             </div>
           </div>
+          {/* Display service title */}
+          <p className="mb-2 text-sm leading-snug text-blue-700">
+            {service.title}
+          </p>
+          {/* Location info - city/address if available */}
+          {service.location &&
+            (service.location.city || service.location.address) && (
+              <div className="mb-2 flex items-center text-xs text-blue-700">
+                <MapPinIcon className="mr-0.5 h-3 w-3 flex-shrink-0" />
+                <span className="truncate">
+                  {service.location.city || service.location.address}
+                  {service.location.state
+                    ? `, ${service.location.state}`
+                    : ""}
+                </span>
+              </div>
+            )}
         </div>
-      </a>
+
+        <div className={priceLocationContainerClass}>
+          <p
+            className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}
+          >
+            {`₱${service.price.amount.toFixed(2)}`}
+            {/* <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span> */}
+          </p>
+          <div
+            className={`flex items-center text-xs text-blue-800 ${locationMarginClass}`}
+          >
+            <MapPinIcon className="mr-0.5 h-3 w-3" />
+            <span>
+              {service.location.serviceRadius}{" "}
+              {service.location.serviceRadiusUnit}
+            </span>
+          </div>
+        </div>
+      </div>
     </Link>
   );
 };

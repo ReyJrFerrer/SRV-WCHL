@@ -7,8 +7,8 @@ import {
   ChartBarIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/solid";
-import { useProviderBookingManagement } from "@app/hooks/useProviderBookingManagement";
-import { useProviderReviews } from "@app/hooks/reviewManagement";
+import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
+import { useProviderReviews } from "../../hooks/reviewManagement";
 
 interface ProviderStatsProps {
   className?: string;

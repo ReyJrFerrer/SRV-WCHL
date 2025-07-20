@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
-import Link from "next/link";
-import ServiceListItem from "./ServiceListItemNextjs";
+import React from "react";
+import { Link } from "react-router-dom";
+import ServiceListItem from "./ServiceListItem";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import {
   EnrichedService,
@@ -15,7 +15,7 @@ interface TopPicksProps {
 
 const TopPicks: React.FC<TopPicksProps> = ({ className = "", limit = 4 }) => {
   // Use our custom hook to fetch top pick services
-  const { services, loading, error } = useTopPickServices(limit);
+  const { services } = useTopPickServices(limit);
 
   // Use the EnrichedService directly, but update heroImage using category helper
   const enhanceService = (service: EnrichedService): EnrichedService => ({
@@ -28,7 +28,7 @@ const TopPicks: React.FC<TopPicksProps> = ({ className = "", limit = 4 }) => {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold sm:text-xl">Magbook Na!</h2>
         <Link
-          href="/client/service/view-all"
+          to="/client/service/view-all"
           className="flex items-center text-blue-600 transition-colors hover:text-amber-700"
         >
           <span className="mr-1">View All</span>
