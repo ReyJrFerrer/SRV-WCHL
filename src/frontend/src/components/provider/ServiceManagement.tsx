@@ -1,9 +1,6 @@
-// SRV-ICP-ver2-jdMain/frontend/src/components/provider/ServiceManagementNextjs.tsx
-// ...existing imports...
 import React from "react";
 import {
   PlusIcon,
-  CurrencyDollarIcon,
   StarIcon,
   ArrowRightIcon,
   ScissorsIcon,
@@ -20,7 +17,7 @@ import {
   EllipsisHorizontalCircleIcon,
   BoltIcon,
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { EnhancedService } from "../../hooks/serviceManagement";
 import { getCategoryIcon } from "../../utils/serviceHelpers";
 
@@ -144,20 +141,13 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
       <div className="section-header mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-bold text-gray-800">Aking mga Serbisyo</h2>
         {services.length > maxItemsToShow && (
-          <Link href="/provider/services" legacyBehavior>
-            <a className="flex items-center text-sm font-medium text-blue-600 transition-colors hover:text-blue-700">
-              View All ({services.length})
-              <ArrowRightIcon className="ml-1 h-4 w-4" />
-            </a>
+          <Link to="/provider/services" className="flex items-center text-sm font-medium text-blue-600 transition-colors hover:text-blue-700">
+            View All ({services.length})
+            <ArrowRightIcon className="ml-1 h-4 w-4" />
           </Link>
         )}
-        <Link href="/provider/services/add" legacyBehavior>
-          <a
-            className="add-button ml-auto rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 sm:ml-0"
-            aria-label="Add new service"
-          >
-            <PlusIcon className="h-5 w-5" />
-          </a>
+        <Link to="/provider/services/add" className="add-button ml-auto rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 sm:ml-0" aria-label="Add new service">
+          <PlusIcon className="h-5 w-5" />
         </Link>
       </div>
 
@@ -169,10 +159,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
             return (
               <Link
                 key={service.id}
-                href={`/provider/service-details/${service.id}`}
-                legacyBehavior
+                to={`/provider/service-details/${service.id}`}
+                className="service-card-item block cursor-pointer rounded-lg bg-gray-50 p-4 shadow-sm transition-shadow hover:shadow-md"
               >
-                <a className="service-card-item block cursor-pointer rounded-lg bg-gray-50 p-4 shadow-sm transition-shadow hover:shadow-md">
                   <div className="flex flex-col md:flex-row md:items-start md:space-x-4">
                     {/* Service Icon */}
                     <div className="mb-3 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 md:mb-0">
@@ -218,7 +207,6 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                       </div>
                     </div>
                   </div>
-                </a>
               </Link>
             );
           })}
@@ -227,10 +215,8 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         <div className="py-10 text-center text-gray-500">
           <WrenchScrewdriverIcon className="mx-auto mb-3 h-12 w-12 text-gray-300" />
           <p className="mb-1">You haven't listed any services yet.</p>
-          <Link href="/provider/services/add" legacyBehavior>
-            <a className="text-sm font-semibold text-blue-600 hover:text-blue-700">
-              Add your first service
-            </a>
+                    <Link to="/provider/services/add" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+            Add your first service
           </Link>
         </div>
       )}

@@ -13,7 +13,7 @@ import {
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { useBookingRating } from "../../../hooks/reviewManagement";
-import BottomNavigationNextjs from "../../../components/provider/BottomNavigationNextjs";
+import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
 
 export default function ProviderReviewView() {
   const router = useRouter();

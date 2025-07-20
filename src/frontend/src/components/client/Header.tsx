@@ -14,9 +14,7 @@ interface HeaderProps {
   className?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({
-  className = "",
-}) => {
+const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const { isAuthenticated } = useAuth();
   const { logout, isLoggingOut } = useLogout();
   // Use the hook to fetch all services

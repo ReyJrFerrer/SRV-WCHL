@@ -1,6 +1,5 @@
 export interface TimeSlot {
-    dayOfWeek: number;
-    startTime: string;
-    endTime: string;
-  }
-  
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}

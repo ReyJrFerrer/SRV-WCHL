@@ -2,12 +2,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { ArrowLeftIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { useAuth } from "@bundly/ares-react";
-
-// Components
-import ServiceListItem from "../../components/client/ServiceListItemNextjs";
-import BottomNavigation from "../../components/client/BottomNavigationNextjs";
-import SearchBar from "../../components/client/SearchBarNextjs";
+import ServiceListItem from "../../components/client/ServiceListItem";
+import BottomNavigation from "../../components/client/BottomNavigation";
+import SearchBar from "../../components/client/SearchBar";
 
 // Hooks
 import {

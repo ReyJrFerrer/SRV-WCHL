@@ -3,8 +3,12 @@ import { MediaItem } from "../common/media-item";
 import { Location } from "../common/location";
 import { Service } from "../service/service";
 
-export type ProviderVerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
-export type ProviderAccountStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'BANNED';
+export type ProviderVerificationStatus = "PENDING" | "VERIFIED" | "REJECTED";
+export type ProviderAccountStatus =
+  | "ACTIVE"
+  | "INACTIVE"
+  | "SUSPENDED"
+  | "BANNED";
 
 export interface ServiceProvider extends BaseEntity {
   firstName: string;
@@ -31,7 +35,8 @@ export interface ServiceProvider extends BaseEntity {
 
 export interface ProviderAvailability {
   weeklySchedule: {
-    [key: string]: { // 'Monday', 'Tuesday', etc.
+    [key: string]: {
+      // 'Monday', 'Tuesday', etc.
       isAvailable: boolean;
       slots: {
         startTime: string; // Format: "HH:MM"
@@ -51,7 +56,7 @@ export interface ProviderAvailability {
 
 export interface ProviderCredential {
   id: string;
-  type: 'LICENSE' | 'CERTIFICATION' | 'EDUCATION' | 'AWARD' | 'OTHER';
+  type: "LICENSE" | "CERTIFICATION" | "EDUCATION" | "AWARD" | "OTHER";
   title: string;
   issuingAuthority: string;
   issueDate: Date;
@@ -73,7 +78,12 @@ export interface ProviderEarningSummary {
 export interface ProviderTaxInformation {
   taxIdNumber: string;
   businessName?: string;
-  businessType?: 'SOLE_PROPRIETOR' | 'LLC' | 'CORPORATION' | 'PARTNERSHIP' | 'OTHER';
+  businessType?:
+    | "SOLE_PROPRIETOR"
+    | "LLC"
+    | "CORPORATION"
+    | "PARTNERSHIP"
+    | "OTHER";
   taxDocumentsSubmitted: boolean;
   vatRegistered: boolean;
   vatNumber?: string;

@@ -1,7 +1,6 @@
 // SRV-ICP-ver2-jdMain/frontend/src/components/provider/ProviderServiceListItem.tsx
 import React from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Service } from "../../../assets/types/service/service";
 import {
   PencilIcon,
@@ -48,12 +47,10 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
     <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl md:flex-row">
       <div className="relative h-48 md:h-auto md:w-1/3">
         {heroImageUrl && (
-          <Image
+          <img
             src={heroImageUrl}
             alt={service.title || service.name}
-            layout="fill"
-            objectFit="cover"
-            className="transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         )}
         <span
@@ -69,15 +66,10 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
             {service.category.name}
           </p>
           {/* MODIFICATION: Make title a link */}
-          <Link href={`/provider/service-details/${service.id}`} legacyBehavior>
-            <a
-              className="transition-colors hover:text-blue-600"
-              title="View service details"
-            >
-              <h3 className="mb-2 truncate text-lg font-bold text-gray-800 md:text-xl">
-                {service.title || service.name}
-              </h3>
-            </a>
+          <Link to={`/provider/service-details/${service.id}`} className="transition-colors hover:text-blue-600" title="View service details">
+            <h3 className="mb-2 truncate text-lg font-bold text-gray-800 md:text-xl">
+              {service.title || service.name}
+            </h3>
           </Link>
           <p
             className="mb-3 line-clamp-2 text-sm text-gray-600"
@@ -95,10 +87,8 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-start gap-2 border-t border-gray-200 pt-4">
-          <Link href={`/provider/services/edit/${service.id}`} legacyBehavior>
-            <a className="flex items-center rounded-lg bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:text-sm">
-              <PencilIcon className="mr-1.5 h-4 w-4" /> Edit
-            </a>
+          <Link to={`/provider/services/edit/${service.id}`} className="flex items-center rounded-lg bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:text-sm">
+            <PencilIcon className="mr-1.5 h-4 w-4" /> Edit
           </Link>
           <button
             onClick={() => onToggleActive(service.id, service.isActive)}
@@ -117,12 +107,10 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({
           </button>
           {/* Stats link can also go to the new detail page or a dedicated stats page */}
           <Link
-            href={`/provider/service-details/${service.id}?section=stats`}
-            legacyBehavior
+            to={`/provider/service-details/${service.id}?section=stats`}
+            className="flex items-center rounded-lg bg-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300 sm:text-sm"
           >
-            <a className="flex items-center rounded-lg bg-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300 sm:text-sm">
-              <ChartBarIcon className="mr-1.5 h-4 w-4" /> Stats
-            </a>
+            <ChartBarIcon className="mr-1.5 h-4 w-4" /> Stats
           </Link>
           <button
             onClick={() => onDeleteService(service.id)}

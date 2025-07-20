@@ -22,7 +22,7 @@ import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
-import BottomNavigationNextjs from "../../../components/provider/BottomNavigationNextjs";
+import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
 
 const ProviderBookingDetailsPage: NextPage = () => {
   const router = useRouter();

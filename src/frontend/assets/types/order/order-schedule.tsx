@@ -1,4 +1,3 @@
-
 export interface OrderSchedule {
   startDate: Date;
   endDate?: Date;

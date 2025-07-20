@@ -258,7 +258,10 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   // Update the render logic for the buttons section
   return (
-    <Link to={`/client/booking/${booking.id}`} className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+    <Link
+      to={`/client/booking/${booking.id}`}
+      className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+    >
       <div className="md:flex">
         {serviceImage && (
           <div className="md:flex-shrink-0">
@@ -266,7 +269,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               <img
                 src={serviceImage}
                 alt={serviceTitle!}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
                     "/images/default-service.jpg";
@@ -331,8 +334,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 onClick={handleCancelClick}
                 className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
               >
-                <XCircleIcon className="mr-1.5 h-4 w-4" /> Ikansela ang
-                booking
+                <XCircleIcon className="mr-1.5 h-4 w-4" /> Ikansela ang booking
               </button>
             )}
 

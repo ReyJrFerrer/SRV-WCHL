@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/router";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
@@ -49,7 +48,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   booking,
 }) => {
   const [showDetails, setShowDetails] = useState(false);
-  const router = useRouter();
+  const navigate = useNavigate();
   const {
     acceptBookingById,
     declineBookingById,
@@ -227,7 +226,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
     const success = await startBookingById(booking.id);
     if (success) {
-      router.push(`/provider/active-service/${booking.id}`);
+      navigate(`/provider/active-service/${booking.id}`);
     } else {
       console.error(`❌ Failed to start service for booking ${booking.id}`);
     }
@@ -246,17 +245,15 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     <>
       {/* ✅ Conditionally render Link only for non-InProgress bookings */}
       {!isInProgress ? (
-        <Link href={`/provider/booking/${booking.id}`} legacyBehavior>
-          <a className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <Link to={`/provider/booking/${booking.id}`} className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
             <div className="md:flex">
               {serviceImage && (
                 <div className="md:flex-shrink-0">
                   <div className="relative h-48 w-full object-cover md:w-48">
-                    <Image
+                    <img
                       src={serviceImage}
                       alt={serviceTitle}
-                      layout="fill"
-                      objectFit="cover"
+                      className="h-full w-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           "/images/default-service.jpg";
@@ -457,24 +454,19 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                         Contact Client
                       </button>
                       <Link
-                        href={`/provider/review/${booking?.id}`}
-                        legacyBehavior
+                        to={`/provider/review/${booking?.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex w-full items-center justify-center rounded-md bg-yellow-500 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-yellow-600 sm:w-auto"
                       >
-                        <a
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex w-full items-center justify-center rounded-md bg-yellow-500 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-yellow-600 sm:w-auto"
-                        >
-                          <StarIcon className="mr-1.5 h-4 w-4" />
-                          View My Reviews
-                        </a>
+                        <StarIcon className="mr-1.5 h-4 w-4" />
+                        View My Reviews
                       </Link>
                     </>
                   )}
                 </div>
               </div>
             </div>
-          </a>
-        </Link>
+          </Link>
       ) : (
         // ✅ For InProgress bookings, render without Link wrapper
         <div className="focus:ring-opacity-50 block overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -482,11 +474,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             {serviceImage && (
               <div className="md:flex-shrink-0">
                 <div className="relative h-48 w-full object-cover md:w-48">
-                  <Image
+                  <img
                     src={serviceImage}
                     alt={serviceTitle}
-                    layout="fill"
-                    objectFit="cover"
+                    className="h-full w-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src =
                         "/images/default-service.jpg";
@@ -686,16 +677,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                       Contact Client
                     </button>
                     <Link
-                      href={`/provider/review/${booking?.id}`}
-                      legacyBehavior
+                      to={`/provider/review/${booking?.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex w-full items-center justify-center rounded-md bg-yellow-500 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-yellow-600 sm:w-auto"
                     >
-                      <a
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex w-full items-center justify-center rounded-md bg-yellow-500 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-yellow-600 sm:w-auto"
-                      >
-                        <StarIcon className="mr-1.5 h-4 w-4" />
-                        View My Reviews
-                      </a>
+                      <StarIcon className="mr-1.5 h-4 w-4" />
+                      View My Reviews
                     </Link>
                   </>
                 )}

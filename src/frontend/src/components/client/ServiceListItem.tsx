@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  StarIcon,
-  MapPinIcon,
-} from "@heroicons/react/24/solid";
+import { StarIcon, MapPinIcon } from "@heroicons/react/24/solid";
 import { EnrichedService } from "../../hooks/serviceInformation";
 import { useServiceReviews } from "../../hooks/reviewManagement";
 
@@ -148,7 +145,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
           <img
             src={service.providerAvatar || "/images/rey.png"}
             alt={service.title}
-            className="service-image w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
         {/* Category badge */}
@@ -221,18 +218,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
                 <MapPinIcon className="mr-0.5 h-3 w-3 flex-shrink-0" />
                 <span className="truncate">
                   {service.location.city || service.location.address}
-                  {service.location.state
-                    ? `, ${service.location.state}`
-                    : ""}
+                  {service.location.state ? `, ${service.location.state}` : ""}
                 </span>
               </div>
             )}
         </div>
 
         <div className={priceLocationContainerClass}>
-          <p
-            className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}
-          >
+          <p className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}>
             {`₱${service.price.amount.toFixed(2)}`}
             {/* <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span> */}
           </p>

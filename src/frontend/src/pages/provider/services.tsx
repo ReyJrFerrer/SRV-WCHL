@@ -20,7 +20,7 @@ import {
   BoltIcon,
   ScissorsIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/BottomNavigationNextjs";
+import BottomNavigation from "../../components/provider/BottomNavigation";
 import {
   useServiceManagement,
   EnhancedService,

@@ -312,7 +312,9 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         };
 
         // Navigate to confirmation page with details
-        navigate(`/client/booking/confirmation?details=${encodeURIComponent(JSON.stringify(confirmationDetails))}`);
+        navigate(
+          `/client/booking/confirmation?details=${encodeURIComponent(JSON.stringify(confirmationDetails))}`,
+        );
       } else {
         setFormError("Nabigo ang paglikha ng reservasyon. Subukan muli.");
       }

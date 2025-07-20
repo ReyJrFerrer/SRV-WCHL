@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   CalendarDaysIcon,
   CalendarIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/solid";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 interface BookingRequestsProps {
   pendingRequests?: number;
@@ -12,7 +12,7 @@ interface BookingRequestsProps {
   className?: string;
 }
 
-const BookingRequestsNextjs: React.FC<BookingRequestsProps> = ({
+const BookingRequests: React.FC<BookingRequestsProps> = ({
   pendingRequests = 0,
   upcomingJobs = 0,
   className = "",
@@ -33,11 +33,9 @@ const BookingRequestsNextjs: React.FC<BookingRequestsProps> = ({
           {pendingRequests === 1 ? "request" : "requests"} na kailangan ng iyong
           sagot.
         </p>
-        <Link href="/provider/bookings?tab=Pending" legacyBehavior>
-          <a className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400">
-            <span>Tignan ang mga Requests</span>
-            <ArrowRightIcon className="h-4 w-4" />
-          </a>
+        <Link to="/provider/bookings?tab=Pending" className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400">
+          <span>Tignan ang mga Requests</span>
+          <ArrowRightIcon className="h-4 w-4" />
         </Link>
       </div>
       {/* Upcoming Jobs Card */}
@@ -53,15 +51,13 @@ const BookingRequestsNextjs: React.FC<BookingRequestsProps> = ({
           <span className="text-2xl font-bold">{upcomingJobs}</span>{" "}
           {upcomingJobs === 1 ? "service" : "services"} na nakaiskedyul.
         </p>
-        <Link href="/provider/bookings?tab=Upcoming" legacyBehavior>
-          <a className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400">
-            <span>Tignan ang mga Requests</span>
-            <ArrowRightIcon className="h-4 w-4" />
-          </a>
+        <Link to="/provider/bookings?tab=Upcoming" className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400">
+          <span>Tignan ang mga Requests</span>
+          <ArrowRightIcon className="h-4 w-4" />
         </Link>
       </div>
     </div>
   );
 };
 
-export default BookingRequestsNextjs;
+export default BookingRequests;

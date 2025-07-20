@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   MapPinIcon,
   BellIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/solid";
-import Image from "next/image";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import { FrontendProfile } from "../../services/authCanisterService";
-import { useAuth } from "@bundly/ares-react";
+import { useAuth } from "../../context/AuthContext";
 import { useLogout } from "../../hooks/logout";
 
 interface SPHeaderProps {
@@ -21,7 +20,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
   notificationCount = 0,
   className = "",
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { logout, isLoggingOut } = useLogout(); // Use the hook
 
@@ -50,13 +49,12 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
       {/* Top Row: Welcome Info & Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Image
+          <img
             src="/logo.svg"
             alt="Logo"
             width={60}
             height={60}
             className="flex-shrink-0 rounded-full bg-white"
-            priority
           />
         </div>
 

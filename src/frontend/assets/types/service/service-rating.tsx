@@ -1,4 +1,4 @@
 export interface ServiceRating {
-    average: number;
-    count: number;
+  average: number;
+  count: number;
 }

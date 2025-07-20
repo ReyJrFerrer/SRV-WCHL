@@ -14,7 +14,7 @@ import {
   PhoneIcon,
 } from "@heroicons/react/24/solid";
 
-import BottomNavigation from "../../../components/provider/BottomNavigationNextjs";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
   useProviderBookingManagement,
   ProviderEnhancedBooking,

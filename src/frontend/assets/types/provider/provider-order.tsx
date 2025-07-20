@@ -4,18 +4,18 @@ import { OrderStatus } from "../order/order-status";
 import { MediaItem } from "../common/media-item";
 import { Location } from "../common/location";
 
-export type ProviderOrderActionType = 
-  | 'ACCEPTED' 
-  | 'REJECTED' 
-  | 'STARTED' 
-  | 'ARRIVED' 
-  | 'COMPLETED' 
-  | 'CANCELLED' 
-  | 'MESSAGE_SENT'
-  | 'LOCATION_SHARED'
-  | 'PHOTO_UPLOADED'
-  | 'EXTRA_REQUESTED'
-  | 'PAYMENT_CONFIRMED';
+export type ProviderOrderActionType =
+  | "ACCEPTED"
+  | "REJECTED"
+  | "STARTED"
+  | "ARRIVED"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "MESSAGE_SENT"
+  | "LOCATION_SHARED"
+  | "PHOTO_UPLOADED"
+  | "EXTRA_REQUESTED"
+  | "PAYMENT_CONFIRMED";
 
 export interface ProviderOrder extends BaseEntity {
   order: Order;
@@ -67,7 +67,12 @@ export interface OrderPenalty extends BaseEntity {
   orderId: string;
   description: string;
   amount: number;
-  reason: 'LATE_ARRIVAL' | 'EARLY_DEPARTURE' | 'CANCELLATION' | 'NO_SHOW' | 'OTHER';
+  reason:
+    | "LATE_ARRIVAL"
+    | "EARLY_DEPARTURE"
+    | "CANCELLATION"
+    | "NO_SHOW"
+    | "OTHER";
   agreedByProvider: boolean;
   agreedAt?: Date;
   additionalNotes?: string;

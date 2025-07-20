@@ -6,7 +6,7 @@ import {
   CheckBadgeIcon,
   AcademicCapIcon,
 } from "@heroicons/react/24/solid";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { FrontendProfile } from "../../services/authCanisterService";
 
 // Placeholder credential interface
@@ -78,7 +78,7 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({
         <h2 className="text-xl font-bold text-blue-700">
           Mga Credential at Veripikasyon
         </h2>
-        <Link href="/provider/credentials/add">
+        <Link to="/provider/credentials/add">
           <button className="add-button rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700">
             <PlusIcon className="h-5 w-5" />
           </button>
@@ -168,7 +168,7 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({
           <p className="mt-1 text-sm text-gray-600">
             Add credentials to build trust with potential clients
           </p>
-          <Link href="/provider/credentials/add">
+          <Link to="/provider/credentials/add">
             <button className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">
               Add Credentials
             </button>

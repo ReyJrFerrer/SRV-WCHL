@@ -25,7 +25,7 @@ import {
   useServiceManagement,
   EnhancedService,
 } from "../../../hooks/serviceManagement";
-import BottomNavigation from "../../../components/provider/BottomNavigationNextjs";
+import BottomNavigation from "../../../components/provider/BottomNavigation";
 import { ServicePackage } from "../../../services/serviceCanisterService";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 

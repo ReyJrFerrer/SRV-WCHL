@@ -90,9 +90,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       }
 
       if (redirectToSearchResultsPage) {
-        navigate(
-          `/client/search-results?q=${encodeURIComponent(finalQuery)}`,
-        );
+        navigate(`/client/search-results?q=${encodeURIComponent(finalQuery)}`);
       }
     }
   };

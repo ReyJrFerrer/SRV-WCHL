@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import BottomNavigation from "../../components/provider/BottomNavigationNextjs";
+import BottomNavigation from "../../components/provider/BottomNavigation";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
 import {
   useProviderBookingManagement,
