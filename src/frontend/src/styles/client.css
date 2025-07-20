@@ -1,7 +1,5 @@
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
-@reference "tailwindcss"
+@reference "tailwindcss";
 
 @layer components {
   .service-card {
