@@ -1,6 +1,6 @@
 import "./shared/about-us.css";
 import { FingerPrintIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface AboutUsProps {
   onLoginClick: () => void;
@@ -19,6 +19,83 @@ export default function AboutUs({
     const nav = document.querySelector(".main-nav");
     nav?.classList.toggle("active");
   };
+
+  function initServiceGallery() {
+    const galleryContainer = document.querySelector(".gallery-container");
+    if (!galleryContainer) return;
+
+    const slides = document.querySelectorAll<HTMLElement>(".gallery-image-wrapper");
+    const prevBtn = document.querySelector<HTMLButtonElement>(".prev-btn");
+    const nextBtn = document.querySelector<HTMLButtonElement>(".next-btn");
+    const indicators = document.querySelector(".gallery-indicators");
+    let currentIndex = 0;
+
+    slides.forEach((_, index) => {
+      const indicator = document.createElement("div");
+      indicator.classList.add("gallery-indicator");
+      if (index === 0) indicator.classList.add("active");
+
+      indicator.addEventListener("click", () => {
+        goToSlide(index);
+      });
+
+      indicators.appendChild(indicator);
+    });
+
+    nextBtn.addEventListener("click", () => {
+      currentIndex = (currentIndex + 1) % slides.length;
+      updateGallery();
+    });
+
+    prevBtn.addEventListener("click", () => {
+      currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      updateGallery();
+    });
+
+    function goToSlide(index) {
+      currentIndex = index;
+      updateGallery();
+    }
+
+    function updateGallery() {
+      slides.forEach((slide) => {
+        slide.classList.remove("active");
+      });
+      slides[currentIndex].classList.add("active");
+
+      const allIndicators = document.querySelectorAll(".gallery-indicator");
+      allIndicators.forEach((ind, index) => {
+        ind.classList.toggle("active", index === currentIndex);
+      });
+    }
+
+    slides.forEach((slide) => {
+      slide.addEventListener("click", () => {
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateGallery();
+      });
+    });
+
+    let autoplayInterval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % slides.length;
+      updateGallery();
+    }, 5000);
+
+    (galleryContainer as HTMLElement).addEventListener("mouseenter", () => {
+      clearInterval(autoplayInterval);
+    });
+
+    (galleryContainer as HTMLElement).addEventListener("mouseleave", () => {
+      autoplayInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateGallery();
+      }, 5000);
+    });
+  }
+
+  useEffect(() => {
+    initServiceGallery();
+  }, []);
 
   return (
     <div>
