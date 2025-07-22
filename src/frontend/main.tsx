@@ -34,6 +34,8 @@ import ClientBookService from "./src/pages/client/book/[id]";
 // Client Category & Review Pages
 import ClientCategory from "./src/pages/client/categories/[slug]";
 import ClientReview from "./src/pages/client/review/[id]";
+import ClientProfilePage from "./src/pages/client/profile";
+import SettingsPage from "./src/pages/client/settings";
 
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
@@ -75,6 +77,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="home" element={<ClientHome />} />
             <Route path="chat" element={<ClientChat />} />
             <Route path="chat/:providerId" element={<ConversationPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="profile" element={<ClientProfilePage />} />
             <Route path="search-results" element={<SearchResults />} />
 
             {/* Service Routes */}
