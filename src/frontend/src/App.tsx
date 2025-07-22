@@ -3,12 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
+import AboutUs from "./components/About-Us";
+
+type CurrentView = 'main' | 'about';
 
 export default function App() {
   const navigate = useNavigate();
   const { isAuthenticated, identity, login, isLoading, error } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<CurrentView>('main');
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
@@ -55,11 +59,33 @@ export default function App() {
     );
   }
 
+  const handleNavigateToAbout = () => {
+    setCurrentView('about');
+  };
+
+  const handleNavigateToMain = () => {
+    setCurrentView('main');
+  };
+
   return (
     <main className="bg-gray-50">
-      <MainPage onLoginClick={login} isLoginLoading={isLoading} />
+      {currentView === 'main' && (
+        <MainPage 
+          onLoginClick={login} 
+          isLoginLoading={isLoading}
+          onNavigateToAbout={handleNavigateToAbout}
+        />
+      )}
+      
+      {currentView === 'about' && (
+        <AboutUs 
+          onLoginClick={login} 
+          isLoginLoading={isLoading}
+          onNavigateToMain={handleNavigateToMain}
+        />
+      )}
 
-      {!isAuthenticated && (error || profileError) && (
+      {/* {!isAuthenticated && (error || profileError) && (
         <section className="bg-yellow-100 py-16 lg:py-24">
           <div className="container mx-auto px-6 text-center">
             <h2 className="mb-6 text-3xl font-bold text-slate-800 lg:text-4xl">
@@ -79,7 +105,7 @@ export default function App() {
             </button>
           </div>
         </section>
-      )}
+      )} */}
     </main>
   );
 }

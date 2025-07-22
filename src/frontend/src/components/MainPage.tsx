@@ -5,11 +5,13 @@ import "./shared/styles.css";
 interface MainPageProps {
   onLoginClick: () => void;
   isLoginLoading: boolean;
+  onNavigateToAbout: () => void;
 }
 
 export default function MainPage({
   onLoginClick,
   isLoginLoading,
+  onNavigateToAbout,
 }: MainPageProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -44,19 +46,23 @@ export default function MainPage({
             <nav className={`main-nav ${isMobileMenuOpen ? "active" : ""}`}>
               <ul className="nav-list">
                 <li className="nav-item">
-                  <a href="/" className="nav-link nav-link-active">
+                  <a href="#" className="nav-link nav-link-active" onClick={(e) => { e.preventDefault(); }}>
                     Home
                   </a>
                 </li>
                 <li className="nav-item">
-                  <a href="/about" className="nav-link">
+                  <a 
+                    href="#" 
+                    className="nav-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigateToAbout();
+                    }}
+                  >
                     About
                   </a>
                 </li>
                 <li className="nav-item">
-                  <a href="/contact" className="nav-link">
-                    Contact
-                  </a>
                 </li>
                 <li className="nav-item nav-cta">
                   <button
@@ -495,72 +501,74 @@ export default function MainPage({
             </div>
             <div className="footer-section footer-nav">
               <ul className="footer-links nav-links">
-                <li>
-                  <a href="index.html" className="footer-link">
+              <li className="nav-item">
+                  <a href="#" className="footer-link" onClick={(e) => { e.preventDefault(); }}>
                     Home
                   </a>
                 </li>
-                <li>
-                  <a href="about-us.html" className="footer-link">
+                <li className="nav-item">
+                  <a 
+                    href="#" 
+                    className="footer-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigateToAbout();
+                    }}
+                  >
                     About
-                  </a>
-                </li>
-                <li>
-                  <a href="contact.html" className="footer-link">
-                    Contact
                   </a>
                 </li>
               </ul>
             </div>
             <div className="footer-section">
               <ul className="footer-links">
-                <li className="social-item">
+                <li className="social-item-main">
                   <a
                     href="https://www.facebook.com/srvpinoy"
-                    className="footer-link social-link"
+                    className="footer-link social-link-main"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <img
                       src="public/socials/brand-facebook.svg"
                       alt="Facebook"
-                      className="social-icon"
+                      className="social-icon-main"
                     />
                   </a>
                   <a
                     href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr"
-                    className="footer-link social-link"
+                    className="footer-link social-link-main"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <img
                       src="public/socials/brand-instagram.svg"
                       alt="Instagram"
-                      className="social-icon"
+                      className="social-icon-main"
                     />
                   </a>
                   <a
                     href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-"
-                    className="footer-link social-link"
+                    className="footer-link social-link-main"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <img
                       src="public/socials/brand-youtube.svg"
                       alt="Youtube"
-                      className="social-icon"
+                      className="social-icon-main"
                     />
                   </a>
                   <a
                     href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1"
-                    className="footer-link social-link"
+                    className="footer-link social-link-main" 
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <img
                       src="public/socials/brand-tiktok.svg"
                       alt="Tiktok"
-                      className="social-icon"
+                      className="social-icon-main"
                     />
                   </a>
                 </li>

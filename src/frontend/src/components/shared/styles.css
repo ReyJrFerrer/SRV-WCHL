@@ -1403,18 +1403,18 @@ body {
   font-size: 0.75rem;
 }
 
-.social-item {
+.social-item-main {
   display: flex;
   align-items: center;
 }
 
-.social-link {
+.social-link-main {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.social-icon {
+.social-icon-main {
   width: 35px;
   height: 35px;
   filter: invert(70%) sepia(12%) saturate(275%) hue-rotate(180deg)
@@ -1422,7 +1422,7 @@ body {
   transition: filter 0.3s ease;
 }
 
-.social-link:hover .social-icon {
+.social-link-main:hover .social-icon-main {
   filter: invert(83%) sepia(35%) saturate(1096%) hue-rotate(334deg)
     brightness(103%) contrast(96%);
 }
@@ -1631,7 +1631,7 @@ body.menu-open {
     align-items: center;
   }
 
-  .footer-section .social-item {
+  .footer-section .social-item-main {
     display: flex;
     flex-direction: row;
     gap: 1.5rem;
@@ -1698,10 +1698,10 @@ body.menu-open {
     align-items: center;
   }
   .footer-section {
-    margin: auto;
+    margin: auto; 
   }
 
-  .footer-section .social-item {
+  .footer-section .social-item-main {
     display: flex;
     flex-direction: row;
     gap: 1.5rem;
