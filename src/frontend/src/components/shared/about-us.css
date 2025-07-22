@@ -7,21 +7,9 @@
   font-family: "nunito";
   src: url("public/fonts/Nunito.ttf") format("opentype");
 }
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 body {
-  padding-top: 100px;
   font-family: "nunito";
-  line-height: 1.6;
-  color: #1e293b;
-  background-color: #f9fafb;
 }
-
 .container {
   max-width: 1600px;
   margin: 0 auto;
