@@ -59,6 +59,7 @@ import ProviderReview from "./src/pages/provider/review/[id]";
 
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
+import ConversationPage from "./src/pages/client/chat/[providerId]";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -73,6 +74,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route index element={<ClientRedirect />} />
             <Route path="home" element={<ClientHome />} />
             <Route path="chat" element={<ClientChat />} />
+            <Route path="chat/:providerId" element={<ConversationPage />} />
             <Route path="search-results" element={<SearchResults />} />
 
             {/* Service Routes */}

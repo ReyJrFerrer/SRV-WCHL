@@ -1,60 +1,124 @@
 import React, { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // Components
-import BottomNavigation from "../../components/client/BottomNavigation";
+import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import { UserCircleIcon } from "@heroicons/react/24/solid";
+
+// Mock data for the list of conversations
+const mockConversations = [
+  {
+    providerId: "1",
+    providerName: "Jane Doe",
+    providerImage: "/yanni.jpg", // Ensure these images are in your /public folder
+    lastMessage: "2 PM on Saturday works for me!",
+    timestamp: "10:35 AM",
+    unreadCount: 1,
+  },
+  {
+    providerId: "2",
+    providerName: "John Smith",
+    providerImage: "/don.jpg",
+    lastMessage: "Yes, the replacement part just arrived.",
+    timestamp: "Yesterday",
+    unreadCount: 0,
+  },
+  {
+    providerId: "3",
+    providerName: "Emily White",
+    providerImage: "/hannah.jpg",
+    lastMessage: "You're welcome! Glad I could help.",
+    timestamp: "2d ago",
+    unreadCount: 0,
+  },
+];
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  // useNavigate is the hook for programmatic navigation in react-router-dom
+  const navigate = useNavigate();
 
-  // Set document title
+  // Set the document title when the component mounts
   useEffect(() => {
-    document.title = "Chat | Service Provider App";
+    document.title = "Messages | SRV";
   }, []);
+
+  const handleConversationClick = (convo: (typeof mockConversations)[0]) => {
+    // Navigate to the specific chat page and pass provider info in the state
+    navigate(`/client/chat/${convo.providerId}`, {
+      state: {
+        providerName: convo.providerName,
+        providerImage: convo.providerImage,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Status bar */}
-
-      <div className="px-4 pt-4">
-        <div className="mb-4 rounded-xl bg-white p-4 shadow">
-          <h1 className="mb-2 text-xl font-bold">Messages</h1>
-          <p className="text-gray-500">Connect with service providers</p>
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
+          <h1 className="text-xl font-bold text-gray-900">Messages</h1>
         </div>
+      </header>
 
+      <div className="mx-auto mt-4 max-w-5xl">
         {isAuthenticated ? (
-          <div className="mb-4 rounded-xl bg-white p-6 shadow">
-            <div className="flex flex-col items-center justify-center py-10">
-              <div className="mb-4 rounded-full bg-gray-100 p-4">
-                <svg
-                  className="h-10 w-10 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+          <div className="bg-white">
+            <ul className="divide-y divide-gray-200">
+              {mockConversations.map((convo) => (
+                <li
+                  key={convo.providerId}
+                  onClick={() => handleConversationClick(convo)}
+                  className="flex cursor-pointer items-center space-x-4 p-4 transition-colors hover:bg-gray-50"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                  />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-lg font-medium">No messages yet</h3>
-              <p className="mb-4 text-center text-gray-500">
-                Your conversation with service providers will appear here
-              </p>
-              <button className="rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700">
-                Find Service Providers
-              </button>
-            </div>
+                  <div className="relative h-12 w-12 flex-shrink-0">
+                    {convo.providerImage ? (
+                      // Use the standard <img> tag instead of Next.js <Image>
+                      <img
+                        src={convo.providerImage}
+                        alt={convo.providerName}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <UserCircleIcon className="h-12 w-12 text-gray-300" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="truncate text-sm font-semibold text-gray-900">
+                        {convo.providerName}
+                      </p>
+                      <p
+                        className={`text-xs ${convo.unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-500"}`}
+                      >
+                        {convo.timestamp}
+                      </p>
+                    </div>
+                    <div className="mt-1 flex items-start justify-between">
+                      <p className="truncate text-sm text-gray-500">
+                        {convo.lastMessage}
+                      </p>
+                      {convo.unreadCount > 0 && (
+                        <span className="ml-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+                          {convo.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : (
-          <div className="rounded-xl bg-white p-6 text-center shadow">
+          <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
             <p className="mb-4 text-lg text-red-600">
               Please log in to access your messages
             </p>
-            <button className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">
+            <button
+              onClick={() => navigate("/login")} // Navigate to a login page
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            >
               Log In
             </button>
           </div>
