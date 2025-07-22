@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -31,7 +31,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     updateServiceStatus,
     getStatusColor,
     getServicePackages,
-    loading: hookLoading,
     error: hookError,
   } = useServiceManagement();
 
@@ -51,115 +50,47 @@ const ProviderServiceDetailPage: React.FC = () => {
     }
   }, [service]);
   const [retryCount, setRetryCount] = useState(0);
-  const [initializationAttempts, setInitializationAttempts] = useState(0);
 
-  // Refs to track loading state
-  const hasLoadedSuccessfully = useRef(false);
-  const currentServiceId = useRef<string | null>(null);
-  const isLoadingRef = useRef(false);
-  const mountedRef = useRef(true);
-
-  // Cleanup on unmount
+  // Load service data
   useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+    const loadServiceData = async () => {
+      if (!id || typeof id !== "string") return;
 
-  // Wait for hook initialization before attempting to load service
-  // Robust service loading with initialization check
-  const loadServiceDataRobust = useCallback(
-    async (serviceId: string): Promise<void> => {
-      // Prevent concurrent loading
-      if (isLoadingRef.current) {
-        return;
-      }
-
-      // Don't reload if we already have this service loaded successfully
-      if (
-        service &&
-        service.id === serviceId &&
-        hasLoadedSuccessfully.current
-      ) {
-        return;
-      }
-
-      isLoadingRef.current = true;
       setLoading(true);
       setError(null);
-      setInitializationAttempts(0);
 
       try {
-        // Simplified approach - just wait a bit for the hook to be ready
-        if (!getService) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
-
-        // Check if component was unmounted during wait
-        if (!mountedRef.current) {
-          return;
-        }
-
-        // Direct call without retries first, since backend is fast
-        const serviceData = await getService(serviceId);
-
+        console.log("Loading service:", id);
+        const serviceData = await getService(id);
+        console.log("Service Data:", serviceData);
+        
         if (serviceData) {
+          setService(serviceData);
+          
+          // Load packages separately
           try {
-            const servicePackages = await getServicePackages(serviceId);
-
-            // Only update state if component is still mounted
-            if (mountedRef.current) {
-              setService(serviceData);
-              setPackages(servicePackages || []);
-              setRetryCount(0);
-              hasLoadedSuccessfully.current = true;
-              currentServiceId.current = serviceId;
-              setError(null);
-            }
+            const servicePackages = await getServicePackages(id);
+            console.log("Service Packages:", servicePackages);
+            setPackages(servicePackages || []);
           } catch (packageError) {
             console.warn("Failed to load packages:", packageError);
-            // Continue with service loading even if packages fail
-            if (mountedRef.current) {
-              setService(serviceData);
-              setPackages([]);
-              setRetryCount(0);
-              hasLoadedSuccessfully.current = true;
-              currentServiceId.current = serviceId;
-              setError(null);
-            }
+            setPackages([]);
           }
+          
+          setError(null);
         } else {
           throw new Error("Service not found");
         }
       } catch (err) {
         console.error("Error loading service:", err);
-        if (mountedRef.current) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load service",
-          );
-          hasLoadedSuccessfully.current = false;
-        }
+        setError(err instanceof Error ? err.message : "Failed to load service");
       } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
-        isLoadingRef.current = false;
+        setLoading(false);
       }
-    },
-    [service, getService, getServicePackages],
-  );
+    };
 
-  // Main effect to load service when ID changes
-  useEffect(() => {
-    if (id && typeof id === "string") {
-      // Only load if service ID changed or we haven't loaded successfully
-      if (currentServiceId.current !== id || !hasLoadedSuccessfully.current) {
-        currentServiceId.current = id;
-        hasLoadedSuccessfully.current = false;
-        loadServiceDataRobust(id);
-      }
-    }
-  }, [id, loadServiceDataRobust]);
+    loadServiceData();
+  }, [id, getService, getServicePackages]);
 
   const handleDeleteService = async () => {
     if (!service) return;
@@ -172,9 +103,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       setIsDeleting(true);
       try {
         await deleteService(service.id);
-        // Reset state when navigating away
-        hasLoadedSuccessfully.current = false;
-        currentServiceId.current = null;
+        // Navigate back to services list
         navigate("/provider/services");
       } catch (error) {
         console.error("Failed to delete service:", error);
@@ -206,21 +135,19 @@ const ProviderServiceDetailPage: React.FC = () => {
   const handleRetry = () => {
     if (id && typeof id === "string") {
       setRetryCount((prev) => prev + 1);
-      hasLoadedSuccessfully.current = false; // Reset success flag for retry
-      loadServiceDataRobust(id);
+      setLoading(true);
+      setError(null);
+      // Trigger reload by clearing service state
+      setService(null);
     }
   };
 
   // Show loading screen during initialization or data loading
-  if ((loading || hookLoading || initializationAttempts > 0) && !service) {
+  if (loading && !service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-        <p className="mt-4 text-gray-700">
-          {initializationAttempts > 0
-            ? `Initializing system... (${initializationAttempts}/20)`
-            : "Loading service details..."}
-        </p>
+        <p className="mt-4 text-gray-700">Loading service details...</p>
         {retryCount > 0 && (
           <p className="mt-2 text-sm text-gray-500">
             Retry attempt: {retryCount}

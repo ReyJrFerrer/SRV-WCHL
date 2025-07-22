@@ -292,12 +292,6 @@ const EditServicePage: React.FC = () => {
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  // Refs to track loading state
-  const hasLoadedSuccessfully = useRef(false);
-  const currentServiceId = useRef<string | null>(null);
-  const isLoadingRef = useRef(false);
-  const mountedRef = useRef(true);
-
   const daysOfWeek: DayOfWeek[] = [
     "Monday",
     "Tuesday",
@@ -313,24 +307,117 @@ const EditServicePage: React.FC = () => {
   const minuteOptions = ["00", "15", "30", "45"];
   const periodOptions: ("AM" | "PM")[] = ["AM", "PM"];
 
-  // Cleanup on unmount
+  // Load service data when ID changes
   useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+    const loadServiceData = async () => {
+      if (!id || typeof id !== "string") return;
 
-  // Load service data when component mounts
-  useEffect(() => {
-    if (id && typeof id === "string") {
-      // Only load if service ID changed or we haven't loaded successfully
-      if (currentServiceId.current !== id || !hasLoadedSuccessfully.current) {
-        currentServiceId.current = id;
-        hasLoadedSuccessfully.current = false;
-        loadServiceDataRobust(id);
+      setPageLoading(true);
+      setError(null);
+
+      try {
+        console.log("Loading service:", id);
+        const service = await getService(id);
+        
+        if (service) {
+          setServiceToEdit(service);
+          
+          // Load service packages
+          let loadedPackages: ServicePackage[] = [];
+          try {
+            loadedPackages = await getServicePackages(id);
+            setPackages(loadedPackages);
+          } catch (packagesError) {
+            console.error("Failed to load service packages:", packagesError);
+            setPackages([]);
+          }
+
+          // Load availability data
+          let serviceAvailability: ProviderAvailability | null = null;
+          try {
+            serviceAvailability = await getServiceAvailability(id);
+          } catch (availabilityError) {
+            console.error("Failed to load service availability:", availabilityError);
+          }
+
+          // Populate form data
+          setFormData({
+            serviceOfferingTitle: service.title,
+            categoryId: service.category?.id || "",
+            locationAddress: service.location.address,
+            serviceRadius: "5",
+            serviceRadiusUnit: "km" as "km" | "mi",
+            // Populate availability from loaded data
+            instantBookingEnabled:
+              serviceAvailability?.instantBookingEnabled || false,
+            bookingNoticeHours:
+              serviceAvailability?.bookingNoticeHours || 24,
+            maxBookingsPerDay:
+              serviceAvailability?.maxBookingsPerDay || 5,
+            availabilitySchedule:
+              serviceAvailability?.weeklySchedule?.map(
+                (item) => item.day,
+              ) || [],
+            useSameTimeForAllDays: true,
+            commonTimeSlots:
+              serviceAvailability?.weeklySchedule &&
+              serviceAvailability.weeklySchedule.length > 0
+                ? convertBackendSlotsToUI(
+                    serviceAvailability.weeklySchedule[0].availability
+                      .slots,
+                  )
+                : [
+                    {
+                      id: nanoid(),
+                      startHour: "09",
+                      startMinute: "00",
+                      startPeriod: "AM" as "AM" | "PM",
+                      endHour: "05",
+                      endMinute: "00",
+                      endPeriod: "PM" as "AM" | "PM",
+                    },
+                  ],
+            perDayTimeSlots: {
+              Monday: [],
+              Tuesday: [],
+              Wednesday: [],
+              Thursday: [],
+              Friday: [],
+              Saturday: [],
+              Sunday: [],
+            },
+            requirements: "",
+            servicePackages: loadedPackages.map(
+              (pkg: ServicePackage) => ({
+                id: pkg.id,
+                name: pkg.title,
+                description: pkg.description,
+                price: String(pkg.price),
+                currency: "PHP",
+                isPopular: false,
+              }),
+            ),
+            existingHeroImage: "",
+            existingMediaItems: [],
+            termsTitle: "",
+            termsContent: "",
+            termsAcceptanceRequired: false,
+          });
+
+          setError(null);
+        } else {
+          throw new Error("Service not found");
+        }
+      } catch (err) {
+        console.error("Error loading service:", err);
+        setError(err instanceof Error ? err.message : "Failed to load service");
+      } finally {
+        setPageLoading(false);
       }
-    }
-  }, [id]);
+    };
+
+    loadServiceData();
+  }, [id, getService, getServicePackages, getServiceAvailability]);
 
   // Clear hook errors when component mounts
   useEffect(() => {
@@ -345,194 +432,6 @@ const EditServicePage: React.FC = () => {
       document.title = "Edit Service - SRV Provider";
     }
   }, [serviceToEdit]);
-
-  const loadServiceDataRobust = useCallback(
-    async (serviceId: string): Promise<void> => {
-      // Prevent concurrent loading
-      if (isLoadingRef.current) {
-        return;
-      }
-
-      // Don't reload if we already have this service loaded successfully
-      if (
-        serviceToEdit &&
-        serviceToEdit.id === serviceId &&
-        hasLoadedSuccessfully.current
-      ) {
-        return;
-      }
-
-      isLoadingRef.current = true;
-      setPageLoading(true);
-      setError(null);
-
-      try {
-        // Check if component was unmounted during initialization
-        if (!mountedRef.current) {
-          return;
-        }
-
-        // Attempt to get service with retries
-        const maxRetries = 3;
-        let lastError: any = null;
-
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-          try {
-            // Add progressive delay for retries
-            if (attempt > 0) {
-              await new Promise((resolve) =>
-                setTimeout(resolve, 1000 * attempt),
-              );
-            }
-
-            // Check if component was unmounted during delay
-            if (!mountedRef.current) {
-              return;
-            }
-
-            const service = await getService(serviceId);
-
-            if (service) {
-              // Only update state if component is still mounted
-              if (mountedRef.current) {
-                setServiceToEdit(service);
-              }
-
-              // Load service packages and availability
-              let loadedPackages: ServicePackage[] = [];
-              let serviceAvailability: ProviderAvailability | null = null;
-
-              try {
-                loadedPackages = await getServicePackages(serviceId);
-
-                if (mountedRef.current) {
-                  setPackages(loadedPackages);
-                }
-              } catch (packagesError) {
-                console.error(
-                  "Failed to load service packages:",
-                  packagesError,
-                );
-                if (mountedRef.current) {
-                  setPackages([]);
-                }
-              }
-
-              // Load availability data
-              try {
-                serviceAvailability = await getServiceAvailability(serviceId);
-              } catch (availabilityError) {
-                console.error(
-                  "Failed to load service availability:",
-                  availabilityError,
-                );
-              }
-
-              // Populate form data
-              if (mountedRef.current) {
-                setFormData({
-                  serviceOfferingTitle: service.title,
-                  categoryId: service.category?.id || "",
-                  locationAddress: service.location.address,
-                  serviceRadius: "5", // Default value since this field may not exist in new schema
-                  serviceRadiusUnit: "km" as "km" | "mi",
-                  // Populate availability from loaded data
-                  instantBookingEnabled:
-                    serviceAvailability?.instantBookingEnabled || false,
-                  bookingNoticeHours:
-                    serviceAvailability?.bookingNoticeHours || 24,
-                  maxBookingsPerDay:
-                    serviceAvailability?.maxBookingsPerDay || 5,
-                  availabilitySchedule:
-                    serviceAvailability?.weeklySchedule?.map(
-                      (item) => item.day,
-                    ) || [],
-                  useSameTimeForAllDays: true,
-                  commonTimeSlots:
-                    serviceAvailability?.weeklySchedule &&
-                    serviceAvailability.weeklySchedule.length > 0
-                      ? convertBackendSlotsToUI(
-                          serviceAvailability.weeklySchedule[0].availability
-                            .slots,
-                        )
-                      : [
-                          {
-                            id: nanoid(),
-                            startHour: "09",
-                            startMinute: "00",
-                            startPeriod: "AM" as "AM" | "PM",
-                            endHour: "05",
-                            endMinute: "00",
-                            endPeriod: "PM" as "AM" | "PM",
-                          },
-                        ],
-                  perDayTimeSlots: {
-                    Monday: [],
-                    Tuesday: [],
-                    Wednesday: [],
-                    Thursday: [],
-                    Friday: [],
-                    Saturday: [],
-                    Sunday: [],
-                  },
-                  requirements: "", // We'll need to handle this differently
-                  servicePackages: loadedPackages.map(
-                    (pkg: ServicePackage) => ({
-                      id: pkg.id,
-                      name: pkg.title,
-                      description: pkg.description,
-                      price: String(pkg.price),
-                      currency: "PHP", // Default currency
-                      isPopular: false, // Default value
-                    }),
-                  ),
-                  existingHeroImage: "", // We'll handle images differently
-                  existingMediaItems: [],
-                  termsTitle: "",
-                  termsContent: "",
-                  termsAcceptanceRequired: false,
-                });
-
-                hasLoadedSuccessfully.current = true;
-              }
-
-              return;
-            } else {
-              lastError = new Error("Service not found");
-            }
-          } catch (err) {
-            console.error(
-              `Failed to load service (attempt ${attempt + 1}):`,
-              err,
-            );
-            lastError = err;
-          }
-        }
-
-        // All retries failed
-        if (mountedRef.current) {
-          const errorMessage =
-            lastError?.message || "Failed to load service data";
-          setError(errorMessage);
-          hasLoadedSuccessfully.current = false;
-        }
-      } catch (err) {
-        console.error("Error in loadServiceDataRobust:", err);
-        if (mountedRef.current) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load service",
-          );
-          hasLoadedSuccessfully.current = false;
-        }
-      } finally {
-        if (mountedRef.current) {
-          setPageLoading(false);
-        }
-        isLoadingRef.current = false;
-      }
-    },
-    [serviceToEdit, getService, getServicePackages, getServiceAvailability],
-  );
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -881,8 +780,10 @@ const EditServicePage: React.FC = () => {
   const handleRetry = () => {
     if (id && typeof id === "string") {
       setRetryCount((prev) => prev + 1);
-      hasLoadedSuccessfully.current = false; // Reset success flag for retry
-      loadServiceDataRobust(id);
+      setPageLoading(true);
+      setError(null);
+      // Trigger reload by clearing service state
+      setServiceToEdit(null);
     }
   };
 

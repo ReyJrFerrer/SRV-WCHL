@@ -1,6 +1,6 @@
 import { FingerPrintIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import styles from "./shared/styles.module.css";
+import "./shared/styles.css";
 
 interface MainPageProps {
   onLoginClick: () => void;
