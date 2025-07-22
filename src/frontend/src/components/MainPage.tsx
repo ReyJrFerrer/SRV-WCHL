@@ -466,7 +466,8 @@ export default function MainPage({
           <div className="about-cta-card">
             <h2 className="about-cta-title">Join the SRV Community Today</h2>
             <p className="about-cta-description">
-            Connect with trusted local service providers and discover a better way to get things done in your community.
+              Connect with trusted local service providers and discover a better
+              way to get things done in your community.
             </p>
             <div className="about-cta-button-container">
               <button
