@@ -464,10 +464,9 @@ export default function MainPage({
       <section className="about-cta-section">
         <div className="container">
           <div className="about-cta-card">
-            <h2 className="about-cta-title">Be the first to experience SRV</h2>
+            <h2 className="about-cta-title">Join the SRV Community Today</h2>
             <p className="about-cta-description">
-              Join the waitlist today and get notified the moment we launch in
-              your area!
+            Connect with trusted local service providers and discover a better way to get things done in your community.
             </p>
             <div className="about-cta-button-container">
               <button
