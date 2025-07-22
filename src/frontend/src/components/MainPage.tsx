@@ -46,13 +46,19 @@ export default function MainPage({
             <nav className={`main-nav ${isMobileMenuOpen ? "active" : ""}`}>
               <ul className="nav-list">
                 <li className="nav-item">
-                  <a href="#" className="nav-link nav-link-active" onClick={(e) => { e.preventDefault(); }}>
+                  <a
+                    href="#"
+                    className="nav-link nav-link-active"
+                    onClick={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
                     Home
                   </a>
                 </li>
                 <li className="nav-item">
-                  <a 
-                    href="#" 
+                  <a
+                    href="#"
                     className="nav-link"
                     onClick={(e) => {
                       e.preventDefault();
@@ -62,8 +68,7 @@ export default function MainPage({
                     About
                   </a>
                 </li>
-                <li className="nav-item">
-                </li>
+                <li className="nav-item"></li>
                 <li className="nav-item nav-cta">
                   <button
                     onClick={onLoginClick}
@@ -501,14 +506,20 @@ export default function MainPage({
             </div>
             <div className="footer-section footer-nav">
               <ul className="footer-links nav-links">
-              <li className="nav-item">
-                  <a href="#" className="footer-link" onClick={(e) => { e.preventDefault(); }}>
+                <li className="nav-item">
+                  <a
+                    href="#"
+                    className="footer-link"
+                    onClick={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
                     Home
                   </a>
                 </li>
                 <li className="nav-item">
-                  <a 
-                    href="#" 
+                  <a
+                    href="#"
                     className="footer-link"
                     onClick={(e) => {
                       e.preventDefault();
@@ -561,7 +572,7 @@ export default function MainPage({
                   </a>
                   <a
                     href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1"
-                    className="footer-link social-link-main" 
+                    className="footer-link social-link-main"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

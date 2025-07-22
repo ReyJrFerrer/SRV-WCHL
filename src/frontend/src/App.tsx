@@ -5,14 +5,14 @@ import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
 import AboutUs from "./components/About-Us";
 
-type CurrentView = 'main' | 'about';
+type CurrentView = "main" | "about";
 
 export default function App() {
   const navigate = useNavigate();
   const { isAuthenticated, identity, login, isLoading, error } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<CurrentView>('main');
+  const [currentView, setCurrentView] = useState<CurrentView>("main");
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
@@ -60,26 +60,26 @@ export default function App() {
   }
 
   const handleNavigateToAbout = () => {
-    setCurrentView('about');
+    setCurrentView("about");
   };
 
   const handleNavigateToMain = () => {
-    setCurrentView('main');
+    setCurrentView("main");
   };
 
   return (
     <main className="bg-gray-50">
-      {currentView === 'main' && (
-        <MainPage 
-          onLoginClick={login} 
+      {currentView === "main" && (
+        <MainPage
+          onLoginClick={login}
           isLoginLoading={isLoading}
           onNavigateToAbout={handleNavigateToAbout}
         />
       )}
-      
-      {currentView === 'about' && (
-        <AboutUs 
-          onLoginClick={login} 
+
+      {currentView === "about" && (
+        <AboutUs
+          onLoginClick={login}
           isLoginLoading={isLoading}
           onNavigateToMain={handleNavigateToMain}
         />
