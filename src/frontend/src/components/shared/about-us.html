@@ -1,505 +1,802 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>About SRV - Your Service Hub</title>
-    <meta name="description" content="Learn about SRV, the platform connecting Filipinos with reliable local services on the Internet Computer.">
-    <link rel="icon" href="public/logo.svg">
-    <link rel="stylesheet" href="about-us.css">
+    <meta
+      name="description"
+      content="Learn about SRV, the platform connecting Filipinos with reliable local services on the Internet Computer."
+    />
+    <link rel="icon" href="public/logo.svg" />
+    <link rel="stylesheet" href="about-us.css" />
     <script src="script.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <header class="site-header">
-         <div class="container">
-            <div class="header-content">
-                <div class="logo-container">
-                    <a href="/" class="logo-link" aria-label="SRV Home">
-                        <img src="public/logo.svg" alt="SRV Logo" class="logo-image">
-                    </a>
-                </div>
-                
-                <button class="mobile-menu-toggle" aria-label="Toggle menu">
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                </button>
-                
-                <nav class="main-nav">
-                    <ul class="nav-list">
-                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
-                        <li class="nav-item"><a href="about-us.html" class="nav-link nav-link-active">About</a></li>
-                        <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
-                        <li class="nav-item nav-cta">
-                            <button id="needServiceBtn" class="btn-primary">
-                                <span class="btn-text">Join the Waitlist</span>
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
+      <div class="container">
+        <div class="header-content">
+          <div class="logo-container">
+            <a href="/" class="logo-link" aria-label="SRV Home">
+              <img src="public/logo.svg" alt="SRV Logo" class="logo-image" />
+            </a>
+          </div>
 
-                <div class="header-button">
-                    <button id="needServiceBtn" class="btn-primary">
-                        <span class="btn-text">Join the Waitlist</span>
-                    </button>
-                </div>
-            </div>
+          <button class="mobile-menu-toggle" aria-label="Toggle menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+
+          <nav class="main-nav">
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="index.html" class="nav-link">Home</a>
+              </li>
+              <li class="nav-item">
+                <a href="about-us.html" class="nav-link nav-link-active"
+                  >About</a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="contact.html" class="nav-link">Contact</a>
+              </li>
+              <li class="nav-item nav-cta">
+                <button id="needServiceBtn" class="btn-primary">
+                  <span class="btn-text">Join the Waitlist</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+          <div class="header-button">
+            <button id="needServiceBtn" class="btn-primary">
+              <span class="btn-text">Join the Waitlist</span>
+            </button>
+          </div>
         </div>
+      </div>
     </header>
 
     <section class="about-hero-section">
-        <div class="container">
-            <div class="about-hero-content">
-                <div class="about-hero-image">
-                    <img src="public/about-srv.jpeg" alt="SRV Service Platform" class="hero-image">
-                </div>
-                <div class="about-hero-text">
-                    <h1 class="about-hero-title">About SRV</h1>
-                    <p class="about-hero-description">
-                        Mobile Phone? Laptop? Computer? Any other devices?  SRV (Serbisyo, Rito, Valid) is here for you anywhere, anytime. Designed to act as a centralized digital marketplace connecting clients seeking various services with independent, local freelance service providers in Baguio City. Built specifically for the Filipino community, SRV bridges the gap between reliable service needs and trusted local professionals, moving beyond the limitations of Facebook groups and word-of-mouth referrals.
-                    </p>
-                    <div class="about-hero-buttons">
-                        <button id="needServiceBtn" class="btn-primary">
-                            <span class="btn-text">Join the Waitlist</span>
-                        </button>
-                    </div>
-                </div>
+      <div class="container">
+        <div class="about-hero-content">
+          <div class="about-hero-image">
+            <img
+              src="public/about-srv.jpeg"
+              alt="SRV Service Platform"
+              class="hero-image"
+            />
+          </div>
+          <div class="about-hero-text">
+            <h1 class="about-hero-title">About SRV</h1>
+            <p class="about-hero-description">
+              Mobile Phone? Laptop? Computer? Any other devices? SRV (Serbisyo,
+              Rito, Valid) is here for you anywhere, anytime. Designed to act as
+              a centralized digital marketplace connecting clients seeking
+              various services with independent, local freelance service
+              providers in Baguio City. Built specifically for the Filipino
+              community, SRV bridges the gap between reliable service needs and
+              trusted local professionals, moving beyond the limitations of
+              Facebook groups and word-of-mouth referrals.
+            </p>
+            <div class="about-hero-buttons">
+              <button id="needServiceBtn" class="btn-primary">
+                <span class="btn-text">Join the Waitlist</span>
+              </button>
             </div>
+          </div>
         </div>
+      </div>
     </section>
 
     <section id="mission" class="mission-section">
-    <div class="container">
+      <div class="container">
         <div class="mission-content">
-            <div class="mission-text">
-                <h2 class="mission-tagline">
-                    <span class="tagline-primary">Smarter Services.</span>
-                    <span class="tagline-secondary">Better Communities.</span>
-                </h2>
-                <p class="mission-description">
-                    We're here to connect every barangay by guiding Filipinos to trusted local services. Know and be known in your local area through a reliable platform.
-                </p>
-            </div>
-            <div class="mission-image">
-                <img src="public/smarter-services.png" alt="Connected Community" class="mission-img">
-            </div>
+          <div class="mission-text">
+            <h2 class="mission-tagline">
+              <span class="tagline-primary">Smarter Services.</span>
+              <span class="tagline-secondary">Better Communities.</span>
+            </h2>
+            <p class="mission-description">
+              We're here to connect every barangay by guiding Filipinos to
+              trusted local services. Know and be known in your local area
+              through a reliable platform.
+            </p>
+          </div>
+          <div class="mission-image">
+            <img
+              src="public/smarter-services.png"
+              alt="Connected Community"
+              class="mission-img"
+            />
+          </div>
         </div>
-    </div>
+      </div>
     </section>
 
     <section class="services-preview-section">
-        <div class="container">
-            <div class="services-header">
-                <h2 class="services-title">Services We Connect</h2>
-            </div>
-            
-            <div class="services-gallery">
-                <div class="gallery-container">
-                    <div class="gallery-image-wrapper active" data-index="0">
-                        <img src="public/services/electrician.jpeg" alt="Home Repairs" class="gallery-image">
-                        <div class="image-overlay">
-                            <h3 class="overlay-title">Home Repairs</h3>
-                            <p class="overlay-description">Electricians, plumbers, carpenters</p>
-                        </div>
-                    </div>
-                    <div class="gallery-image-wrapper" data-index="1">
-                        <img src="public/services/mechanic.jpeg" alt="Automobile Repairs" class="gallery-image">
-                        <div class="image-overlay">
-                            <h3 class="overlay-title">Automobile Repairs</h3>
-                            <p class="overlay-description">Mechanics, car detailing</p>
-                        </div>
-                    </div>
-                    <div class="gallery-image-wrapper" data-index="2">
-                        <img src="public/services/technician.jpeg" alt="Gadget & Appliance Tech" class="gallery-image">
-                        <div class="image-overlay">
-                            <h3 class="overlay-title">Gadget & Appliance Tech</h3>
-                            <p class="overlay-description">Phone repair, appliance fixing</p>
-                        </div>
-                    </div>
-                    <div class="gallery-image-wrapper" data-index="3">
-                        <img src="public/services/hair-stylist.jpeg" alt="Beauty Services" class="gallery-image">
-                        <div class="image-overlay">
-                            <h3 class="overlay-title">Beauty Services</h3>
-                            <p class="overlay-description">Hair styling, manicures, facials</p>
-                        </div>
-                    </div>
-                    <div class="gallery-image-wrapper" data-index="4">
-                        <img src="public/services/massager.jpeg" alt="Wellness Services" class="gallery-image">
-                        <div class="image-overlay">
-                            <h3 class="overlay-title">Wellness Services</h3>
-                            <p class="overlay-description">Massage therapy, relaxation treatments</p>
-                        </div>
-                    </div>
-                    <div class="gallery-image-wrapper" data-index="5">
-                        <img src="public/services/delivery-man.jpeg" alt="Delivery & Errands" class="gallery-image">
-                        <div class="image-overlay">
-                            <h3 class="overlay-title">Delivery & Errands</h3>
-                            <p class="overlay-description">Shopping, document delivery</p>
-                        </div>
-                    </div>
-                    <div class="gallery-image-wrapper" data-index="6">
-                        <img src="public/services/tutor.jpeg" alt="Tutoring" class="gallery-image">
-                        <div class="image-overlay">
-                            <h3 class="overlay-title">Tutoring</h3>
-                            <p class="overlay-description">Academic support, skill training</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="gallery-controls">
-                    <button class="gallery-control prev-btn">◀</button>
-                    <div class="gallery-indicators"></div>
-                    <button class="gallery-control next-btn">▶</button>
-                </div>
-            </div>
+      <div class="container">
+        <div class="services-header">
+          <h2 class="services-title">Services We Connect</h2>
         </div>
+
+        <div class="services-gallery">
+          <div class="gallery-container">
+            <div class="gallery-image-wrapper active" data-index="0">
+              <img
+                src="public/services/electrician.jpeg"
+                alt="Home Repairs"
+                class="gallery-image"
+              />
+              <div class="image-overlay">
+                <h3 class="overlay-title">Home Repairs</h3>
+                <p class="overlay-description">
+                  Electricians, plumbers, carpenters
+                </p>
+              </div>
+            </div>
+            <div class="gallery-image-wrapper" data-index="1">
+              <img
+                src="public/services/mechanic.jpeg"
+                alt="Automobile Repairs"
+                class="gallery-image"
+              />
+              <div class="image-overlay">
+                <h3 class="overlay-title">Automobile Repairs</h3>
+                <p class="overlay-description">Mechanics, car detailing</p>
+              </div>
+            </div>
+            <div class="gallery-image-wrapper" data-index="2">
+              <img
+                src="public/services/technician.jpeg"
+                alt="Gadget & Appliance Tech"
+                class="gallery-image"
+              />
+              <div class="image-overlay">
+                <h3 class="overlay-title">Gadget & Appliance Tech</h3>
+                <p class="overlay-description">
+                  Phone repair, appliance fixing
+                </p>
+              </div>
+            </div>
+            <div class="gallery-image-wrapper" data-index="3">
+              <img
+                src="public/services/hair-stylist.jpeg"
+                alt="Beauty Services"
+                class="gallery-image"
+              />
+              <div class="image-overlay">
+                <h3 class="overlay-title">Beauty Services</h3>
+                <p class="overlay-description">
+                  Hair styling, manicures, facials
+                </p>
+              </div>
+            </div>
+            <div class="gallery-image-wrapper" data-index="4">
+              <img
+                src="public/services/massager.jpeg"
+                alt="Wellness Services"
+                class="gallery-image"
+              />
+              <div class="image-overlay">
+                <h3 class="overlay-title">Wellness Services</h3>
+                <p class="overlay-description">
+                  Massage therapy, relaxation treatments
+                </p>
+              </div>
+            </div>
+            <div class="gallery-image-wrapper" data-index="5">
+              <img
+                src="public/services/delivery-man.jpeg"
+                alt="Delivery & Errands"
+                class="gallery-image"
+              />
+              <div class="image-overlay">
+                <h3 class="overlay-title">Delivery & Errands</h3>
+                <p class="overlay-description">Shopping, document delivery</p>
+              </div>
+            </div>
+            <div class="gallery-image-wrapper" data-index="6">
+              <img
+                src="public/services/tutor.jpeg"
+                alt="Tutoring"
+                class="gallery-image"
+              />
+              <div class="image-overlay">
+                <h3 class="overlay-title">Tutoring</h3>
+                <p class="overlay-description">
+                  Academic support, skill training
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-controls">
+            <button class="gallery-control prev-btn">◀</button>
+            <div class="gallery-indicators"></div>
+            <button class="gallery-control next-btn">▶</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="pillars-section">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Our Core Pillars</h2>
-            </div>
-            
-            <div class="pillars-impact-container">
-                <div class="pillars-grid">
-                    <div class="pillar-card">
-                        <div class="pillar-header">
-                            <h3 class="pillar-title">Our Story</h3>
-                            <img src="public/three-pillars/story.svg" alt="Story Icon" class="pillar-icon">
-                        </div>
-                        <div class="pillar-content">
-                            <p class="pillar-description">
-                                Rooted in Baguio, we built SRV to rethink how communities and service providers connect moving beyond inconsistent Facebook groups and word-of-mouth searches, we created a platform where trust meets convenience.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="pillar-card">
-                        <div class="pillar-header">
-                            <h3 class="pillar-title">Our Mission</h3>
-                            <img src="public/three-pillars/mission.svg" alt="Mission Icon" class="pillar-icon">
-                        </div>
-                        <div class="pillar-content">
-                            <p class="pillar-description">
-                                To connect every Filipino with reliable local services-one verified provider at a time.  Together with empowering local freelancers while making quality services accessible to everyone in the community.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="pillar-card">
-                        <div class="pillar-header">
-                            <h3 class="pillar-title">What Makes Us Unique?</h3>
-                            <img src="public/three-pillars/unique.svg" alt="Unique Icon" class="pillar-icon">
-                        </div>
-                        <div class="pillar-content">
-                            <p class="pillar-description">
-                                Local insights enhanced with technology to create a platform that understands Filipino service culture. Built on decentralized blockchain technology (ICP) with verified provider profiles, transparent pricing, and community-driven reviews.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="impact-container">
-                    <div class="impact-header">
-                        <h2 class="impact-title">Our Potential Impact</h2>
-                    </div>
-                    
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-number">85%</div>
-                            <p class="metric-description">reduction in time spent searching for reliable service providers</p>
-                        </div>
-
-                        <div class="metric-card">
-                            <div class="metric-number">3x</div>
-                            <p class="metric-description">increase in bookings for local freelance service providers</p>
-                        </div>
-
-                        <div class="metric-card">
-                            <div class="metric-number">40%</div>
-                            <p class="metric-description">faster service request fulfillment through location-based matching</p>
-                        </div>
-
-                        <div class="metric-card">
-                            <div class="metric-number">90%</div>
-                            <p class="metric-description">improvement in service quality assurance through verified provider profiles</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-        
-    <section class="additional-info-section">
+      <div class="container">
         <div class="section-header">
-            <h2 class="section-title">Ways to Connect</h2>
+          <h2 class="section-title">Our Core Pillars</h2>
         </div>
 
-        <div class="container">
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3 class="info-title">For Service Providers</h3>
-                    <p class="info-description">
-                        Ready to contribute to the network of trusted local service providers? Highlight what you're great at - Do what you do best!
-                    </p>
-                    <button class="btn-secondary" id = "providerBtn2">
-                        Preregister Now
-                    </button>
-                </div>
-
-                <div class="info-card">
-                    <h3 class="info-title">For Partnerships</h3>
-                    <p class="info-description">
-                        Looking to partner with SRV? We're open to collaborations with businesses, organizations, and community leaders.
-                    </p>
-                    <a href="contact.html" class="btn-secondary">
-                        Email Partnerships
-                    </a>
-                </div>
-
-                <div class="info-card">
-                    <h3 class="info-title">For Support</h3>
-                    <p class="info-description">
-                        Need technical support or have questions about using SRV? Our support team is here to help.
-                    </p>
-                    <a href="contact.html" class="btn-secondary">
-                        Get Support
-                    </a>
-                </div>
+        <div class="pillars-impact-container">
+          <div class="pillars-grid">
+            <div class="pillar-card">
+              <div class="pillar-header">
+                <h3 class="pillar-title">Our Story</h3>
+                <img
+                  src="public/three-pillars/story.svg"
+                  alt="Story Icon"
+                  class="pillar-icon"
+                />
+              </div>
+              <div class="pillar-content">
+                <p class="pillar-description">
+                  Rooted in Baguio, we built SRV to rethink how communities and
+                  service providers connect moving beyond inconsistent Facebook
+                  groups and word-of-mouth searches, we created a platform where
+                  trust meets convenience.
+                </p>
+              </div>
             </div>
+
+            <div class="pillar-card">
+              <div class="pillar-header">
+                <h3 class="pillar-title">Our Mission</h3>
+                <img
+                  src="public/three-pillars/mission.svg"
+                  alt="Mission Icon"
+                  class="pillar-icon"
+                />
+              </div>
+              <div class="pillar-content">
+                <p class="pillar-description">
+                  To connect every Filipino with reliable local services-one
+                  verified provider at a time. Together with empowering local
+                  freelancers while making quality services accessible to
+                  everyone in the community.
+                </p>
+              </div>
+            </div>
+
+            <div class="pillar-card">
+              <div class="pillar-header">
+                <h3 class="pillar-title">What Makes Us Unique?</h3>
+                <img
+                  src="public/three-pillars/unique.svg"
+                  alt="Unique Icon"
+                  class="pillar-icon"
+                />
+              </div>
+              <div class="pillar-content">
+                <p class="pillar-description">
+                  Local insights enhanced with technology to create a platform
+                  that understands Filipino service culture. Built on
+                  decentralized blockchain technology (ICP) with verified
+                  provider profiles, transparent pricing, and community-driven
+                  reviews.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="impact-container">
+            <div class="impact-header">
+              <h2 class="impact-title">Our Potential Impact</h2>
+            </div>
+
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-number">85%</div>
+                <p class="metric-description">
+                  reduction in time spent searching for reliable service
+                  providers
+                </p>
+              </div>
+
+              <div class="metric-card">
+                <div class="metric-number">3x</div>
+                <p class="metric-description">
+                  increase in bookings for local freelance service providers
+                </p>
+              </div>
+
+              <div class="metric-card">
+                <div class="metric-number">40%</div>
+                <p class="metric-description">
+                  faster service request fulfillment through location-based
+                  matching
+                </p>
+              </div>
+
+              <div class="metric-card">
+                <div class="metric-number">90%</div>
+                <p class="metric-description">
+                  improvement in service quality assurance through verified
+                  provider profiles
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <section class="additional-info-section">
+      <div class="section-header">
+        <h2 class="section-title">Ways to Connect</h2>
+      </div>
+
+      <div class="container">
+        <div class="info-grid">
+          <div class="info-card">
+            <h3 class="info-title">For Service Providers</h3>
+            <p class="info-description">
+              Ready to contribute to the network of trusted local service
+              providers? Highlight what you're great at - Do what you do best!
+            </p>
+            <button class="btn-secondary" id="providerBtn2">
+              Preregister Now
+            </button>
+          </div>
+
+          <div class="info-card">
+            <h3 class="info-title">For Partnerships</h3>
+            <p class="info-description">
+              Looking to partner with SRV? We're open to collaborations with
+              businesses, organizations, and community leaders.
+            </p>
+            <a href="contact.html" class="btn-secondary">
+              Email Partnerships
+            </a>
+          </div>
+
+          <div class="info-card">
+            <h3 class="info-title">For Support</h3>
+            <p class="info-description">
+              Need technical support or have questions about using SRV? Our
+              support team is here to help.
+            </p>
+            <a href="contact.html" class="btn-secondary"> Get Support </a>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="team-section">
-        <div class="container">
-            <div class="team-header">
-                <h2 class="team-title">Meet the Team</h2>
-                <p class="team-description">
-                    The passionate individuals behind SRV, working to revolutionize how Filipino communities connect with local services.
-                </p>
-            </div>
-            
-            <div class="team-grid">
-                <div class="team-member">
-                    <div class="member-image-container">
-                        <div class="member-image-wrapper">
-                            <img src="public/about-us/don.jpg" alt="Don - Team Member" class="member-image">
-                        </div>
-                        <div class="member-social">
-                            <a href="https://www.facebook.com/share/16V1X4FiAZ/" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon">
-                            </a>
-                            <a href="https://www.linkedin.com/in/don-daryll-dela-concha-081ab6320?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" class="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-linkedin.svg" alt="LinkedIn" class="social-icon">
-                            </a>
-                           
-                        </div>
-                    </div>
-                    <div class="member-info">
-                        <h3 class="member-name">Don Daryll Dela Concha</h3>
-                        <p class="member-role">Chief Product Officer</p>
-                        <p class="member-bio">
-                            Drives product innovation and strategy to deliver value to customers and boost business performance. 
-                        </p>
-                    </div>
-                </div>
-                <div class="team-member">
-                    <div class="member-image-container">
-                        <div class="member-image-wrapper">
-                            <img src="public/about-us/jd.png" alt="JD - Team Member" class="member-image">
-                        </div>
-                        <div class="member-social">
-                            <a href="https://www.facebook.com/jandale.ii/" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon">
-                            </a>
-                             <a href="https://www.linkedin.com/in/jan-dale-zarate-1bbb67188/" class="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-linkedin.svg" alt="LinkedIn" class="social-icon">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="member-info">
-                        <h3 class="member-name">Jan Dale Zarate</h3>
-                        <p class="member-role">Chief Executive Officer</p>
-                        <p class="member-bio">
-                            Leads the company's overall strategy and vision, ensuring long-term growth and success. 
-                        </p>
-                    </div>
-                </div>
-                 <div class="team-member">
-                    <div class="member-image-container">
-                        <div class="member-image-wrapper">
-                            <img src="public/about-us/rey.png" alt="Rey - Team Member" class="member-image">
-                        </div>
-                        <div class="member-social">
-                            <a href="https://www.facebook.com/reynaldo.ferrer.jr.2024" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon">
-                            </a>
-                            <a href="https://www.linkedin.com/in/reynaldo-jr-ferrer" class="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-linkedin.svg" alt="LinkedIn" class="social-icon">
-                            </a>
-                           
-                        </div>
-                    </div>
-                    <div class="member-info">
-                        <h3 class="member-name">Reynaldo Jr Ferrer</h3>
-                        <p class="member-role">Chief Technology Officer</p>
-                        <p class="member-bio">
-                            Aligns technology with business goals to enable innovation, scalability, and competitive advantage. 
-                        </p>
-                    </div>
-                </div>
-
-                <div class="team-member">
-                    <div class="member-image-container">
-                        <div class="member-image-wrapper">
-                            <img src="public/about-us/mark.jpeg" alt="Mark - Team Member" class="member-image">
-                        </div>
-                        <div class="member-social">
-                            <a href="https://www.facebook.com/Albior788/" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon">
-                            </a>
-                            <a href="https://www.linkedin.com/in/albior788/" class="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-linkedin.svg" alt="LinkedIn" class="social-icon">
-                            </a>
-                            
-                        </div>
-                    </div>
-                    <div class="member-info">
-                        <h3 class="member-name">Mark Kim Albior</h3>
-                        <p class="member-role">Chief Architect</p>
-                        <p class="member-bio">
-                            Designs and oversees technical systems to ensure they are scalable, efficient, and future-ready. 
-                        </p>
-                    </div>
-                </div>
-
-                <div class="team-member">
-                    <div class="member-image-container">
-                        <div class="member-image-wrapper">
-                            <img src="public/about-us/hannah.jpg" alt="Hannah - Team Member" class="member-image">
-                        </div>
-                        <div class="member-social">
-                            <a href="https://www.facebook.com/share/1AL8AtDj7y/?mibextid=wwXIfr" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon">
-                            </a>
-                            <a href="https://www.linkedin.com/in/princess-hannah-arzadon-1927562b6?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" class="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-linkedin.svg" alt="LinkedIn" class="social-icon">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="member-info">
-                        <h3 class="member-name">Princess Hannah Arzadon</h3>
-                        <p class="member-role">Chief Operating Officer</p>
-                        <p class="member-bio">
-                            Oversees daily operations and ensures the team delivers seamless, high-quality service experiences for all users.
-                        </p>
-                    </div>
-                </div>
-                <div class="team-member">
-                    <div class="member-image-container">
-                        <div class="member-image-wrapper">
-                            <img src="public/about-us/alexie2.png" alt="Alexie - Team Member" class="member-image">
-                        </div>
-                        <div class="member-social">
-                            <a href="https://www.facebook.com/share/1aLoigCQzR/?mibextid=wwXIfr" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon">
-                            </a>
-                            <a href="https://www.linkedin.com/in/alexie-johanna-pagal-0627b731a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" class="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-linkedin.svg" alt="LinkedIn" class="social-icon">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="member-info">
-                        <h3 class="member-name">Alexie Johann Pagal</h3>
-                        <p class="member-role">Chief Financial Officer</p>
-                        <p class="member-bio">
-                            Manages financial health and strategy to ensure stability, profitability, and informed decision-making.
-                        </p>
-                    </div>
-                </div>
-            </div>
+      <div class="container">
+        <div class="team-header">
+          <h2 class="team-title">Meet the Team</h2>
+          <p class="team-description">
+            The passionate individuals behind SRV, working to revolutionize how
+            Filipino communities connect with local services.
+          </p>
         </div>
+
+        <div class="team-grid">
+          <div class="team-member">
+            <div class="member-image-container">
+              <div class="member-image-wrapper">
+                <img
+                  src="public/about-us/don.jpg"
+                  alt="Don - Team Member"
+                  class="member-image"
+                />
+              </div>
+              <div class="member-social">
+                <a
+                  href="https://www.facebook.com/share/16V1X4FiAZ/"
+                  class="social-link"
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/don-daryll-dela-concha-081ab6320?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+                  class="social-link"
+                  aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-linkedin.svg"
+                    alt="LinkedIn"
+                    class="social-icon"
+                  />
+                </a>
+              </div>
+            </div>
+            <div class="member-info">
+              <h3 class="member-name">Don Daryll Dela Concha</h3>
+              <p class="member-role">Chief Product Officer</p>
+              <p class="member-bio">
+                Drives product innovation and strategy to deliver value to
+                customers and boost business performance.
+              </p>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="member-image-container">
+              <div class="member-image-wrapper">
+                <img
+                  src="public/about-us/jd.png"
+                  alt="JD - Team Member"
+                  class="member-image"
+                />
+              </div>
+              <div class="member-social">
+                <a
+                  href="https://www.facebook.com/jandale.ii/"
+                  class="social-link"
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/jan-dale-zarate-1bbb67188/"
+                  class="social-link"
+                  aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-linkedin.svg"
+                    alt="LinkedIn"
+                    class="social-icon"
+                  />
+                </a>
+              </div>
+            </div>
+            <div class="member-info">
+              <h3 class="member-name">Jan Dale Zarate</h3>
+              <p class="member-role">Chief Executive Officer</p>
+              <p class="member-bio">
+                Leads the company's overall strategy and vision, ensuring
+                long-term growth and success.
+              </p>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="member-image-container">
+              <div class="member-image-wrapper">
+                <img
+                  src="public/about-us/rey.png"
+                  alt="Rey - Team Member"
+                  class="member-image"
+                />
+              </div>
+              <div class="member-social">
+                <a
+                  href="https://www.facebook.com/reynaldo.ferrer.jr.2024"
+                  class="social-link"
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/reynaldo-jr-ferrer"
+                  class="social-link"
+                  aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-linkedin.svg"
+                    alt="LinkedIn"
+                    class="social-icon"
+                  />
+                </a>
+              </div>
+            </div>
+            <div class="member-info">
+              <h3 class="member-name">Reynaldo Jr Ferrer</h3>
+              <p class="member-role">Chief Technology Officer</p>
+              <p class="member-bio">
+                Aligns technology with business goals to enable innovation,
+                scalability, and competitive advantage.
+              </p>
+            </div>
+          </div>
+
+          <div class="team-member">
+            <div class="member-image-container">
+              <div class="member-image-wrapper">
+                <img
+                  src="public/about-us/mark.jpeg"
+                  alt="Mark - Team Member"
+                  class="member-image"
+                />
+              </div>
+              <div class="member-social">
+                <a
+                  href="https://www.facebook.com/Albior788/"
+                  class="social-link"
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/albior788/"
+                  class="social-link"
+                  aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-linkedin.svg"
+                    alt="LinkedIn"
+                    class="social-icon"
+                  />
+                </a>
+              </div>
+            </div>
+            <div class="member-info">
+              <h3 class="member-name">Mark Kim Albior</h3>
+              <p class="member-role">Chief Architect</p>
+              <p class="member-bio">
+                Designs and oversees technical systems to ensure they are
+                scalable, efficient, and future-ready.
+              </p>
+            </div>
+          </div>
+
+          <div class="team-member">
+            <div class="member-image-container">
+              <div class="member-image-wrapper">
+                <img
+                  src="public/about-us/hannah.jpg"
+                  alt="Hannah - Team Member"
+                  class="member-image"
+                />
+              </div>
+              <div class="member-social">
+                <a
+                  href="https://www.facebook.com/share/1AL8AtDj7y/?mibextid=wwXIfr"
+                  class="social-link"
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/princess-hannah-arzadon-1927562b6?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
+                  class="social-link"
+                  aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-linkedin.svg"
+                    alt="LinkedIn"
+                    class="social-icon"
+                  />
+                </a>
+              </div>
+            </div>
+            <div class="member-info">
+              <h3 class="member-name">Princess Hannah Arzadon</h3>
+              <p class="member-role">Chief Operating Officer</p>
+              <p class="member-bio">
+                Oversees daily operations and ensures the team delivers
+                seamless, high-quality service experiences for all users.
+              </p>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="member-image-container">
+              <div class="member-image-wrapper">
+                <img
+                  src="public/about-us/alexie2.png"
+                  alt="Alexie - Team Member"
+                  class="member-image"
+                />
+              </div>
+              <div class="member-social">
+                <a
+                  href="https://www.facebook.com/share/1aLoigCQzR/?mibextid=wwXIfr"
+                  class="social-link"
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/alexie-johanna-pagal-0627b731a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
+                  class="social-link"
+                  aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-linkedin.svg"
+                    alt="LinkedIn"
+                    class="social-icon"
+                  />
+                </a>
+              </div>
+            </div>
+            <div class="member-info">
+              <h3 class="member-name">Alexie Johann Pagal</h3>
+              <p class="member-role">Chief Financial Officer</p>
+              <p class="member-bio">
+                Manages financial health and strategy to ensure stability,
+                profitability, and informed decision-making.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
-
-
 
     <section class="about-cta-section">
-        <div class="container">
-            <div class="about-cta-card">
-                <h2 class="about-cta-title">Be the first to experience SRV</h2>
-                <p class="about-cta-description">Join the waitlist today and get notified the moment we launch in your area!</p>
-                <div class="about-cta-button-container">
-                    <button id="needServiceBtn" class="btn-primary">
-                        <span class="btn-text">Join the Waitlist</span>
-                    </button>
-                </div>
-            </div>
+      <div class="container">
+        <div class="about-cta-card">
+          <h2 class="about-cta-title">Be the first to experience SRV</h2>
+          <p class="about-cta-description">
+            Join the waitlist today and get notified the moment we launch in
+            your area!
+          </p>
+          <div class="about-cta-button-container">
+            <button id="needServiceBtn" class="btn-primary">
+              <span class="btn-text">Join the Waitlist</span>
+            </button>
+          </div>
         </div>
+      </div>
     </section>
 
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <a href="/" class="footer-logo-link">
+              <img src="public/logo.svg" alt="SRV Logo" class="footer-logo" />
+            </a>
+          </div>
+          <div class="footer-section footer-nav">
+            <ul class="footer-links nav-links">
+              <li><a href="index.html" class="footer-link">Home</a></li>
+              <li><a href="about-us.html" class="footer-link">About</a></li>
+              <li><a href="contact.html" class="footer-link">Contact</a></li>
+            </ul>
+          </div>
 
-     <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <a href="/" class="footer-logo-link">
-                        <img src="public/logo.svg" alt="SRV Logo" class="footer-logo">
-                    </a>
-                </div>
-                <div class="footer-section footer-nav">
-                    <ul class="footer-links nav-links">
-                        <li><a href="index.html" class="footer-link">Home</a></li>
-                        <li><a href="about-us.html" class="footer-link">About</a></li>
-                        <li><a href="contact.html" class="footer-link">Contact</a></li>
-                    </ul>
-                </div>
-    
-                <div class="footer-section">
-                    <ul class="footer-links">
-                         <li class="social-item">
-                            <a href="https://www.facebook.com/srvpinoy" class="footer-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon-footer">
-                            </a>
-                            <a href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr" class="footer-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-instagram.svg" alt="Instagram" class="social-icon-footer">
-                            </a>
-                            <a href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-" class="footer-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-youtube.svg" alt="Youtube" class="social-icon-footer">
-                            </a>
-                            <a href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1" class="footer-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-tiktok.svg" alt="Tiktok" class="social-icon-footer">
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p class="footer-copyright">© 2025 SRV Service Booking. All rights reserved.</p>
-            </div>
+          <div class="footer-section">
+            <ul class="footer-links">
+              <li class="social-item">
+                <a
+                  href="https://www.facebook.com/srvpinoy"
+                  class="footer-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon-footer"
+                  />
+                </a>
+                <a
+                  href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr"
+                  class="footer-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-instagram.svg"
+                    alt="Instagram"
+                    class="social-icon-footer"
+                  />
+                </a>
+                <a
+                  href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-"
+                  class="footer-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-youtube.svg"
+                    alt="Youtube"
+                    class="social-icon-footer"
+                  />
+                </a>
+                <a
+                  href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1"
+                  class="footer-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-tiktok.svg"
+                    alt="Tiktok"
+                    class="social-icon-footer"
+                  />
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
+
+        <div class="footer-bottom">
+          <p class="footer-copyright">
+            © 2025 SRV Service Booking. All rights reserved.
+          </p>
+        </div>
+      </div>
     </footer>
-    <div id="waitlistModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Join Our Waitlist</h2>
-            <p>Be the first to know when SRV launches!</p>
-            <form id="waitlistForm">
-                <input type="email" id="emailInput" placeholder="Enter your email address" required>
-                <p style="font-size: 0.85em; color: #666;">
-                    By joining, you agree to receive a confirmation email and future updates from SRV.
-                </p>
-                <div class="modal-buttons">
-                    <button type="submit" class="btn-primary modal-btn-primary">Join Waitlist</button>
-                    <button type="button" id="providerBtn" class="btn-secondary modal-btn-secondary">
-                        Preregister as Provider
-                    </button>
-                </div>
-                
-            </form>
-            <div id="message" style="display: none;"></div>
-        </div>
+    <div id="waitlistModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Join Our Waitlist</h2>
+        <p>Be the first to know when SRV launches!</p>
+        <form id="waitlistForm">
+          <input
+            type="email"
+            id="emailInput"
+            placeholder="Enter your email address"
+            required
+          />
+          <p style="font-size: 0.85em; color: #666">
+            By joining, you agree to receive a confirmation email and future
+            updates from SRV.
+          </p>
+          <div class="modal-buttons">
+            <button type="submit" class="btn-primary modal-btn-primary">
+              Join Waitlist
+            </button>
+            <button
+              type="button"
+              id="providerBtn"
+              class="btn-secondary modal-btn-secondary"
+            >
+              Preregister as Provider
+            </button>
+          </div>
+        </form>
+        <div id="message" style="display: none"></div>
+      </div>
     </div>
-</body>
+  </body>
 </html>
