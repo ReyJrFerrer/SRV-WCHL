@@ -1,61 +1,58 @@
 import React, { useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
+// Interface for the booking details passed via navigation state
 interface BookingDetails {
   serviceName: string;
   providerName: string;
-  selectedPackages: { id: string; name: string }[];
-  concerns: string;
+  packages: { id: string; title: string }[];
   bookingType: string;
   date: string;
   time: string;
   location?: string;
+  concerns: string;
+  amountPaid: string;
+  landmark: string;
 }
 
 const BookingConfirmationPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const details = searchParams.get("details");
+  const location = useLocation();
 
-  let bookingDetails: BookingDetails | null = null;
+  // Safely access the booking details from the navigation state
+  const bookingDetails: BookingDetails | null = location.state?.details || null;
 
-  // Set document title
+  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Booking Confirmed - SRV Client";
   }, []);
 
-  if (details && typeof details === "string") {
-    try {
-      bookingDetails = JSON.parse(details);
-    } catch (error) {
-      console.error("Failed to parse booking details:", error);
-    }
-  }
-
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-3">
         <h1 className="text-center text-lg font-semibold text-gray-900">
           Booking Request Sent!
         </h1>
       </header>
 
-      {/* Main Content */}
       <main className="flex flex-1 items-center justify-center p-4">
         {bookingDetails ? (
           <div className="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-lg">
-            {/* Success Icon */}
-            <div className="mb-4 text-6xl">🎉</div>
+            <div className="relative mx-auto mb-4 h-24 w-24">
+              {/* Use standard <img> tag instead of Next.js <Image> */}
+              <img
+                src="/images/external logo/ConfirmationPageLogo.svg"
+                alt="Success"
+                className="h-full w-full object-cover"
+              />
+            </div>
 
-            {/* Success Message */}
             <h2 className="mb-2 text-xl font-semibold text-gray-900">
-              Ang request mo ay naibigay na kay {bookingDetails.providerName}!
+              Your request has been sent to {bookingDetails.providerName}!
             </h2>
             <p className="mb-6 text-gray-600">
-              Hintayin na ang notipikasyon mula sa katayuan ng iyong booking.
+              You will be notified of your booking status.
             </p>
 
-            {/* Booking Summary */}
             <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left">
               <h3 className="mb-3 border-b border-gray-200 pb-2 font-semibold text-gray-900">
                 Booking Summary:
@@ -63,24 +60,22 @@ const BookingConfirmationPage: React.FC = () => {
 
               <div className="space-y-2 text-sm">
                 <p>
-                  <span className="font-medium text-gray-700">Service:</span>{" "}
+                  <span className="font-bold text-gray-700">Service:</span>{" "}
                   {bookingDetails.serviceName}
                 </p>
                 <p>
-                  <span className="font-medium text-gray-700">Provider:</span>{" "}
+                  <span className="font-bold text-gray-700">Provider:</span>{" "}
                   {bookingDetails.providerName}
                 </p>
 
-                {bookingDetails.selectedPackages &&
-                  bookingDetails.selectedPackages.length > 0 && (
+                {bookingDetails.packages &&
+                  bookingDetails.packages.length > 0 && (
                     <div>
-                      <span className="font-medium text-gray-700">
-                        Packages:
-                      </span>
+                      <span className="font-bold text-gray-700">Packages:</span>
                       <ul className="mt-1 ml-4 list-inside list-disc">
-                        {bookingDetails.selectedPackages.map((pkg) => (
+                        {bookingDetails.packages.map((pkg) => (
                           <li key={pkg.id} className="text-gray-600">
-                            {pkg.name}
+                            {pkg.title}
                           </li>
                         ))}
                       </ul>
@@ -88,32 +83,56 @@ const BookingConfirmationPage: React.FC = () => {
                   )}
 
                 <p>
-                  <span className="font-medium text-gray-700">Type:</span>{" "}
+                  <span className="font-bold text-gray-700">Type:</span>{" "}
                   {bookingDetails.bookingType === "sameday"
                     ? "Same Day"
                     : "Scheduled"}
                 </p>
                 <p>
-                  <span className="font-medium text-gray-700">Date:</span>{" "}
+                  <span className="font-bold text-gray-700">Date:</span>{" "}
                   {bookingDetails.date}
                 </p>
                 <p>
-                  <span className="font-medium text-gray-700">Time:</span>{" "}
+                  <span className="font-bold text-gray-700">Time:</span>{" "}
                   {bookingDetails.time}
                 </p>
+
                 {bookingDetails.location && (
                   <p>
-                    <span className="font-medium text-gray-700">Location:</span>{" "}
+                    <span className="font-bold text-gray-700">Location:</span>{" "}
                     {bookingDetails.location}
+                    {bookingDetails.landmark &&
+                    bookingDetails.landmark !== "None"
+                      ? ` (${bookingDetails.landmark})`
+                      : ""}
+                  </p>
+                )}
+
+                {bookingDetails.amountPaid &&
+                  bookingDetails.amountPaid !== "N/A" && (
+                    <p>
+                      <span className="font-bold text-gray-700">
+                        Amount to Pay:
+                      </span>{" "}
+                      ₱ {bookingDetails.amountPaid}
+                    </p>
+                  )}
+
+                {bookingDetails.concerns && (
+                  <p>
+                    <span className="font-bold text-gray-700">
+                      Notes for Provider:
+                    </span>{" "}
+                    {bookingDetails.concerns}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Action Button */}
+            {/* Use Link from react-router-dom */}
             <Link
-              to="/client"
-              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+              to="/client/home"
+              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-yellow-500"
             >
               Back to Home
             </Link>
@@ -121,12 +140,11 @@ const BookingConfirmationPage: React.FC = () => {
         ) : (
           <div className="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-lg">
             <p className="mb-4 text-gray-600">
-              Loading booking details or an error occurred while parsing
-              details.
+              Loading booking details or an error occurred.
             </p>
             <Link
-              to="/client"
-              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+              to="/client/home"
+              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-yellow-500"
             >
               Back to Home
             </Link>

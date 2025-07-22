@@ -1,11 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { DayOfWeek } from "../../services/serviceCanisterService";
-import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
+import "react-datepicker/dist/react-datepicker.css"; // Styles for the date picker
 
-// Helper functions
+import {
+  CalendarDaysIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  CreditCardIcon,
+  GlobeAltIcon,
+  ExclamationCircleIcon,
+  PencilSquareIcon,
+  CheckCircleIcon,
+} from "@heroicons/react/24/outline";
+
+// Hooks and Services - adjust paths as needed
+import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
+import { DayOfWeek } from "../../services/serviceCanisterService";
+
+// --- Helper Data and Types (No changes needed) ---
 const dayIndexToName = (dayIndex: number): string => {
   const days = [
     "Sunday",
@@ -18,32 +31,158 @@ const dayIndexToName = (dayIndex: number): string => {
   ];
   return days[dayIndex] || "";
 };
+type AddressDataType = {
+  [province: string]: { [municipality: string]: string[] };
+};
+const addressData: AddressDataType = {
+  Bulacan: {
+    Pulilan: ["Poblacion", "Longos", "Dampol 1st", "Dampol 2nd"],
+    Calumpit: ["Poblacion", "Canalate", "Gatbuca"],
+  },
+  Pampanga: {
+    "San Fernando": ["Dolores", "San Agustin", "Santo Rosario"],
+    "Angeles City": ["Balibago", "Malabanias", "Pandan"],
+  },
+  Benguet: {
+    "Baguio City": ["Domoit Kanluran", "Isabang"],
+    Atok: ["Barangay 1", "Barangay 2"],
+    Bakun: ["Barangay 1", "Barangay 2"],
+    Bokod: ["Barangay 1", "Barangay 2"],
+    Buguias: ["Barangay 1", "Barangay 2"],
+    Itogon: ["Barangay 1", "Barangay 2"],
+    Kabayan: ["Barangay 1", "Barangay 2"],
+    Kapangan: ["Barangay 1", "Barangay 2"],
+    Kibungan: ["Barangay 1", "Barangay 2"],
+    "La Trinidad": ["Barangay 1", "Barangay 2"],
+    Mankayan: ["Barangay 1", "Barangay 2"],
+    Sablan: ["Barangay 1", "Barangay 2"],
+    Tuba: ["Barangay 1", "Barangay 2"],
+    Tublay: ["Barangay 1", "Barangay 2"],
+  },
+  Pangasinan: {
+    Dagupan: ["Barangay 1", "Barangay 2"],
+    Alaminos: ["Barangay 1", "Barangay 2"],
+    "San Carlos": ["Abanon", "Mabakbalino"],
+    Urdaneta: ["Barangay 1", "Barangay 2"],
+    Calasiao: ["Ambonao", "Bued"],
+    "San Manuel": ["San Antonio‑Arzadon", "Guiset Norte"],
+    Mangaldan: ["Alitaya", "Poblacion"],
+    Sison: ["Agat", "Poblacion Central"],
+    Agno: ["Barangay 1", "Barangay 2"],
+  },
+};
 
-interface SelectablePackage {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  checked: boolean;
-}
+// --- Sub-Components ---
+type PaymentSectionProps = {
+  paymentMethod: string;
+  setPaymentMethod: (method: string) => void;
+  packages: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    checked: boolean;
+  }[];
+  amountPaid: string;
+  handleAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  paymentError: string | null;
+  totalPrice: number;
+};
 
-interface ClientBookingPageComponentProps {
-  serviceSlug: string;
-}
+const PaymentSection: React.FC<PaymentSectionProps> = ({
+  paymentMethod,
+  setPaymentMethod,
+  packages,
+  amountPaid,
+  handleAmountChange,
+  paymentError,
+  totalPrice,
+}) => (
+  <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
+    <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Method</h3>
+    <div className="space-y-3">
+      <div
+        onClick={() => setPaymentMethod("cash")}
+        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${
+          paymentMethod === "cash"
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300"
+        }`}
+      >
+        <div className="flex items-center">
+          <CurrencyDollarIcon className="mr-3 h-6 w-6 text-green-500" />
+          <span className="font-medium text-gray-800">Cash</span>
+        </div>
+        {paymentMethod === "cash" && (
+          <CheckCircleIcon className="h-6 w-6 text-blue-500" />
+        )}
+      </div>
+      {paymentMethod === "cash" && packages.some((p) => p.checked) && (
+        <div className="pt-2 pl-4">
+          <label className="text-sm font-medium text-gray-700">
+            Amount to Pay
+          </label>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={amountPaid}
+            onChange={handleAmountChange}
+            placeholder={`e.g., ${totalPrice.toFixed(2)}`}
+            className={`mt-1 w-full rounded-md border p-2 ${
+              paymentError ? "border-red-500" : "border-gray-300"
+            }`}
+          />
+          {paymentError && amountPaid && (
+            <p className="mt-1 flex items-center text-xs text-red-600">
+              <ExclamationCircleIcon className="mr-1 h-4 w-4" />
+              {paymentError}
+            </p>
+          )}
+        </div>
+      )}
+      <div className="flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50">
+        <div className="flex items-center">
+          <img
+            src="/images/external logo/g-cash-logo.svg"
+            alt="GCash"
+            width={24}
+            height={24}
+            className="mr-3"
+          />
+          <span className="font-medium text-gray-500">GCash</span>
+        </div>
+        <span className="text-xs text-gray-400">Soon</span>
+      </div>
+      <div className="flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50">
+        <div className="flex items-center">
+          <CreditCardIcon className="mr-3 h-6 w-6 text-gray-400" />
+          <span className="font-medium text-gray-500">Debit/Credit Card</span>
+        </div>
+        <span className="text-xs text-gray-400">Soon</span>
+      </div>
+      <div className="flex cursor-not-allowed items-center justify-between rounded-lg border p-3 opacity-50">
+        <div className="flex items-center">
+          <GlobeAltIcon className="mr-3 h-6 w-6 text-gray-400" />
+          <span className="font-medium text-gray-500">Web3 Wallet</span>
+        </div>
+        <span className="text-xs text-gray-400">Soon</span>
+      </div>
+    </div>
+  </div>
+);
 
-const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
-  serviceSlug,
-}) => {
+// --- Main Page Component ---
+const ClientBookingPageComponent: React.FC = () => {
   const navigate = useNavigate();
+  const { id: serviceId } = useParams<{ id: string }>(); // Get service ID from URL
 
-  // Use the booking hook
   const {
-    service: hookService,
+    service,
     packages: hookPackages,
-    providerProfile: hookProviderProfile, // Add this
-    loading: hookLoading,
-    error: hookError,
-    availableSlots: hookAvailableSlots,
+    providerProfile,
+    loading,
+    error,
+    availableSlots,
     isSameDayAvailable,
     loadServiceData,
     getAvailableSlots,
@@ -51,74 +190,86 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     calculateTotalPrice,
   } = useBookRequest();
 
-  // Local state for form management
-  const [packages, setPackages] = useState<SelectablePackage[]>([]);
-  const [concerns] = useState<string>("");
-  const [bookingOption, setBookingOption] = useState<"sameday" | "scheduled">(
-    "sameday",
-  );
+  // --- State Management ---
+  const [packages, setPackages] = useState<
+    {
+      id: string;
+      title: string;
+      description: string;
+      price: number;
+      checked: boolean;
+    }[]
+  >([]);
+  const [bookingOption, setBookingOption] = useState<
+    "sameday" | "scheduled" | null
+  >(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Location state
-  const [houseNumber, setHouseNumber] = useState("");
+  // Address state
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("");
+  const [selectedBarangay, setSelectedBarangay] = useState("");
   const [street, setStreet] = useState("");
-  const [barangay, setBarangay] = useState("");
-  const [municipalityCity, setMunicipalityCity] = useState("");
-  const [province, setProvince] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [concerns, setConcerns] = useState("");
+
+  // Location toggle state
   const [currentLocationStatus, setCurrentLocationStatus] = useState("");
   const [useGpsLocation, setUseGpsLocation] = useState(false);
   const [showManualAddress, setShowManualAddress] = useState(false);
 
-  // Load service data when component mounts
-  useEffect(() => {
-    if (serviceSlug) {
-      loadServiceData(serviceSlug);
-    }
-  }, [serviceSlug, loadServiceData]);
+  // Submission and payment state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [amountPaid, setAmountPaid] = useState("");
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  // Update local packages state when hook packages change
+  // --- Effects ---
+  useEffect(() => {
+    if (serviceId) {
+      loadServiceData(serviceId);
+    }
+  }, [serviceId, loadServiceData]);
+
   useEffect(() => {
     if (hookPackages.length > 0) {
-      setPackages(
-        hookPackages.map((pkg) => ({
-          id: pkg.id,
-          title: pkg.title,
-          description: pkg.description,
-          price: pkg.price,
-          checked: false,
-        })),
-      );
+      setPackages(hookPackages.map((pkg) => ({ ...pkg, checked: false })));
     }
   }, [hookPackages]);
 
-  // Update booking option based on same-day availability
   useEffect(() => {
-    if (!isSameDayAvailable && bookingOption === "sameday") {
-      setBookingOption("scheduled");
+    if (service && selectedDate) {
+      getAvailableSlots(service.id, selectedDate);
     }
-  }, [isSameDayAvailable, bookingOption]);
+  }, [service, selectedDate, getAvailableSlots]);
 
-  // Load available slots when date is selected
+  const totalPrice = useMemo(() => {
+    const selectedPackageIds = packages
+      .filter((p) => p.checked)
+      .map((p) => p.id);
+    return calculateTotalPrice(selectedPackageIds, hookPackages);
+  }, [packages, hookPackages, calculateTotalPrice]);
+
   useEffect(() => {
-    const loadSlots = async () => {
-      if (hookService && selectedDate) {
-        try {
-          await getAvailableSlots(hookService.id, selectedDate);
-        } catch (error) {
-          console.error("Error loading slots:", error);
-        }
+    if (paymentMethod === "cash" && packages.some((p) => p.checked)) {
+      const paidAmount = parseFloat(amountPaid);
+      if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice)) {
+        setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
+      } else {
+        setPaymentError(null);
       }
-    };
-    loadSlots();
-  }, [hookService, selectedDate, getAvailableSlots]);
+    } else {
+      setPaymentError(null);
+    }
+  }, [amountPaid, totalPrice, paymentMethod, packages]);
 
-  // Event handlers
+  // --- Event Handlers ---
   const handlePackageChange = (packageId: string) => {
-    setFormError(null);
-    setPackages((prevPackages) =>
-      prevPackages.map((pkg) =>
+    setPackages((prev) =>
+      prev.map((pkg) =>
         pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg,
       ),
     );
@@ -126,36 +277,18 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
 
   const handleBookingOptionChange = (option: "sameday" | "scheduled") => {
     if (option === "sameday" && !isSameDayAvailable) return;
-    setFormError(null);
     setBookingOption(option);
-    if (option === "sameday") {
-      setSelectedDate(null);
-      setSelectedTime("");
-    }
   };
 
   const handleDateChange = (date: Date | null) => {
     setSelectedDate(date);
-    if (!date) {
-      setSelectedTime("");
-    }
-    if (formError?.includes("date")) {
-      setFormError(null);
-    }
-  };
-
-  const handleTimeChange = (time: string) => {
-    setSelectedTime(time);
-    if (formError?.includes("time")) {
-      setFormError(null);
-    }
+    setSelectedTime("");
   };
 
   const handleUseCurrentLocation = () => {
     setCurrentLocationStatus("Fetching location...");
     setUseGpsLocation(true);
     setShowManualAddress(false);
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -163,15 +296,10 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
           setCurrentLocationStatus(
             `📍 Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)} (Using this)`,
           );
-          setHouseNumber("");
-          setStreet("");
-          setBarangay("");
-          setMunicipalityCity("");
-          setProvince("");
         },
         (error) => {
           setCurrentLocationStatus(
-            `⚠️ Hindi makuha ang lokasyon. Ilagay nalang ito nang manu-mano. (Error: ${error.message})`,
+            `⚠️ Could not get location. Please enter manually. (Error: ${error.message})`,
           );
           setUseGpsLocation(false);
           setShowManualAddress(true);
@@ -179,7 +307,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       );
     } else {
       setCurrentLocationStatus(
-        "Hindi suportado ang geolocation. Ilagay nalang ang address nang manu-mano.",
+        "Geolocation not supported. Please enter address manually.",
       );
       setUseGpsLocation(false);
       setShowManualAddress(true);
@@ -194,197 +322,147 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     }
   };
 
-  const handleConfirmBooking = async () => {
-    setFormError(null);
-
-    // Validate package selection
-    const anyPackageSelected = packages.some((pkg) => pkg.checked);
-    if (!anyPackageSelected) {
-      setFormError("Pumili ng hindi bababa sa isang package ng serbisyo.");
-      return;
-    }
-
-    // Validate scheduling
-    if (bookingOption === "scheduled") {
-      if (!selectedDate) {
-        setFormError("Pumili ng petsa para sa iyong nakatakdang reservasyon.");
-        return;
-      }
-      if (!selectedTime.trim()) {
-        setFormError("Pumili ng oras para sa iyong nakatakdang reservasyon.");
-        return;
-      }
-    } else if (!isSameDayAvailable) {
-      setFormError("Reserbasyon ng kaparehong araw ay hindi maaari.");
-      return;
-    }
-
-    // Validate location
-    let finalAddress = "Walang tinukoy na address.";
-    if (useGpsLocation) {
-      finalAddress = currentLocationStatus;
-    } else if (
-      houseNumber ||
-      street ||
-      barangay ||
-      municipalityCity ||
-      province
-    ) {
-      const addressParts = [
-        houseNumber,
-        street,
-        barangay,
-        municipalityCity,
-        province,
-      ].filter(Boolean);
-      finalAddress = addressParts.join(", ");
-    } else {
-      setFormError("Ibigay ang iyong lokasyon (GPS o manu-manong ilagay).");
-      return;
-    }
-
-    // Prepare booking data with debugging
-    const selectedPackageIds = packages
-      .filter((pkg) => pkg.checked)
-      .map((pkg) => pkg.id);
-
-    let totalPrice = 0;
-    try {
-      totalPrice = calculateTotalPrice(selectedPackageIds, hookPackages);
-
-      if (isNaN(totalPrice) || totalPrice < 0) {
-        setFormError(
-          "Hindi makuha ang kabuuang presyo. Mangyaring subukan muli.",
-        );
-        return;
-      }
-    } catch (error) {
-      setFormError(
-        "Hindi makuha ang kabuuang presyo. Mangyaring subukan muli.",
-      );
-      return;
-    }
-
-    const bookingData: BookingRequest = {
-      serviceId: hookService!.id,
-      serviceName: hookService!.title,
-      providerId: hookService!.providerId.toString(),
-      packages: packages.filter((pkg) => pkg.checked),
-      totalPrice,
-      bookingType: bookingOption,
-      scheduledDate:
-        bookingOption === "scheduled" ? selectedDate || undefined : undefined,
-      scheduledTime: bookingOption === "scheduled" ? selectedTime : undefined,
-      location: finalAddress,
-      concerns:
-        concerns.trim() || "Walang tiyak na mga alalahanin na nabanggit.",
-    };
-
-    try {
-      const booking = await createBookingRequest(bookingData);
-      if (booking) {
-        // Prepare booking details for confirmation page
-        const confirmationDetails = {
-          serviceName: bookingData.serviceName,
-          providerName:
-            hookProviderProfile?.name || "Hindi Kilalang Tagapagbigay.",
-          selectedPackages: bookingData.packages.map((pkg) => ({
-            id: pkg.id,
-            name: pkg.title,
-          })),
-          concerns: bookingData.concerns || "No specific concerns mentioned",
-          bookingType:
-            bookingData.bookingType === "sameday" ? "Same Day" : "Scheduled",
-          date:
-            bookingData.bookingType === "scheduled" && bookingData.scheduledDate
-              ? bookingData.scheduledDate.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })
-              : "Same Day",
-          time:
-            bookingData.bookingType === "scheduled" && bookingData.scheduledTime
-              ? bookingData.scheduledTime
-              : "As soon as possible",
-          location: bookingData.location,
-        };
-
-        // Navigate to confirmation page with details
-        navigate(
-          `/client/booking/confirmation?details=${encodeURIComponent(JSON.stringify(confirmationDetails))}`,
-        );
-      } else {
-        setFormError("Nabigo ang paglikha ng reservasyon. Subukan muli.");
-      }
-    } catch (error) {
-      setFormError(
-        "Nagkaroon ng error habang nililikha ang reservasyon. Subukan muli.",
-      );
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d{0,2}$/.test(value)) {
+      setAmountPaid(value);
     }
   };
 
-  if (hookLoading) {
-    return (
-      <div className="flex min-h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">
-            Naglo-load ang mga detalye ng serbisyo...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const handleConfirmBooking = async () => {
+    setFormError(null);
+    setIsSubmitting(true);
 
-  if (hookError) {
-    return (
-      <div className="flex min-h-96 items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600">{hookError}</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
+    if (
+      !bookingOption ||
+      !packages.some((pkg) => pkg.checked) ||
+      (bookingOption === "scheduled" && (!selectedDate || !selectedTime))
+    ) {
+      setFormError("Please complete all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
 
-  if (!hookService) {
-    return (
-      <div className="flex min-h-96 items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Hindi natagpuan ang serbisyo</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Bumalik
-          </button>
-        </div>
-      </div>
-    );
-  }
+    let finalAddress = "Address not specified.";
+    if (useGpsLocation && currentLocationStatus.startsWith("📍")) {
+      finalAddress = currentLocationStatus;
+    } else if (showManualAddress) {
+      if (
+        !selectedProvince ||
+        !selectedMunicipality ||
+        !selectedBarangay ||
+        !street ||
+        !houseNumber
+      ) {
+        setFormError("Please complete all required address fields.");
+        setIsSubmitting(false);
+        return;
+      }
+      finalAddress = `${houseNumber}, ${street}, ${selectedBarangay}, ${selectedMunicipality}, ${selectedProvince}`;
+    } else if (!useGpsLocation) {
+      setFormError(
+        "Please provide your location (either GPS or manual entry).",
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
-  const isConfirmDisabled =
-    !packages.some((pkg) => pkg.checked) ||
-    (bookingOption === "sameday" && !isSameDayAvailable) ||
-    (bookingOption === "scheduled" && (!selectedDate || !selectedTime.trim()));
+    try {
+      let finalScheduledDate: Date | undefined = undefined;
+      if (bookingOption === "scheduled" && selectedDate && selectedTime) {
+        const [startTime] = selectedTime.split("-");
+        const [hours, minutes] = startTime.split(":").map(Number);
+        finalScheduledDate = new Date(selectedDate);
+        finalScheduledDate.setHours(hours, minutes, 0, 0);
+      }
+
+      const bookingData: BookingRequest = {
+        serviceId: service!.id,
+        serviceName: service!.title,
+        providerId: service!.providerId.toString(),
+        packages: packages.filter((pkg) => pkg.checked),
+        totalPrice,
+        bookingType: bookingOption,
+        scheduledDate: finalScheduledDate,
+        scheduledTime: bookingOption === "scheduled" ? selectedTime : undefined,
+        location: finalAddress,
+        concerns: concerns,
+      };
+
+      const booking = await createBookingRequest(bookingData);
+      if (booking) {
+        const confirmationDetails = {
+          ...bookingData,
+          providerName: providerProfile?.name,
+          date: finalScheduledDate
+            ? finalScheduledDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : "Same Day",
+          time: bookingData.scheduledTime || "As soon as possible",
+          amountPaid: paymentMethod === "cash" ? amountPaid : "N/A",
+          landmark: landmark || "None",
+        };
+        // Navigate to confirmation page with state
+        navigate("/client/booking/confirmation", {
+          state: { details: confirmationDetails },
+        });
+      } else {
+        setFormError("Failed to create booking. Please try again.");
+      }
+    } catch (error) {
+      console.error("Booking submission error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred.";
+      setFormError(
+        `An error occurred while creating the booking: ${errorMessage}`,
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- Render Logic ---
+  if (loading)
+    return <div className="p-10 text-center">Loading service details...</div>;
+  if (error)
+    return <div className="p-10 text-center text-red-500">{String(error)}</div>;
+  if (!service)
+    return <div className="p-10 text-center">Service not found.</div>;
+
+  const isLocationValid =
+    (useGpsLocation && currentLocationStatus.startsWith("📍")) ||
+    (showManualAddress &&
+      selectedProvince &&
+      selectedMunicipality &&
+      selectedBarangay &&
+      street &&
+      houseNumber);
+  const isPaymentValid =
+    paymentMethod !== "cash" ||
+    (paymentMethod === "cash" &&
+      amountPaid &&
+      !paymentError &&
+      parseFloat(amountPaid) >= totalPrice);
+  const isBookingDisabled =
+    !bookingOption ||
+    !packages.some((p) => p.checked) ||
+    (bookingOption === "scheduled" && (!selectedDate || !selectedTime)) ||
+    !isLocationValid ||
+    !isPaymentValid ||
+    isSubmitting;
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <div className="flex-grow pb-28 md:pb-24">
-        <div className="md:flex md:flex-row md:gap-x-6 md:p-4 lg:gap-x-8 lg:p-6">
-          {/* Left Column Wrapper */}
-          <div className="md:flex md:w-1/2 md:flex-col">
-            {/* Package Selection Section */}
-            <div className="border-b border-gray-200 bg-white p-4 md:rounded-t-xl md:border md:border-b-0 md:shadow-sm">
+        <div className="md:flex md:flex-row md:gap-x-8 md:p-6">
+          <div className="md:w-1/2">
+            <div className="bg-white p-4 md:rounded-xl md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Pumili ng package *
+                Select Package(s) *
               </h3>
               {packages.map((pkg) => (
                 <label
@@ -409,252 +487,297 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                 </label>
               ))}
             </div>
-
-            {/* Concerns Section */}
-            {/* <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Concerns</h3>
-              <textarea
-                className="w-full p-3 border border-gray-300 rounded-lg resize-none min-h-[80px] focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Add any concerns or requests..."
-                value={concerns}
-                onChange={(e) => setConcerns(e.target.value)}
+            <div className="hidden md:block">
+              <PaymentSection
+                {...{
+                  paymentMethod,
+                  setPaymentMethod,
+                  packages,
+                  amountPaid,
+                  handleAmountChange,
+                  paymentError,
+                  totalPrice,
+                }}
               />
-            </div> */}
+            </div>
           </div>
-
-          {/* Right Column Wrapper */}
-          <div className="mt-4 md:mt-0 md:flex md:w-1/2 md:flex-col">
-            {/* Booking Schedule Section */}
-            <div className="border-b border-gray-200 bg-white p-4 md:rounded-t-xl md:border md:border-b-0 md:shadow-sm">
+          <div className="mt-4 md:mt-0 md:w-1/2">
+            <div className="mb-4 bg-white p-4 md:rounded-xl md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Iskedyul ng reserbasyon *
+                Provider's Availability
               </h3>
-
-              {hookService.weeklySchedule &&
-                hookService.weeklySchedule.length > 0 && (
-                  <div className="mb-4 rounded bg-blue-50 p-2 text-center text-sm text-blue-700">
-                    <strong>
-                      Available:{" "}
-                      {hookService.weeklySchedule
-                        .filter((s) => s.availability.isAvailable)
-                        .map((s) => s.day)
-                        .join(", ")}{" "}
-                      |
-                      {hookService.weeklySchedule[0]?.availability?.slots
-                        ?.map((slot) => `${slot.startTime}-${slot.endTime}`)
-                        .join(", ") || "No time slots available"}
-                    </strong>
+              {service.weeklySchedule && service.weeklySchedule.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <CalendarDaysIcon className="mt-1 h-6 w-6 text-gray-400" />
+                    <div>
+                      <h4 className="font-medium text-gray-800">
+                        Available Days
+                      </h4>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {service.weeklySchedule
+                          .filter((s) => s.availability.isAvailable)
+                          .map((s) => (
+                            <span
+                              key={s.day}
+                              className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800"
+                            >
+                              {s.day}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
                   </div>
-                )}
-
-              {(!hookService.weeklySchedule ||
-                hookService.weeklySchedule.length === 0) && (
-                <div className="mb-4 rounded bg-yellow-50 p-2 text-center text-sm text-yellow-700">
-                  Walang itinakdang iskedyul ng availability para sa
-                  tagapagbigay na ito.
+                  <div className="flex items-start space-x-3">
+                    <ClockIcon className="mt-1 h-6 w-6 text-gray-400" />
+                    <div>
+                      <h4 className="font-medium text-gray-800">
+                        Service Hours
+                      </h4>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {service.weeklySchedule[0]?.availability?.slots?.map(
+                          (slot, index) => (
+                            <span
+                              key={index}
+                              className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800"
+                            >{`${slot.startTime}-${slot.endTime}`}</span>
+                          ),
+                        ) ?? (
+                          <span className="text-sm text-gray-500">
+                            Not specified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded bg-yellow-50 p-3 text-center text-sm text-yellow-700">
+                  This provider has not set their weekly schedule.
                 </div>
               )}
-
+            </div>
+            <div className="bg-white p-4 md:rounded-xl md:shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                Booking Schedule *
+              </h3>
               <div className="mb-4 flex gap-3">
                 <button
-                  className={`flex-1 rounded-lg border p-3 text-center ${
-                    bookingOption === "sameday"
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 bg-gray-50 text-gray-700"
-                  } ${!isSameDayAvailable ? "cursor-not-allowed opacity-50" : "hover:bg-blue-500 hover:text-white"}`}
+                  className={`flex-1 rounded-lg border p-3 text-center transition-colors ${bookingOption === "sameday" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"} ${!isSameDayAvailable ? "cursor-not-allowed opacity-50" : ""}`}
                   onClick={() => handleBookingOptionChange("sameday")}
                   disabled={!isSameDayAvailable}
                 >
-                  <div className="text-sm font-medium">Parehong araw</div>
-                  {isSameDayAvailable && (
-                    <div className="text-xs opacity-75">
-                      Makakarating sa loob ng 20-45 mins
-                    </div>
-                  )}
+                  <div className="text-sm font-medium">Same Day</div>
                 </button>
                 <button
-                  className={`flex-1 rounded-lg border p-3 text-center ${
-                    bookingOption === "scheduled"
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"
-                  }`}
+                  className={`flex-1 rounded-lg border p-3 text-center transition-colors ${bookingOption === "scheduled" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"}`}
                   onClick={() => handleBookingOptionChange("scheduled")}
                 >
-                  <div className="text-sm font-medium">Iskedyul nalang</div>
+                  Schedule
                 </button>
               </div>
-
               {bookingOption === "scheduled" && (
                 <div className="space-y-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Pumili ng petsa:
-                    </label>
+                  <div className="booking-calendar-wrapper">
                     <DatePicker
                       selected={selectedDate}
                       onChange={handleDateChange}
-                      className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-blue-500"
-                      placeholderText="Click to select a date"
-                      dateFormat="MMMM d, yyyy"
-                      minDate={new Date()}
+                      minDate={
+                        new Date(new Date().setDate(new Date().getDate() + 1))
+                      }
                       filterDate={(date) => {
-                        if (!hookService.weeklySchedule) return false;
                         const dayName = dayIndexToName(date.getDay());
-                        return hookService.weeklySchedule.some(
-                          (scheduleItem) =>
-                            scheduleItem.day === (dayName as DayOfWeek) &&
-                            scheduleItem.availability.isAvailable,
-                        );
+                        return service.weeklySchedule
+                          ? service.weeklySchedule.some(
+                              (s) =>
+                                s.day === (dayName as DayOfWeek) &&
+                                s.availability.isAvailable,
+                            )
+                          : false;
                       }}
+                      inline
                     />
                   </div>
-
-                  {selectedDate && hookAvailableSlots.length > 0 && (
+                  {selectedDate && (
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Pumili ng oras:
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Select a time:
                       </label>
-                      <select
-                        className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-blue-500"
-                        value={selectedTime}
-                        onChange={(e) => handleTimeChange(e.target.value)}
-                      >
-                        <option value="">Choose a time</option>
-                        {hookAvailableSlots
-                          .filter((slot) => slot.isAvailable)
-                          .map((slot, index) => {
-                            const timeSlotValue = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
-                            return (
-                              <option key={index} value={timeSlotValue}>
-                                {slot.timeSlot.startTime} -{" "}
-                                {slot.timeSlot.endTime}
-                              </option>
-                            );
-                          })}
-                      </select>
-                    </div>
-                  )}
-
-                  {selectedDate && hookAvailableSlots.length === 0 && (
-                    <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-700">
-                      ⏰ Walang libreng oras para sa petsang ito. Subukan ang
-                      ibang petsa.
-                    </div>
-                  )}
-
-                  {!selectedDate && (
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-                      📅 Pumili ng petsa muna upang makita ang mga libreng oras.
+                      <div className="flex flex-wrap gap-2">
+                        {availableSlots.length > 0 ? (
+                          availableSlots
+                            .filter((slot) => slot.isAvailable)
+                            .map((slot, index) => {
+                              const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => setSelectedTime(time)}
+                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${selectedTime === time ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+                                >
+                                  {time}
+                                </button>
+                              );
+                            })
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No available slots for this day.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
               )}
             </div>
-
-            {/* Location Section */}
-            <div className="border-b border-gray-200 bg-white p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
+            <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Lokasyon ng Serbisyo *
+                Service Location *
               </h3>
-
               <button
                 onClick={handleUseCurrentLocation}
                 className="mb-3 w-full rounded-lg bg-blue-600 p-3 text-sm text-white transition-colors hover:bg-blue-700"
               >
-                📍 Gamitin ang kasalukuyang lokasyon.
+                📍 Use Current Location
               </button>
-
               {currentLocationStatus && (
                 <div className="mb-3 rounded border border-blue-200 bg-blue-50 p-2 text-center text-xs text-blue-700">
                   {currentLocationStatus}
                 </div>
               )}
-
               {!showManualAddress && (
                 <button
                   onClick={toggleManualAddress}
                   className="w-full rounded-lg bg-gray-100 p-3 text-sm text-gray-700 transition-colors hover:bg-gray-200"
                 >
-                  Manu-manong ilagay
+                  Enter Address Manually
                 </button>
               )}
-
               {showManualAddress && (
                 <div className="mt-2 space-y-3">
                   <p className="text-xs text-gray-600">
-                    Ilagay ang address ng manu-mano (Lahat ay kinakailangan.*):
+                    Please enter your address manually:
                   </p>
-                  <input
-                    type="text"
-                    placeholder="House No. / Unit / Building *"
-                    value={houseNumber}
-                    onChange={(e) => setHouseNumber(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
+                  <select
+                    value={selectedProvince}
+                    onChange={(e) => {
+                      setSelectedProvince(e.target.value);
+                      setSelectedMunicipality("");
+                      setSelectedBarangay("");
+                    }}
+                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm"
+                  >
+                    <option value="">Select Province</option>
+                    {Object.keys(addressData).map((prov) => (
+                      <option key={prov} value={prov}>
+                        {prov}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedMunicipality}
+                    onChange={(e) => {
+                      setSelectedMunicipality(e.target.value);
+                      setSelectedBarangay("");
+                    }}
+                    disabled={!selectedProvince}
+                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm disabled:bg-gray-100"
+                  >
+                    <option value="">Select Municipality/City</option>
+                    {selectedProvince &&
+                      Object.keys(addressData[selectedProvince]).map((mun) => (
+                        <option key={mun} value={mun}>
+                          {mun}
+                        </option>
+                      ))}
+                  </select>
+                  <select
+                    value={selectedBarangay}
+                    onChange={(e) => setSelectedBarangay(e.target.value)}
+                    disabled={!selectedMunicipality}
+                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm disabled:bg-gray-100"
+                  >
+                    <option value="">Select Barangay</option>
+                    {selectedMunicipality &&
+                      addressData[selectedProvince][selectedMunicipality].map(
+                        (brgy) => (
+                          <option key={brgy} value={brgy}>
+                            {brgy}
+                          </option>
+                        ),
+                      )}
+                  </select>
                   <input
                     type="text"
                     placeholder="Street Name *"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 p-3 text-sm"
                   />
                   <input
                     type="text"
-                    placeholder="Barangay *"
-                    value={barangay}
-                    onChange={(e) => setBarangay(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="House No. / Unit / Building *"
+                    value={houseNumber}
+                    onChange={(e) => setHouseNumber(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 p-3 text-sm"
                   />
                   <input
                     type="text"
-                    placeholder="Municipality / City *"
-                    value={municipalityCity}
-                    onChange={(e) => setMunicipalityCity(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Province *"
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Landmark / Additional Info (Optional)"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 p-3 text-sm"
                   />
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        <div className="mt-4 px-4 md:mx-4 md:mt-6 md:px-0 lg:mx-6">
-          <div className="bg-white p-4 md:rounded-xl md:border md:shadow-sm">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">
-              Magbayad
-            </h3>
-            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-              💸 "Tanging cash lamang ang maaaring ipangbayad."
+            <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
+              <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+                <PencilSquareIcon className="mr-2 h-5 w-5 text-gray-500" />
+                Notes for Provider (Optional)
+              </h3>
+              <textarea
+                placeholder="e.g., Beware of the dog, please bring a ladder, etc."
+                value={concerns}
+                onChange={(e) => setConcerns(e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div className="md:hidden">
+              <PaymentSection
+                {...{
+                  paymentMethod,
+                  setPaymentMethod,
+                  packages,
+                  amountPaid,
+                  handleAmountChange,
+                  paymentError,
+                  totalPrice,
+                }}
+              />
             </div>
           </div>
-
+        </div>
+      </div>
+      <div className="sticky bottom-0 border-t bg-white p-4">
+        <div className="mx-auto max-w-md">
           {formError && (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
               {formError}
             </div>
           )}
+          <button
+            onClick={handleConfirmBooking}
+            disabled={isBookingDisabled}
+            className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-yellow-500 disabled:bg-gray-300"
+          >
+            {isSubmitting && (
+              <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+            )}
+            {isSubmitting ? "Submitting..." : "Confirm Booking"}
+          </button>
         </div>
-      </div>
-
-      <div className="shadow-top-md sticky bottom-0 border-t border-gray-200 bg-white p-4">
-        <button
-          onClick={handleConfirmBooking}
-          disabled={isConfirmDisabled}
-          className={`w-full rounded-lg py-3 font-semibold text-white transition-colors md:py-4 ${
-            isConfirmDisabled
-              ? "cursor-not-allowed bg-gray-300"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          Kumpirmahin ang reserbasyon.
-        </button>
       </div>
     </div>
   );

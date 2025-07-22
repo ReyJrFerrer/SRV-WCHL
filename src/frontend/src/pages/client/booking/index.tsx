@@ -1,12 +1,18 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import BottomNavigationNextjs from "../../../components/client/BottomNavigation";
-import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard";
-import { useBookingManagement } from "../../../hooks/bookingManagement";
+import { useSearchParams } from "react-router-dom";
+import BottomNavigation from "../../../components/client/BottomNavigation"; // Adjusted import
+import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard"; // Adjust path as needed
 import {
-  ArrowLeftIcon,
+  useBookingManagement,
+  EnhancedBooking,
+} from "../../../hooks/bookingManagement"; // Adjust path as needed
+import {
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
+  CalendarDaysIcon,
+  SparklesIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
 } from "@heroicons/react/24/solid";
 
 type BookingStatusTab =
@@ -26,95 +32,137 @@ const TAB_ITEMS: BookingStatusTab[] = [
 ];
 
 const MyBookingsPage: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const queryTab = searchParams.get("tab");
   const bookingManagement = useBookingManagement();
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
 
-  // Set document title
+  // Effect to sync the active tab with the URL query parameter
+  useEffect(() => {
+    const queryTab = searchParams.get("tab");
+    if (queryTab && typeof queryTab === "string") {
+      const upperCaseQueryTab = queryTab
+        .toUpperCase()
+        .replace("-", "_") as BookingStatusTab;
+      if (TAB_ITEMS.includes(upperCaseQueryTab)) {
+        setActiveTab(upperCaseQueryTab);
+      } else {
+        // If the tab in the URL is invalid, reset to 'all'
+        setSearchParams({ tab: "all" });
+      }
+    } else {
+      setActiveTab("ALL");
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Set the document title
   useEffect(() => {
     document.title = "My Bookings - SRV";
   }, []);
 
-  useEffect(() => {
-    let targetTab: BookingStatusTab = "ALL";
-    let shouldRedirect = false;
-    let redirectTabQuery = "all";
-
-    if (queryTab) {
-      const upperCaseQueryTab = queryTab.toUpperCase() as BookingStatusTab;
-      if (TAB_ITEMS.includes(upperCaseQueryTab)) {
-        targetTab = upperCaseQueryTab;
-      } else {
-        shouldRedirect = true;
-      }
-    }
-
-    if (activeTab !== targetTab) {
-      setActiveTab(targetTab);
-    }
-
-    if (shouldRedirect && queryTab !== redirectTabQuery) {
-      setSearchParams({ tab: redirectTabQuery });
-    }
-  }, [queryTab, setSearchParams, activeTab]);
-
-  // Filter bookings based on active tab
-  const filteredBookings = useMemo(() => {
-    if (!Array.isArray(bookingManagement.bookings)) {
-      console.error(
-        "bookingManagement.bookings is not an array!",
-        bookingManagement.bookings,
-      );
-      return [];
-    }
-
-    const validBookings = bookingManagement.bookings.filter((booking) => {
-      if (!booking) {
-        console.warn(
-          "Undefined/null booking object found in bookings and removed before tab filtering.",
-        );
-        return false;
-      }
-      if (typeof booking.status !== "string") {
-        console.warn(
-          "Booking object missing or has invalid status, removed before tab filtering:",
-          booking,
-        );
-        return false;
-      }
-      return true;
-    });
-
-    if (activeTab === "ALL") {
-      return validBookings;
-    }
-
-    // Map tab names to booking status values to match your booking management hook
-    const statusMapping: Record<BookingStatusTab, string[]> = {
-      ALL: [],
-      PENDING: ["Requested", "Pending"],
-      CONFIRMED: ["Accepted", "Confirmed"],
-      IN_PROGRESS: ["InProgress", "In_Progress"],
-      COMPLETED: ["Completed"],
-      CANCELLED: ["Cancelled", "Declined"],
-    };
-
-    const statusesToMatch = statusMapping[activeTab] || [];
-    return validBookings.filter((booking) =>
-      statusesToMatch.some(
-        (status) => booking.status.toLowerCase() === status.toLowerCase(),
-      ),
+  const bookingCategories = useMemo(() => {
+    if (!Array.isArray(bookingManagement.bookings)) return [];
+    const categories = new Set(
+      bookingManagement.bookings
+        .map((b) => b.serviceDetails?.category?.name)
+        .filter(Boolean),
     );
-  }, [activeTab, bookingManagement.bookings]);
+    return ["All Categories", ...Array.from(categories)];
+  }, [bookingManagement.bookings]);
 
-  // Get bookings count for each tab
+  const filteredBookings = useMemo(() => {
+    if (!Array.isArray(bookingManagement.bookings)) return [];
+
+    let processedBookings = bookingManagement.bookings.filter(
+      (booking) => booking && typeof booking.status === "string",
+    );
+
+    if (activeTab !== "ALL") {
+      const statusMapping: Record<BookingStatusTab, string[]> = {
+        ALL: [],
+        PENDING: ["Requested", "Pending"],
+        CONFIRMED: ["Accepted", "Confirmed"],
+        IN_PROGRESS: ["InProgress", "In_Progress"],
+        COMPLETED: ["Completed"],
+        CANCELLED: ["Cancelled", "Declined"],
+      };
+      const statusesToMatch = statusMapping[activeTab] || [];
+      processedBookings = processedBookings.filter((booking) =>
+        statusesToMatch.some(
+          (status) => booking.status.toLowerCase() === status.toLowerCase(),
+        ),
+      );
+    }
+
+    if (searchTerm) {
+      processedBookings = processedBookings.filter(
+        (booking) =>
+          booking.serviceName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking.packageName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking.providerProfile?.name
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()),
+      );
+    }
+
+    if (filterType !== "all" && filterType !== "All Categories") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      processedBookings = processedBookings.filter((booking) => {
+        if (filterType === "sameDay") {
+          const bookingDate = new Date(
+            booking.requestedDate || booking.createdAt,
+          );
+          bookingDate.setHours(0, 0, 0, 0);
+          return bookingDate.getTime() === today.getTime();
+        }
+        if (filterType === "scheduled") {
+          const bookingDate = new Date(
+            booking.requestedDate || booking.createdAt,
+          );
+          bookingDate.setHours(0, 0, 0, 0);
+          return bookingDate.getTime() > today.getTime();
+        }
+        return booking.serviceDetails?.category?.name === filterType;
+      });
+    }
+
+    return processedBookings;
+  }, [activeTab, bookingManagement.bookings, searchTerm, filterType]);
+
+  const { sameDayBookings, scheduledBookings } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sameDay: EnhancedBooking[] = [];
+    const scheduled: EnhancedBooking[] = [];
+
+    filteredBookings.forEach((booking) => {
+      const bookingDate = new Date(booking.requestedDate || booking.createdAt);
+      bookingDate.setHours(0, 0, 0, 0);
+      if (bookingDate.getTime() === today.getTime()) {
+        sameDay.push(booking);
+      } else {
+        scheduled.push(booking);
+      }
+    });
+    scheduled.sort(
+      (a, b) =>
+        new Date(a.requestedDate || a.createdAt).getTime() -
+        new Date(b.requestedDate || b.createdAt).getTime(),
+    );
+    return { sameDayBookings: sameDay, scheduledBookings: scheduled };
+  }, [filteredBookings]);
+
   const getBookingCountForTab = (tab: BookingStatusTab) => {
     if (!bookingManagement.bookings) return 0;
     if (tab === "ALL") return bookingManagement.bookings.length;
-
     const statusMapping: Record<BookingStatusTab, string[]> = {
       ALL: [],
       PENDING: ["Requested", "Pending"],
@@ -123,10 +171,10 @@ const MyBookingsPage: React.FC = () => {
       COMPLETED: ["Completed"],
       CANCELLED: ["Cancelled", "Declined"],
     };
-
     const statusesToMatch = statusMapping[tab] || [];
     return bookingManagement.bookings.filter(
       (booking) =>
+        booking &&
         booking.status &&
         statusesToMatch.some(
           (status) => booking.status.toLowerCase() === status.toLowerCase(),
@@ -134,12 +182,14 @@ const MyBookingsPage: React.FC = () => {
     ).length;
   };
 
-  // Handle cancel booking
   const handleCancelBookingOnListPage = async (bookingId: string) => {
+    // NOTE: window.confirm is blocking and not ideal for modern UX.
+    // Consider replacing this with a custom modal component.
     if (window.confirm("Are you sure you want to cancel this booking?")) {
       try {
         await bookingManagement.updateBookingStatus(bookingId, "Cancelled");
-        alert(`Booking ${bookingId} has been cancelled successfully.`);
+        // NOTE: window.alert is also blocking. Use a toast notification instead.
+        alert(`Booking has been cancelled successfully.`);
       } catch (error) {
         console.error("Error cancelling booking:", error);
         alert("Failed to cancel booking. Please try again.");
@@ -148,103 +198,145 @@ const MyBookingsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
-        <div className="container mx-auto flex items-center">
-          <button
-            onClick={() => navigate("/client/home")}
-            className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100 md:hidden"
-            aria-label="Back to Home"
-          >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-          </button>
-          <h1 className="flex-grow text-center text-xl font-semibold text-slate-800 md:text-left">
-            Aking Bookings
-          </h1>
+    <>
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-4xl items-center justify-center px-4 py-4">
+          <h1 className="text-xl font-bold text-gray-900">My Bookings</h1>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div
-        className="booking-tabs sticky top-[57px] z-10 overflow-x-auto border-b border-gray-200 bg-white whitespace-nowrap"
-        style={{
-          msOverflowStyle: "none",
-          scrollbarWidth: "none",
-        }}
-      >
-        <style>
-          {`
-              .booking-tabs::-webkit-scrollbar {
-                display: none;
-              }
-            `}
-        </style>
-        <nav className="flex justify-start space-x-1 p-1.5 sm:justify-around sm:p-2">
-          {TAB_ITEMS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setSearchParams({ tab: tab.toLowerCase() });
-              }}
-              className={`flex-shrink-0 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-150 sm:text-sm ${
-                activeTab === tab
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-500 hover:bg-gray-200 hover:text-slate-700"
-              }`}
-            >
-              {tab.replace("_", " ")} ({getBookingCountForTab(tab)})
-            </button>
-          ))}
-        </nav>
+      <div className="flex min-h-screen flex-col bg-gray-100">
+        {/* Search/Filter Bar */}
+        <div className="sticky top-[57px] z-10 border-b border-gray-200 bg-white">
+          <div className="hide-scrollbar flex justify-start overflow-x-auto p-2 whitespace-nowrap sm:justify-center">
+            <nav className="flex space-x-1 rounded-full bg-gray-200 p-1">
+              {TAB_ITEMS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() =>
+                    setSearchParams({
+                      tab: tab.toLowerCase().replace("_", "-"),
+                    })
+                  }
+                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${activeTab === tab ? "bg-blue-600 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
+                >
+                  {tab.replace("_", " ")} ({getBookingCountForTab(tab)})
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="container mx-auto px-4 pt-2 pb-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-grow">
+                <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search bookings..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div className="relative">
+                <FunnelIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="w-full appearance-none truncate rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500 sm:w-auto"
+                >
+                  <option value="all">All Types</option>
+                  <option value="sameDay">Same Day</option>
+                  <option value="scheduled">Scheduled</option>
+                  <optgroup label="Categories">
+                    {bookingCategories.slice(1).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <main className="container mx-auto flex-grow p-3 pb-24 sm:p-4 md:pb-4">
+          {bookingManagement.loading ? (
+            <div className="py-16 text-center">
+              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+              <p className="mt-4 text-gray-500">Loading bookings...</p>
+            </div>
+          ) : bookingManagement.error ? (
+            <div className="mt-4 rounded-lg bg-white py-16 text-center shadow">
+              <ExclamationTriangleIcon className="mx-auto mb-4 h-16 w-16 text-red-300" />
+              <p className="mb-4 text-lg text-red-500">
+                {bookingManagement.error}
+              </p>
+              <button
+                onClick={() => bookingManagement.retryOperation("loadBookings")}
+                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredBookings.length > 0 ? (
+            <div className="space-y-8">
+              {sameDayBookings.length > 0 && (
+                <section>
+                  <div className="mb-3 flex items-center">
+                    <SparklesIcon className="mr-2 h-6 w-6 text-yellow-500" />
+                    <h2 className="text-lg font-bold text-yellow-600">
+                      Same Day Bookings
+                    </h2>
+                  </div>
+                  <div className="space-y-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 md:space-y-6">
+                    {sameDayBookings.map((booking) => (
+                      <ClientBookingItemCard
+                        key={booking.id}
+                        booking={booking}
+                        onCancelBooking={handleCancelBookingOnListPage}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {scheduledBookings.length > 0 && (
+                <section>
+                  <div className="mb-3 flex items-center">
+                    <CalendarDaysIcon className="mr-2 h-6 w-6 text-gray-500" />
+                    <h2 className="text-lg font-bold text-gray-700">
+                      Scheduled Bookings
+                    </h2>
+                  </div>
+                  <div className="space-y-4 md:space-y-6">
+                    {scheduledBookings.map((booking) => (
+                      <ClientBookingItemCard
+                        key={booking.id}
+                        booking={booking}
+                        onCancelBooking={handleCancelBookingOnListPage}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-lg bg-white py-16 text-center shadow">
+              <ClipboardDocumentListIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+              <p className="text-lg text-gray-500">
+                No bookings found with the current filters.
+              </p>
+            </div>
+          )}
+        </main>
+
+        <div>
+          <BottomNavigation />
+        </div>
       </div>
-
-      {/* Main Content */}
-      <main className="container mx-auto flex-grow p-3 pb-20 sm:p-4">
-        {bookingManagement.loading ? (
-          <div className="py-16 text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-500">
-              Niloload ang iyong mga bookings...
-            </p>
-          </div>
-        ) : bookingManagement.error ? (
-          <div className="mt-4 rounded-lg bg-white py-16 text-center shadow">
-            <ExclamationTriangleIcon className="mx-auto mb-4 h-16 w-16 text-red-300" />
-            <p className="mb-4 text-lg text-red-500">
-              {bookingManagement.error}
-            </p>
-            <button
-              onClick={() => bookingManagement.retryOperation("loadBookings")}
-              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              Ulitin
-            </button>
-          </div>
-        ) : filteredBookings.length > 0 ? (
-          <div className="space-y-4 md:space-y-6">
-            {filteredBookings.map((booking) => (
-              <ClientBookingItemCard
-                key={booking.id}
-                booking={booking}
-                onCancelBooking={handleCancelBookingOnListPage}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-lg bg-white py-16 text-center shadow">
-            <ClipboardDocumentListIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-            <p className="text-lg text-gray-500">
-              Walang booking na nahanap sa kategoryang: "
-              {activeTab.replace("_", " ")}" .
-            </p>
-          </div>
-        )}
-      </main>
-
-      {/* Bottom Navigation */}
-      <BottomNavigationNextjs />
-    </div>
+    </>
   );
 };
+
 export default MyBookingsPage;
