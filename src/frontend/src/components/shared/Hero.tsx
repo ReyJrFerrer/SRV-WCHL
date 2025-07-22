@@ -335,12 +335,16 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
                 <span className="text-segment">Ang Serbisyo,</span>
                 <div className="component-group line-1-components">
                   <div className="arrow-circle">
-                    <img src="/hero/arrow.png" alt="Arrow" className="arrow-image" />
+                    <img
+                      src="/hero/arrow.png"
+                      alt="Arrow"
+                      className="arrow-image"
+                    />
                   </div>
                   <div className="toggle-switch"></div>
                 </div>
               </div>
-              
+
               {/* Second line: Star, Rito ay with message bubble */}
               <div className="text-line">
                 <div className="component-group line-2-components">
@@ -348,10 +352,14 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
                 </div>
                 <span className="text-segment">Rito ay</span>
                 <div className="component-group">
-                  <img src="/hero/message-load.svg" alt="Typing message animation" className="message-load-image" />
+                  <img
+                    src="/hero/message-load.svg"
+                    alt="Typing message animation"
+                    className="message-load-image"
+                  />
                 </div>
               </div>
-              
+
               {/* Third line: always Valued! with dots and line */}
               <div className="text-line">
                 <div className="dots-line">
@@ -363,8 +371,16 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
                 </div>
                 <span className="text-segment">always Valued!</span>
                 <div className="component-group line-3-components">
-                  <img src="/hero/polygon1.svg" alt="Decorative polygon" className="polygon-image1" />
-                  <img src="/hero/polygon1.svg" alt="Decorative polygon" className="polygon-image2" />
+                  <img
+                    src="/hero/polygon1.svg"
+                    alt="Decorative polygon"
+                    className="polygon-image1"
+                  />
+                  <img
+                    src="/hero/polygon1.svg"
+                    alt="Decorative polygon"
+                    className="polygon-image2"
+                  />
                 </div>
               </div>
             </div>

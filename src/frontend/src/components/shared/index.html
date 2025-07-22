@@ -1,350 +1,510 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SRV - Your Service Hub</title>
-    <meta name="description" content="Find and book local services with ease on the Internet Computer.">
-    <link rel="icon" href="public/logo.svg">
-    <link rel="stylesheet" href="styles.css">
+    <meta
+      name="description"
+      content="Find and book local services with ease on the Internet Computer."
+    />
+    <link rel="icon" href="public/logo.svg" />
+    <link rel="stylesheet" href="styles.css" />
     <script src="script.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Header Section-->
-     <header class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo-container">
-                    <a href="/" class="logo-link" aria-label="SRV Home">
-                        <img src="public/logo.svg" alt="SRV Logo" class="logo-image">
-                    </a>
-                </div>
-                
-                <button class="mobile-menu-toggle" aria-label="Toggle menu">
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                </button>
-                
-                <nav class="main-nav">
-                    <ul class="nav-list">
-                        <li class="nav-item"><a href="index.html" class="nav-link nav-link-active">Home</a></li>
-                        <li class="nav-item"><a href="about-us.html" class="nav-link">About</a></li>
-                        <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
-                        <li class="nav-item nav-cta">
-                            <button id="needServiceBtn" class="btn-primary">
-                                <span class="btn-text">Join the Waitlist</span>
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
+    <header class="site-header">
+      <div class="container">
+        <div class="header-content">
+          <div class="logo-container">
+            <a href="/" class="logo-link" aria-label="SRV Home">
+              <img src="public/logo.svg" alt="SRV Logo" class="logo-image" />
+            </a>
+          </div>
 
-                <div class="header-button">
-                    <button id="needServiceBtn" class="btn-primary">
-                        <span class="btn-text">Join the Waitlist</span>
-                    </button>
-                </div>
-            </div>
+          <button class="mobile-menu-toggle" aria-label="Toggle menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+
+          <nav class="main-nav">
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="index.html" class="nav-link nav-link-active">Home</a>
+              </li>
+              <li class="nav-item">
+                <a href="about-us.html" class="nav-link">About</a>
+              </li>
+              <li class="nav-item">
+                <a href="contact.html" class="nav-link">Contact</a>
+              </li>
+              <li class="nav-item nav-cta">
+                <button id="needServiceBtn" class="btn-primary">
+                  <span class="btn-text">Join the Waitlist</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+          <div class="header-button">
+            <button id="needServiceBtn" class="btn-primary">
+              <span class="btn-text">Join the Waitlist</span>
+            </button>
+          </div>
         </div>
+      </div>
     </header>
 
     <section class="hero-section">
-      
-        <div class="container">
-            <div class="hero-content">
-           
-                <div class="hero-text-container">
-                    <h1 class="hero-text">
-                        <div class="text-line">
-                            <span class="text-segment">Ang Serbisyo,</span>
-                            <span class="component-group-after">
-                                <span class="arrow-circle">
-                                     <img src="public/hero/arrow.png" alt="Arrow" class="arrow-image">
-                                </span>
-                                <span class="toggle-switch"></span>
-                                 
-                            </span>
-                        </div>
-                        
-                        <div class="text-line">
-                            <span class="component-group-before">
-                                 <img src="public/hero/star.svg" alt="star" class="star-image">
-                               
-                            </span>
-                            <span class="text-segment">Rito ay</span>
-                            <span class="component-group-after">
-                                <img src="public/hero/message-load.svg" alt="message-load" class="message-load-image">
-                          
-                            </span>
-                        </div>
-                        
-                        <div class="text-line">
-                            <span class="component-group-before">
-                                <div class = "dots-line">
-                                    <span class="line"></span>
-                                        <span class="dots">
-                                            <span class="dot"></span>
-                                            <span class="dot"></span>
-                                        </span>
-                                    <span class="line"></span>
-                                </div>
-                            </span>
-                            
-                            <span class="text-segment">always Valued!</span>
-                            <span class="component-group-after">
-                                 <img src="public/hero/polygon1.svg" alt="star" class="polygon-image1">
-                                     <img src="public/hero/polygon1.svg" alt="star" class="polygon-image2">
-                            </span>
-                        </div>
-                    </h1>
-                </div>
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-text-container">
+            <h1 class="hero-text">
+              <div class="text-line">
+                <span class="text-segment">Ang Serbisyo,</span>
+                <span class="component-group-after">
+                  <span class="arrow-circle">
+                    <img
+                      src="public/hero/arrow.png"
+                      alt="Arrow"
+                      class="arrow-image"
+                    />
+                  </span>
+                  <span class="toggle-switch"></span>
+                </span>
+              </div>
 
+              <div class="text-line">
+                <span class="component-group-before">
+                  <img
+                    src="public/hero/star.svg"
+                    alt="star"
+                    class="star-image"
+                  />
+                </span>
+                <span class="text-segment">Rito ay</span>
+                <span class="component-group-after">
+                  <img
+                    src="public/hero/message-load.svg"
+                    alt="message-load"
+                    class="message-load-image"
+                  />
+                </span>
+              </div>
 
-                <p class="hero-description">
-                    Finding reliable help for everyday tasks can be a challenge. <strong>SRV</strong> is your platform to easily discover, compare, and book a wide range of local service providers.
-                </p>
+              <div class="text-line">
+                <span class="component-group-before">
+                  <div class="dots-line">
+                    <span class="line"></span>
+                    <span class="dots">
+                      <span class="dot"></span>
+                      <span class="dot"></span>
+                    </span>
+                    <span class="line"></span>
+                  </div>
+                </span>
 
+                <span class="text-segment">always Valued!</span>
+                <span class="component-group-after">
+                  <img
+                    src="public/hero/polygon1.svg"
+                    alt="star"
+                    class="polygon-image1"
+                  />
+                  <img
+                    src="public/hero/polygon1.svg"
+                    alt="star"
+                    class="polygon-image2"
+                  />
+                </span>
+              </div>
+            </h1>
+          </div>
 
-                <div class="hero-buttons">
-                    <button id="needServiceBtn" class="btn-primary">
-                        <span class="btn-text">Join the Waitlist</span>
-                    </button>
-                </div>
-                <div id="waitlistCount" style="margin-top: 20px; text-align: center; font-size: 1rem; color: #444;">
-                    Loading waitlist count...
-                </div>
-            </div>
+          <p class="hero-description">
+            Finding reliable help for everyday tasks can be a challenge.
+            <strong>SRV</strong> is your platform to easily discover, compare,
+            and book a wide range of local service providers.
+          </p>
+
+          <div class="hero-buttons">
+            <button id="needServiceBtn" class="btn-primary">
+              <span class="btn-text">Join the Waitlist</span>
+            </button>
+          </div>
+          <div
+            id="waitlistCount"
+            style="
+              margin-top: 20px;
+              text-align: center;
+              font-size: 1rem;
+              color: #444;
+            "
+          >
+            Loading waitlist count...
+          </div>
         </div>
+      </div>
     </section>
 
     <section class="features-section">
-        <div class="container">
-            <div class="features-header">
-                <h1 class="features-title">How does SRV work?</h1> 
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3 class="feature-title">Discover</h3>
-                    <div class="feature-image">
-                        <img src="public/blueBall.png" alt="Service Discovery" class="feature-icon">
-                    </div>
-                    <p class="feature-description">Browse trusted service providers near you - from home repair to wellness.</p>
-                </div>
-
-                <div class="feature-card">
-                    <h3 class="feature-title">Compare</h3>
-                    <div class="feature-image">
-                        <img src="public/ovalorange.png" alt="Detailed Provider Profiles" class="feature-icon">
-                    </div>
-                    <p class="feature-description">Check profiles, ratings, and real customer reviews</p>
-                </div>
-
-                <div class="feature-card">
-                    <h3 class="feature-title">Book</h3>
-                    <div class="feature-image">
-                        <img src="public/capsuleguy.png" alt="Seamless Booking System" class="feature-icon">
-                    </div>
-                    <p class="feature-description">Choose your preferred provider and confirm your schedule in just a few taps</p>
-                </div>
-
-                <div class="feature-card">
-                    <h3 class="feature-title">Get it Done</h3>
-                    <div class="feature-image">
-                        <img src="public/blueoval.png" alt="Authentic Ratings & Reviews" class="feature-icon">
-                    </div>
-                    <p class="feature-description">Service is completed. You rate, review, and vouch - helping the next customer choose wisely</p>
-                </div>
-            </div>
+      <div class="container">
+        <div class="features-header">
+          <h1 class="features-title">How does SRV work?</h1>
         </div>
-    </section>
 
+        <div class="features-grid">
+          <div class="feature-card">
+            <h3 class="feature-title">Discover</h3>
+            <div class="feature-image">
+              <img
+                src="public/blueBall.png"
+                alt="Service Discovery"
+                class="feature-icon"
+              />
+            </div>
+            <p class="feature-description">
+              Browse trusted service providers near you - from home repair to
+              wellness.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <h3 class="feature-title">Compare</h3>
+            <div class="feature-image">
+              <img
+                src="public/ovalorange.png"
+                alt="Detailed Provider Profiles"
+                class="feature-icon"
+              />
+            </div>
+            <p class="feature-description">
+              Check profiles, ratings, and real customer reviews
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <h3 class="feature-title">Book</h3>
+            <div class="feature-image">
+              <img
+                src="public/capsuleguy.png"
+                alt="Seamless Booking System"
+                class="feature-icon"
+              />
+            </div>
+            <p class="feature-description">
+              Choose your preferred provider and confirm your schedule in just a
+              few taps
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <h3 class="feature-title">Get it Done</h3>
+            <div class="feature-image">
+              <img
+                src="public/blueoval.png"
+                alt="Authentic Ratings & Reviews"
+                class="feature-icon"
+              />
+            </div>
+            <p class="feature-description">
+              Service is completed. You rate, review, and vouch - helping the
+              next customer choose wisely
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="why-choose-section">
+      <img src="public/CircleArrow.svg" class="bg-shape-arrow-left" alt="" />
+      <img src="public/Polygon 3.svg" class="bg-shape-triangle-top" alt="" />
 
-        <img src="public/CircleArrow.svg" class="bg-shape-arrow-left" alt="">
-        <img src="public/Polygon 3.svg" class="bg-shape-triangle-top" alt="">
-
-        <div class="container">
-           
-            <div class="why-choose-header">
-                <div class="why-choose-title-container">
-                    <h1 class="why-choose-title">Why Choose SRV?</h1>
-                </div>
-            </div>
-
-         
-            <div class="why-choose-content">
-                 <div class="phone-container">
-                    <img src="public/phone-new.png" alt="SRV Mobile App" class="phone-image">
-                </div>
-        
-                <div class="content-card">
-                    <div class="reasons-grid">
-                        <div class="reason-item">
-                            <div class="reason-icon">
-                                <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                </svg>
-                                     
-                            </div>
-                            <h3 class="reason-title">Beripikado at Maaasahan</h3>
-                            <p class="reason-description">Kasama mo ang SRV sa paghanap ng mga service provider na may kakayahan at beripikado.</p>
-                        </div>
-
-                        <div class="reason-item">
-                
-                            <div class="reason-icon">
-                                <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                            </div>
-                            <h3 class="reason-title">Platform na Nakatuon sa Kliyente</h3>
-                            <p class="reason-description">Madali lang maghanap at magtingin ng mga service provider sa iyong partikular na pangangailangan at lokasyon</p>
-                        </div>
-
-                        <div class="reason-item">
-                    
-                            <div class="reason-icon">
-                                <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"></path>
-                                </svg>
-                            </div>
-                            <h3 class="reason-title">Nagpapalakas sa mga Provider</h3>
-                            <p class="reason-description">Lahat ng iskedyul, reputasyon at ng kakayahan mo, mabilis lang asikasuhin sa SRV.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div class="container">
+        <div class="why-choose-header">
+          <div class="why-choose-title-container">
+            <h1 class="why-choose-title">Why Choose SRV?</h1>
+          </div>
         </div>
 
+        <div class="why-choose-content">
+          <div class="phone-container">
+            <img
+              src="public/phone-new.png"
+              alt="SRV Mobile App"
+              class="phone-image"
+            />
+          </div>
+
+          <div class="content-card">
+            <div class="reasons-grid">
+              <div class="reason-item">
+                <div class="reason-icon">
+                  <svg
+                    class="icon-svg"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="reason-title">Beripikado at Maaasahan</h3>
+                <p class="reason-description">
+                  Kasama mo ang SRV sa paghanap ng mga service provider na may
+                  kakayahan at beripikado.
+                </p>
+              </div>
+
+              <div class="reason-item">
+                <div class="reason-icon">
+                  <svg
+                    class="icon-svg"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="reason-title">Platform na Nakatuon sa Kliyente</h3>
+                <p class="reason-description">
+                  Madali lang maghanap at magtingin ng mga service provider sa
+                  iyong partikular na pangangailangan at lokasyon
+                </p>
+              </div>
+
+              <div class="reason-item">
+                <div class="reason-icon">
+                  <svg
+                    class="icon-svg"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
+                    ></path>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="reason-title">Nagpapalakas sa mga Provider</h3>
+                <p class="reason-description">
+                  Lahat ng iskedyul, reputasyon at ng kakayahan mo, mabilis lang
+                  asikasuhin sa SRV.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
-
-
 
     <section class="sdg-section">
-        <div class="container">
-            <div class="sdg-header">
-                <h1 class="sdg-title">Our Commitment to Sustainable Development</h1>
-                <p class="sdg-description">
-                    SRV is dedicated to making a positive impact by aligning our platform with key Sustainable Development Goals.
-                </p>
-            </div>
-
-            <div class="sdg-grid">
-                <div class="sdg-card">
-                     <h3 class="sdg-card-title">SDG 9: Industry, Innovation, and Infrastructure</h3>
-                      <div class="sdg-icon" >
-                            <img src="public/sdg9.png" alt="sdg 9" >
-                        </div>
-                   
-                    <p class="sdg-card-description">Integrating blockchain into e-commerce brings innovation to a mature industry while promoting public adoption of the technology and strengthening the platform's infrastructure.</p>
-                </div>
-
-                <div class="sdg-card sdg-card-primary">
-                    <h3 class="sdg-card-title sdg-primary-title">SDG 8: Decent Work and Economic Growth</h3>
-                       <div class="sdg-icon" >
-            
-                            <img src="public/sdg8.png" alt="sdg 8" >
-                        </div>
-                    
-                    <p class="sdg-card-description sdg-primary-description">SRV provides a professional platform for service transactions, promoting mutual respect and creating job opportunities for skilled but unemployed individuals.</p>
-                    <div class="sdg-primary-badge">Primary Focus</div>
-                </div>
-
-                <div class="sdg-card">
-                    <h3 class="sdg-card-title">SDG 17: Partnerships for the Goals</h3>
-                    <div class="sdg-icon" >
-        
-                        <img src="public/sdg17.png" alt="sdg 17" >
-                    </div>
-                   
-                    <p class="sdg-card-description">SRV fosters collaboration among service providers, clients, and support staff through technology, aligning with the SDG goals of partnership and knowledge sharing.</p>
-                </div>
-            </div>
+      <div class="container">
+        <div class="sdg-header">
+          <h1 class="sdg-title">Our Commitment to Sustainable Development</h1>
+          <p class="sdg-description">
+            SRV is dedicated to making a positive impact by aligning our
+            platform with key Sustainable Development Goals.
+          </p>
         </div>
+
+        <div class="sdg-grid">
+          <div class="sdg-card">
+            <h3 class="sdg-card-title">
+              SDG 9: Industry, Innovation, and Infrastructure
+            </h3>
+            <div class="sdg-icon">
+              <img src="public/sdg9.png" alt="sdg 9" />
+            </div>
+
+            <p class="sdg-card-description">
+              Integrating blockchain into e-commerce brings innovation to a
+              mature industry while promoting public adoption of the technology
+              and strengthening the platform's infrastructure.
+            </p>
+          </div>
+
+          <div class="sdg-card sdg-card-primary">
+            <h3 class="sdg-card-title sdg-primary-title">
+              SDG 8: Decent Work and Economic Growth
+            </h3>
+            <div class="sdg-icon">
+              <img src="public/sdg8.png" alt="sdg 8" />
+            </div>
+
+            <p class="sdg-card-description sdg-primary-description">
+              SRV provides a professional platform for service transactions,
+              promoting mutual respect and creating job opportunities for
+              skilled but unemployed individuals.
+            </p>
+            <div class="sdg-primary-badge">Primary Focus</div>
+          </div>
+
+          <div class="sdg-card">
+            <h3 class="sdg-card-title">SDG 17: Partnerships for the Goals</h3>
+            <div class="sdg-icon">
+              <img src="public/sdg17.png" alt="sdg 17" />
+            </div>
+
+            <p class="sdg-card-description">
+              SRV fosters collaboration among service providers, clients, and
+              support staff through technology, aligning with the SDG goals of
+              partnership and knowledge sharing.
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
 
-
-        <section class="about-cta-section">
-            <div class="container">
-                <div class="about-cta-card">
-                    <h2 class="about-cta-title">Be the first to experience SRV</h2>
-                    <p class="about-cta-description">Join the waitlist today and get notified the moment we launch in your area!</p>
-                    <div class="about-cta-button-container">
-                        <button id="needServiceBtn" class="btn-primary">
-                            <span class="btn-text">Join the Waitlist</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-
-
+    <section class="about-cta-section">
+      <div class="container">
+        <div class="about-cta-card">
+          <h2 class="about-cta-title">Be the first to experience SRV</h2>
+          <p class="about-cta-description">
+            Join the waitlist today and get notified the moment we launch in
+            your area!
+          </p>
+          <div class="about-cta-button-container">
+            <button id="needServiceBtn" class="btn-primary">
+              <span class="btn-text">Join the Waitlist</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <a href="/" class="footer-logo-link">
-                        <img src="public/logo.svg" alt="SRV Logo" class="footer-logo">
-                    </a>
-                </div>
-                <div class="footer-section footer-nav">
-                    <ul class="footer-links nav-links">
-                        <li><a href="index.html" class="footer-link">Home</a></li>
-                        <li><a href="about-us.html" class="footer-link">About</a></li>
-                        <li><a href="contact.html" class="footer-link">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <ul class="footer-links">
-                        <li class="social-item">
-                            <a href="https://www.facebook.com/srvpinoy" class="footer-link social-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon">
-                            </a>
-                            <a href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr" class="footer-link social-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-instagram.svg" alt="Instagram" class="social-icon">
-                            </a>
-                            <a href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-" class="footer-link social-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-youtube.svg" alt="Youtube" class="social-icon">
-                            </a>
-                            <a href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1" class="footer-link social-link" target="_blank" rel="noopener noreferrer">
-                                <img src="public/socials/brand-tiktok.svg" alt="Tiktok" class="social-icon">
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p class="footer-copyright">© 2025 SRV Service Booking. All rights reserved.</p>
-            </div>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <a href="/" class="footer-logo-link">
+              <img src="public/logo.svg" alt="SRV Logo" class="footer-logo" />
+            </a>
+          </div>
+          <div class="footer-section footer-nav">
+            <ul class="footer-links nav-links">
+              <li><a href="index.html" class="footer-link">Home</a></li>
+              <li><a href="about-us.html" class="footer-link">About</a></li>
+              <li><a href="contact.html" class="footer-link">Contact</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <ul class="footer-links">
+              <li class="social-item">
+                <a
+                  href="https://www.facebook.com/srvpinoy"
+                  class="footer-link social-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-facebook.svg"
+                    alt="Facebook"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr"
+                  class="footer-link social-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-instagram.svg"
+                    alt="Instagram"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-"
+                  class="footer-link social-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-youtube.svg"
+                    alt="Youtube"
+                    class="social-icon"
+                  />
+                </a>
+                <a
+                  href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1"
+                  class="footer-link social-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="public/socials/brand-tiktok.svg"
+                    alt="Tiktok"
+                    class="social-icon"
+                  />
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
+
+        <div class="footer-bottom">
+          <p class="footer-copyright">
+            © 2025 SRV Service Booking. All rights reserved.
+          </p>
+        </div>
+      </div>
     </footer>
-    
-    <div id="waitlistModal" class="modal" style="display: none;">
-    <div class="modal-content">
+
+    <div id="waitlistModal" class="modal" style="display: none">
+      <div class="modal-content">
         <span class="close">&times;</span>
         <h2>Join Our Waitlist</h2>
         <p>Be the first to know when SRV launches!</p>
         <form id="waitlistForm">
-            <input type="email" id="emailInput" placeholder="Enter your email address" required>
-            <p style="font-size: 0.85em; color: #666;">
-                By joining, you agree to receive a confirmation email and future updates from SRV.
-            </p>
-            <div class="modal-buttons">
-                <button type="submit" class="btn-primary modal-btn-primary">Join Waitlist</button>
-                <button type="button" class="btn-secondary modal-btn-secondary" id="providerBtn">
-                    Preregister as Provider
-                </button>
-            </div>
-            
+          <input
+            type="email"
+            id="emailInput"
+            placeholder="Enter your email address"
+            required
+          />
+          <p style="font-size: 0.85em; color: #666">
+            By joining, you agree to receive a confirmation email and future
+            updates from SRV.
+          </p>
+          <div class="modal-buttons">
+            <button type="submit" class="btn-primary modal-btn-primary">
+              Join Waitlist
+            </button>
+            <button
+              type="button"
+              class="btn-secondary modal-btn-secondary"
+              id="providerBtn"
+            >
+              Preregister as Provider
+            </button>
+          </div>
         </form>
-        <div id="message" style="display: none; margin-top: 10px;"></div>
+        <div id="message" style="display: none; margin-top: 10px"></div>
+      </div>
     </div>
-</div>
-</body>
+  </body>
 </html>
