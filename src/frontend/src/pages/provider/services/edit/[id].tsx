@@ -318,10 +318,10 @@ const EditServicePage: React.FC = () => {
       try {
         console.log("Loading service:", id);
         const service = await getService(id);
-        
+
         if (service) {
           setServiceToEdit(service);
-          
+
           // Load service packages
           let loadedPackages: ServicePackage[] = [];
           try {
@@ -337,7 +337,10 @@ const EditServicePage: React.FC = () => {
           try {
             serviceAvailability = await getServiceAvailability(id);
           } catch (availabilityError) {
-            console.error("Failed to load service availability:", availabilityError);
+            console.error(
+              "Failed to load service availability:",
+              availabilityError,
+            );
           }
 
           // Populate form data
@@ -350,21 +353,17 @@ const EditServicePage: React.FC = () => {
             // Populate availability from loaded data
             instantBookingEnabled:
               serviceAvailability?.instantBookingEnabled || false,
-            bookingNoticeHours:
-              serviceAvailability?.bookingNoticeHours || 24,
-            maxBookingsPerDay:
-              serviceAvailability?.maxBookingsPerDay || 5,
+            bookingNoticeHours: serviceAvailability?.bookingNoticeHours || 24,
+            maxBookingsPerDay: serviceAvailability?.maxBookingsPerDay || 5,
             availabilitySchedule:
-              serviceAvailability?.weeklySchedule?.map(
-                (item) => item.day,
-              ) || [],
+              serviceAvailability?.weeklySchedule?.map((item) => item.day) ||
+              [],
             useSameTimeForAllDays: true,
             commonTimeSlots:
               serviceAvailability?.weeklySchedule &&
               serviceAvailability.weeklySchedule.length > 0
                 ? convertBackendSlotsToUI(
-                    serviceAvailability.weeklySchedule[0].availability
-                      .slots,
+                    serviceAvailability.weeklySchedule[0].availability.slots,
                   )
                 : [
                     {
@@ -387,16 +386,14 @@ const EditServicePage: React.FC = () => {
               Sunday: [],
             },
             requirements: "",
-            servicePackages: loadedPackages.map(
-              (pkg: ServicePackage) => ({
-                id: pkg.id,
-                name: pkg.title,
-                description: pkg.description,
-                price: String(pkg.price),
-                currency: "PHP",
-                isPopular: false,
-              }),
-            ),
+            servicePackages: loadedPackages.map((pkg: ServicePackage) => ({
+              id: pkg.id,
+              name: pkg.title,
+              description: pkg.description,
+              price: String(pkg.price),
+              currency: "PHP",
+              isPopular: false,
+            })),
             existingHeroImage: "",
             existingMediaItems: [],
             termsTitle: "",

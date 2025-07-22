@@ -237,7 +237,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
   // Computed states
   const loading = useMemo(
     () => loadingStates.services || loadingStates.profile,
@@ -301,7 +300,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   // Fetch user profile
   const fetchUserProfile = useCallback(async () => {
     // Wait for authentication context to be properly initialized
-    if (!isAuthenticated || !identity ) return;
+    if (!isAuthenticated || !identity) return;
 
     try {
       setLoadingState("profile", true);
@@ -319,13 +318,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [isAuthenticated, identity, setLoadingState, handleError]);
 
-
-
   // Fetch provider profile
   const fetchProviderProfile = useCallback(
     async (providerId: string): Promise<FrontendProfile | null> => {
-
-
       try {
         if (providerProfiles.has(providerId)) {
           return providerProfiles.get(providerId)!;
@@ -350,7 +345,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
-
     try {
       setLoadingState("categories", true);
       // Add delay to ensure agents are ready
@@ -385,13 +379,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
       return enrichedService;
     },
     [fetchProviderProfile],
-
-    
   );
 
   // Fetch services
   const fetchServices = useCallback(async () => {
-
     try {
       setLoadingState("services", true);
       // Add delay to ensure agents are ready
@@ -410,11 +401,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     } finally {
       setLoadingState("services", false);
     }
-  }, [
-    setLoadingState,
-    handleError,
-    enrichServiceWithProviderData,
-  ]);
+  }, [setLoadingState, handleError, enrichServiceWithProviderData]);
 
   // Service CRUD Operations
 
@@ -835,7 +822,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
         return [];
       }
     },
-    [ handleError, enrichServiceWithProviderData],
+    [handleError, enrichServiceWithProviderData],
   );
 
   const getServicesByLocation = useCallback(
@@ -859,7 +846,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
         return [];
       }
     },
-    [ handleError, enrichServiceWithProviderData],
+    [handleError, enrichServiceWithProviderData],
   );
 
   const getNearbyServices = useCallback(
@@ -989,7 +976,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
       handleError(error, "get categories");
       return [];
     }
-  }, [ handleError]);
+  }, [handleError]);
 
   const refreshCategories = useCallback(async (): Promise<void> => {
     await fetchCategories();
@@ -998,8 +985,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   // Provider functions
   const getProviderServices = useCallback(
     async (providerId?: string): Promise<EnhancedService[]> => {
-  
-
       try {
         const targetProviderId = providerId || getCurrentUserId();
         if (!targetProviderId) return [];
@@ -1019,12 +1004,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
         return [];
       }
     },
-    [
-
-      getCurrentUserId,
-      handleError,
-      enrichServiceWithProviderData,
-    ],
+    [getCurrentUserId, handleError, enrichServiceWithProviderData],
   );
 
   const getProviderStats = useCallback(
@@ -1077,17 +1057,13 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [isAuthenticated, identity, fetchUserProfile]);
 
   useEffect(() => {
- 
-      fetchServices();
-      fetchCategories();
-    
+    fetchServices();
+    fetchCategories();
   }, [fetchServices, fetchCategories]);
 
   // Availability management functions
   const getServiceAvailability = useCallback(
     async (serviceId: string): Promise<ProviderAvailability | null> => {
-   
-
       try {
         // Add delay to ensure agents are ready
         await new Promise((resolve) => setTimeout(resolve, 100));

@@ -1,4 +1,4 @@
-import  "./shared/about-us.css";
+import "./shared/about-us.css";
 import { FingerPrintIcon } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
 

@@ -63,10 +63,10 @@ const ProviderServiceDetailPage: React.FC = () => {
         console.log("Loading service:", id);
         const serviceData = await getService(id);
         console.log("Service Data:", serviceData);
-        
+
         if (serviceData) {
           setService(serviceData);
-          
+
           // Load packages separately
           try {
             const servicePackages = await getServicePackages(id);
@@ -76,7 +76,7 @@ const ProviderServiceDetailPage: React.FC = () => {
             console.warn("Failed to load packages:", packageError);
             setPackages([]);
           }
-          
+
           setError(null);
         } else {
           throw new Error("Service not found");
