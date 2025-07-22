@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact SRV - Get in Touch</title>
+    <meta name="description" content="Contact SRV for partnerships, support, or inquiries about our service marketplace platform.">
+    <link rel="icon" href="public/logo.svg">
+    <link rel="stylesheet" href="contact.css">
+    <script src="script.js"></script>
+</head>
+<body>
+    <header class="site-header">
+         <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <a href="/" class="logo-link" aria-label="SRV Home">
+                        <img src="public/logo.svg" alt="SRV Logo" class="logo-image">
+                    </a>
+                </div>
+                
+                <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+                
+                <nav class="main-nav">
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                        <li class="nav-item"><a href="about-us.html" class="nav-link">About</a></li>
+                        <li class="nav-item"><a href="contact.html" class="nav-link nav-link-active">Contact</a></li>
+                        <li class="nav-item nav-cta">
+                            <button id="needServiceBtn" class="btn-primary">
+                                <span class="btn-text">Join the Waitlist</span>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="header-button">
+                    <button id="needServiceBtn" class="btn-primary">
+                        <span class="btn-text">Join the Waitlist</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-layout">
+                <div class="contact-info">
+                    <h1 class="contact-title">Contact Us</h1>
+                    <p class="contact-description">
+                        Whether you're a homeowner needing services, a skilled service provider, 
+                        or a local business partner — we're here to answer your questions 
+                        and explore opportunities to connect our community.
+                    </p>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <div class="contact-icon email-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="contact-content">
+                                <h3 class="contact-label">E-mail</h3>
+                                <p class="contact-value">support@srvpinoy.com</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-icon location-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21 10C21 17 12 23 12 23S3 17 3 10C3 5.02944 7.02944 1 12 1C16.9706 1 21 5.02944 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="contact-content">
+                                <h3 class="contact-label">Location</h3>
+                                <p class="contact-value">Baguio City, Philippines</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                      <div class="social-icons">
+                        <a href="https://www.facebook.com/srvpinoy" class="social-link facebook" aria-label="Facebook"  target="_blank" rel="noopener noreferrer" >
+                            <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon-img">
+                        </a>
+                        <a href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr" class="social-link instagram" aria-label="Instagram"  target="_blank" rel="noopener noreferrer">
+                            <img src="public/socials/brand-instagram.svg" alt="Instagram" class="social-icon-img">
+                        </a>
+                    </div>
+                    
+
+                </div>
+
+                <div class="contact-form-container">
+                    <form class="contact-form" id="contactForm">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Name</label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                class="form-input" 
+                                placeholder="Enter your full name"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-input" 
+                                placeholder="Enter your email address"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject" class="form-label">Subject</label>
+                            <input 
+                                type="text" 
+                                id="subject" 
+                                name="subject" 
+                                class="form-input" 
+                                placeholder="e.g. Partnership Inquiry, Feedback, Support"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea 
+                                id="message" 
+                                name="message" 
+                                class="form-textarea" 
+                                placeholder="Tell us about your inquiry, feedback, or how we can help you..."
+                                rows="6"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-submit">
+                            <span class="btn-text">Submit</span>
+                            <div class="loading-spinner" style="display: none;"></div>
+                        </button>
+                    </form>
+
+                    <div id="formMessage" class="form-message" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+  
+
+     <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="/" class="footer-logo-link">
+                        <img src="public/logo.svg" alt="SRV Logo" class="footer-logo">
+                    </a>
+                </div>
+                <div class="footer-section footer-nav">
+                    <ul class="footer-links nav-links">
+                        <li><a href="index.html" class="footer-link">Home</a></li>
+                        <li><a href="about-us.html" class="footer-link">About</a></li>
+                        <li><a href="contact.html" class="footer-link">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <ul class="footer-links">
+                        <li class="social-item">
+                            <a href="https://www.facebook.com/srvpinoy" class="footer-link" target="_blank" rel="noopener noreferrer">
+                                <img src="public/socials/brand-facebook.svg" alt="Facebook" class="social-icon-footer">
+                            </a>
+                            <a href="https://www.instagram.com/srvpinoy?igsh=MWJzZTEyaGFrdmwycw%3D%3D&utm_source=qr" class="footer-link" target="_blank" rel="noopener noreferrer">
+                                <img src="public/socials/brand-instagram.svg" alt="Instagram" class="social-icon-footer">
+                            </a>
+                            <a href="https://youtube.com/@srvpinoy?si=XqCsNabtY42DkpJ-" class="footer-link" target="_blank" rel="noopener noreferrer">
+                                <img src="public/socials/brand-youtube.svg" alt="Youtube" class="social-icon-footer">
+                            </a>
+                            <a href="https://www.tiktok.com/@srvpinoy?_t=ZS-8xkUDFeTRm3&_r=1" class="footer-link" target="_blank" rel="noopener noreferrer">
+                                <img src="public/socials/brand-tiktok.svg" alt="Tiktok" class="social-icon-footer">
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2025 SRV Service Booking. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="waitlistModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Join Our Waitlist</h2>
+            <p>Be the first to know when SRV launches!</p>
+             <form id="waitlistForm">
+            <input type="email" id="emailInput" placeholder="Enter your email address" required>
+            <p style="font-size: 0.85em; color: #666;">
+                By joining, you agree to receive a confirmation email and future updates from SRV.
+            </p>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-primary modal-btn-primary">Join Waitlist</button>
+                <button type="button" class="btn-secondary modal-btn-secondary" id="providerBtn">
+                    Preregister as Provider
+                </button>
+            </div>
+            
+        </form>
+            <div id="message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.querySelector('.btn-submit');
+            const spinner = submitBtn.querySelector('.loading-spinner');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const messageDiv = document.getElementById('formMessage');
+            
+            spinner.style.display = 'inline-block';
+            btnText.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            setTimeout(() => {
+                spinner.style.display = 'none';
+                btnText.textContent = 'Submit';
+                submitBtn.disabled = false;
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'form-message success';
+                messageDiv.textContent = 'Thank you for your message! We\'ll get back to you soon.';
+                
+                document.getElementById('contactForm').reset();
+                
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

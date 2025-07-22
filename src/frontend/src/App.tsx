@@ -2,12 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import authCanisterService from "./services/authCanisterService";
-import Hero from "./components/shared/Hero";
-import Features from "./components/shared/Features";
-import WhyChooseSRV from "./components/shared/WhyChooseSRV";
-import AboutUs from "./components/shared/AboutUs";
-import SDGSection from "./components/shared/SDGSection";
-import Footer from "./components/shared/Footer";
+import MainPage from "./components/MainPage";
 
 export default function App() {
   const navigate = useNavigate();
@@ -15,18 +10,6 @@ export default function App() {
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  // Reset auth actor when identity changes
-  // useEffect(() => {
-  //   if (identity) {
-  //     // Refresh the actor with new identity
-  //     refreshAuthActor(identity);
-  //   } else {
-  //     // Reset actor when no identity is present
-  //     resetAuthActor();
-  //   }
-  // }, [identity]);
-
-  // Check profile and redirect when authenticated
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
       if (isAuthenticated && identity) {
@@ -74,11 +57,7 @@ export default function App() {
 
   return (
     <main className="bg-gray-50">
-      <Hero onLoginClick={login} isLoginLoading={isLoading} />
-      <Features />
-      <WhyChooseSRV />
-      <SDGSection />
-      <AboutUs />
+      <MainPage onLoginClick={login} isLoginLoading={isLoading} />
 
       {!isAuthenticated && (error || profileError) && (
         <section className="bg-yellow-100 py-16 lg:py-24">
@@ -101,8 +80,6 @@ export default function App() {
           </div>
         </section>
       )}
-
-      <Footer />
     </main>
   );
 }

@@ -2116,6 +2116,7 @@ body.menu-open {
 
 .hero-text {
   font-family: "rubik";
+  font-weight: 700;
   font-size: clamp(1.5rem, 8vw, 5.5rem);
   line-height: 1.2;
   color: #000;
