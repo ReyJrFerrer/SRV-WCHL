@@ -24,7 +24,9 @@ export default function AboutUs({
     const galleryContainer = document.querySelector(".gallery-container");
     if (!galleryContainer) return;
 
-    const slides = document.querySelectorAll<HTMLElement>(".gallery-image-wrapper");
+    const slides = document.querySelectorAll<HTMLElement>(
+      ".gallery-image-wrapper",
+    );
     const prevBtn = document.querySelector<HTMLButtonElement>(".prev-btn");
     const nextBtn = document.querySelector<HTMLButtonElement>(".next-btn");
     const indicators = document.querySelector(".gallery-indicators");
