@@ -34,6 +34,7 @@ actor ReputationCanister {
     private var bookingCanisterId : ?Principal = null;
     private var reviewCanisterId : ?Principal = null;
     private var serviceCanisterId : ?Principal = null;
+    private var llmCanisterId : ?Principal = null;
 
     // Constants for reputation calculation
     private let BASE_SCORE : Float = 50.0;
@@ -372,6 +373,20 @@ actor ReputationCanister {
         };
         return #VeryHigh;
     };
+
+    // LLM-based sentiment analysis
+    private func analyzeSentimentWithLLM(review : Review) : async Float {
+        // For now, return placeholder value - will implement LLM integration
+        return 0.5;
+    };
+
+    // Get reputation history for a user
+    private func getReputationHistory(userId : Principal) : [(Time.Time, Float)] {
+        switch (reputationHistory.get(userId)) {
+            case (?history) history;
+            case (null) [];
+        };
+    };
     
     // Public functions
     
@@ -467,7 +482,115 @@ actor ReputationCanister {
     //     return #ok(updatedEvidence);
     // };
     
-    // Set canister references (admin function)
+    // Get reputation score with history for a user
+    public query func getReputationScoreWithHistory(userId : Principal) : async Result<{
+        score : ReputationScore;
+        history : [(Time.Time, Float)];
+    }> {
+        switch (reputations.get(userId)) {
+            case (?score) {
+                let history = getReputationHistory(userId);
+                return #ok({
+                    score = score;
+                    history = history;
+                });
+            };
+            case (null) {
+                return #err("No reputation score found for this user");
+            };
+        };
+    };
+
+    // Process a new review with LLM sentiment analysis
+    public func processReviewWithLLM(review : Review) : async Result<Review> {
+        // 1. Analyze sentiment with LLM
+        let llmSentimentScore = await analyzeSentimentWithLLM(review);
+        
+        // 2. Analyze review for flags (enhanced with LLM sentiment)
+        let flags = analyzeReviewWithLLMSentiment(review, llmSentimentScore);
+        
+        // 3. Calculate quality score incorporating LLM sentiment
+        let qualityScore : Float = calculateReviewQualityWithLLM(review, llmSentimentScore, flags);
+        
+        // 4. Determine if review should be hidden
+        let shouldHide = qualityScore < 0.3 or flags.size() > 2;
+        
+        // 5. Update provider reputation
+        ignore await updateUserReputation(review.providerId);
+        
+        // 6. Update client reputation (reviewer)
+        ignore await updateUserReputation(review.clientId);
+        
+        // 7. Return updated review with status and quality score
+        let updatedReview : Review = {
+            id = review.id;
+            bookingId = review.bookingId;
+            clientId = review.clientId;
+            providerId = review.providerId;
+            serviceId = review.serviceId;
+            rating = review.rating;
+            comment = review.comment;
+            status = if (shouldHide) { #Hidden } else if (flags.size() > 0) { #Flagged } else { #Visible };
+            qualityScore = ?qualityScore;
+            createdAt = review.createdAt;
+            updatedAt = Time.now();
+        };
+        
+        return #ok(updatedReview);
+    };
+
+    // Enhanced review analysis with LLM sentiment
+    private func analyzeReviewWithLLMSentiment(review : Review, llmSentiment : Float) : [DetectionFlag] {
+        var flags : [DetectionFlag] = [];
+        
+        // 1. Check for review bombing
+        if (review.rating <= 2) {
+            flags := Array.append<DetectionFlag>(flags, [#ReviewBomb]);
+        };
+        
+        // 2. Check for competitive manipulation
+        if (review.rating == 5 and Text.size(review.comment) < 20) {
+            flags := Array.append<DetectionFlag>(flags, [#CompetitiveManipulation]);
+        };
+        
+        // 3. Enhanced sentiment consistency check using LLM
+        if (llmSentiment < 0.3 and review.rating >= 4) {
+            flags := Array.append<DetectionFlag>(flags, [#Other]);
+        };
+        
+        // 4. Check for extremely negative sentiment with high rating
+        if (llmSentiment < 0.2 and review.rating >= 4) {
+            flags := Array.append<DetectionFlag>(flags, [#CompetitiveManipulation]);
+        };
+        
+        return flags;
+    };
+
+    // Calculate review quality incorporating LLM sentiment
+    private func calculateReviewQualityWithLLM(review : Review, llmSentiment : Float, flags : [DetectionFlag]) : Float {
+        var qualityScore : Float = 0.7; // Base quality score
+        
+        // 1. LLM sentiment alignment with rating (weight: 0.3)
+        let ratingNormalized = Float.fromInt(review.rating) / 5.0;
+        let sentimentAlignment = 1.0 - Float.abs(llmSentiment - ratingNormalized);
+        qualityScore += sentimentAlignment * 0.3;
+        
+        // 2. Review length and detail (weight: 0.2)
+        let commentLength = Text.size(review.comment);
+        if (commentLength > 50) {
+            qualityScore += 0.1;
+        };
+        if (commentLength > 150) {
+            qualityScore += 0.1;
+        };
+        
+        // 3. Penalty for flags
+        qualityScore -= Float.fromInt(flags.size()) * 0.25;
+        
+        return Float.max(0.0, Float.min(1.0, qualityScore));
+    };
+    
+    // Set canister references including LLM (admin function)
     public shared(msg) func setCanisterReferences(
         auth : Principal,
         booking : Principal,
@@ -479,6 +602,8 @@ actor ReputationCanister {
         bookingCanisterId := ?booking;
         reviewCanisterId := ?review;
         serviceCanisterId := ?service;
+        // Set LLM canister ID from dfx.json
+        llmCanisterId := ?Principal.fromText("w36hm-eqaaa-aaaal-qr76a-cai");
         
         return #ok("Canister references set successfully");
     };
