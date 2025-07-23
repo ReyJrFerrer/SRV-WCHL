@@ -462,13 +462,6 @@ const ClientBookingPageComponent: React.FC = () => {
 
   // DEBUG: Show locationStatus and displayAddress for troubleshooting
   // Remove isLocationValid, not used for button state
-  const isPaymentValid =
-    paymentMethod !== "cash" ||
-    (paymentMethod === "cash" &&
-      amountPaid &&
-      !paymentError &&
-      parseFloat(amountPaid) >= totalPrice);
-  const isBookingDisabled = isSubmitting;
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -750,7 +743,6 @@ const ClientBookingPageComponent: React.FC = () => {
           )}
           <button
             onClick={handleConfirmBooking}
-            disabled={isBookingDisabled}
             className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-yellow-500 disabled:bg-gray-300"
           >
             {isSubmitting && (
