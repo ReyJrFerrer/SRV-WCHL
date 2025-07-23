@@ -2,7 +2,7 @@ import React from "react";
 import ServiceListItem from "./ServiceListItem"; // Your individual card component
 import {
   EnrichedService,
-  useTopPickServices,
+  useAllServicesWithProviders,
 } from "../../hooks/serviceInformation";
 import { getCategoryImage } from "../../utils/serviceHelpers";
 
@@ -11,7 +11,7 @@ interface ServicesListProps {
 }
 
 const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
-  const { services, loading, error } = useTopPickServices();
+  const { services, loading, error } = useAllServicesWithProviders();
 
   const enhanceService = (service: EnrichedService): EnrichedService => ({
     ...service,
