@@ -169,7 +169,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
     const success = await acceptBookingById(booking.id);
     if (success) {
-      window.location.reload();
+      // window.location.reload();
     } else {
       console.error(`❌ Failed to accept booking ${booking.id}`);
     }

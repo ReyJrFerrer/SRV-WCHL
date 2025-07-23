@@ -14,6 +14,7 @@ import {
   ServicePackage,
   serviceCanisterService,
 } from "../services/serviceCanisterService";
+import chatCanisterService from "../services/chatCanisterService";
 
 // Enhanced Provider Booking interface with client data enrichment and package support
 export interface ProviderEnhancedBooking extends Booking {
@@ -757,6 +758,51 @@ export const useProviderBookingManagement =
             bookingId,
             scheduledDate || new Date(),
           );
+          // After successfully accepting a booking, try to create a conversation
+          if (updatedBooking) {
+            try {
+              // Convert Principal IDs to strings for comparison
+              const clientIdStr = updatedBooking.clientId.toString();
+              const providerIdStr = updatedBooking.providerId.toString();
+
+              // Check if a conversation already exists between these users
+              const existingConversations =
+                await chatCanisterService.getMyConversations();
+              const conversationExists = existingConversations.some(
+                (conversationSummary) => {
+                  const conversation = conversationSummary.conversation;
+                  return (
+                    (conversation.clientId === clientIdStr &&
+                      conversation.providerId === providerIdStr) ||
+                    (conversation.clientId === providerIdStr &&
+                      conversation.providerId === clientIdStr)
+                  );
+                },
+              );
+
+              // Only create a new conversation if one doesn't exist
+              if (!conversationExists) {
+                await chatCanisterService.createConversation(
+                  clientIdStr,
+                  providerIdStr,
+                  bookingId,
+                );
+                console.log(
+                  "Conversation created for accepted booking:",
+                  bookingId,
+                );
+              } else {
+                console.log("Conversation already exists between these users");
+              }
+            } catch (chatError) {
+              // Log the error but don't prevent the booking status update
+              console.error(
+                "Failed to create conversation for booking:",
+                bookingId,
+                chatError,
+              );
+            }
+          }
 
           if (updatedBooking) {
             const enrichedBooking =
