@@ -74,6 +74,27 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Auto-detect geolocation on mount
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      setLocationStatus("unsupported");
+      setLocationState(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocationStatus("allowed");
+        setLocationState({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+      },
+      (err) => {
+        setLocationStatus("denied");
+        setLocationState(null);
+      },
+    );
+  }, []);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identity, setIdentity] = useState<Identity | null>(null);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css"; // Styles for the date picker
+import "react-datepicker/dist/react-datepicker.css";
 
 import {
   CurrencyDollarIcon,
@@ -9,14 +9,16 @@ import {
   GlobeAltIcon,
   ExclamationCircleIcon,
   PencilSquareIcon,
+  CheckCircleIcon,
+  MapPinIcon,
 } from "@heroicons/react/24/outline";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
-// Hooks and Services - adjust paths as needed
+// Hooks and Services
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
-import { DayOfWeek } from "../../services/serviceCanisterService"; // Importing types only
+import { useAuth } from "../../context/AuthContext";
+import { DayOfWeek } from "../../services/serviceCanisterService";
 
-// --- Helper Data and Types ---
+// Helper Data and Types
 const dayIndexToName = (dayIndex: number): string => {
   const days = [
     "Sunday",
@@ -172,7 +174,8 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 // --- Main Page Component ---
 const ClientBookingPageComponent: React.FC = () => {
   const navigate = useNavigate();
-  const { id: serviceId } = useParams<{ id: string }>(); // Get service ID from URL
+  const { id: serviceId } = useParams<{ id: string }>();
+  const { location, locationStatus } = useAuth();
 
   const {
     service,
@@ -188,7 +191,7 @@ const ClientBookingPageComponent: React.FC = () => {
     calculateTotalPrice,
   } = useBookRequest();
 
-  // --- State Management ---
+  // State Management
   const [packages, setPackages] = useState<
     {
       id: string;
@@ -202,10 +205,14 @@ const ClientBookingPageComponent: React.FC = () => {
     "sameday" | "scheduled" | null
   >(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-
-  // Address state
+  const [displayAddress, setDisplayAddress] = useState<string>(
+    "Detecting location...",
+  );
+  const [addressMode, setAddressMode] = useState<"context" | "manual">(
+    "context",
+  );
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedBarangay, setSelectedBarangay] = useState("");
@@ -213,23 +220,14 @@ const ClientBookingPageComponent: React.FC = () => {
   const [houseNumber, setHouseNumber] = useState("");
   const [landmark, setLandmark] = useState("");
   const [concerns, setConcerns] = useState("");
-
-  // Location toggle state
-  const [currentLocationStatus, setCurrentLocationStatus] = useState("");
-  const [useGpsLocation, setUseGpsLocation] = useState(false);
-  const [showManualAddress, setShowManualAddress] = useState(false);
-
-  // Submission and payment state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  // --- Effects ---
+  // Effects
   useEffect(() => {
-    if (serviceId) {
-      loadServiceData(serviceId);
-    }
+    if (serviceId) loadServiceData(serviceId);
   }, [serviceId, loadServiceData]);
 
   useEffect(() => {
@@ -239,16 +237,47 @@ const ClientBookingPageComponent: React.FC = () => {
   }, [hookPackages]);
 
   useEffect(() => {
-    if (service && selectedDate) {
-      getAvailableSlots(service.id, selectedDate);
+    if (locationStatus === "allowed" && location) {
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.address) {
+            const { city, town, village, state, suburb } = data.address;
+            const loc = [city || town || village || suburb, state]
+              .filter(Boolean)
+              .join(", ");
+            setDisplayAddress(
+              loc || `Lat: ${location.latitude}, Lon: ${location.longitude}`,
+            );
+          } else {
+            setDisplayAddress(
+              `Lat: ${location.latitude}, Lon: ${location.longitude}`,
+            );
+          }
+        })
+        .catch(() =>
+          setDisplayAddress(
+            `Lat: ${location.latitude}, Lon: ${location.longitude}`,
+          ),
+        );
+    } else if (locationStatus === "denied") {
+      setDisplayAddress("Location not shared. Please enter manually.");
+      setAddressMode("manual");
+    } else {
+      setDisplayAddress("Detecting location...");
     }
+  }, [location, locationStatus]);
+
+  useEffect(() => {
+    if (service && selectedDate) getAvailableSlots(service.id, selectedDate);
   }, [service, selectedDate, getAvailableSlots]);
 
   const totalPrice = useMemo(() => {
-    const selectedPackageIds = packages
+    return packages
       .filter((p) => p.checked)
-      .map((p) => p.id);
-    return calculateTotalPrice(selectedPackageIds, hookPackages);
+      .reduce((sum, pkg) => sum + pkg.price, 0);
   }, [packages, hookPackages, calculateTotalPrice]);
 
   useEffect(() => {
@@ -264,7 +293,7 @@ const ClientBookingPageComponent: React.FC = () => {
     }
   }, [amountPaid, totalPrice, paymentMethod, packages]);
 
-  // --- Event Handlers ---
+  // Event Handlers
   const handlePackageChange = (packageId: string) => {
     setPackages((prev) =>
       prev.map((pkg) =>
@@ -272,79 +301,63 @@ const ClientBookingPageComponent: React.FC = () => {
       ),
     );
   };
-
   const handleBookingOptionChange = (option: "sameday" | "scheduled") => {
     if (option === "sameday" && !isSameDayAvailable) return;
     setBookingOption(option);
   };
-
   const handleDateChange = (date: Date | null) => {
     setSelectedDate(date);
     setSelectedTime("");
   };
-
-  const handleUseCurrentLocation = () => {
-    setCurrentLocationStatus("Fetching location...");
-    setUseGpsLocation(true);
-    setShowManualAddress(false);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setCurrentLocationStatus(
-            `📍 Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)} (Using this)`,
-          );
-        },
-        (error) => {
-          setCurrentLocationStatus(
-            `⚠️ Could not get location. Please enter manually. (Error: ${error.message})`,
-          );
-          setUseGpsLocation(false);
-          setShowManualAddress(true);
-        },
-      );
-    } else {
-      setCurrentLocationStatus(
-        "Geolocation not supported. Please enter address manually.",
-      );
-      setUseGpsLocation(false);
-      setShowManualAddress(true);
-    }
-  };
-
-  const toggleManualAddress = () => {
-    setShowManualAddress(!showManualAddress);
-    if (!showManualAddress) {
-      setUseGpsLocation(false);
-      setCurrentLocationStatus("");
-    }
-  };
-
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^\d*\.?\d{0,2}$/.test(value)) {
-      setAmountPaid(value);
-    }
+    if (/^\d*\.?\d{0,2}$/.test(value)) setAmountPaid(value);
   };
 
   const handleConfirmBooking = async () => {
     setFormError(null);
-    setIsSubmitting(true);
-
-    if (
-      !bookingOption ||
-      !packages.some((pkg) => pkg.checked) ||
-      (bookingOption === "scheduled" && (!selectedDate || !selectedTime))
-    ) {
-      setFormError("Please complete all required fields.");
-      setIsSubmitting(false);
+    // Validate all required fields and show specific error messages
+    if (!bookingOption) {
+      setFormError("Please select a booking schedule (Same Day or Scheduled).");
       return;
     }
-
-    let finalAddress = "Address not specified.";
-    if (useGpsLocation && currentLocationStatus.startsWith("📍")) {
-      finalAddress = currentLocationStatus;
-    } else if (showManualAddress) {
+    if (!packages.some((pkg) => pkg.checked)) {
+      setFormError("Please select at least one package.");
+      return;
+    }
+    if (bookingOption === "scheduled" && (!selectedDate || !selectedTime)) {
+      setFormError("Please select a date and time for your booking.");
+      return;
+    }
+    // Location validation
+    if (addressMode === "context") {
+      if (
+        locationStatus === undefined ||
+        locationStatus === null ||
+        locationStatus === "not_set"
+      ) {
+        setFormError(
+          `Location status is not set. Please wait for location detection or enter your address manually. [locationStatus: ${locationStatus}]`,
+        );
+        return;
+      }
+      if (locationStatus !== "allowed") {
+        setFormError(
+          `Please allow location access or enter your address manually. [locationStatus: ${locationStatus}]`,
+        );
+        return;
+      }
+      if (
+        !displayAddress ||
+        displayAddress.trim() === "" ||
+        displayAddress.trim() === "Detecting location..."
+      ) {
+        setFormError(
+          `A valid location must be detected before proceeding. [locationStatus: ${locationStatus}, displayAddress: ${displayAddress}]`,
+        );
+        return;
+      }
+    } else if (addressMode === "manual") {
       if (
         !selectedProvince ||
         !selectedMunicipality ||
@@ -353,18 +366,33 @@ const ClientBookingPageComponent: React.FC = () => {
         !houseNumber
       ) {
         setFormError("Please complete all required address fields.");
-        setIsSubmitting(false);
         return;
       }
-      finalAddress = `${houseNumber}, ${street}, ${selectedBarangay}, ${selectedMunicipality}, ${selectedProvince}`;
-    } else if (!useGpsLocation) {
+    } else {
       setFormError(
-        "Please provide your location (either GPS or manual entry).",
+        "Please provide your location by enabling it or entering it manually.",
       );
-      setIsSubmitting(false);
       return;
     }
-
+    // Payment validation
+    if (paymentMethod === "cash" && packages.some((p) => p.checked)) {
+      const paidAmount = parseFloat(amountPaid);
+      if (!amountPaid) {
+        setFormError("Please enter the amount to pay.");
+        return;
+      }
+      if (isNaN(paidAmount) || paidAmount < totalPrice) {
+        setFormError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
+        return;
+      }
+    }
+    setIsSubmitting(true);
+    let finalAddress = "Address not specified.";
+    if (addressMode === "context" && locationStatus === "allowed") {
+      finalAddress = displayAddress;
+    } else if (addressMode === "manual") {
+      finalAddress = `${houseNumber}, ${street}, ${selectedBarangay}, ${selectedMunicipality}, ${selectedProvince}`;
+    }
     try {
       let finalScheduledDate: Date | undefined = undefined;
       if (bookingOption === "scheduled" && selectedDate && selectedTime) {
@@ -373,7 +401,6 @@ const ClientBookingPageComponent: React.FC = () => {
         finalScheduledDate = new Date(selectedDate);
         finalScheduledDate.setHours(hours, minutes, 0, 0);
       }
-
       const bookingData: BookingRequest = {
         serviceId: service!.id,
         serviceName: service!.title,
@@ -386,7 +413,6 @@ const ClientBookingPageComponent: React.FC = () => {
         location: finalAddress,
         concerns: concerns,
       };
-
       const booking = await createBookingRequest(bookingData);
       if (booking) {
         const confirmationDetails = {
@@ -401,14 +427,14 @@ const ClientBookingPageComponent: React.FC = () => {
               })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
-          // Pass both total price and the amount paid for clarity on the confirmation page
-          totalPrice: totalPrice,
+          // For receipt page compatibility:
           packagePrice: totalPrice.toFixed(2),
           amountToPay:
-            paymentMethod === "cash" ? amountPaid : totalPrice.toFixed(2),
+            paymentMethod === "cash"
+              ? amountPaid || totalPrice.toFixed(2)
+              : totalPrice.toFixed(2),
           landmark: landmark || "None",
         };
-        // Navigate to confirmation page with state
         navigate("/client/booking/confirmation", {
           state: { details: confirmationDetails },
         });
@@ -416,7 +442,6 @@ const ClientBookingPageComponent: React.FC = () => {
         setFormError("Failed to create booking. Please try again.");
       }
     } catch (error) {
-      console.error("Booking submission error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred.";
       setFormError(
@@ -435,27 +460,15 @@ const ClientBookingPageComponent: React.FC = () => {
   if (!service)
     return <div className="p-10 text-center">Service not found.</div>;
 
-  const isLocationValid =
-    (useGpsLocation && currentLocationStatus.startsWith("📍")) ||
-    (showManualAddress &&
-      selectedProvince &&
-      selectedMunicipality &&
-      selectedBarangay &&
-      street &&
-      houseNumber);
+  // DEBUG: Show locationStatus and displayAddress for troubleshooting
+  // Remove isLocationValid, not used for button state
   const isPaymentValid =
     paymentMethod !== "cash" ||
     (paymentMethod === "cash" &&
       amountPaid &&
       !paymentError &&
       parseFloat(amountPaid) >= totalPrice);
-  const isBookingDisabled =
-    !bookingOption ||
-    !packages.some((p) => p.checked) ||
-    (bookingOption === "scheduled" && (!selectedDate || !selectedTime)) ||
-    !isLocationValid ||
-    !isPaymentValid ||
-    isSubmitting;
+  const isBookingDisabled = isSubmitting;
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -586,32 +599,42 @@ const ClientBookingPageComponent: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* --- REFACTORED LOCATION SECTION --- */}
             <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Service Location *
               </h3>
+              <div className="mb-3 rounded-lg border border-gray-300 bg-gray-50 p-3">
+                <div className="flex items-center">
+                  <MapPinIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-gray-500">
+                      {addressMode === "context"
+                        ? "Using Your Current Location"
+                        : "Using Manual Address"}
+                    </p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {addressMode === "context"
+                        ? displayAddress
+                        : "See form below"}
+                    </p>
+                  </div>
+                </div>
+              </div>
               <button
-                onClick={handleUseCurrentLocation}
-                className="w-full rounded-lg border bg-gray-100 p-3 text-sm text-gray-700 transition-colors hover:bg-gray-200"
+                onClick={() =>
+                  setAddressMode(
+                    addressMode === "manual" ? "context" : "manual",
+                  )
+                }
+                className="w-full rounded-lg bg-gray-200 p-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-300"
               >
-                <div className="text-sm font-medium">
-                  📍 Use Current Location
-                </div>
+                {addressMode === "manual"
+                  ? "Use Current Location"
+                  : "Enter Address Manually"}
               </button>
-              {currentLocationStatus && (
-                <div className="mb-3 rounded border border-blue-200 bg-blue-50 p-2 text-center text-xs text-blue-700">
-                  {currentLocationStatus}
-                </div>
-              )}
-              {!showManualAddress && (
-                <button
-                  onClick={toggleManualAddress}
-                  className={`w-full rounded-lg border p-3 text-sm font-medium transition-colors ${showManualAddress ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-100 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"}`}
-                >
-                  <div>Enter Address Manually</div>
-                </button>
-              )}
-              {showManualAddress && (
+              {addressMode === "manual" && (
                 <div className="mt-2 space-y-3">
                   <p className="text-xs text-gray-600">
                     Please enter your address manually:
