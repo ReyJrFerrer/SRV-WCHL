@@ -1,25 +1,33 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeftIcon, StarIcon } from "@heroicons/react/24/outline";
-import { useBookingRating } from "../../../hooks/reviewManagement";
-import { useBookingManagement } from "../../../hooks/bookingManagement";
+import { StarIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { useBookingRating } from "../../../hooks/reviewManagement"; // Adjust path as needed
+import {
+  useBookingManagement,
+  EnhancedBooking,
+} from "../../../hooks/bookingManagement"; // Adjust path as needed
 
-export default function BookingRating() {
+const feedbackOptions = [
+  "Very Professional",
+  "Arrived On Time",
+  "Friendly Staff",
+  "Highly Recommended",
+  "Great Experience",
+];
+
+export const BookingReviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const { id: bookingId } = useParams<{ id: string }>(); // Get bookingId from URL params
+  const { id: bookingId } = useParams<{ id: string }>();
 
-  // State for the rating form
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // State for booking and review data
-  const [booking, setBooking] = useState<any>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [booking, setBooking] = useState<EnhancedBooking | null>(null);
   const [existingReview, setExistingReview] = useState<any>(null);
   const [providerNameState, setProviderName] = useState("Service Provider");
 
-  // Get booking data from booking management hook
   const {
     bookings,
     loading: bookingLoading,
@@ -28,38 +36,29 @@ export default function BookingRating() {
     formatLocationString,
   } = useBookingManagement();
 
-  // Get review functionality from review management hook
   const {
     submitReview,
     updateReview,
-    canReview,
     getBookingReviews,
     loading: reviewLoading,
     error: reviewError,
     clearError,
-  } = useBookingRating(bookingId as string); // Pass bookingId to the hook
+  } = useBookingRating(bookingId as string);
 
   // Set document title
   useEffect(() => {
-    document.title = "SRV | Rate Service";
+    document.title = `Review Booking - SRV`;
   }, []);
 
-  const handleRating = useCallback((value: number) => {
-    setRating(value);
-  }, []);
-
-  // Load booking and review data when bookingId changes
+  // Load booking and existing review data
   useEffect(() => {
     const loadData = async () => {
       if (!bookingId || typeof bookingId !== "string") return;
-
       try {
-        // Find the booking from the bookings array
         const foundBooking = bookings.find((b) => b.id === bookingId);
-        setBooking(foundBooking);
+        setBooking(foundBooking || null);
 
         if (foundBooking) {
-          // Set provider name from enriched booking data
           setProviderName(
             foundBooking.providerProfile?.name ||
               foundBooking.providerName ||
@@ -67,58 +66,72 @@ export default function BookingRating() {
           );
         }
 
-        // Check for existing reviews
-        const bookingReviews = await getBookingReviews(bookingId);
+        const bookingReviews = await getBookingReviews(bookingId as string);
         if (bookingReviews && bookingReviews.length > 0) {
-          const userReview = bookingReviews[0]; // Assuming one review per booking per user
+          const userReview = bookingReviews[0];
           setExistingReview(userReview);
-
-          // Pre-fill form if editing existing review
           setRating(userReview.rating);
           setFeedback(userReview.comment);
         }
       } catch (error) {
         console.error("Error loading booking/review data:", error);
+        setFormError("Could not load booking data.");
       }
     };
 
-    loadData();
-  }, [bookingId, bookings, getBookingReviews]);
+    if (!bookingLoading) {
+      loadData();
+    }
+  }, [bookingId, bookings, getBookingReviews, bookingLoading]);
 
-  // Handle form submission
+  const handleRating = useCallback((value: number) => {
+    setRating(value);
+  }, []);
+
+  const handleFeedbackButtonClick = (option: string) => {
+    setFeedback((prev) => (prev ? `${prev}, ${option}` : option));
+  };
+
   const handleSubmit = useCallback(async () => {
+    setFormError(null);
+    clearError();
+
     if (rating === 0) {
-      alert("Please select a rating");
+      setFormError("Please select a rating from 1 to 5 stars.");
+      return;
+    }
+
+    const trimmedFeedback = feedback.trim();
+    if (trimmedFeedback.length < 5 || trimmedFeedback.length > 500) {
+      setFormError("A comment between 5 and 500 characters is required.");
       return;
     }
 
     if (!bookingId || typeof bookingId !== "string") {
-      alert("Invalid booking ID");
+      setFormError("Could not find a valid booking ID.");
       return;
     }
 
     setIsSubmitting(true);
-    clearError();
-
     try {
-      const formData = { rating, comment: feedback };
-
-      let result;
-      if (existingReview) {
-        // Update existing review
-        result = await updateReview(existingReview.id, formData);
-      } else {
-        // Submit new review
-        result = await submitReview(bookingId, formData);
-      }
+      const formData = { rating, comment: trimmedFeedback };
+      const result = existingReview
+        ? await updateReview(existingReview.id, formData)
+        : await submitReview(bookingId as string, formData);
 
       if (result) {
-        // Success - navigate back to bookings
-        navigate("/client/booking");
+        // Navigate to receipt page with state
+        navigate(`/client/booking/receipt/${bookingId}`, {
+          state: {
+            price: booking?.price || 0,
+            paid: booking?.price || 0,
+            change: 0,
+            method: "Cash",
+          },
+        });
       }
     } catch (error) {
       console.error("Error submitting review:", error);
-      // Error is handled by the hook and displayed in UI
     } finally {
       setIsSubmitting(false);
     }
@@ -131,26 +144,20 @@ export default function BookingRating() {
     submitReview,
     clearError,
     navigate,
+    booking,
   ]);
 
-  // Pre-fill form if editing existing review
-  useEffect(() => {
-    if (existingReview) {
-      setRating(existingReview.rating);
-      setFeedback(existingReview.comment);
-    }
-  }, [existingReview]);
-
-  // Memoized values for performance
   const isLoading = useMemo(
     () => bookingLoading || reviewLoading,
     [bookingLoading, reviewLoading],
   );
 
-  const hasError = useMemo(
-    () => bookingError || reviewError,
-    [bookingError, reviewError],
-  );
+  const isFormValid = useMemo(() => {
+    const trimmedFeedback = feedback.trim();
+    return (
+      rating > 0 && trimmedFeedback.length >= 5 && trimmedFeedback.length <= 500
+    );
+  }, [rating, feedback]);
 
   const ratingLabel = useMemo(() => {
     switch (rating) {
@@ -165,12 +172,11 @@ export default function BookingRating() {
       case 5:
         return "Excellent";
       default:
-        return "";
+        return "Select a rating";
     }
   }, [rating]);
 
-  // Loading state
-  if (isLoading) {
+  if (isLoading && !booking) {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
@@ -179,58 +185,15 @@ export default function BookingRating() {
     );
   }
 
-  // Error state
-  if (hasError) {
-    return (
-      <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-red-200 bg-red-50 p-6">
-        <h2 className="mb-2 text-lg font-semibold text-red-800">Error</h2>
-        <p className="mb-4 text-red-600">{bookingError || reviewError}</p>
-        <button
-          onClick={() => navigate(-1)}
-          className="text-blue-600 hover:underline"
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
-
-  // No booking found
   if (!booking) {
     return (
-      <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-yellow-200 bg-yellow-50 p-6">
+      <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-yellow-200 bg-yellow-50 p-6 text-center">
         <h2 className="mb-2 text-lg font-semibold text-yellow-800">
           Booking Not Found
         </h2>
         <p className="mb-4 text-yellow-600">
-          The requested booking could not be found or you don't have permission
-          to review it.
+          {bookingError || "The requested booking could not be found."}
         </p>
-        <button
-          onClick={() => navigate(-1)}
-          className="text-blue-600 hover:underline"
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
-
-  // Cannot review
-  if (canReview === false) {
-    return (
-      <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-yellow-200 bg-yellow-50 p-6">
-        <h2 className="mb-2 text-lg font-semibold text-yellow-800">
-          Review Not Available
-        </h2>
-        <p className="mb-4 text-yellow-600">
-          You cannot review this booking. This may be because:
-        </p>
-        <ul className="mb-4 list-inside list-disc space-y-1 text-yellow-600">
-          <li>The booking is not completed yet</li>
-          <li>The 30-day review window has expired</li>
-          <li>You are not the client for this booking</li>
-        </ul>
         <button
           onClick={() => navigate(-1)}
           className="text-blue-600 hover:underline"
@@ -243,55 +206,38 @@ export default function BookingRating() {
 
   return (
     <div className="mx-auto mt-6 max-w-2xl rounded-lg bg-white p-6 shadow">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 flex items-center text-sm text-blue-600 hover:underline"
-      >
-        <ArrowLeftIcon className="mr-1 h-4 w-4" /> Back
-      </button>
-
-      {/* Booking Information Card */}
       <div className="mb-6 rounded-lg border bg-gray-50 p-4">
-        <h3 className="mb-2 font-medium text-gray-900">Booking Details</h3>
+        <h3 className="mb-3 font-bold text-gray-900">Booking Details</h3>
         <div className="grid grid-cols-1 gap-3 text-sm text-gray-600 md:grid-cols-2">
           <div>
-            <span className="font-medium">Service:</span>{" "}
+            <span className="font-bold">Provider:</span> {providerNameState}
+          </div>
+          <div>
+            <span className="font-bold">Service:</span>{" "}
             {booking.serviceName || "Service"}
           </div>
           <div>
-            <span className="font-medium">Date:</span>{" "}
-            {formatBookingDate(booking.scheduledDate)}
+            <span className="font-bold">Date:</span>{" "}
+            {formatBookingDate(booking.scheduledDate ?? "")}
           </div>
           <div>
-            <span className="font-medium">Location:</span>{" "}
+            <span className="font-bold">Location:</span>{" "}
             {formatLocationString(booking.location)}
           </div>
           <div>
-            <span className="font-medium">Price:</span> $
-            {booking.price || "TBD"}
+            <span className="font-bold">Price:</span> ${booking.price || "TBD"}
           </div>
         </div>
       </div>
 
-      {/* Rating Form */}
-      <h2 className="mb-2 text-xl font-semibold">
-        {existingReview ? "Update Review for" : "Rate"} {providerNameState}
+      <h2 className="mb-4 text-center text-xl font-bold">
+        How satisfied were you with the service?
       </h2>
-      <p className="mb-4 text-gray-500">
-        {existingReview
-          ? "Update your previous rating and feedback"
-          : "How satisfied were you with the service?"}
-      </p>
-
-      {/* Star Rating */}
-      <div className="mb-4 flex space-x-2">
+      <div className="mb-2 flex justify-center space-x-2">
         {[1, 2, 3, 4, 5].map((star) => (
           <StarIcon
             key={star}
-            className={`h-7 w-7 cursor-pointer transition-colors ${
-              (hovered ?? rating) >= star ? "text-yellow-400" : "text-gray-300"
-            } ${isSubmitting ? "pointer-events-none" : ""}`}
+            className={`h-10 w-10 cursor-pointer transition-colors ${(hovered ?? rating) >= star ? "text-yellow-400" : "text-gray-300"}`}
             onClick={() => !isSubmitting && handleRating(star)}
             onMouseEnter={() => !isSubmitting && setHovered(star)}
             onMouseLeave={() => !isSubmitting && setHovered(null)}
@@ -299,15 +245,30 @@ export default function BookingRating() {
           />
         ))}
       </div>
-
-      {/* Rating Labels */}
-      <div className="mb-4 text-sm text-gray-600">
-        {rating > 0 && <span>{ratingLabel}</span>}
+      <div className="mb-6 text-center text-lg font-semibold text-gray-600">
+        <span>{ratingLabel}</span>
       </div>
 
-      {/* Feedback Textarea */}
+      <div className="mb-4">
+        <p className="mb-2 text-center text-sm font-medium text-gray-700">
+          Add a quick comment:
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {feedbackOptions.map((option) => (
+            <button
+              key={option}
+              onClick={() => handleFeedbackButtonClick(option)}
+              disabled={isSubmitting}
+              className="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-800 transition-colors hover:border-blue-300 hover:bg-blue-100 disabled:opacity-50"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <textarea
-        placeholder="Write your feedback... (optional)"
+        placeholder="Write your feedback... (5-500 characters)"
         className="w-full resize-none rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100"
         rows={4}
         value={feedback}
@@ -319,7 +280,13 @@ export default function BookingRating() {
         {feedback.length}/500 characters
       </div>
 
-      {/* Submit Button */}
+      {(formError || reviewError) && (
+        <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+          <ExclamationCircleIcon className="mr-2 h-5 w-5" />
+          <span className="text-sm">{formError || reviewError}</span>
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end space-x-3">
         <button
           onClick={() => navigate(-1)}
@@ -330,7 +297,7 @@ export default function BookingRating() {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={rating === 0 || isSubmitting}
+          disabled={!isFormValid || isSubmitting}
           className="flex items-center rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           {isSubmitting && (
@@ -343,17 +310,8 @@ export default function BookingRating() {
               : "Submit Rating"}
         </button>
       </div>
-
-      {/* Existing Review Info */}
-      {existingReview && (
-        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> You previously rated this service{" "}
-            {existingReview.rating}/5 stars. You can update your review at any
-            time.
-          </p>
-        </div>
-      )}
     </div>
   );
-}
+};
+
+export default BookingReviewPage;

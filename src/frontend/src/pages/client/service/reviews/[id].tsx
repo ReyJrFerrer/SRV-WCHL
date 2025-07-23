@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -6,9 +6,10 @@ import {
   UserIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/solid";
-import { useServiceReviews } from "../../../../hooks/reviewManagement";
-import { useServiceById } from "../../../../hooks/serviceInformation";
+import { useServiceReviews } from "../../../../hooks/reviewManagement"; // Adjust path as needed
+import { useServiceById } from "../../../../hooks/serviceInformation"; // Adjust path as needed
 
+// --- Reusable Star Rating Component ---
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
   maxStars = 5,
@@ -28,6 +29,7 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   );
 };
 
+// --- Main Page Component ---
 const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
@@ -58,16 +60,21 @@ const ServiceReviewsPage: React.FC = () => {
   >("newest");
   const [filterRating, setFilterRating] = useState<number | null>(null);
 
-  // Computed values
-  const sortedAndFilteredReviews = React.useMemo(() => {
+  // Set the document title dynamically
+  useEffect(() => {
+    if (service) {
+      document.title = `SRV | Reviews for ${service.name} by ${service.providerName || "Provider"}`;
+    }
+  }, [service]);
+
+  // Computed values for sorted and filtered reviews
+  const sortedAndFilteredReviews = useMemo(() => {
     let filtered = reviews.filter((review) => review.status === "Visible");
 
-    // Filter by rating if selected
     if (filterRating) {
       filtered = filtered.filter((review) => review.rating === filterRating);
     }
 
-    // Sort reviews
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
@@ -87,16 +94,7 @@ const ServiceReviewsPage: React.FC = () => {
   const ratingDistribution = getRatingDistribution(reviews);
   const averageRating = getAverageRating(reviews);
 
-  // Set document title
-  useEffect(() => {
-    if (service) {
-      const providerName = service.providerName || "Service Provider";
-      document.title = `SRV | Reviews for ${service.name} by ${providerName}`;
-    } else {
-      document.title = "SRV | Service Reviews";
-    }
-  }, [service]);
-
+  // --- Render States ---
   if (serviceLoading || reviewsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -112,9 +110,8 @@ const ServiceReviewsPage: React.FC = () => {
         <h1 className="mb-4 text-2xl font-bold text-red-600">
           Error Loading Reviews
         </h1>
-        {/* <p className="text-gray-600 mb-6">{serviceError! || reviewsError!}</p> */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(-1)} // Go back to the previous page
           className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
         >
           Go Back
@@ -143,11 +140,11 @@ const ServiceReviewsPage: React.FC = () => {
   }
 
   const providerName = service.providerName || "Service Provider";
-  const providerAvatar = "/images/rey.png";
+  const providerAvatar = "/images/rey.png"; // Placeholder
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header for navigation */}
+      {/* Header */}
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center">
@@ -182,7 +179,6 @@ const ServiceReviewsPage: React.FC = () => {
               className="h-full w-full object-cover"
             />
           </div>
-
           <div className="flex-grow">
             <h2 className="text-xl font-bold text-gray-800 md:text-2xl">
               {providerName}
@@ -203,8 +199,6 @@ const ServiceReviewsPage: React.FC = () => {
           <h3 className="mb-4 text-lg font-semibold text-gray-800">
             Rating Breakdown
           </h3>
-
-          {/* Rating Distribution */}
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <h4 className="mb-3 font-medium text-gray-700">
@@ -227,7 +221,6 @@ const ServiceReviewsPage: React.FC = () => {
                 </div>
               ))}
             </div>
-
             <div>
               <h4 className="mb-3 font-medium text-gray-700">Quick Stats</h4>
               <div className="space-y-2 text-sm">
@@ -256,8 +249,6 @@ const ServiceReviewsPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Filters and Sorting */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
               <label className="text-sm font-medium text-gray-700">
@@ -274,7 +265,6 @@ const ServiceReviewsPage: React.FC = () => {
                 <option value="lowest">Lowest Rating</option>
               </select>
             </div>
-
             <div className="flex items-center space-x-2">
               <label className="text-sm font-medium text-gray-700">
                 Filter by rating:
@@ -339,16 +329,12 @@ const ServiceReviewsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="mb-2">
                   <StarRatingDisplay rating={review.rating} />
                 </div>
-
                 <p className="mb-3 text-sm leading-relaxed text-gray-700">
                   {review.comment}
                 </p>
-
-                {/* Quality Score */}
                 {review.qualityScore && (
                   <div className="mb-2 flex items-center text-xs text-gray-500">
                     <span>
@@ -356,8 +342,6 @@ const ServiceReviewsPage: React.FC = () => {
                     </span>
                   </div>
                 )}
-
-                {/* Review Actions (if owned by current user) */}
                 {review.canEdit && (
                   <div className="flex items-center space-x-2 border-t border-gray-100 pt-2">
                     <button className="text-xs text-blue-600 hover:underline">

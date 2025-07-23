@@ -29,11 +29,14 @@ import ClientServiceReviews from "./src/pages/client/service/reviews/[id]";
 import ClientBookingIndex from "./src/pages/client/booking/index";
 import ClientBookingDetails from "./src/pages/client/booking/[id]";
 import ClientBookingConfirmation from "./src/pages/client/booking/confirmation";
+import ReceiptPage from "./src/pages/client/booking/receipt/[id]";
 import ClientBookService from "./src/pages/client/book/[id]";
 
 // Client Category & Review Pages
 import ClientCategory from "./src/pages/client/categories/[slug]";
 import ClientReview from "./src/pages/client/review/[id]";
+import ClientProfilePage from "./src/pages/client/profile";
+import SettingsPage from "./src/pages/client/settings";
 
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
@@ -59,6 +62,7 @@ import ProviderReview from "./src/pages/provider/review/[id]";
 
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
+import ConversationPage from "./src/pages/client/chat/[providerId]";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -73,6 +77,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route index element={<ClientRedirect />} />
             <Route path="home" element={<ClientHome />} />
             <Route path="chat" element={<ClientChat />} />
+            <Route path="chat/:providerId" element={<ConversationPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="profile" element={<ClientProfilePage />} />
             <Route path="search-results" element={<SearchResults />} />
 
             {/* Service Routes */}
@@ -90,6 +97,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               path="booking/confirmation"
               element={<ClientBookingConfirmation />}
             />
+            <Route path="booking/receipt/:id" element={<ReceiptPage />} />
             <Route path="book/:id" element={<ClientBookService />} />
 
             {/* Category & Review Routes */}

@@ -1,75 +1,38 @@
-import { useState, useEffect } from "react";
-// Import useAuth when needed
-// import { useAuth } from "../../context/AuthContext";
+import React, { useEffect } from "react";
 
 // Components
 import Header from "../../components/client/Header";
 import Categories from "../../components/client/Categories";
-import TopPicks from "../../components/client/TopPicks";
+import ServiceList from "../../components/client/ServiceListReact"; // Assuming you have a ServiceList component
 import BottomNavigation from "../../components/client/BottomNavigation";
-// Utilities
-import { getCategoryIcon } from "../../utils/serviceHelpers";
 
 // Hooks
-import { useCategories } from "../../hooks/serviceInformation";
-
-// Define the adapted category type that matches the Categories component requirements
-interface AdaptedCategory {
-  id: string;
-  name: string;
-  icon: string;
-  slug: string;
-}
+import { useServiceManagement } from "../../hooks/serviceManagement";
 
 const ClientHomePage: React.FC = () => {
-  // If you need auth later, you can uncomment this line
-  // const { isAuthenticated, identity } = useAuth();
-  const [adaptedCategories, setAdaptedCategories] = useState<AdaptedCategory[]>(
-    [],
-  );
+  const { loadingCategories, error } = useServiceManagement();
 
-  // Use the categories hook
-  const { categories, loading, error } = useCategories();
+  // Set the document title when the component mounts
 
-  // Set document title using React 19 approach
   useEffect(() => {
     document.title = "SRV | Find Local Service Providers";
-    // You could add a meta description here too if needed
-    // const metaDescription = document.querySelector('meta[name="description"]');
-    // if (metaDescription) {
-    //   metaDescription.setAttribute('content', 'Find the best service providers near you');
-    // }
   }, []);
-
-  // Transform categories when they change
-  useEffect(() => {
-    if (categories && categories.length > 0) {
-      const transformed: AdaptedCategory[] = categories.map((category) => ({
-        id: category.id,
-        name: category.name,
-        icon: getCategoryIcon(category.name),
-        slug: category.slug,
-      }));
-      setAdaptedCategories(transformed);
-    } else {
-      setAdaptedCategories([]);
-    }
-  }, [categories]);
-
-  if (loading) {
+  // Display a loading spinner while categories are being fetched by the hook.
+  if (loadingCategories) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-green-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Display an error message if fetching categories failed */}
       {error && (
-        <div className="mx-4 mt-4 rounded border border-yellow-400 bg-yellow-100 px-4 py-3 text-yellow-700">
+        <div className="mx-4 mt-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
           <span className="block sm:inline">
-            Failed to load categories: {error.message}
+            Failed to load categories: {error}
           </span>
         </div>
       )}
@@ -77,13 +40,16 @@ const ClientHomePage: React.FC = () => {
       <div className="px-4 pt-4 pb-16">
         <Header className="mb-6" />
 
+        {/* The Categories component now fetches its own data via the useServiceManagement hook.
+          We no longer need to pass the 'categories' prop to it.
+        */}
         <Categories
-          categories={adaptedCategories}
           className="mb-8"
-          initialItemCount={3}
+          moreButtonImageUrl="/images/categories/more.png"
+          lessButtonImageUrl="/images/categories/more.png"
         />
 
-        <TopPicks className="mb-8" />
+        <ServiceList />
       </div>
 
       <BottomNavigation />
