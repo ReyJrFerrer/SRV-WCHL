@@ -40,7 +40,6 @@ import ProviderHome from "./src/pages/provider/home";
 import ProviderBookings from "./src/pages/provider/bookings";
 import ProviderChat from "./src/pages/provider/chat";
 
-
 // Provider Service Management
 import ProviderServices from "./src/pages/provider/services";
 import ProviderAddService from "./src/pages/provider/services/add";

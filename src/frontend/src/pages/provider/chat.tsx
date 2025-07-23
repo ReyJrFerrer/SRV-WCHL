@@ -12,7 +12,6 @@ const ProviderChatPage: React.FC = () => {
     document.title = "Chat | Service Provider App";
   }, []);
 
-  
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Status bar */}
