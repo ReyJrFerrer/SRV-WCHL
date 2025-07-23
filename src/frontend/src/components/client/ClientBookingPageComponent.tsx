@@ -171,7 +171,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         },
         (error) => {
           setCurrentLocationStatus(
-            `⚠️ Hindi makuha ang lokasyon. Ilagay nalang ito nang manu-mano. (Error: ${error.message})`,
+            `⚠️ Unable to get location. Kindly input manually input. (Error: ${error.message})`,
           );
           setUseGpsLocation(false);
           setShowManualAddress(true);
@@ -179,7 +179,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       );
     } else {
       setCurrentLocationStatus(
-        "Hindi suportado ang geolocation. Ilagay nalang ang address nang manu-mano.",
+        "Geolocation is unsupported. Kindly input address manually input.",
       );
       setUseGpsLocation(false);
       setShowManualAddress(true);
@@ -200,27 +200,27 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     // Validate package selection
     const anyPackageSelected = packages.some((pkg) => pkg.checked);
     if (!anyPackageSelected) {
-      setFormError("Pumili ng hindi bababa sa isang package ng serbisyo.");
+      setFormError("Choose at least one package. ");
       return;
     }
 
     // Validate scheduling
     if (bookingOption === "scheduled") {
       if (!selectedDate) {
-        setFormError("Pumili ng petsa para sa iyong nakatakdang reservasyon.");
+        setFormError("Choose a data for your reservation.");
         return;
       }
       if (!selectedTime.trim()) {
-        setFormError("Pumili ng oras para sa iyong nakatakdang reservasyon.");
+        setFormError("Choose a time for your reservation.");
         return;
       }
     } else if (!isSameDayAvailable) {
-      setFormError("Reserbasyon ng kaparehong araw ay hindi maaari.");
+      setFormError("Same day reservation is unavailable.");
       return;
     }
 
     // Validate location
-    let finalAddress = "Walang tinukoy na address.";
+    let finalAddress = "Address was not placed.";
     if (useGpsLocation) {
       finalAddress = currentLocationStatus;
     } else if (
@@ -239,7 +239,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       ].filter(Boolean);
       finalAddress = addressParts.join(", ");
     } else {
-      setFormError("Ibigay ang iyong lokasyon (GPS o manu-manong ilagay).");
+      setFormError("Provide your address (GPS or manually place).");
       return;
     }
 
@@ -253,15 +253,11 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       totalPrice = calculateTotalPrice(selectedPackageIds, hookPackages);
 
       if (isNaN(totalPrice) || totalPrice < 0) {
-        setFormError(
-          "Hindi makuha ang kabuuang presyo. Mangyaring subukan muli.",
-        );
+        setFormError("Unable to retrieve total price. Try again.");
         return;
       }
     } catch (error) {
-      setFormError(
-        "Hindi makuha ang kabuuang presyo. Mangyaring subukan muli.",
-      );
+      setFormError("Unable to retrieve total price. Try again.");
       return;
     }
 
@@ -276,8 +272,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         bookingOption === "scheduled" ? selectedDate || undefined : undefined,
       scheduledTime: bookingOption === "scheduled" ? selectedTime : undefined,
       location: finalAddress,
-      concerns:
-        concerns.trim() || "Walang tiyak na mga alalahanin na nabanggit.",
+      concerns: concerns.trim() || "No specific concerns were mentioned.",
     };
 
     try {
@@ -287,7 +282,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         const confirmationDetails = {
           serviceName: bookingData.serviceName,
           providerName:
-            hookProviderProfile?.name || "Hindi Kilalang Tagapagbigay.",
+            hookProviderProfile?.name || "Unknown Service Provider.",
           selectedPackages: bookingData.packages.map((pkg) => ({
             id: pkg.id,
             name: pkg.title,
@@ -316,11 +311,11 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
           `/client/booking/confirmation?details=${encodeURIComponent(JSON.stringify(confirmationDetails))}`,
         );
       } else {
-        setFormError("Nabigo ang paglikha ng reservasyon. Subukan muli.");
+        setFormError("Unable to create a reservation. Please try again.");
       }
     } catch (error) {
       setFormError(
-        "Nagkaroon ng error habang nililikha ang reservasyon. Subukan muli.",
+        "An error occurred while creating the reservation. Please try again..",
       );
     }
   };
@@ -330,9 +325,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       <div className="flex min-h-96 items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">
-            Naglo-load ang mga detalye ng serbisyo...
-          </p>
+          <p className="mt-2 text-gray-600">Loading service details...</p>
         </div>
       </div>
     );
@@ -358,12 +351,12 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     return (
       <div className="flex min-h-96 items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Hindi natagpuan ang serbisyo</p>
+          <p className="text-gray-600">Service not found</p>
           <button
             onClick={() => navigate(-1)}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
-            Bumalik
+            Back
           </button>
         </div>
       </div>
@@ -384,7 +377,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
             {/* Package Selection Section */}
             <div className="border-b border-gray-200 bg-white p-4 md:rounded-t-xl md:border md:border-b-0 md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Pumili ng package *
+                Choose a package *
               </h3>
               {packages.map((pkg) => (
                 <label
@@ -427,7 +420,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
             {/* Booking Schedule Section */}
             <div className="border-b border-gray-200 bg-white p-4 md:rounded-t-xl md:border md:border-b-0 md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Iskedyul ng reserbasyon *
+                Reservation Schedule *
               </h3>
 
               {hookService.weeklySchedule &&
@@ -450,8 +443,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
               {(!hookService.weeklySchedule ||
                 hookService.weeklySchedule.length === 0) && (
                 <div className="mb-4 rounded bg-yellow-50 p-2 text-center text-sm text-yellow-700">
-                  Walang itinakdang iskedyul ng availability para sa
-                  tagapagbigay na ito.
+                  There is no set availability schedule for this provider.
                 </div>
               )}
 
@@ -465,10 +457,10 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                   onClick={() => handleBookingOptionChange("sameday")}
                   disabled={!isSameDayAvailable}
                 >
-                  <div className="text-sm font-medium">Parehong araw</div>
+                  <div className="text-sm font-medium">Same Day</div>
                   {isSameDayAvailable && (
                     <div className="text-xs opacity-75">
-                      Makakarating sa loob ng 20-45 mins
+                      Provider will arrive within 20-45 mins
                     </div>
                   )}
                 </button>
@@ -480,7 +472,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                   }`}
                   onClick={() => handleBookingOptionChange("scheduled")}
                 >
-                  <div className="text-sm font-medium">Iskedyul nalang</div>
+                  <div className="text-sm font-medium">Scheduled</div>
                 </button>
               </div>
 
@@ -488,7 +480,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                 <div className="space-y-4">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Pumili ng petsa:
+                      Choose a date:
                     </label>
                     <DatePicker
                       selected={selectedDate}
@@ -512,7 +504,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                   {selectedDate && hookAvailableSlots.length > 0 && (
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Pumili ng oras:
+                        Choose a time slot:
                       </label>
                       <select
                         className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-blue-500"
@@ -537,14 +529,14 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
 
                   {selectedDate && hookAvailableSlots.length === 0 && (
                     <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-700">
-                      ⏰ Walang libreng oras para sa petsang ito. Subukan ang
-                      ibang petsa.
+                      ⏰ There are no available times for this date. Try a
+                      different one.
                     </div>
                   )}
 
                   {!selectedDate && (
                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-                      📅 Pumili ng petsa muna upang makita ang mga libreng oras.
+                      📅 Select a date first to see available times.
                     </div>
                   )}
                 </div>
@@ -554,14 +546,14 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
             {/* Location Section */}
             <div className="border-b border-gray-200 bg-white p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Lokasyon ng Serbisyo *
+                Location of Service *
               </h3>
 
               <button
                 onClick={handleUseCurrentLocation}
                 className="mb-3 w-full rounded-lg bg-blue-600 p-3 text-sm text-white transition-colors hover:bg-blue-700"
               >
-                📍 Gamitin ang kasalukuyang lokasyon.
+                📍 Use current location.
               </button>
 
               {currentLocationStatus && (
@@ -575,14 +567,14 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                   onClick={toggleManualAddress}
                   className="w-full rounded-lg bg-gray-100 p-3 text-sm text-gray-700 transition-colors hover:bg-gray-200"
                 >
-                  Manu-manong ilagay
+                  Manually input address.
                 </button>
               )}
 
               {showManualAddress && (
                 <div className="mt-2 space-y-3">
                   <p className="text-xs text-gray-600">
-                    Ilagay ang address ng manu-mano (Lahat ay kinakailangan.*):
+                    Manually input address. (All is required.*):
                   </p>
                   <input
                     type="text"
@@ -627,11 +619,9 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
 
         <div className="mt-4 px-4 md:mx-4 md:mt-6 md:px-0 lg:mx-6">
           <div className="bg-white p-4 md:rounded-xl md:border md:shadow-sm">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">
-              Magbayad
-            </h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Pay</h3>
             <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-              💸 "Tanging cash lamang ang maaaring ipangbayad."
+              💸 "Cash payment is only available."
             </div>
           </div>
 
@@ -653,7 +643,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
               : "bg-green-600 hover:bg-green-700"
           }`}
         >
-          Kumpirmahin ang reserbasyon.
+          Confirm Reservation
         </button>
       </div>
     </div>

@@ -76,7 +76,7 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({
     <div className={`credentials-section ${className}`}>
       <div className="section-header mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-blue-700">
-          Mga Credential at Veripikasyon
+          Credentials and Verification
         </h2>
         <Link to="/provider/credentials/add">
           <button className="add-button rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700">

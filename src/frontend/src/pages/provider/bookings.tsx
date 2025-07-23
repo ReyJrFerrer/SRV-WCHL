@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import BottomNavigation from "../../components/provider/BottomNavigation";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
@@ -8,25 +8,37 @@ import {
 } from "../../hooks/useProviderBookingManagement";
 
 type BookingStatusTab =
-  | "Pending"
-  | "Upcoming"
-  | "Completed"
-  | "Cancelled"
-  | "InProgress";
+  | "ALL"
+  | "PENDING"
+  | "CONFIRMED"
+  | "IN PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
+
+type BookingFilterType = "All Types" | "Delivery Service" | "Beauty and Wellness" | "Tutoring" | "Photography Services" | "Home Services" | "Cleaning Services" | "Automotive Repair" | "Gadget Repair";
+
 const TAB_ITEMS: BookingStatusTab[] = [
-  "Pending",
-  "Upcoming",
-  "InProgress",
-  "Completed",
-  "Cancelled",
+  "ALL",
+  "PENDING",
+  "CONFIRMED",
+  "IN PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
 ];
+
+const FILTER_TYPES: BookingFilterType[] = ["All Types", "Delivery Service", "Beauty and Wellness", "Tutoring", "Photography Services", "Home Services", "Cleaning Services", "Automotive Repair", "Gadget Repair"];
 
 const ProviderBookingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryTab = searchParams.get("tab");
 
-  const [activeTab, setActiveTab] = useState<BookingStatusTab>("Pending");
+  const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filterType, setFilterType] = useState<BookingFilterType>("All Types");
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false); // New state for dropdown visibility
+
+  const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the dropdown to handle clicks outside
 
   // Use the provider booking management hook
   const {
@@ -50,18 +62,30 @@ const ProviderBookingsPage: React.FC = () => {
     ) {
       setActiveTab(queryTab as BookingStatusTab);
     } else if (!queryTab) {
-      setActiveTab("Pending");
+      setActiveTab("ALL");
     }
   }, [queryTab]);
 
-  // Set document title
   useEffect(() => {
-    document.title = "Aking Bookings - SRV Provider";
+    document.title = "My Bookings | SRV Provider";
+  }, []);
+
+  // Effect to close the dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   // Categorize bookings based on the hook's filtering functions
   const categorizedBookings = useMemo(() => {
-    // Combine cancelled and declined bookings in the cancelled tab
     const cancelledBookings = getBookingsByStatus("Cancelled");
     const declinedBookings = getBookingsByStatus("Declined");
     const combinedCancelledBookings = [
@@ -69,12 +93,17 @@ const ProviderBookingsPage: React.FC = () => {
       ...declinedBookings,
     ];
 
+    const allBookings = bookings;
+
     return {
-      Pending: getPendingBookings(),
-      Upcoming: getUpcomingBookings(),
-      Completed: getCompletedBookings(),
-      Cancelled: combinedCancelledBookings, // Include both cancelled and declined
-      InProgress: bookings.filter((booking) => booking.status === "InProgress"),
+      ALL: allBookings,
+      PENDING: getPendingBookings(),
+      CONFIRMED: getUpcomingBookings(),
+      COMPLETED: getCompletedBookings(),
+      CANCELLED: combinedCancelledBookings,
+      "IN PROGRESS": bookings.filter(
+        (booking) => booking.status === "InProgress",
+      ),
     };
   }, [
     getPendingBookings,
@@ -84,8 +113,44 @@ const ProviderBookingsPage: React.FC = () => {
     bookings,
   ]);
 
-  const currentBookings: ProviderEnhancedBooking[] =
-    categorizedBookings[activeTab] || [];
+  // Calculate counts for each tab
+  const tabCounts = useMemo(() => {
+    return {
+      ALL: categorizedBookings.ALL.length,
+      PENDING: categorizedBookings.PENDING.length,
+      CONFIRMED: categorizedBookings.CONFIRMED.length,
+      "IN PROGRESS": categorizedBookings["IN PROGRESS"].length,
+      COMPLETED: categorizedBookings.COMPLETED.length,
+      CANCELLED: categorizedBookings.CANCELLED.length,
+    };
+  }, [categorizedBookings]);
+
+  // Main filtered bookings display
+  const currentBookings: ProviderEnhancedBooking[] = useMemo(() => {
+    let filteredBookings = categorizedBookings[activeTab] || [];
+
+    // Apply service type filter if not "All Types"
+    if (filterType !== "All Types") {
+      filteredBookings = filteredBookings.filter(
+        (booking) =>
+          booking.serviceName &&
+          booking.serviceName.toLowerCase() === filterType.toLowerCase(),
+      );
+    }
+
+    // Apply search term filter
+    if (searchTerm) {
+      filteredBookings = filteredBookings.filter(
+        (booking) =>
+          (booking.serviceName &&
+            booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (booking.clientName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (booking.id.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    return filteredBookings;
+  }, [activeTab, categorizedBookings, searchTerm, filterType]);
 
   // Handle retry functionality
   const handleRetry = async () => {
@@ -102,16 +167,15 @@ const ProviderBookingsPage: React.FC = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">Hala!</h1>
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Oops!</h1>
           <p className="mb-4 text-gray-600">
-            Kailangan mong nakalogin bilang isang tagapagbigay serbisyo upang
-            magpatuloy
+            You need to be logged in as service provider to continue.
           </p>
           <button
             onClick={() => navigate("/provider/login")}
             className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
           >
-            Balik sa Login
+            Back to Login
           </button>
         </div>
       </div>
@@ -124,7 +188,7 @@ const ProviderBookingsPage: React.FC = () => {
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          <p className="text-gray-600">Niloload ang iyong mga bookings...</p>
+          <p className="text-gray-600">Loading Bookings...</p>
         </div>
       </div>
     );
@@ -136,7 +200,7 @@ const ProviderBookingsPage: React.FC = () => {
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
         <div className="text-center">
           <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Hindi maload ang mga bookings
+            Unable to load bookings
           </h1>
           <p className="mb-4 text-gray-600">{error}</p>
           <div className="space-x-3">
@@ -144,13 +208,13 @@ const ProviderBookingsPage: React.FC = () => {
               onClick={() => navigate("/provider/dashboard")}
               className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
             >
-              Balik sa Dashboard
+              Back to Dashboard
             </button>
             <button
               onClick={handleRetry}
               className="rounded-lg bg-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-400"
             >
-              Ulitin
+              Retry
             </button>
           </div>
         </div>
@@ -161,150 +225,161 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
-        {/* Error Display */}
-        {error && (
-          <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-sm text-red-600">{error}</span>
-              </div>
-              <button
-                onClick={clearError}
-                className="text-sm font-medium text-red-600 hover:text-red-800"
-              >
-                Isara
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Refresh indicator */}
-        {refreshing && (
-          <div className="mx-4 mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-            <div className="flex items-center">
-              <div className="mr-3 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <span className="text-sm text-blue-600">
-                Nirerefresh ang mga bookings...
-              </span>
-            </div>
-          </div>
-        )}
-
-        <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-800">
-              Aking Bookings
+        {/* Header */}
+        <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
+          <div className="flex justify-center items-center">
+            {/* The h1 will be hidden on small screens and block on medium and larger screens */}
+            <h1 className="text-lg font-semibold text-gray-800 hidden md:block">
+              My Bookings
             </h1>
-            <button
-              onClick={refreshBookings}
-              disabled={refreshing}
-              className="p-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-              title="Refresh bookings"
-            >
-              <svg
-                className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
+            {/* Placeholder for your logo. You'd typically replace this with an <img> tag. */}
+            <div className="md:hidden">
+              {/* This is where your logo would go for small screens */}
+              <span className="text-lg font-bold text-blue-600">SRV</span>
+            </div>
           </div>
         </header>
 
-        <div className="sticky top-[73px] z-10 border-b border-gray-200 bg-white">
-          <nav className="flex justify-around space-x-1 p-1 sm:space-x-2 sm:p-2">
-            {TAB_ITEMS.map((tab) => (
+        {/* Tab Navigation and Filters */}
+        <div className="sticky top-[64px] z-10 bg-white px-4 pt-4 pb-2">
+          <div className="flex justify-between items-center mb-4">
+            <div className="relative flex-grow mr-2">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search bookings..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            {/* Filter Dropdown */}
+            <div className="relative" ref={dropdownRef}>
               <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                }}
-                className={`flex-grow rounded-md px-3 py-2 text-center text-xs font-medium transition-colors sm:text-sm ${
-                  activeTab === tab
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-                }`}
+                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                {tab} ({categorizedBookings[tab]?.length || 0})
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-1" // Removed mr-1 for small screens to center icon
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01.293.707L19 13v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6l-2.293-2.293A1 1 0 0110 6.586V4a1 1 0 011-1h16a1 1 0 011 1z"
+                  />
+                </svg>
+                {/* Text for the filter button - hidden on small, block on medium+ */}
+                <span className="hidden md:inline">{filterType}</span>
+                <svg className={`ml-2 -mr-0.5 h-4 w-4 transform transition-transform ${isDropdownOpen ? 'rotate-180' : 'rotate-0'} md:ml-2`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
-            ))}
-          </nav>
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                  <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                    {FILTER_TYPES.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          setFilterType(type);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`${
+                          filterType === type ? 'bg-blue-100 text-blue-900' : 'text-gray-700'
+                        } block w-full text-left px-4 py-2 text-sm hover:bg-gray-100`}
+                        role="menuitem"
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Centering the tabs */}
+          <div className="flex justify-center overflow-x-auto">
+            <nav className="flex space-x-2 pb-2 text-sm">
+              {TAB_ITEMS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab);
+                  }}
+                  className={`flex-shrink-0 px-4 py-2 text-center font-medium transition-colors rounded-full ${
+                    activeTab === tab
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  }`}
+                >
+                  {tab} ({tabCounts[tab as keyof typeof tabCounts]})
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
 
         <main className="flex-grow overflow-y-auto pb-20">
           {currentBookings.length > 0 ? (
-            <div className="space-y-4 p-4">
+            <div className="space-y-4 px-4 py-4">
               {currentBookings.map((booking) => (
                 <div
                   key={booking.id}
                   onClick={() => {
-                    // If it's an InProgress booking, navigate to active service page
                     if (
-                      activeTab === "InProgress" &&
+                      activeTab === "IN PROGRESS" &&
                       booking.status === "InProgress"
                     ) {
                       navigate(`/provider/active-service/${booking.id}`);
                     }
                   }}
-                  className={`w-full ${activeTab === "InProgress" ? "cursor-pointer transition-shadow hover:shadow-lg" : ""}`}
+                  className={`w-full ${activeTab === "IN PROGRESS" ? "cursor-pointer transition-shadow hover:shadow-lg" : ""}`}
                 >
                   <ProviderBookingItemCard booking={booking} />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="py-16 text-center">
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-250px)] px-4 py-16 text-center">
               <div className="mb-4">
-                {activeTab === "Pending" && (
-                  <div className="mb-4 text-6xl">⏳</div>
-                )}
-                {activeTab === "Upcoming" && (
-                  <div className="mb-4 text-6xl">📅</div>
-                )}
-                {activeTab === "Completed" && (
-                  <div className="mb-4 text-6xl">✅</div>
-                )}
-                {activeTab === "Cancelled" && (
-                  <div className="mb-4 text-6xl">❌</div>
-                )}
-                {activeTab === "InProgress" && (
-                  <div className="mb-4 text-6xl">🔄</div>
-                )}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-24 w-24 text-gray-300 mx-auto"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                  />
+                </svg>
               </div>
-              <h3 className="mb-2 text-lg font-medium text-gray-900">
-                Walang {activeTab.toLowerCase()} bookings
-              </h3>
-              <p className="mb-6 text-gray-500">
-                {activeTab === "Pending" &&
-                  "Wala kang naghihintay na booking request."}
-                {activeTab === "Upcoming" &&
-                  "Wala kang mga nalalapit na kumpirmadong booking."}
-                {activeTab === "Completed" &&
-                  "Wala ka pang natapos na booking."}
-                {activeTab === "Cancelled" &&
-                  "Wala kang mga nakanselang o tinanggihang booking."}
-                {activeTab === "InProgress" &&
-                  "Wala kang mga booking na kasalukuyang isinasagawa."}
+              <p className="text-gray-500 text-lg">
+                No bookings found with the current filters.
               </p>
-              {activeTab === "Pending" && (
-                <p className="text-sm text-gray-400">
-                  Ang mga bagong booking requests ay magpapakita dito kapag
-                  nagbook na sila.
-                </p>
-              )}
-              {activeTab === "Cancelled" && (
-                <p className="text-sm text-gray-400">
-                  Ang booking na ito ay kinansela ng kliyente o tinanggihan mo
-                  ay magpapakita dito.
-                </p>
-              )}
             </div>
           )}
         </main>

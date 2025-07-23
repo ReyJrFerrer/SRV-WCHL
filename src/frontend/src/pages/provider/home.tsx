@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+// Remove Next.js Head import
 import SPHeaderNextjs from "../../components/provider/SPHeader";
 import ProviderStatsNextjs from "../../components/provider/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";
@@ -160,6 +161,12 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
 
   return (
     <>
+      {/* If you want to set the page title, use React Helmet here */}
+      {/* <Helmet>
+        <title>Provider Dashboard | SRV-ICP</title>
+        <meta name="description" content="Manage your services, bookings, and earnings" />
+      </Helmet> */}
+
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Use userProfile directly for SPHeaderNextjs */}
         <SPHeaderNextjs
@@ -182,8 +189,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
             error={servicesError}
             onRefresh={refreshServices}
           />
-
-          {userProfile && <CredentialsDisplayNextjs provider={userProfile} />}
         </div>
 
         <BottomNavigationNextjs />
