@@ -11,7 +11,8 @@ interface BookingDetails {
   time: string;
   location?: string;
   concerns: string;
-  amountPaid: string;
+  amountToPay: string;
+  packagePrice: string;
   landmark: string;
 }
 
@@ -108,13 +109,22 @@ const BookingConfirmationPage: React.FC = () => {
                   </p>
                 )}
 
-                {bookingDetails.amountPaid &&
-                  bookingDetails.amountPaid !== "N/A" && (
+                {bookingDetails.packagePrice && (
+                  <p>
+                    <span className="font-bold text-gray-700">
+                      Package Price:
+                    </span>{" "}
+                    ₱ {bookingDetails.packagePrice || "0.00"}
+                  </p>
+                )}
+
+                {bookingDetails.amountToPay &&
+                  bookingDetails.amountToPay !== "N/A" && (
                     <p>
                       <span className="font-bold text-gray-700">
                         Amount to Pay:
                       </span>{" "}
-                      ₱ {bookingDetails.amountPaid}
+                      ₱ {bookingDetails.amountToPay}
                     </p>
                   )}
 
