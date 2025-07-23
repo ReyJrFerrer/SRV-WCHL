@@ -372,7 +372,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                       .filter((entry) => entry.availability.isAvailable)
                       .map((entry) => (
                         <div key={entry.day} className="flex items-start gap-2">
-                          <span className="w-24 flex-shrink-0 text-sm font-medium text-black-700">
+                          <span className="text-black-700 w-24 flex-shrink-0 text-sm font-medium">
                             {entry.day}:
                           </span>
                           <span className="text-black-900 text-sm font-medium">

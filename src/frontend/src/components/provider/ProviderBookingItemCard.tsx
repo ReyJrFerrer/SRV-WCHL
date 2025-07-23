@@ -319,7 +319,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
                 {/* Expandable details section - HIDDEN ON SMALL SCREENS */}
                 <div
-                  className={`overflow-hidden transition-all duration-300 sm:block hidden`} 
+                  className={`hidden overflow-hidden transition-all duration-300 sm:block`}
                   style={{
                     maxHeight: showDetails ? 200 : 0,
                     opacity: showDetails ? 1 : 0,
@@ -371,7 +371,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                         booking.id,
                         "decline",
                       )}
-                      className="flex w-full items-center justify-center rounded-md bg-white px-3 py-2 text-xs font-medium text-red-500 transition-colors hover:bg-red-100  disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                      className="flex w-full items-center justify-center rounded-md bg-white px-3 py-2 text-xs font-medium text-red-500 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                     >
                       <XCircleIcon className="mr-1.5 h-4 w-4" />
                       {isBookingActionInProgress(booking.id, "decline")
@@ -542,7 +542,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
                 {/* Expandable details section - HIDDEN ON SMALL SCREENS */}
                 <div
-                  className={`overflow-hidden transition-all duration-300 sm:block hidden`}
+                  className={`hidden overflow-hidden transition-all duration-300 sm:block`}
                   style={{
                     maxHeight: showDetails ? 200 : 0,
                     opacity: showDetails ? 1 : 0,

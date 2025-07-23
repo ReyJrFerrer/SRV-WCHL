@@ -15,7 +15,16 @@ type BookingStatusTab =
   | "COMPLETED"
   | "CANCELLED";
 
-type BookingFilterType = "All Types" | "Delivery Service" | "Beauty and Wellness" | "Tutoring" | "Photography Services" | "Home Services" | "Cleaning Services" | "Automotive Repair" | "Gadget Repair";
+type BookingFilterType =
+  | "All Types"
+  | "Delivery Service"
+  | "Beauty and Wellness"
+  | "Tutoring"
+  | "Photography Services"
+  | "Home Services"
+  | "Cleaning Services"
+  | "Automotive Repair"
+  | "Gadget Repair";
 
 const TAB_ITEMS: BookingStatusTab[] = [
   "ALL",
@@ -26,7 +35,17 @@ const TAB_ITEMS: BookingStatusTab[] = [
   "CANCELLED",
 ];
 
-const FILTER_TYPES: BookingFilterType[] = ["All Types", "Delivery Service", "Beauty and Wellness", "Tutoring", "Photography Services", "Home Services", "Cleaning Services", "Automotive Repair", "Gadget Repair"];
+const FILTER_TYPES: BookingFilterType[] = [
+  "All Types",
+  "Delivery Service",
+  "Beauty and Wellness",
+  "Tutoring",
+  "Photography Services",
+  "Home Services",
+  "Cleaning Services",
+  "Automotive Repair",
+  "Gadget Repair",
+];
 
 const ProviderBookingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -73,7 +92,10 @@ const ProviderBookingsPage: React.FC = () => {
   // Effect to close the dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -143,9 +165,13 @@ const ProviderBookingsPage: React.FC = () => {
       filteredBookings = filteredBookings.filter(
         (booking) =>
           (booking.serviceName &&
-            booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (booking.clientName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (booking.id.toLowerCase().includes(searchTerm.toLowerCase()))
+            booking.serviceName
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          booking.clientName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking.id.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -227,9 +253,9 @@ const ProviderBookingsPage: React.FC = () => {
       <div className="flex min-h-screen flex-col bg-gray-100">
         {/* Header */}
         <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-          <div className="flex justify-center items-center">
+          <div className="flex items-center justify-center">
             {/* The h1 will be hidden on small screens and block on medium and larger screens */}
-            <h1 className="text-lg font-semibold text-gray-800 hidden md:block">
+            <h1 className="hidden text-lg font-semibold text-gray-800 md:block">
               My Bookings
             </h1>
             {/* Placeholder for your logo. You'd typically replace this with an <img> tag. */}
@@ -242,9 +268,9 @@ const ProviderBookingsPage: React.FC = () => {
 
         {/* Tab Navigation and Filters */}
         <div className="sticky top-[64px] z-10 bg-white px-4 pt-4 pb-2">
-          <div className="flex justify-between items-center mb-4">
-            <div className="relative flex-grow mr-2">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="relative mr-2 flex-grow">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 text-gray-400"
@@ -263,7 +289,7 @@ const ProviderBookingsPage: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search bookings..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -271,12 +297,12 @@ const ProviderBookingsPage: React.FC = () => {
             {/* Filter Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1" // Removed mr-1 for small screens to center icon
+                  className="mr-1 h-5 w-5" // Removed mr-1 for small screens to center icon
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -290,13 +316,28 @@ const ProviderBookingsPage: React.FC = () => {
                 </svg>
                 {/* Text for the filter button - hidden on small, block on medium+ */}
                 <span className="hidden md:inline">{filterType}</span>
-                <svg className={`ml-2 -mr-0.5 h-4 w-4 transform transition-transform ${isDropdownOpen ? 'rotate-180' : 'rotate-0'} md:ml-2`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                <svg
+                  className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform ${isDropdownOpen ? "rotate-180" : "rotate-0"} md:ml-2`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                  <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                <div className="ring-opacity-5 absolute right-0 z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black focus:outline-none">
+                  <div
+                    className="py-1"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="options-menu"
+                  >
                     {FILTER_TYPES.map((type) => (
                       <button
                         key={type}
@@ -305,8 +346,10 @@ const ProviderBookingsPage: React.FC = () => {
                           setIsDropdownOpen(false);
                         }}
                         className={`${
-                          filterType === type ? 'bg-blue-100 text-blue-900' : 'text-gray-700'
-                        } block w-full text-left px-4 py-2 text-sm hover:bg-gray-100`}
+                          filterType === type
+                            ? "bg-blue-100 text-blue-900"
+                            : "text-gray-700"
+                        } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
                         role="menuitem"
                       >
                         {type}
@@ -326,7 +369,7 @@ const ProviderBookingsPage: React.FC = () => {
                   onClick={() => {
                     setActiveTab(tab);
                   }}
-                  className={`flex-shrink-0 px-4 py-2 text-center font-medium transition-colors rounded-full ${
+                  className={`flex-shrink-0 rounded-full px-4 py-2 text-center font-medium transition-colors ${
                     activeTab === tab
                       ? "bg-blue-600 text-white"
                       : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
@@ -360,11 +403,11 @@ const ProviderBookingsPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-250px)] px-4 py-16 text-center">
+            <div className="flex h-[calc(100vh-250px)] flex-col items-center justify-center px-4 py-16 text-center">
               <div className="mb-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-24 w-24 text-gray-300 mx-auto"
+                  className="mx-auto h-24 w-24 text-gray-300"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -377,7 +420,7 @@ const ProviderBookingsPage: React.FC = () => {
                   />
                 </svg>
               </div>
-              <p className="text-gray-500 text-lg">
+              <p className="text-lg text-gray-500">
                 No bookings found with the current filters.
               </p>
             </div>

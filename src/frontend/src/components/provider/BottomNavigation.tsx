@@ -8,7 +8,6 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 
-
 // Assuming these hooks are available in your new project structure
 // You may need to adjust the import paths
 //import { useNotifications } from "../../hooks/useNotifications";
