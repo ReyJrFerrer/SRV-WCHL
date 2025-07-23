@@ -6,6 +6,14 @@ import chatCanisterService, {
   FrontendConversation,
   FrontendMessagePage,
 } from "../services/chatCanisterService";
+import { authCanisterService } from "../services/authCanisterService";
+
+// Enhanced conversation summary with user name
+export interface EnhancedConversationSummary
+  extends FrontendConversationSummary {
+  otherUserName?: string;
+  otherUserId: string;
+}
 
 /**
  * Custom hook to manage chat functionality including conversations and messaging
@@ -15,7 +23,7 @@ export const useChat = () => {
 
   // State management
   const [conversations, setConversations] = useState<
-    FrontendConversationSummary[]
+    EnhancedConversationSummary[]
   >([]);
   const [currentConversation, setCurrentConversation] =
     useState<FrontendConversation | null>(null);
@@ -24,9 +32,84 @@ export const useChat = () => {
   const [error, setError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
 
+  // Cache for user names to avoid repeated API calls
+  const [userNameCache, setUserNameCache] = useState<Map<string, string>>(
+    new Map(),
+  );
+
   // Auto-refresh interval
   const refreshInterval = useRef<NodeJS.Timeout | null>(null);
   const AUTO_REFRESH_INTERVAL = 5000; // 5 seconds
+
+  /**
+   * Get user name from cache or fetch from auth service
+   */
+  const getUserName = useCallback(
+    async (userId: string): Promise<string> => {
+      // Check cache first
+      if (userNameCache.has(userId)) {
+        return userNameCache.get(userId)!;
+      }
+
+      try {
+        const profile = await authCanisterService.getProfile(userId);
+        const userName = profile?.name || `User ${userId.slice(0, 8)}...`;
+
+        // Update cache
+        setUserNameCache((prev) => new Map(prev).set(userId, userName));
+
+        return userName;
+      } catch (error) {
+        console.error("Failed to fetch user name:", error);
+        const fallbackName = `User ${userId.slice(0, 8)}...`;
+
+        // Cache the fallback name to avoid repeated failed requests
+        setUserNameCache((prev) => new Map(prev).set(userId, fallbackName));
+
+        return fallbackName;
+      }
+    },
+    [userNameCache],
+  );
+
+  /**
+   * Enhance conversation summaries with user names
+   */
+  const enhanceConversationsWithNames = useCallback(
+    async (
+      conversationSummaries: FrontendConversationSummary[],
+    ): Promise<EnhancedConversationSummary[]> => {
+      if (!identity) return [];
+
+      const currentUserId = identity.getPrincipal().toString();
+
+      const enhancedConversations = await Promise.all(
+        conversationSummaries.map(
+          async (summary): Promise<EnhancedConversationSummary> => {
+            const conversation = summary.conversation;
+
+            // Determine the other user ID
+            const otherUserId =
+              conversation.clientId === currentUserId
+                ? conversation.providerId
+                : conversation.clientId;
+
+            // Fetch the other user's name
+            const otherUserName = await getUserName(otherUserId);
+
+            return {
+              ...summary,
+              otherUserId,
+              otherUserName,
+            };
+          },
+        ),
+      );
+
+      return enhancedConversations;
+    },
+    [identity, getUserName],
+  );
 
   /**
    * Fetch all conversations for the current user
@@ -43,14 +126,18 @@ export const useChat = () => {
     try {
       const fetchedConversations =
         await chatCanisterService.getMyConversations();
-      setConversations(fetchedConversations);
+
+      // Enhance conversations with user names
+      const enhancedConversations =
+        await enhanceConversationsWithNames(fetchedConversations);
+      setConversations(enhancedConversations);
     } catch (err) {
       console.error("Failed to fetch conversations:", err);
       setError("Could not load conversations.");
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, identity]);
+  }, [isAuthenticated, identity, enhanceConversationsWithNames]);
 
   /**
    * Fetch messages for a specific conversation
@@ -352,6 +439,7 @@ export const useChat = () => {
     // Utilities
     getUnreadCount,
     fetchMessages,
+    getUserName,
 
     // Auto-refresh controls
     startAutoRefresh,

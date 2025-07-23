@@ -8,7 +8,7 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 
 const ClientChatPage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, identity } = useAuth();
   const navigate = useNavigate();
   const { conversations, loading, error, markAsRead } = useChat();
 
@@ -70,13 +70,13 @@ const ClientChatPage: React.FC = () => {
                   const conversation = conversationSummary.conversation;
                   const lastMessage = conversationSummary.lastMessage;
 
-                  // Determine who the "other" user is (not the current user)
-                  const currentUserId = ""; // We'll need to get this from auth context
-                  const isClient = conversation.clientId !== currentUserId;
-                  const otherUserId = isClient
-                    ? conversation.providerId
-                    : conversation.clientId;
-                  const otherUserName = `User ${otherUserId.slice(0, 8)}...`; // Placeholder name
+                  // Use the enhanced data from useChat hook
+                  const currentUserId =
+                    identity?.getPrincipal().toString() || "";
+                  const otherUserId = conversationSummary.otherUserId;
+                  const otherUserName =
+                    conversationSummary.otherUserName ||
+                    `User ${otherUserId.slice(0, 8)}...`;
 
                   // Get unread count for current user
                   const unreadEntry = conversation.unreadCount.find(

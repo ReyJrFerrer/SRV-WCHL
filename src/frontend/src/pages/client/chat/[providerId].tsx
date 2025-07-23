@@ -9,113 +9,167 @@ import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 
-// Mock data for demonstration purposes
-const mockMessages = [
-  {
-    id: 1,
-    text: "Hello! I'm interested in your cleaning service. Are you available this weekend?",
-    sender: "client",
-    timestamp: "10:30 AM",
-  },
-  {
-    id: 2,
-    text: "Hi there! Thanks for reaching out. Yes, I have some availability on Saturday. What time were you thinking?",
-    sender: "provider",
-    timestamp: "10:32 AM",
-  },
-  {
-    id: 3,
-    text: "Saturday afternoon would be great, maybe around 2 PM?",
-    sender: "client",
-    timestamp: "10:33 AM",
-  },
-  {
-    id: 4,
-    text: "2 PM on Saturday works for me! I'll go ahead and confirm that for you once you book the service.",
-    sender: "provider",
-    timestamp: "10:35 AM",
-  },
-  {
-    id: 5,
-    text: "Sounds great, thank you!",
-    sender: "client",
-    timestamp: "10:36 AM",
-  },
-];
-
-const mockConversations = [
-  {
-    providerId: "1",
-    providerName: "Jane Doe",
-    providerImage: "/yanni.jpg",
-    providerAvailability: "Available Saturday 2 PM",
-  },
-  {
-    providerId: "2",
-    providerName: "John Smith",
-    providerImage: "/don.jpg",
-    providerAvailability: "Available Tomorrow",
-  },
-  {
-    providerId: "3",
-    providerName: "Emily White",
-    providerImage: "/hannah.jpg",
-    providerAvailability: "Available Next Week",
-  },
-];
-
 const ConversationPage: React.FC = () => {
+  const { providerId } = useParams<{ providerId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { providerId } = useParams();
-
-  // Try to get provider info from state, else fallback to mockConversations
-  let providerName = "Chat";
-  let providerImage = undefined;
-  let providerAvailability = "Not Available";
-  if (location.state && location.state.providerName) {
-    providerName = location.state.providerName;
-    providerImage = location.state.providerImage;
-    providerAvailability =
-      location.state.providerAvailability || "Not Available";
-  } else if (providerId) {
-    const convo = mockConversations.find((c) => c.providerId === providerId);
-    if (convo) {
-      providerName = convo.providerName;
-      providerImage = convo.providerImage;
-      providerAvailability = convo.providerAvailability;
-    }
-  }
-
-  const [messages, setMessages] = useState(mockMessages);
-  const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { identity } = useAuth();
+  const {
+    currentConversation,
+    messages,
+    loading,
+    error,
+    sendMessage,
+    loadConversation,
+    markAsRead,
+    sendingMessage,
+    getUserName,
+  } = useChat();
 
-  // Automatically scroll to the latest message
-  const scrollToBottom = () => {
+  const [messageText, setMessageText] = useState("");
+  const [otherUserName, setOtherUserName] = useState<string>("");
+
+  // Get conversation info from location state or use defaults
+  useEffect(() => {
+    if (location.state?.otherUserName) {
+      setOtherUserName(location.state.otherUserName);
+    } else if (location.state?.conversationId) {
+      setOtherUserName("Chat");
+    } else {
+      setOtherUserName(providerId || "Provider");
+    }
+  }, [location.state, providerId]);
+
+  // Load conversation when conversationId changes
+  useEffect(() => {
+    const conversationId = location.state?.conversationId || providerId;
+    if (conversationId && identity) {
+      loadConversation(conversationId);
+    }
+  }, [providerId, location.state?.conversationId, identity, loadConversation]);
+
+  // Update user name when conversation loads
+  useEffect(() => {
+    if (currentConversation && identity) {
+      const currentUserId = identity.getPrincipal().toString();
+      const otherUserId =
+        currentConversation.clientId === currentUserId
+          ? currentConversation.providerId
+          : currentConversation.clientId;
+
+      // Fetch the other user's name
+      getUserName(otherUserId).then(setOtherUserName).catch(console.error);
+    }
+  }, [currentConversation, identity, getUserName]);
+
+  // Mark messages as read when conversation loads
+  useEffect(() => {
+    if (currentConversation && messages.length > 0) {
+      markAsRead(currentConversation.id);
+    }
+  }, [currentConversation, messages, markAsRead]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(scrollToBottom, [messages]);
+  }, [messages]);
 
   // Handle sending a new message
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === "") return;
+    if (
+      !messageText.trim() ||
+      !currentConversation ||
+      !identity ||
+      sendingMessage
+    )
+      return;
 
-    const message = {
-      id: messages.length + 1,
-      text: newMessage,
-      sender: "client",
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+    try {
+      // Determine the receiver ID (the other participant in the conversation)
+      const currentUserId = identity.getPrincipal().toString();
+      const receiverId =
+        currentConversation.clientId === currentUserId
+          ? currentConversation.providerId
+          : currentConversation.clientId;
 
-    setMessages([...messages, message]);
-    setNewMessage("");
+      await sendMessage(messageText.trim(), receiverId);
+      setMessageText("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   };
+
+  // Format timestamp for display
+  const formatTimestamp = (date: Date): string => {
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Determine if message is from current user
+  const isFromCurrentUser = (senderId: string): boolean => {
+    if (!identity) return false;
+    return senderId === identity.getPrincipal().toString();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen flex-col bg-gray-50">
+        <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="rounded-full p-2 hover:bg-gray-100"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+          </button>
+          <div className="ml-3">
+            <h1 className="text-lg font-semibold text-gray-900">Loading...</h1>
+          </div>
+        </header>
+        <main className="flex flex-1 items-center justify-center">
+          <p className="text-gray-600">Loading conversation...</p>
+        </main>
+        <div className="fixed bottom-0 left-0 z-30 w-full">
+          <BottomNavigation />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen flex-col bg-gray-50">
+        <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="rounded-full p-2 hover:bg-gray-100"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+          </button>
+          <div className="ml-3">
+            <h1 className="text-lg font-semibold text-gray-900">Error</h1>
+          </div>
+        </header>
+        <main className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <p className="mb-4 text-red-600">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+        <div className="fixed bottom-0 left-0 z-30 w-full">
+          <BottomNavigation />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen flex-col bg-gray-50">
@@ -129,22 +183,14 @@ const ConversationPage: React.FC = () => {
         </button>
         <div className="ml-3 flex items-center">
           <div className="relative h-10 w-10">
-            {providerImage ? (
-              <img
-                src={providerImage as string}
-                alt={providerName as string}
-                className="h-full w-full rounded-full object-cover"
-              />
-            ) : (
-              <UserCircleIcon className="h-10 w-10 text-gray-400" />
-            )}
+            <UserCircleIcon className="h-10 w-10 text-gray-400" />
           </div>
           <div className="ml-3">
             <h1 className="text-lg font-semibold text-gray-900">
-              {providerName || "Chat"}
+              {otherUserName}
             </h1>
             <p className="text-xs text-gray-500">
-              {providerAvailability || "Not Available"}
+              {currentConversation ? "Active" : "Loading..."}
             </p>
           </div>
         </div>
@@ -152,36 +198,45 @@ const ConversationPage: React.FC = () => {
 
       {/* Messages Area */}
       <main className="flex-1 space-y-4 overflow-y-auto p-4 pb-32">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex items-end gap-2 ${msg.sender === "client" ? "justify-end" : "justify-start"}`}
-          >
-            {msg.sender === "provider" && (
-              <div className="relative h-8 w-8 flex-shrink-0">
-                {providerImage ? (
-                  <img
-                    src={providerImage as string}
-                    alt={providerName as string}
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <UserCircleIcon className="h-8 w-8 text-gray-300" />
-                )}
-              </div>
-            )}
-            <div
-              className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${msg.sender === "client" ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
-            >
-              <p className="text-sm">{msg.text}</p>
-              <p
-                className={`mt-1 text-xs ${msg.sender === "client" ? "text-blue-100" : "text-gray-400"} text-right`}
-              >
-                {msg.timestamp}
-              </p>
-            </div>
+        {messages.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-gray-500">
+              No messages yet. Start the conversation!
+            </p>
           </div>
-        ))}
+        ) : (
+          messages.map((message) => {
+            const fromCurrentUser = isFromCurrentUser(message.senderId);
+            return (
+              <div
+                key={message.id}
+                className={`flex items-end gap-2 ${fromCurrentUser ? "justify-end" : "justify-start"}`}
+              >
+                {!fromCurrentUser && (
+                  <div className="relative h-8 w-8 flex-shrink-0">
+                    <UserCircleIcon className="h-8 w-8 text-gray-300" />
+                  </div>
+                )}
+                <div
+                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${
+                    fromCurrentUser
+                      ? "rounded-br-none bg-blue-600 text-white"
+                      : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
+                  }`}
+                >
+                  <p className="text-sm">{message.content}</p>
+                  <p
+                    className={`mt-1 text-right text-xs ${
+                      fromCurrentUser ? "text-blue-100" : "text-gray-400"
+                    }`}
+                  >
+                    {formatTimestamp(message.createdAt)}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        )}
         <div ref={messagesEndRef} />
       </main>
 
@@ -193,18 +248,28 @@ const ConversationPage: React.FC = () => {
         >
           <input
             type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
             placeholder="Type a message..."
-            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            maxLength={500}
+            disabled={sendingMessage || !currentConversation}
+            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
+            disabled={
+              sendingMessage || !messageText.trim() || !currentConversation
+            }
             className="rounded-full bg-blue-600 p-3 text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300"
           >
             <PaperAirplaneIcon className="h-5 w-5" />
           </button>
         </form>
+        {messageText.length > 400 && (
+          <p className="mt-1 text-center text-xs text-gray-500">
+            {500 - messageText.length} characters remaining
+          </p>
+        )}
       </footer>
 
       {/* Bottom Navigation */}
