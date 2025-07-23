@@ -229,7 +229,7 @@ export default function MainPage({
               <h3 className="feature-title">Discover</h3>
               <div className="feature-image">
                 <img
-                  src="public/blueBall.png"
+                  src="blueBall.png"
                   alt="Service Discovery"
                   className="feature-icon"
                 />
@@ -244,7 +244,7 @@ export default function MainPage({
               <h3 className="feature-title">Compare</h3>
               <div className="feature-image">
                 <img
-                  src="public/ovalorange.png"
+                  src="ovalorange.png"
                   alt="Detailed Provider Profiles"
                   className="feature-icon"
                 />
@@ -258,7 +258,7 @@ export default function MainPage({
               <h3 className="feature-title">Book</h3>
               <div className="feature-image">
                 <img
-                  src="public/capsuleguy.png"
+                  src="capsuleguy.png"
                   alt="Seamless Booking System"
                   className="feature-icon"
                 />
@@ -273,7 +273,7 @@ export default function MainPage({
               <h3 className="feature-title">Get it Done</h3>
               <div className="feature-image">
                 <img
-                  src="public/blueoval.png"
+                  src="blueoval.png"
                   alt="Authentic Ratings & Reviews"
                   className="feature-icon"
                 />
@@ -288,16 +288,8 @@ export default function MainPage({
       </section>
 
       <section className="why-choose-section">
-        <img
-          src="public/CircleArrow.svg"
-          className="bg-shape-arrow-left"
-          alt=""
-        />
-        <img
-          src="public/Polygon 3.svg"
-          className="bg-shape-triangle-top"
-          alt=""
-        />
+        <img src="CircleArrow.svg" className="bg-shape-arrow-left" alt="" />
+        <img src="Polygon 3.svg" className="bg-shape-triangle-top" alt="" />
 
         <div className="container">
           <div className="why-choose-header">
@@ -309,7 +301,7 @@ export default function MainPage({
           <div className="why-choose-content">
             <div className="phone-container">
               <img
-                src="public/phone-new.png"
+                src="phone-new.png"
                 alt="SRV Mobile App"
                 className="phone-image"
               />
@@ -417,7 +409,7 @@ export default function MainPage({
                 SDG 9: Industry, Innovation, and Infrastructure
               </h3>
               <div className="sdg-icon">
-                <img src="public/sdg9.png" alt="sdg 9" />
+                <img src="sdg9.png" alt="sdg 9" />
               </div>
 
               <p className="sdg-card-description">
@@ -432,7 +424,7 @@ export default function MainPage({
                 SDG 8: Decent Work and Economic Growth
               </h3>
               <div className="sdg-icon">
-                <img src="public/sdg8.png" alt="sdg 8" />
+                <img src="sdg8.png" alt="sdg 8" />
               </div>
 
               <p className="sdg-card-description sdg-primary-description">
@@ -448,7 +440,7 @@ export default function MainPage({
                 SDG 17: Partnerships for the Goals
               </h3>
               <div className="sdg-icon">
-                <img src="public/sdg17.png" alt="sdg 17" />
+                <img src="sdg17.png" alt="sdg 17" />
               </div>
 
               <p className="sdg-card-description">
@@ -497,11 +489,7 @@ export default function MainPage({
           <div className="footer-content">
             <div className="footer-brand">
               <a href="/" className="footer-logo-link">
-                <img
-                  src="public/logo.svg"
-                  alt="SRV Logo"
-                  className="footer-logo"
-                />
+                <img src="logo.svg" alt="SRV Logo" className="footer-logo" />
               </a>
             </div>
             <div className="footer-section footer-nav">
@@ -541,7 +529,7 @@ export default function MainPage({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon-main"
                     />
@@ -553,7 +541,7 @@ export default function MainPage({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-instagram.svg"
+                      src="socials/brand-instagram.svg"
                       alt="Instagram"
                       className="social-icon-main"
                     />
@@ -565,7 +553,7 @@ export default function MainPage({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-youtube.svg"
+                      src="socials/brand-youtube.svg"
                       alt="Youtube"
                       className="social-icon-main"
                     />
@@ -577,7 +565,7 @@ export default function MainPage({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-tiktok.svg"
+                      src="socials/brand-tiktok.svg"
                       alt="Tiktok"
                       className="social-icon-main"
                     />

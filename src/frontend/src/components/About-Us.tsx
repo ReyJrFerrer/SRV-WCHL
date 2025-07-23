@@ -193,7 +193,7 @@ export default function AboutUs({
           <div className="about-hero-content">
             <div className="about-hero-image">
               <img
-                src="public/about-srv.jpeg"
+                src="about-srv.jpeg"
                 alt="SRV Service Platform"
                 className="hero-image"
               />
@@ -250,7 +250,7 @@ export default function AboutUs({
             </div>
             <div className="mission-image">
               <img
-                src="public/smarter-services.png"
+                src="smarter-services.png"
                 alt="Connected Community"
                 className="mission-img"
               />
@@ -269,7 +269,7 @@ export default function AboutUs({
             <div className="gallery-container">
               <div className="gallery-image-wrapper active" data-index="0">
                 <img
-                  src="public/services/electrician.jpeg"
+                  src="services/electrician.jpeg"
                   alt="Home Repairs"
                   className="gallery-image"
                 />
@@ -282,7 +282,7 @@ export default function AboutUs({
               </div>
               <div className="gallery-image-wrapper" data-index="1">
                 <img
-                  src="public/services/mechanic.jpeg"
+                  src="services/mechanic.jpeg"
                   alt="Automobile Repairs"
                   className="gallery-image"
                 />
@@ -295,7 +295,7 @@ export default function AboutUs({
               </div>
               <div className="gallery-image-wrapper" data-index="2">
                 <img
-                  src="public/services/technician.jpeg"
+                  src="services/technician.jpeg"
                   alt="Gadget & Appliance Tech"
                   className="gallery-image"
                 />
@@ -308,7 +308,7 @@ export default function AboutUs({
               </div>
               <div className="gallery-image-wrapper" data-index="3">
                 <img
-                  src="public/services/hair-stylist.jpeg"
+                  src="services/hair-stylist.jpeg"
                   alt="Beauty Services"
                   className="gallery-image"
                 />
@@ -321,7 +321,7 @@ export default function AboutUs({
               </div>
               <div className="gallery-image-wrapper" data-index="4">
                 <img
-                  src="public/services/massager.jpeg"
+                  src="services/massager.jpeg"
                   alt="Wellness Services"
                   className="gallery-image"
                 />
@@ -334,7 +334,7 @@ export default function AboutUs({
               </div>
               <div className="gallery-image-wrapper" data-index="5">
                 <img
-                  src="public/services/delivery-man.jpeg"
+                  src="services/delivery-man.jpeg"
                   alt="Delivery & Errands"
                   className="gallery-image"
                 />
@@ -347,7 +347,7 @@ export default function AboutUs({
               </div>
               <div className="gallery-image-wrapper" data-index="6">
                 <img
-                  src="public/services/tutor.jpeg"
+                  src="services/tutor.jpeg"
                   alt="Tutoring"
                   className="gallery-image"
                 />
@@ -381,7 +381,7 @@ export default function AboutUs({
                 <div className="pillar-header">
                   <h3 className="pillar-title">Our Story</h3>
                   <img
-                    src="public/three-pillars/story.svg"
+                    src="three-pillars/story.svg"
                     alt="Story Icon"
                     className="pillar-icon"
                   />
@@ -400,7 +400,7 @@ export default function AboutUs({
                 <div className="pillar-header">
                   <h3 className="pillar-title">Our Mission</h3>
                   <img
-                    src="public/three-pillars/mission.svg"
+                    src="three-pillars/mission.svg"
                     alt="Mission Icon"
                     className="pillar-icon"
                   />
@@ -419,7 +419,7 @@ export default function AboutUs({
                 <div className="pillar-header">
                   <h3 className="pillar-title">What Makes Us Unique?</h3>
                   <img
-                    src="public/three-pillars/unique.svg"
+                    src="three-pillars/unique.svg"
                     alt="Unique Icon"
                     className="pillar-icon"
                   />
@@ -537,7 +537,7 @@ export default function AboutUs({
               <div className="member-image-container">
                 <div className="member-image-wrapper">
                   <img
-                    src="public/about-us/don.jpg"
+                    src="about-us/don.jpg"
                     alt="Don - Team Member"
                     className="member-image"
                   />
@@ -551,7 +551,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon"
                     />
@@ -564,7 +564,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-linkedin.svg"
+                      src="socials/brand-linkedin.svg"
                       alt="LinkedIn"
                       className="social-icon"
                     />
@@ -584,7 +584,7 @@ export default function AboutUs({
               <div className="member-image-container">
                 <div className="member-image-wrapper">
                   <img
-                    src="public/about-us/jd.png"
+                    src="about-us/jd.png"
                     alt="JD - Team Member"
                     className="member-image"
                   />
@@ -598,7 +598,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon"
                     />
@@ -611,7 +611,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-linkedin.svg"
+                      src="socials/brand-linkedin.svg"
                       alt="LinkedIn"
                       className="social-icon"
                     />
@@ -631,7 +631,7 @@ export default function AboutUs({
               <div className="member-image-container">
                 <div className="member-image-wrapper">
                   <img
-                    src="public/about-us/rey.png"
+                    src="about-us/rey.png"
                     alt="Rey - Team Member"
                     className="member-image"
                   />
@@ -645,7 +645,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon"
                     />
@@ -658,7 +658,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-linkedin.svg"
+                      src="socials/brand-linkedin.svg"
                       alt="LinkedIn"
                       className="social-icon"
                     />
@@ -679,7 +679,7 @@ export default function AboutUs({
               <div className="member-image-container">
                 <div className="member-image-wrapper">
                   <img
-                    src="public/about-us/mark.jpeg"
+                    src="about-us/mark.jpeg"
                     alt="Mark - Team Member"
                     className="member-image"
                   />
@@ -693,7 +693,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon"
                     />
@@ -706,7 +706,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-linkedin.svg"
+                      src="socials/brand-linkedin.svg"
                       alt="LinkedIn"
                       className="social-icon"
                     />
@@ -727,7 +727,7 @@ export default function AboutUs({
               <div className="member-image-container">
                 <div className="member-image-wrapper">
                   <img
-                    src="public/about-us/hannah.jpg"
+                    src="about-us/hannah.jpg"
                     alt="Hannah - Team Member"
                     className="member-image"
                   />
@@ -741,7 +741,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon"
                     />
@@ -754,7 +754,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-linkedin.svg"
+                      src="socials/brand-linkedin.svg"
                       alt="LinkedIn"
                       className="social-icon"
                     />
@@ -774,7 +774,7 @@ export default function AboutUs({
               <div className="member-image-container">
                 <div className="member-image-wrapper">
                   <img
-                    src="public/about-us/alexie2.png"
+                    src="about-us/alexie2.png"
                     alt="Alexie - Team Member"
                     className="member-image"
                   />
@@ -788,7 +788,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon"
                     />
@@ -801,7 +801,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-linkedin.svg"
+                      src="socials/brand-linkedin.svg"
                       alt="LinkedIn"
                       className="social-icon"
                     />
@@ -857,11 +857,7 @@ export default function AboutUs({
           <div className="footer-content">
             <div className="footer-brand">
               <a href="/" className="footer-logo-link">
-                <img
-                  src="public/logo.svg"
-                  alt="SRV Logo"
-                  className="footer-logo"
-                />
+                <img src="logo.svg" alt="SRV Logo" className="footer-logo" />
               </a>
             </div>
             <div className="footer-section footer-nav">
@@ -900,7 +896,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-facebook.svg"
+                      src="socials/brand-facebook.svg"
                       alt="Facebook"
                       className="social-icon-footer"
                     />
@@ -912,7 +908,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-instagram.svg"
+                      src="socials/brand-instagram.svg"
                       alt="Instagram"
                       className="social-icon-footer"
                     />
@@ -924,7 +920,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-youtube.svg"
+                      src="socials/brand-youtube.svg"
                       alt="Youtube"
                       className="social-icon-footer"
                     />
@@ -936,7 +932,7 @@ export default function AboutUs({
                     rel="noopener noreferrer"
                   >
                     <img
-                      src="public/socials/brand-tiktok.svg"
+                      src="socials/brand-tiktok.svg"
                       alt="Tiktok"
                       className="social-icon-footer"
                     />

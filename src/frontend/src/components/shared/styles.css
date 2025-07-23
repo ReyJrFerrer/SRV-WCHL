@@ -1,11 +1,11 @@
 @font-face {
   font-family: "rubik";
-  src: url("public/fonts/rubik.ttf") format("opentype");
+  src: url("fonts/rubik.ttf") format("opentype");
 }
 
 @font-face {
   font-family: "nunito";
-  src: url("public/fonts/Nunito.ttf") format("opentype");
+  src: url("fonts/Nunito.ttf") format("opentype");
 }
 
 body {
