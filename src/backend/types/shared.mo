@@ -227,6 +227,65 @@ module {
         packageBreakdown: [(Text, Nat)]; // (packageId, count) pairs for package bookings
     };
 
+    // Chat types
+    public type MessageStatus = {
+        #Sent;
+        #Delivered;
+        #Read;
+    };
+
+    public type MessageType = {
+        #Text;
+        #File; // Future support for file attachments
+    };
+
+    public type EncryptedContent = {
+        encryptedText: Text;
+        encryptionKey: Text;
+    };
+
+    public type FileAttachment = {
+        fileName: Text;
+        fileSize: Nat;
+        fileType: Text;
+        fileUrl: Text;
+    };
+
+    public type Message = {
+        id: Text;
+        conversationId: Text;
+        senderId: Principal;
+        receiverId: Principal;
+        messageType: MessageType;
+        content: EncryptedContent;
+        attachment: ?FileAttachment;
+        status: MessageStatus;
+        createdAt: Time.Time;
+        readAt: ?Time.Time;
+    };
+
+    public type Conversation = {
+        id: Text;
+        clientId: Principal;
+        providerId: Principal;
+        bookingId: Text;
+        createdAt: Time.Time;
+        lastMessageAt: ?Time.Time;
+        isActive: Bool;
+        unreadCount: [(Principal, Nat)]; // (userId, unreadCount) pairs
+    };
+
+    public type ConversationSummary = {
+        conversation: Conversation;
+        lastMessage: ?Message;
+    };
+
+    public type MessagePage = {
+        messages: [Message];
+        hasMore: Bool;
+        nextPageToken: ?Text;
+    };
+
     // API Response
     public type Result<T> = {
         #ok: T;

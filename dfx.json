@@ -5,29 +5,29 @@
       "id": "w36hm-eqaaa-aaaal-qr76a-cai"
     },
     "auth": {
-      "dependencies": ["booking", "reputation", "service", "review"],
       "type": "motoko",
       "main": "src/backend/function/auth.mo"
     },
     "booking": {
-      "dependencies": ["auth", "reputation", "service", "review"],
       "type": "motoko",
       "main": "src/backend/function/booking.mo"
     },
     "reputation": {
-      "dependencies": ["booking", "auth", "service", "review"],
       "type": "motoko",
       "main": "src/backend/function/reputation.mo"
     },
     "review": {
-      "dependencies": ["booking", "reputation", "service", "auth"],
       "type": "motoko",
       "main": "src/backend/function/review.mo"
     },
     "service": {
-      "dependencies": ["booking", "reputation", "auth", "review"],
       "type": "motoko",
       "main": "src/backend/function/service.mo"
+    },
+    "chat": {
+      "dependencies": [],
+      "type": "motoko",
+      "main": "src/backend/function/chat.mo"
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
@@ -47,10 +47,26 @@
         "booking",
         "reputation",
         "review",
-        "service"
+        "service",
+        "chat"
       ],
       "type": "motoko",
       "main": "src/backend/main.mo"
+    },
+
+    "frontend": {
+      "dependencies": [
+        "backend",
+        "auth",
+        "internet_identity",
+        "booking",
+        "reputation",
+        "review",
+        "service",
+        "chat"
+      ],
+      "type": "assets",
+      "source": ["src/frontend/dist/"]
     }
   },
   "defaults": {

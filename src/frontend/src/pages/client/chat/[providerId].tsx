@@ -5,7 +5,9 @@ import {
   PaperAirplaneIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../../components/client/BottomNavigation"; // Adjust path as needed
+import BottomNavigation from "../../../components/client/BottomNavigation";
+import { useChat } from "../../../hooks/useChat";
+import { useAuth } from "../../../context/AuthContext";
 
 // Mock data for demonstration purposes
 const mockMessages = [
