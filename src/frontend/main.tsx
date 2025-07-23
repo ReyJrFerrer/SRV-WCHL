@@ -37,13 +37,13 @@ import ClientBookService from "./src/pages/client/book/[id]";
 import ClientCategory from "./src/pages/client/categories/[slug]";
 import ClientReview from "./src/pages/client/review/[id]";
 import ClientProfilePage from "./src/pages/client/profile";
-import SettingsPage from "./src/pages/client/settings";
+import SettingsPageC from "./src/pages/client/settings";
 
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
 import ProviderBookings from "./src/pages/provider/bookings";
 import ProviderChat from "./src/pages/provider/chat";
-import SettingsPage from "./src/pages/provider/settings";
+import SettingsPageSP from "./src/pages/provider/settings";
 import ProviderProfilePage from "./src/pages/provider/profile";
 
 // Provider Service Management
@@ -82,7 +82,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="home" element={<ClientHome />} />
             <Route path="chat" element={<ClientChat />} />
             <Route path="chat/:providerId" element={<ConversationPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings" element={<SettingsPageC />} />
             <Route path="profile" element={<ClientProfilePage />} />
             <Route path="search-results" element={<SearchResults />} />
             <Route path="notifications" element={<NotificationsPage />} />
@@ -116,7 +116,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="home" element={<ProviderHome />} />
             <Route path="bookings" element={<ProviderBookings />} />
             <Route path="chat" element={<ProviderChat />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings" element={<SettingsPageSP />} />
             <Route path="profile" element={<ProviderProfilePage />} />
 
             {/* Service Management Routes */}
