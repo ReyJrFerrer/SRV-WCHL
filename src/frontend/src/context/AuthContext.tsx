@@ -18,6 +18,13 @@ import {
   shouldInitializeCanisters,
 } from "../services/canisterInitService";
 
+// --- NEW: Types for Location State ---
+type LocationStatus = "not_set" | "allowed" | "denied" | "unsupported";
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
 interface AuthContextType {
   authClient: AuthClient | null;
   isAuthenticated: boolean;
@@ -26,6 +33,10 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  // --- NEW: Location properties ---
+  location: Location | null;
+  locationStatus: LocationStatus;
+  setLocation: (status: LocationStatus, location?: Location | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,6 +82,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // --- NEW: State for Location ---
+  const [location, setLocationState] = useState<Location | null>(null);
+  const [locationStatus, setLocationStatus] =
+    useState<LocationStatus>("not_set");
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -81,12 +97,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (isAuth) {
           const identity = client.getIdentity();
           setIdentity(identity);
-          // Update auth actor with the authenticated identity
           updateAllActors(identity);
-          // Initialize canister references for authenticated users
           await initializeCanisters(isAuth, identity);
         } else {
-          // Update auth actor with no identity (anonymous)
           updateAllActors(null);
         }
       } catch (e) {
@@ -98,6 +111,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
   }, []);
+
+  // --- NEW: Function to update location state ---
+  const setLocation = (
+    status: LocationStatus,
+    newLocation?: Location | null,
+  ) => {
+    setLocationStatus(status);
+    if (newLocation) {
+      setLocationState(newLocation);
+    }
+    // Store the permission status to avoid asking on every visit
+    localStorage.setItem("locationPermission", status);
+  };
 
   const login = async () => {
     if (!authClient) return;
@@ -115,9 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const identity = authClient.getIdentity();
           setIsAuthenticated(true);
           setIdentity(identity);
-          // Update auth actor with the authenticated identity
           updateAllActors(identity);
-          // Initialize canister references for authenticated users
           await initializeCanisters(true, identity);
           setIsLoading(false);
         },
@@ -141,7 +165,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await authClient.logout();
     setIsAuthenticated(false);
     setIdentity(null);
-    // Update auth actor to anonymous
     updateAllActors(null);
   };
 
@@ -153,6 +176,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     error,
+    // --- NEW: Add location state to context value ---
+    location,
+    locationStatus,
+    setLocation,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

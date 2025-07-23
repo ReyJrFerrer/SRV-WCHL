@@ -12,9 +12,72 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  // --- UPDATED: Get location data from the AuthContext ---
+  const { isAuthenticated, location, locationStatus } = useAuth();
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userLocation, setUserLocation] = useState<string>("Unknown");
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  // --- NEW: Effect to get a readable address from coordinates ---
+  useEffect(() => {
+    // Try context first, then fallback to localStorage
+    let lat: number | undefined, lon: number | undefined;
+    if (
+      location &&
+      typeof location.latitude === "number" &&
+      typeof location.longitude === "number"
+    ) {
+      lat = location.latitude;
+      lon = location.longitude;
+    } else {
+      const coordsStr = localStorage.getItem("userCoordinates");
+      if (coordsStr) {
+        try {
+          const coords = JSON.parse(coordsStr);
+          if (
+            typeof coords.latitude === "number" &&
+            typeof coords.longitude === "number"
+          ) {
+            lat = coords.latitude;
+            lon = coords.longitude;
+          }
+        } catch {}
+      }
+    }
+    if (lat !== undefined && lon !== undefined) {
+      setLocationLoading(true);
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.address) {
+            const { city, town, village, state, country, suburb } =
+              data.address;
+            const loc = [city || town || village || suburb, state, country]
+              .filter(Boolean)
+              .join(", ");
+            setUserLocation(loc || `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+          } else {
+            setUserLocation(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+          }
+        })
+        .catch(() => setUserLocation(`${lat.toFixed(5)}, ${lon.toFixed(5)}`))
+        .finally(() => setLocationLoading(false));
+    } else {
+      setLocationLoading(true);
+      // Handle cases where location is not available or denied
+      if (locationStatus === "not_set") {
+        setUserLocation("Location not set");
+      } else if (locationStatus === "denied") {
+        setUserLocation("Location not shared");
+      } else {
+        setUserLocation("Unknown");
+      }
+      setLocationLoading(false);
+    }
+  }, [location, locationStatus]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -31,7 +94,6 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   }, [isAuthenticated]);
 
   const handleProfileClick = () => {
-    // Navigate to the user's profile page
     navigate("/client/profile");
   };
 
@@ -83,22 +145,30 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* Location Section */}
+      {/* --- UPDATED: Location Section --- */}
       <div className="rounded-lg bg-yellow-200 p-4">
         <p className="text-sm font-bold text-gray-800">Aking Lokasyon</p>
-        <div className="flex items-center">
+        <div className="flex min-h-[1.5rem] items-center">
           <MapPinIcon className="mr-2 h-5 w-5 text-gray-700" />
-          <span className="text-gray-800">Baguio City</span>
+          {locationLoading ? (
+            <span className="animate-pulse text-gray-500">
+              Detecting location...
+            </span>
+          ) : (
+            <span className="text-gray-800">{userLocation}</span>
+          )}
         </div>
 
-        {/* Search Bar with padding above */}
+        {/* Search Bar */}
         <form
           className="mt-4 w-full"
           onSubmit={(e) => {
             e.preventDefault();
             if (searchQuery.trim()) {
               navigate(
-                `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
+                `/client/search-results?query=${encodeURIComponent(
+                  searchQuery,
+                )}`,
               );
             }
           }}

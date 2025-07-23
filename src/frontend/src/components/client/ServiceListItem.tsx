@@ -168,7 +168,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
           {/* This div helps push price/location to bottom */}
           <div className={nameRatingContainerClass}>
             <h3
-              className={`text-md leading-tight font-bold text-blue-800 transition-colors group-hover:text-green-600 ${nameMarginClass} truncate`}
+              className={`text-md leading-tight font-bold text-blue-800 transition-colors group-hover:text-yellow-400 ${nameMarginClass} truncate`}
             >
               {service.providerName}
             </h3>
