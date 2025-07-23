@@ -4,21 +4,19 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; // Styles for the date picker
 
 import {
-  CalendarDaysIcon,
-  ClockIcon,
   CurrencyDollarIcon,
   CreditCardIcon,
   GlobeAltIcon,
   ExclamationCircleIcon,
   PencilSquareIcon,
-  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 // Hooks and Services - adjust paths as needed
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
-import { DayOfWeek } from "../../services/serviceCanisterService";
+import { DayOfWeek } from "../../services/serviceCanisterService"; // Importing types only
 
-// --- Helper Data and Types (No changes needed) ---
+// --- Helper Data and Types ---
 const dayIndexToName = (dayIndex: number): string => {
   const days = [
     "Sunday",
@@ -403,7 +401,11 @@ const ClientBookingPageComponent: React.FC = () => {
               })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
-          amountPaid: paymentMethod === "cash" ? amountPaid : "N/A",
+          // Pass both total price and the amount paid for clarity on the confirmation page
+          totalPrice: totalPrice,
+          packagePrice: totalPrice.toFixed(2),
+          amountToPay:
+            paymentMethod === "cash" ? amountPaid : totalPrice.toFixed(2),
           landmark: landmark || "None",
         };
         // Navigate to confirmation page with state
@@ -457,6 +459,15 @@ const ClientBookingPageComponent: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
+      <style>
+        {`
+                .booking-calendar-wrapper .react-datepicker { width: 100%; border: 1; }
+                .booking-calendar-wrapper .react-datepicker__month-container { width: 100%; }
+                .booking-calendar-wrapper .react-datepicker__header { background-color: #f3f4f6; }
+                .booking-calendar-wrapper .react-datepicker__day-names, .booking-calendar-wrapper .react-datepicker__week { display: flex; justify-content: space-around; }
+                .booking-calendar-wrapper .react-datepicker__day { margin: 0.25rem; }
+                `}
+      </style>
       <div className="flex-grow pb-28 md:pb-24">
         <div className="md:flex md:flex-row md:gap-x-8 md:p-6">
           <div className="md:w-1/2">
@@ -480,7 +491,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     <div className="text-sm text-gray-600">
                       {pkg.description}
                     </div>
-                    <div className="text-sm font-medium text-green-600">
+                    <div className="text-sm font-medium text-blue-600">
                       ₱{pkg.price}
                     </div>
                   </div>
@@ -502,61 +513,6 @@ const ClientBookingPageComponent: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 md:mt-0 md:w-1/2">
-            <div className="mb-4 bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Provider's Availability
-              </h3>
-              {service.weeklySchedule && service.weeklySchedule.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <CalendarDaysIcon className="mt-1 h-6 w-6 text-gray-400" />
-                    <div>
-                      <h4 className="font-medium text-gray-800">
-                        Available Days
-                      </h4>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {service.weeklySchedule
-                          .filter((s) => s.availability.isAvailable)
-                          .map((s) => (
-                            <span
-                              key={s.day}
-                              className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800"
-                            >
-                              {s.day}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <ClockIcon className="mt-1 h-6 w-6 text-gray-400" />
-                    <div>
-                      <h4 className="font-medium text-gray-800">
-                        Service Hours
-                      </h4>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {service.weeklySchedule[0]?.availability?.slots?.map(
-                          (slot, index) => (
-                            <span
-                              key={index}
-                              className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800"
-                            >{`${slot.startTime}-${slot.endTime}`}</span>
-                          ),
-                        ) ?? (
-                          <span className="text-sm text-gray-500">
-                            Not specified
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded bg-yellow-50 p-3 text-center text-sm text-yellow-700">
-                  This provider has not set their weekly schedule.
-                </div>
-              )}
-            </div>
             <div className="bg-white p-4 md:rounded-xl md:shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Booking Schedule *
@@ -573,7 +529,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   className={`flex-1 rounded-lg border p-3 text-center transition-colors ${bookingOption === "scheduled" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"}`}
                   onClick={() => handleBookingOptionChange("scheduled")}
                 >
-                  Schedule
+                  <div className="text-sm font-medium">Scheduled</div>
                 </button>
               </div>
               {bookingOption === "scheduled" && (
@@ -636,9 +592,11 @@ const ClientBookingPageComponent: React.FC = () => {
               </h3>
               <button
                 onClick={handleUseCurrentLocation}
-                className="mb-3 w-full rounded-lg bg-blue-600 p-3 text-sm text-white transition-colors hover:bg-blue-700"
+                className="w-full rounded-lg border bg-gray-100 p-3 text-sm text-gray-700 transition-colors hover:bg-gray-200"
               >
-                📍 Use Current Location
+                <div className="text-sm font-medium">
+                  📍 Use Current Location
+                </div>
               </button>
               {currentLocationStatus && (
                 <div className="mb-3 rounded border border-blue-200 bg-blue-50 p-2 text-center text-xs text-blue-700">
@@ -648,9 +606,9 @@ const ClientBookingPageComponent: React.FC = () => {
               {!showManualAddress && (
                 <button
                   onClick={toggleManualAddress}
-                  className="w-full rounded-lg bg-gray-100 p-3 text-sm text-gray-700 transition-colors hover:bg-gray-200"
+                  className={`w-full rounded-lg border p-3 text-sm font-medium transition-colors ${showManualAddress ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-gray-100 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"}`}
                 >
-                  Enter Address Manually
+                  <div>Enter Address Manually</div>
                 </button>
               )}
               {showManualAddress && (
