@@ -8,6 +8,8 @@ import {
   CheckBadgeIcon,
   CurrencyEuroIcon,
   CalendarIcon,
+  ArrowPathRoundedSquareIcon,
+  ChevronRightIcon, // Added for the switch button
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
@@ -148,6 +150,12 @@ const ClientProfilePage: React.FC = () => {
     }
   };
 
+  const handleSwitchToProvider = () => {
+    // Placeholder function for future implementation
+    console.log("Attempting to switch to Service Provider mode...");
+    alert("Feature coming soon!");
+  };
+
   if (loading && !profile) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -172,9 +180,9 @@ const ClientProfilePage: React.FC = () => {
 
       <main className="mx-auto max-w-6xl p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          {/* Left Column: Profile Info */}
-          <div className="lg:col-span-1">
-            <div className="h-full rounded-xl bg-white p-6 shadow-md">
+          {/* Left Column: Profile Info & Switch Button */}
+          <div className="space-y-4 lg:col-span-1">
+            <div className="rounded-xl bg-white p-6 shadow-md">
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
                   <img
@@ -276,6 +284,21 @@ const ClientProfilePage: React.FC = () => {
                   )}
                 </div>
               </div>
+            </div>
+            {/* --- Switch to SRVice Provider Button --- */}
+            <div className="rounded-lg bg-yellow-300 shadow-sm">
+              <button
+                onClick={handleSwitchToProvider}
+                className="group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors hover:bg-blue-600"
+              >
+                <div className="flex items-center">
+                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-black group-hover:text-white" />
+                  <span className="text-md font-medium text-gray-800 group-hover:text-white">
+                    Switch into SRVice Provider
+                  </span>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+              </button>
             </div>
           </div>
 

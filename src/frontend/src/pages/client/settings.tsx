@@ -91,7 +91,7 @@ const SettingsPage: React.FC = () => {
                     Switch into SRVice Provider
                   </span>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-gray-400 group-hover:text-white" />
+                <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
               </button>
             </div>
 
