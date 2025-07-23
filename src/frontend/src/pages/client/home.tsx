@@ -5,7 +5,7 @@ import Header from "../../components/client/Header";
 import Categories from "../../components/client/Categories";
 import ServiceList from "../../components/client/ServiceListReact";
 import BottomNavigation from "../../components/client/BottomNavigation";
-import { MapPinIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon } from "@heroicons/react/24/solid";
 
 // Hooks
 import { useServiceManagement } from "../../hooks/serviceManagement";
