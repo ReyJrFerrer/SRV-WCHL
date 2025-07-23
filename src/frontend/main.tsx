@@ -19,6 +19,7 @@ import CreateProfile from "./src/pages/create-profile";
 import ClientHome from "./src/pages/client/home";
 import ClientChat from "./src/pages/client/chat";
 import SearchResults from "./src/pages/client/search-results";
+import NotificationsPage from "./src/pages/client/notifications";
 
 // Client Service Pages
 import ClientServiceViewAll from "./src/pages/client/service/view-all";
@@ -81,6 +82,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="settings" element={<SettingsPage />} />
             <Route path="profile" element={<ClientProfilePage />} />
             <Route path="search-results" element={<SearchResults />} />
+            <Route path="notifications" element={<NotificationsPage />} />
 
             {/* Service Routes */}
             <Route path="service/view-all" element={<ClientServiceViewAll />} />

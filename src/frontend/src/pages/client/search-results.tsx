@@ -14,7 +14,8 @@ import {
 const SearchResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const queryParam = searchParams.get("q");
+  // Accept both 'query' and fallback to 'q' for backward compatibility
+  const queryParam = searchParams.get("query") || searchParams.get("q") || "";
   // const { isAuthenticated, currentIdentity } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -78,7 +79,7 @@ const SearchResultsPage: React.FC = () => {
   const handleSearchOnPage = (newQuery: string) => {
     const trimmedNewQuery = newQuery.trim();
     if (trimmedNewQuery !== searchQuery.trim()) {
-      setSearchParams({ q: trimmedNewQuery });
+      setSearchParams({ query: trimmedNewQuery });
     }
   };
 

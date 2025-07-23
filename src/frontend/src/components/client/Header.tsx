@@ -14,6 +14,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -83,23 +84,35 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
       </div>
 
       {/* Location Section */}
-      <div className="rounded-lg bg-yellow-300 p-4">
-        <p className="text-sm font-medium text-gray-800">Aking Lokasyon</p>
+      <div className="rounded-lg bg-yellow-200 p-4">
+        <p className="text-sm font-bold text-gray-800">Aking Lokasyon</p>
         <div className="flex items-center">
           <MapPinIcon className="mr-2 h-5 w-5 text-gray-700" />
           <span className="text-gray-800">Baguio City</span>
         </div>
 
-        {/* Wrapper to make the search bar a link to the map page */}
-        <div
-          className="mt-4 w-full cursor-pointer"
-          onClick={() => navigate("/client/map-search")}
+        {/* Search Bar with padding above */}
+        <form
+          className="mt-4 w-full"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (searchQuery.trim()) {
+              navigate(
+                `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
+              );
+            }
+          }}
         >
-          {/* Visual placeholder for the search bar */}
-          <div className="pointer-events-none flex w-full items-center rounded-md bg-white p-3 shadow-sm">
-            <p className="text-gray-500">Maghanap ng Serbisyo sa Mapa</p>
+          <div className="flex w-full items-center rounded-md bg-white p-3 shadow-sm">
+            <input
+              type="text"
+              className="flex-1 border-none bg-transparent p-0 text-gray-800 placeholder-gray-500 focus:ring-0"
+              placeholder="Search for service"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-        </div>
+        </form>
       </div>
     </header>
   );
