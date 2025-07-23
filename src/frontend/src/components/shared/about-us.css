@@ -1579,10 +1579,6 @@ body.menu-open {
 }
 
 @media (max-width: 480px) {
-  body {
-    padding-top: 80px;
-  }
-
   .header-content {
     flex-direction: column;
     height: auto;

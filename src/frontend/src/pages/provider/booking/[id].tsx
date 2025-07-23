@@ -424,7 +424,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           {!isDeclined && (
             <button
               onClick={handleContactClient}
-              className="flex w-full items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-700 sm:flex-1"
+              className="flex w-full items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-black transition-colors hover:bg-slate-200 sm:flex-1"
             >
               <PhoneIcon className="mr-2 h-5 w-5" /> Contact Client
             </button>
@@ -439,7 +439,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   specificBooking?.id || "",
                   "decline",
                 )}
-                className="flex w-full items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50 sm:flex-1"
+                className="flex w-full items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-slate-200 disabled:opacity-50 sm:flex-1"
               >
                 <XCircleIcon className="mr-2 h-5 w-5" />
                 {isBookingActionInProgress(specificBooking?.id || "", "decline")
@@ -452,7 +452,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   specificBooking?.id || "",
                   "accept",
                 )}
-                className="flex w-full items-center justify-center rounded-lg bg-green-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-600 disabled:opacity-50 sm:flex-1"
+                className="flex w-full items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-green-500 transition-colors hover:bg-slate-100 disabled:opacity-50 sm:flex-1"
               >
                 <CheckCircleIcon className="mr-2 h-5 w-5" />
                 {isBookingActionInProgress(specificBooking?.id || "", "accept")

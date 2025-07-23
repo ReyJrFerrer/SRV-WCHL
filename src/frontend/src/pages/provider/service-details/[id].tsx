@@ -293,40 +293,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Buttons Card */}
-        <div className="flex flex-col space-y-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:space-y-0 sm:space-x-3">
-          <Link
-            to={`/provider/services/edit/${service.id}`}
-            className="flex flex-1 items-center justify-center rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600"
-          >
-            <PencilIcon className="mr-2 h-5 w-5" /> Edit Service
-          </Link>
-          <button
-            onClick={handleStatusToggle}
-            disabled={isUpdatingStatus}
-            className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 ${
-              service.status === "Available"
-                ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                : "bg-green-500 text-white hover:bg-green-600"
-            }`}
-          >
-            <CogIcon className="mr-2 h-5 w-5" />
-            {isUpdatingStatus
-              ? "Updating..."
-              : service.status === "Available"
-                ? "Deactivate"
-                : "Activate"}
-          </button>
-          <button
-            onClick={handleDeleteService}
-            disabled={isDeleting}
-            className="flex flex-1 items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
-          >
-            <TrashIcon className="mr-2 h-5 w-5" />
-            {isDeleting ? "Deleting..." : "Delete Service"}
-          </button>
-        </div>
-
         {/* Detailed Information Sections */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-3 rounded-xl bg-white p-6 shadow-lg">
@@ -350,89 +316,110 @@ const ProviderServiceDetailPage: React.FC = () => {
               </p> */}
           </div>
 
-          <div className="space-y-3 rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="mb-3 border-b pb-2 text-lg font-semibold text-gray-700">
+          {/* Location & provider details */}
+          <div className="space-y-5 rounded-xl bg-white p-6 shadow-lg">
+            <h3 className="mb-4 flex items-center gap-2 border-b pb-2 text-lg font-semibold text-gray-700">
+              <MapPinIcon className="h-6 w-6 text-blue-500" />
               Location & Provider Details
             </h3>
-            <div className="space-y-3">
-              <p className="flex items-start text-sm">
-                <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-500" />
-                <div className="flex-1">
-                  <span className="font-medium">Full Address:</span>
-                  <div className="mt-1 text-gray-600">
-                    {service.location.address && (
-                      <div>{service.location.address}</div>
-                    )}
-                    <div>
-                      {service.location.city}
-                      {service.location.state && `, ${service.location.state}`}
-                      {service.location.postalCode &&
-                        ` ${service.location.postalCode}`}
-                    </div>
-                    {service.location.country && (
-                      <div className="text-gray-500">
-                        {service.location.country}
-                      </div>
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-2 rounded-lg bg-gray-50 p-4 sm:grid-cols-2">
+              <div className="flex items-center gap-2">
+                <dt className="text-black-500 text-xs font-semibold whitespace-nowrap">
+                  Full Address:
+                </dt>
+                <dd className="text-black-1000 m-0 p-0 text-sm">
+                  {service.location.address && (
+                    <span>{service.location.address}, </span>
+                  )}
+                  <span>
+                    {service.location.city}
+                    {service.location.state && `, ${service.location.state}`}
+                    {service.location.postalCode &&
+                      ` ${service.location.postalCode}`}
+                  </span>
+                  {service.location.country && (
+                    <span className="text-gray-500">
+                      , {service.location.country}
+                    </span>
+                  )}
+                </dd>
+              </div>
+              {/* {(service.location.latitude !== undefined && service.location.longitude !== undefined) && (
+                <>
+                  <dt className="text-xs font-semibold text-gray-500">Coordinates</dt>
+                  <dd className="text-xs font-mono text-gray-700">
+                    {service.location.latitude.toFixed(6)}, {service.location.longitude.toFixed(6)}
+                  </dd>
+                </>
+              )} */}
+            </dl>
+            {/* {service.providerProfile && (
+                <div className="flex items-center text-sm">
+                  <span className="font-medium mr-1">Provider:</span> {service.providerProfile.name}
+                </div>
+              )} */}
+            {service.weeklySchedule && service.weeklySchedule.length > 0 && (
+              <div className="mt-4 space-y-4">
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <CalendarDaysIcon className="text-black-500 h-6 w-6" />
+                    <span className="text-black-700 text-xs font-semibold">
+                      Availability
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {service.weeklySchedule
+                      .filter((entry) => entry.availability.isAvailable)
+                      .map((entry) => (
+                        <div key={entry.day} className="flex items-start gap-2">
+                          <span className="text-black-700 w-24 flex-shrink-0 text-sm font-medium">
+                            {entry.day}:
+                          </span>
+                          <span className="text-black-900 text-sm font-medium">
+                            {entry.availability.slots &&
+                            entry.availability.slots.length > 0 ? (
+                              entry.availability.slots
+                                .map((slot) => {
+                                  const formatTime = (time: string) => {
+                                    const [hourStr, minuteStr] =
+                                      time.split(":");
+                                    let hour = parseInt(hourStr, 10);
+                                    const minute = minuteStr || "00";
+                                    const ampm = hour >= 12 ? "PM" : "AM";
+                                    hour = hour % 12;
+                                    if (hour === 0) hour = 12;
+                                    return `${hour}:${minute.padStart(2, "0")} ${ampm}`;
+                                  };
+                                  return `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
+                                })
+                                .join(" | ")
+                            ) : (
+                              <span className="text-gray-400">No slots</span>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    {service.weeklySchedule.filter(
+                      (entry) => entry.availability.isAvailable,
+                    ).length === 0 && (
+                      <span className="text-gray-400">Not specified</span>
                     )}
                   </div>
                 </div>
-              </p>
-
-              {/* {(service.location.latitude !== undefined && service.location.longitude !== undefined) && (
-                  <p className="flex items-center text-sm">
-                    <MapPinIcon className="h-5 w-5 mr-2 text-green-500"/>
-                    Coordinates: <span className="font-medium ml-1 font-mono text-xs">
-                      {service.location.latitude.toFixed(6)}, {service.location.longitude.toFixed(6)}
-                    </span>
-                  </p>
-                )} */}
-            </div>
-            {/* {service.providerProfile && (
-                <p className="flex items-center text-sm">
-                  Provider: <span className="font-medium ml-1">{service.providerProfile.name}</span>
-                </p>
-              )} */}
-            {service.weeklySchedule && service.weeklySchedule.length > 0 && (
-              <>
-                <p className="flex items-center text-sm">
-                  <CalendarDaysIcon className="mr-2 h-5 w-5 text-indigo-500" />
-                  Available Days:{" "}
-                  <span className="ml-1 font-medium">
-                    {service.weeklySchedule
-                      ?.filter(({ availability }) => availability.isAvailable)
-                      ?.map(({ day }) => day)
-                      ?.join(", ") || "Not specified"}
-                  </span>
-                </p>
-                <p className="flex items-center text-sm">
-                  <ClockIcon className="mr-2 h-5 w-5 text-purple-500" />
-                  Time Slots:{" "}
-                  <span className="ml-1 font-medium">
-                    {service.weeklySchedule
-                      ?.filter(({ availability }) => availability.isAvailable)
-                      ?.flatMap(({ availability }) => availability.slots)
-                      ?.map((slot) => `${slot.startTime}-${slot.endTime}`)
-                      ?.join(" | ") || "Not specified"}
-                  </span>
-                </p>
-                {/* {service.instantBookingEnabled !== undefined && (
-                    <p className="flex items-center text-sm">
-                      <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500"/>
-                      Instant Booking: <span className="font-medium ml-1">
-                        {service.instantBookingEnabled ? 'Available' : 'Not Available'}
-                      </span>
-                    </p>
-                  )} */}
                 {service.bookingNoticeHours !== undefined && (
-                  <p className="flex items-center text-sm">
-                    <ClockIcon className="mr-2 h-5 w-5 text-orange-500" />
-                    Advance Notice:{" "}
-                    <span className="ml-1 font-medium">
-                      {service.bookingNoticeHours} hours required
-                    </span>
-                  </p>
+                  <div className="flex items-start gap-2 rounded-lg bg-gray-50 p-4">
+                    <ClockIcon className="text-black-500 mt-0.5 h-6 w-6" />
+                    <div>
+                      <div className="text-black-700 mb-1 text-xs font-semibold">
+                        Advance Notice
+                      </div>
+                      <div className="text-black-900 text-sm font-medium">
+                        {service.bookingNoticeHours} hours required
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -515,6 +502,39 @@ const ProviderServiceDetailPage: React.FC = () => {
               </div>
             </div>
           )} */}
+        {/* Action Buttons Card */}
+        <div className="flex flex-col space-y-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:space-y-0 sm:space-x-3">
+          <Link
+            to={`/provider/services/edit/${service.id}`}
+            className="text-black-500 flex flex-1 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-100"
+          >
+            <PencilIcon className="mr-2 h-5 w-5" /> Edit Service
+          </Link>
+          <button
+            onClick={handleStatusToggle}
+            disabled={isUpdatingStatus}
+            className={`text-black-500 text-transition-colors flex flex-1 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${
+              service.status === "Available"
+                ? "bg-white-500 text-yellow-500 hover:bg-gray-100"
+                : "bg-white-500 text-green-500 hover:bg-gray-100"
+            }`}
+          >
+            <CogIcon className="mr-2 h-5 w-5" />
+            {isUpdatingStatus
+              ? "Updating..."
+              : service.status === "Available"
+                ? "Deactivate"
+                : "Activate"}
+          </button>
+          <button
+            onClick={handleDeleteService}
+            disabled={isDeleting}
+            className="flex flex-1 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-gray-100 disabled:opacity-50"
+          >
+            <TrashIcon className="mr-2 h-5 w-5" />
+            {isDeleting ? "Deleting..." : "Delete Service"}
+          </button>
+        </div>
       </main>
       <div className="md:hidden">
         <BottomNavigation />

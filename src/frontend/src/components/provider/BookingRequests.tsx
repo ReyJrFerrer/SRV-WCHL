@@ -18,49 +18,64 @@ const BookingRequests: React.FC<BookingRequestsProps> = ({
   className = "",
 }) => {
   return (
-    <div className="booking-cards my-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-      {/* Pending Requests Card */}
-      <div className="booking-card flex flex-col rounded-lg border-l-4 border-blue-600 bg-white p-5 shadow-md">
-        <div className="booking-card-header mb-3 flex items-center justify-between">
-          <h3 className="text-base font-bold text-black sm:text-lg">
-            Naghihintay na mga Request
-          </h3>
-          <CalendarDaysIcon className="h-6 w-6 text-blue-600" />
+    <div className={className}>
+      <h2 className="mb-6 pt-4 text-4xl font-extrabold text-black">Bookings</h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* Pending Requests Card */}
+        <div className="flex flex-col rounded-xl border-t-[16px] border-[#ffdb6f] bg-white p-6 pt-4 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+          <div className="flex-1">
+            <div className="mb-4 flex items-center space-x-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ffdb6f]">
+                <span className="text-3xl font-bold text-white">
+                  {pendingRequests}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl font-bold text-black">
+                  Pending Requests
+                </span>
+                <span className="text-sm text-gray-500">
+                  Need your response
+                </span>
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/provider/bookings?tab=pending"
+            className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 text-base font-semibold text-gray-700 hover:text-yellow-600"
+          >
+            <span className="text-sm sm:text-base">View Requests</span>
+            <ArrowRightIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Link>
         </div>
-        <p className="mb-4 flex-grow text-sm text-blue-600">
-          Mayroon kang{" "}
-          <span className="text-2xl font-bold">{pendingRequests}</span>{" "}
-          {pendingRequests === 1 ? "request" : "requests"} na kailangan ng iyong
-          sagot.
-        </p>
-        <Link
-          to="/provider/bookings?tab=Pending"
-          className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400"
-        >
-          <span>Tignan ang mga Requests</span>
-          <ArrowRightIcon className="h-4 w-4" />
-        </Link>
-      </div>
-      {/* Upcoming Jobs Card */}
-      <div className="booking-card flex flex-col rounded-lg border-l-4 border-blue-600 bg-white p-5 shadow-md">
-        <div className="booking-card-header mb-3 flex items-center justify-between">
-          <h3 className="text-base font-bold text-black sm:text-lg">
-            Serbisyong Nakaiskedyul
-          </h3>
-          <CalendarIcon className="h-6 w-6 text-blue-600" />
+
+        {/* Upcoming Jobs Card */}
+        <div className="flex flex-col rounded-xl border-t-[16px] border-[#ffdb6f] bg-white p-6 pt-4 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+          <div className="flex-1">
+            <div className="mb-4 flex items-center space-x-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ffdb6f]">
+                <span className="text-3xl font-bold text-white">
+                  {upcomingJobs}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl font-bold text-black">
+                  Upcoming Jobs
+                </span>
+                <span className="text-sm text-gray-500">
+                  Scheduled services
+                </span>
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/provider/bookings?tab=upcoming"
+            className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 text-base font-semibold text-gray-700 hover:text-yellow-600"
+          >
+            <span className="text-sm sm:text-base">View Schedule</span>
+            <ArrowRightIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Link>
         </div>
-        <p className="mb-4 flex-grow text-sm text-blue-600">
-          Mayroon kang{" "}
-          <span className="text-2xl font-bold">{upcomingJobs}</span>{" "}
-          {upcomingJobs === 1 ? "service" : "services"} na nakaiskedyul.
-        </p>
-        <Link
-          to="/provider/bookings?tab=Upcoming"
-          className="mt-auto flex items-center justify-between text-sm font-semibold text-blue-600 hover:text-yellow-400"
-        >
-          <span>Tignan ang mga Requests</span>
-          <ArrowRightIcon className="h-4 w-4" />
-        </Link>
       </div>
     </div>
   );
