@@ -34,13 +34,13 @@ const BottomNavigation: React.FC = () => {
       //count: unreadChatCount,
     },
     {
-      to: "/client/notifications",
+      to: "/provider/notifications",
       label: "Notifications",
       icon: BellIcon,
       //count: unreadCount,
     },
     {
-      to: "/client/settings",
+      to: "/provider/settings",
       label: "Settings",
       icon: Cog6ToothIcon,
       count: 0,

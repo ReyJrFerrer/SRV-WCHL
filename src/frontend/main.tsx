@@ -38,6 +38,8 @@ import ClientReview from "./src/pages/client/review/[id]";
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
 import ProviderBookings from "./src/pages/provider/bookings";
+import ProviderChat from "./src/pages/provider/chat";
+
 
 // Provider Service Management
 import ProviderServices from "./src/pages/provider/services";
@@ -102,6 +104,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route index element={<ProviderRedirect />} />
             <Route path="home" element={<ProviderHome />} />
             <Route path="bookings" element={<ProviderBookings />} />
+            <Route path="chat" element={<ProviderChat />} />
 
             {/* Service Management Routes */}
             <Route path="services" element={<ProviderServices />} />
