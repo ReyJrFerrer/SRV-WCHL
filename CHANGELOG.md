@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add frontend chat integration with real-time messaging, conversation management, and notification system
 - Add encrypted chat system enabling direct messaging between clients and service providers after booking completion
 - Add automatic canister references initialization upon successful user login for improved system connectivity
+
+### Fixed
+
+- Fix font loading issue where pages reverted to Times New Roman on reload by centralizing font definitions globally
 - Add provider-specific trust level descriptions in service provider profile page
 - Standardize chat routing structure between client and provider interfaces for consistent navigation
 - Add client analytics system with real booking data integration for profile statistics display
