@@ -229,7 +229,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+        <div className="container mx-auto flex items-center justify-between px-6 py-6">
           <button
             onClick={() => navigate(-1)}
             className="rounded-full p-2 transition-colors hover:bg-gray-100"
@@ -237,7 +237,7 @@ const ProviderServiceDetailPage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="truncate text-lg font-semibold text-gray-800">
+          <h1 className="truncate text-2xl font-semibold text-gray-800">
             Service Details
           </h1>
           <div className="w-8"></div>
@@ -245,7 +245,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       </header>
 
       {/* Show loading overlay for operations while keeping content visible */}
-      {(isUpdatingStatus || isDeleting) && (
+      {/* {(isUpdatingStatus || isDeleting) && (
         <div className="bg-opacity-20 fixed inset-0 z-40 flex items-center justify-center bg-black">
           <div className="flex items-center rounded-lg bg-white p-4 shadow-lg">
             <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -254,11 +254,11 @@ const ProviderServiceDetailPage: React.FC = () => {
             </span>
           </div>
         </div>
-      )}
+      )} */}
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Hero Image and Basic Info Card */}
-        <div className="overflow-hidden rounded-xl bg-white shadow-lg">
+        <div className="mt-8 overflow-hidden rounded-xl bg-white shadow-lg">
           {/* {heroImageUrl && (
               <div className="relative w-full aspect-[16/6] bg-gray-200 overflow-hidden">
                 <Image
