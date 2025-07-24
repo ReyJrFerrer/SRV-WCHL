@@ -34,25 +34,25 @@ const getCategoryDisplayName = (name: string): string => {
 const getImageUrlForCategory = (name: string): string => {
   const lowerName = name.toLowerCase();
   if (lowerName.includes("home") || lowerName.includes("house"))
-    return "/images/categories/home.png";
-  if (lowerName.includes("clean")) return "/images/categories/cleaning.png";
+    return "/images/categories/home.svg";
+  if (lowerName.includes("clean")) return "/images/categories/cleaning.svg";
   if (lowerName.includes("auto") || lowerName.includes("car"))
-    return "/images/categories/auto.png";
+    return "/images/categories/auto.svg";
   if (lowerName.includes("gadget") || lowerName.includes("tech"))
-    return "/images/categories/gadget repair.png";
+    return "/images/categories/gadget repair.svg";
   if (lowerName.includes("beauty") || lowerName.includes("wellness"))
-    return "/images/categories/wellnes.png";
-  if (lowerName.includes("delivery")) return "/images/categories/delivery.png";
+    return "/images/categories/wellnes.svg";
+  if (lowerName.includes("delivery")) return "/images/categories/delivery.svg";
   if (lowerName.includes("electrician"))
-    return "/images/categories/electrician.png";
-  if (lowerName.includes("plumbing")) return "/images/categories/plumber.png";
+    return "/images/categories/electrician.svg";
+  if (lowerName.includes("plumbing")) return "/images/categories/plumber.svg";
   if (lowerName.includes("repair") || lowerName.includes("maintenance"))
-    return "/images/categories/plumber.png";
-  if (lowerName.includes("photo")) return "/images/categories/photography.png";
-  if (lowerName.includes("tutor")) return "/images/categories/tutor.png";
+    return "/images/categories/plumber.svg";
+  if (lowerName.includes("photo")) return "/images/categories/photography.svg";
+  if (lowerName.includes("tutor")) return "/images/categories/tutor.svg";
 
   // Fallback image if no match is found
-  return "/images/default-category.png";
+  return "/images/default-category.svg";
 };
 
 const Categories: React.FC<CategoriesProps> = ({
