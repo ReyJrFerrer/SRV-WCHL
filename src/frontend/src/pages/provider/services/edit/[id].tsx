@@ -734,7 +734,7 @@ const EditServicePage: React.FC = () => {
             serviceId: serviceToEdit.id,
             title: pkgUI.name,
             description: pkgUI.description,
-            price: parseInt(pkgUI.price) || 0,
+            price: parseFloat(pkgUI.price) || 0,
           };
           await createPackage(packageRequest);
         } else {
@@ -744,7 +744,7 @@ const EditServicePage: React.FC = () => {
             serviceId: serviceToEdit.id,
             title: pkgUI.name,
             description: pkgUI.description,
-            price: parseInt(pkgUI.price) || 0,
+            price: parseFloat(pkgUI.price) || 0,
           };
           await updatePackage(packageRequest);
         }
