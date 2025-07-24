@@ -8,26 +8,9 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 
 // Hooks
 import { useServiceManagement } from "../../hooks/serviceManagement";
-import { useAuth } from "../../context/AuthContext"; // Import useAuth to check loading status
 
 const ClientHomePage: React.FC = () => {
-  // Get the master loading status from the AuthContext
-  const { isLoading: isAuthLoading, identity } = useAuth();
-  const { loadingCategories, error } = useServiceManagement();
-
-  // Simplified loading state - combine all loading states
-  const isLoading = React.useMemo(() => {
-    return isAuthLoading || loadingCategories;
-  }, [isAuthLoading, loadingCategories]);
-
-  // Show loading spinner only when actually loading
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  const { error } = useServiceManagement();
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
