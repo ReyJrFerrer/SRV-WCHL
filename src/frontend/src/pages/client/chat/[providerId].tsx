@@ -6,7 +6,7 @@ import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 
 const ConversationPage: React.FC = () => {
-  const DEFAULT_USER_IMAGE = "/src/frontend/public/default.svg";
+  const DEFAULT_USER_IMAGE = "/default-provider.svg";
   const { providerId } = useParams<{ providerId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
