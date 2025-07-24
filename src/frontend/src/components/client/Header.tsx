@@ -12,7 +12,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, location, locationStatus } = useAuth();
+  const { isAuthenticated, location, locationStatus, setLocation } = useAuth();
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [userAddress, setUserAddress] = useState<string>("Unknown");
@@ -31,7 +31,6 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         .then((data) => {
           let province = "";
           if (data && data.address) {
-            // Try to extract province from several possible fields
             province =
               data.address.county ||
               data.address.state ||
@@ -162,9 +161,48 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           </div>
         </div>
 
+        {/* --- NEW: Conditional Button to Request Location --- */}
+        {!locationLoading &&
+          (locationStatus === "denied" ||
+            locationStatus === "not_set" ||
+            locationStatus === "unsupported") && (
+            <button
+              onClick={() => {
+                // Reset location permission in context and localStorage/sessionStorage if used
+                setLocation("not_set", null);
+                setLocationLoading(true);
+                setUserAddress("Detecting location...");
+                // Re-request browser location
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      const { latitude, longitude } = position.coords;
+                      setLocation("allowed", { latitude, longitude });
+                      setLocationLoading(false);
+                    },
+                    () => {
+                      setLocation("denied");
+                      setLocationLoading(false);
+                      alert(
+                        "Location access denied or failed, Please accept the location request and load the page again.",
+                      );
+                    },
+                  );
+                } else {
+                  setLocation("unsupported");
+                  setLocationLoading(false);
+                  alert("Geolocation is not supported by your browser.");
+                }
+              }}
+              className="mb-2 w-full rounded-lg bg-yellow-300 p-2 text-center text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
+            >
+              Share Location
+            </button>
+          )}
+
         {/* Search Bar */}
         <form
-          className="mt-0 w-full"
+          className="mt-2 w-full"
           onSubmit={(e) => {
             e.preventDefault();
             if (searchQuery.trim()) {
