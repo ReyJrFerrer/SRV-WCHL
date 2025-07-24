@@ -259,7 +259,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                     className="h-full w-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src =
-                        "/images/default-service.jpg";
+                        "/default-provider.svg";
                     }}
                   />
                 </div>
@@ -477,7 +477,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                     className="h-full w-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src =
-                        "/images/default-service.jpg";
+                        "/images/default-provider.svg";
                     }}
                   />
                 </div>

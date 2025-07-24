@@ -271,8 +271,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 alt={serviceTitle!}
                 className="h-full w-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "/images/default-service.jpg";
+                  (e.target as HTMLImageElement).src = "/default-provider.svg";
                 }}
               />
             </div>

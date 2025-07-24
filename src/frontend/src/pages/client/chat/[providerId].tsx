@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import {
-  ArrowLeftIcon,
-  PaperAirplaneIcon,
-  UserCircleIcon,
-} from "@heroicons/react/24/solid";
+import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
@@ -19,7 +15,6 @@ const ConversationPage: React.FC = () => {
   const {
     currentConversation,
     messages,
-    loading,
     backgroundLoading, // Add backgroundLoading state
     error,
     sendMessage,

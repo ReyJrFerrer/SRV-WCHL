@@ -139,7 +139,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
         {/* Image container */}
         <div className="aspect-video w-full">
           <img
-            src={service.providerAvatar || "/images/rey.png"}
+            src={service.providerAvatar || "/default-provider.svg"}
             alt={service.title}
             className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
