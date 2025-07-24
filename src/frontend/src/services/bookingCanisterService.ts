@@ -13,6 +13,7 @@ import type {
   Location as CanisterLocation,
   Evidence as CanisterEvidence,
   AvailableSlot as CanisterAvailableSlot,
+  ClientAnalytics as CanisterClientAnalytics,
   ProviderAvailability as CanisterProviderAvailability,
   ProviderAnalytics as CanisterProviderAnalytics,
   TimeSlot as CanisterTimeSlot,
@@ -333,7 +334,7 @@ const convertCanisterProviderAnalytics = (
 });
 
 const convertCanisterClientAnalytics = (
-  analytics: any, // Using any for now since we need to import the generated type
+  analytics: CanisterClientAnalytics,
 ): ClientAnalytics => ({
   clientId: analytics.clientId,
   totalBookings: Number(analytics.totalBookings),

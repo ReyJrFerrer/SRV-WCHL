@@ -133,12 +133,73 @@ const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
 
 // Component for displaying client statistics
 const ClientStats: React.FC = () => {
+  const {
+    loading: analyticsLoading,
+    error: analyticsError,
+    getFormattedStats,
+  } = useClientAnalytics();
+
+  const formattedStats = getFormattedStats();
+
   const stats = [
-    { name: "Total Bookings", value: "14", icon: BriefcaseIcon },
-    { name: "Services Completed", value: "12", icon: CheckBadgeIcon },
-    { name: "Total Spent", value: "₱9,750", icon: CurrencyEuroIcon },
-    { name: "Member Since", value: "July 2025", icon: CalendarIcon },
+    {
+      name: "Total Bookings",
+      value: formattedStats.totalBookings,
+      icon: BriefcaseIcon,
+    },
+    {
+      name: "Services Completed",
+      value: formattedStats.servicesCompleted,
+      icon: CheckBadgeIcon,
+    },
+    {
+      name: "Total Spent",
+      value: formattedStats.totalSpent,
+      icon: CurrencyEuroIcon,
+    },
+    {
+      name: "Member Since",
+      value: formattedStats.memberSince,
+      icon: CalendarIcon,
+    },
   ];
+
+  if (analyticsLoading) {
+    return (
+      <div className="mt-8">
+        <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
+          Your Statistics
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <div
+              key={index}
+              className="flex flex-col items-center justify-center rounded-lg bg-gray-50 p-4 text-center"
+            >
+              <div className="mb-2 h-8 w-8 animate-pulse rounded bg-gray-300" />
+              <div className="mb-1 h-6 w-12 animate-pulse rounded bg-gray-300" />
+              <div className="h-3 w-20 animate-pulse rounded bg-gray-300" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (analyticsError) {
+    return (
+      <div className="mt-8">
+        <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
+          Your Statistics
+        </h3>
+        <div className="flex justify-center">
+          <p className="text-sm text-red-500">
+            Failed to load statistics: {analyticsError}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8">
