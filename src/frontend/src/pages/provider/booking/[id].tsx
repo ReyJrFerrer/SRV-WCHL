@@ -18,6 +18,8 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
+import { useChat } from "../../../hooks/useChat"; // Import the chat hook
+import { useAuth } from "../../../context/AuthContext"; // Import auth context
 
 const ProviderBookingDetailsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +28,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const { identity } = useAuth();
+  const { conversations, loading: chatLoading, error: chatError } = useChat(); // Add the useChat hook
+  const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
 
   // Set document title
   useEffect(() => {
@@ -168,6 +173,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
+  // Changed to messaging
   const handleContactClient = () => {
     if (!specificBooking) return;
     const clientContact =

@@ -36,7 +36,6 @@ export interface FrontendConversation {
   id: string;
   clientId: string;
   providerId: string;
-  bookingId: string;
   createdAt: Date;
   lastMessageAt?: Date;
   isActive: boolean;
@@ -153,7 +152,6 @@ const adaptBackendConversation = (
     id: backendConversation.id,
     clientId: backendConversation.clientId.toString(),
     providerId: backendConversation.providerId.toString(),
-    bookingId: backendConversation.bookingId,
     createdAt: new Date(Number(backendConversation.createdAt) / 1000000),
     lastMessageAt:
       backendConversation.lastMessageAt.length > 0
@@ -213,14 +211,12 @@ export const chatCanisterService = {
   async createConversation(
     clientId: string,
     providerId: string,
-    bookingId: string,
   ): Promise<FrontendConversation | null> {
     try {
       const actor = getChatActor(true);
       const result = await actor.createConversation(
         Principal.fromText(clientId),
         Principal.fromText(providerId),
-        bookingId,
       );
 
       if ("ok" in result) {

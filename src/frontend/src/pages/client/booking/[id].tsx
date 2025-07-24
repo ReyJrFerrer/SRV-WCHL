@@ -21,6 +21,8 @@ import {
 import { reviewCanisterService } from "../../../services/reviewCanisterService";
 import { authCanisterService } from "../../../services/authCanisterService";
 import BottomNavigation from "../../../components/client/BottomNavigation";
+import { useChat } from "../../../hooks/useChat"; // Import the chat hook
+import { useAuth } from "../../../context/AuthContext"; // Import auth context
 
 type BookingStatus =
   | "Requested"
@@ -111,6 +113,9 @@ const BookingDetailsPage: React.FC = () => {
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const { identity } = useAuth();
+  const { conversations, loading: chatLoading, error: chatError } = useChat(); // Add the useChat hook
+  const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
 
   const {
     bookings,
@@ -219,11 +224,48 @@ const BookingDetailsPage: React.FC = () => {
     }
   };
 
-  const handleChatWithProvider = () => {
-    if (specificBooking?.providerProfile?.id) {
-      navigate(`/client/chat/${specificBooking.providerProfile.id}`);
-    } else {
-      alert("Provider information is not available to start a chat.");
+  const handleChatWithProvider = async () => {
+    if (!specificBooking?.providerId) {
+      setChatErrorMessage("Provider information is missing.");
+      return;
+    }
+
+    if (!identity) {
+      setChatErrorMessage("You must be logged in to start a conversation.");
+      return;
+    }
+
+    setChatErrorMessage(null);
+
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+      const providerIdString = specificBooking.providerId.toString();
+
+      // Check if there's an existing conversation with this provider
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === providerIdString) ||
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === providerIdString),
+      );
+
+      if (existingConversation) {
+        // Navigate to existing conversation
+        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: existingConversation.otherUserName,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Failed to handle chat:", error);
+      setChatErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not start conversation. Please try again.",
+      );
     }
   };
 
@@ -467,14 +509,37 @@ const BookingDetailsPage: React.FC = () => {
           <BookingProgressTracker currentStatus={status as BookingStatus} />
         </div>
 
+        {/* Chat Error Message */}
+        {chatErrorMessage && (
+          <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <span className="block sm:inline">{chatErrorMessage}</span>
+            <button
+              onClick={() => setChatErrorMessage(null)}
+              className="ml-2 text-red-900 hover:text-red-700"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-lg">
           <button
             onClick={handleChatWithProvider}
-            className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700"
+            disabled={chatLoading}
+            className="flex min-w-[150px] flex-1 items-center justify-center rounded-lg bg-slate-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with
-            Provider
+            {chatLoading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                Creating Chat...
+              </>
+            ) : (
+              <>
+                <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat with
+                Provider
+              </>
+            )}
           </button>
 
           {canCancel && (

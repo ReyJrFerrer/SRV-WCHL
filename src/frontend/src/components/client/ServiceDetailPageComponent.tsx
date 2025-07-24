@@ -12,6 +12,8 @@ import { CameraIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
 import useServiceById from "../../hooks/serviceDetail"; // Adjusted hook import
 import { useServiceReviews } from "../../hooks/reviewManagement"; // Adjust path as needed
 import { useServiceManagement } from "../../hooks/serviceManagement"; // Using the service management hook
+import { useChat } from "../../hooks/useChat"; // Import the chat hook
+import { useAuth } from "../../context/AuthContext"; // Import auth context
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { ServicePackage } from "../../services/serviceCanisterService";
 
@@ -178,6 +180,7 @@ const CredentialsSection: React.FC<{ isVerified: boolean }> = ({
 const ServiceDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
+  const { identity } = useAuth();
 
   const {
     service,
@@ -185,8 +188,16 @@ const ServiceDetailPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
   const { getServicePackages } = useServiceManagement(); // Use the hook for package fetching
+  const {
+    conversations,
+    createConversation,
+    loading: chatLoading,
+    error: chatError,
+  } = useChat(); // Add the useChat hook
+
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState<boolean>(true);
+  const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (service) {
@@ -217,20 +228,64 @@ const ServiceDetailPage: React.FC = () => {
     navigate(`/client/book/${service.id}`);
   };
 
-  const handleChatProviderClick = () => {
+  const handleChatProviderClick = async () => {
     if (!service?.providerId) {
-      alert("Provider information is missing.");
+      setChatErrorMessage("Provider information is missing.");
       return;
     }
-    navigate(`/client/chat/${service.providerId}`, {
-      state: {
-        providerName: service.providerName,
-        providerImage: service.providerAvatar || "/images/default-avatar.png",
-        providerAvailability: service.availability.isAvailableNow
-          ? "Available Now"
-          : "Not Available",
-      },
-    });
+
+    if (!identity) {
+      setChatErrorMessage("You must be logged in to start a conversation.");
+      return;
+    }
+
+    setChatErrorMessage(null);
+
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+
+      // Check if there's an existing conversation with this provider
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === service.providerId) ||
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === service.providerId),
+      );
+
+      if (existingConversation) {
+        // Navigate to existing conversation
+        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: existingConversation.otherUserName,
+          },
+        });
+      } else {
+        // Create new conversation
+        const newConversation = await createConversation(
+          currentUserId,
+          service.providerId,
+        );
+
+        if (newConversation) {
+          // Navigate to new conversation
+          navigate(`/client/chat/${newConversation.id}`, {
+            state: {
+              conversationId: newConversation.id,
+              otherUserName: service.providerName,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to handle chat:", error);
+      setChatErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not start conversation. Please try again.",
+      );
+    }
   };
 
   if (serviceLoading) {
@@ -281,6 +336,19 @@ const ServiceDetailPage: React.FC = () => {
       </div>
 
       <div className="relative z-10 -mt-24 p-4">
+        {/* Chat Error Message */}
+        {chatErrorMessage && (
+          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <span className="block sm:inline">{chatErrorMessage}</span>
+            <button
+              onClick={() => setChatErrorMessage(null)}
+              className="float-right ml-4 text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
           {/* Left Column */}
           <div className="lg:col-span-1">
@@ -381,6 +449,16 @@ const ServiceDetailPage: React.FC = () => {
             onClick={handleChatProviderClick}
             className="flex w-1/3 items-center justify-center rounded-lg bg-gray-200 py-3 font-bold text-gray-800 hover:bg-gray-300"
           >
+            {chatLoading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                Creating Chat...
+              </>
+            ) : (
+              <>
+                <ChatBubbleOvalLeftEllipsisIcon className="mr-2 h-5 w-5" />
+              </>
+            )}
             <ChatBubbleOvalLeftEllipsisIcon className="mr-2 h-5 w-5" />
             Chat
           </button>

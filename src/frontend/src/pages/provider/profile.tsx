@@ -11,8 +11,11 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon, // Added for the switch button
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
-import { useProviderProfile } from "../../hooks/useProviderProfile"; // Adjust path as needed
+import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
+import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
+import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
+import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
 // Reusable component for the reputation score visualization
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
@@ -64,14 +67,141 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-// Component for displaying provider statistics
-const ProviderStats: React.FC = () => {
+// Trust Level Badge Component
+const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
+  const getTrustLevelConfig = (level: string) => {
+    switch (level) {
+      case "New":
+        return {
+          color: "bg-gray-100 text-gray-800 border-gray-300",
+          icon: "🆕",
+          description:
+            "New provider - Welcome to SRV! Complete your first service booking to start building your professional reputation.",
+        };
+      case "Low":
+        return {
+          color: "bg-red-100 text-red-800 border-red-300",
+          icon: "⚠️",
+          description:
+            "Building trust - Focus on delivering quality service and maintaining good client relationships to improve your provider rating.",
+        };
+      case "Medium":
+        return {
+          color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+          icon: "⭐",
+          description:
+            "Reliable provider - You're establishing a good track record! Continue providing excellent service to reach higher trust levels.",
+        };
+      case "High":
+        return {
+          color: "bg-blue-100 text-blue-800 border-blue-300",
+          icon: "🏆",
+          description:
+            "Trusted professional - Excellent reputation! Clients trust your expertise and reliability. You're a valued service provider.",
+        };
+      case "VeryHigh":
+        return {
+          color: "bg-green-100 text-green-800 border-green-300",
+          icon: "💎",
+          description:
+            "Elite provider - Outstanding professional reputation! You're among the top-rated service providers on our platform.",
+        };
+      default:
+        return {
+          color: "bg-gray-100 text-gray-800 border-gray-300",
+          icon: "❓",
+          description: "Trust level not available.",
+        };
+    }
+  };
+
+  const config = getTrustLevelConfig(trustLevel);
+
+  return (
+    <div className="mt-4 flex flex-col items-center">
+      <div
+        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
+      >
+        <span className="mr-2">{config.icon}</span>
+        {trustLevel} Trust
+      </div>
+      <p className="mt-2 max-w-sm text-center text-xs leading-relaxed text-gray-600">
+        {config.description}
+      </p>
+    </div>
+  );
+};
+
+// Component for displaying client statistics
+const ClientStats: React.FC = () => {
+  const { analytics } = useProviderBookingManagement();
+  const {
+    loading: analyticsLoading,
+    error: analyticsError,
+    getFormattedStats,
+  } = useClientAnalytics();
+
+  const formattedStats = getFormattedStats();
+
   const stats = [
-    { name: "Total Bookings", value: "14", icon: BriefcaseIcon },
-    { name: "Services Completed", value: "12", icon: CheckBadgeIcon },
-    { name: "Total Spent", value: "₱9,750", icon: CurrencyEuroIcon },
-    { name: "Member Since", value: "July 2025", icon: CalendarIcon },
+    {
+      name: "Total Bookings",
+      value: formattedStats.totalBookings,
+      icon: BriefcaseIcon,
+    },
+    {
+      name: "Services Completed",
+      value: formattedStats.servicesCompleted,
+      icon: CheckBadgeIcon,
+    },
+    {
+      name: "Total earnings",
+      value: `₱${(analytics?.totalRevenue || 0).toFixed(2)}`,
+      icon: CurrencyEuroIcon,
+    },
+    {
+      name: "Member Since",
+      value: formattedStats.memberSince,
+      icon: CalendarIcon,
+    },
   ];
+
+  if (analyticsLoading) {
+    return (
+      <div className="mt-8">
+        <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
+          Your Statistics
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <div
+              key={index}
+              className="flex flex-col items-center justify-center rounded-lg bg-gray-50 p-4 text-center"
+            >
+              <div className="mb-2 h-8 w-8 animate-pulse rounded bg-gray-300" />
+              <div className="mb-1 h-6 w-12 animate-pulse rounded bg-gray-300" />
+              <div className="h-3 w-20 animate-pulse rounded bg-gray-300" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (analyticsError) {
+    return (
+      <div className="mt-8">
+        <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
+          Your Statistics
+        </h3>
+        <div className="flex justify-center">
+          <p className="text-sm text-red-500">
+            Failed to load statistics: {analyticsError}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8">
@@ -94,9 +224,15 @@ const ProviderStats: React.FC = () => {
   );
 };
 
-const ProviderProfilePage: React.FC = () => {
+const SPProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, loading, error, updateProfile } = useProviderProfile();
+  const { profile, loading, error, updateProfile } = useClientProfile();
+  const {
+    loading: reputationLoading,
+    error: reputationError,
+    getReputationDisplay,
+  } = useReputation();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -105,7 +241,9 @@ const ProviderProfilePage: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const reputationScore = 92; // Dummy score for now
+  // Get reputation score with fallback for display
+  const reputationDisplay = getReputationDisplay();
+  const reputationScore = reputationDisplay?.score ?? 0;
 
   useEffect(() => {
     document.title = "My Profile | SRV";
@@ -115,7 +253,7 @@ const ProviderProfilePage: React.FC = () => {
     if (profile) {
       setName(profile.name);
       setPhone(profile.phone || "");
-      setPreviewImage(profile.profilePicture?.imageUrl || "/don.jpg");
+      setPreviewImage(profile.profilePicture?.imageUrl || "/default.svg");
     }
   }, [profile]);
 
@@ -186,11 +324,11 @@ const ProviderProfilePage: React.FC = () => {
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
                   <img
-                    src={previewImage || "/don.jpg"}
+                    src={previewImage || "/default.svg"}
                     alt="Profile Picture"
                     className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/don.jpg";
+                      (e.target as HTMLImageElement).src = "/default.svg";
                     }}
                   />
                   {isEditing && (
@@ -215,7 +353,7 @@ const ProviderProfilePage: React.FC = () => {
                 {!isEditing ? (
                   <>
                     <h2 className="text-2xl font-bold text-gray-800">
-                      {name || "Provider Name"}
+                      {name || "Client Name"}
                     </h2>
                     <p className="text-md text-gray-500">
                       {phone || "No phone number"}
@@ -308,24 +446,90 @@ const ProviderProfilePage: React.FC = () => {
               <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
                 Your Reputation
               </h3>
-              <div className="flex justify-center">
-                <ReputationScore score={reputationScore} />
-              </div>
+
+              {/* Reputation Loading State */}
+              {reputationLoading ? (
+                <div className="flex justify-center">
+                  <div className="flex h-48 w-48 items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                      <p className="text-sm text-gray-500">
+                        Loading reputation...
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : reputationError ? (
+                /* Reputation Error State - Display network error as requested */
+                <div className="flex justify-center">
+                  <div className="flex h-48 w-48 items-center justify-center">
+                    <div className="text-center">
+                      <div className="mb-4 text-red-500">
+                        <svg
+                          className="mx-auto h-16 w-16"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-medium text-red-600">
+                        {reputationError}
+                      </p>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Please check your connection and try again
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Normal Reputation Display */
+                <div className="flex flex-col items-center">
+                  <div className="flex justify-center">
+                    <ReputationScore score={reputationScore} />
+                  </div>
+                  {/* Trust Level Badge */}
+                  {reputationDisplay && (
+                    <TrustLevelBadge trustLevel={reputationDisplay.level} />
+                  )}
+                </div>
+              )}
+
               <p className="mx-auto mt-4 max-w-md text-center text-sm text-gray-500">
-                Your score reflects your reliability and conduct on the
-                platform. A higher score builds trust with service providers.
+                Your reputation reflects your professionalism and service
+                quality on the platform. Higher scores and trust levels attract
+                more clients and build stronger business relationships.
+                {reputationDisplay && reputationDisplay.bookings > 0 && (
+                  <span className="mt-1 block text-xs">
+                    Based on {reputationDisplay.bookings} completed service
+                    {reputationDisplay.bookings !== 1 ? "s" : ""}
+                    {reputationDisplay.rating &&
+                      ` with ${reputationDisplay.rating.toFixed(1)}★ average rating`}
+                  </span>
+                )}
               </p>
               <div className="mt-6 border-t border-gray-200 pt-6">
-                <ProviderStats />
+                <ClientStats />
               </div>
             </div>
           </div>
         </div>
         {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+        {reputationError && !error && (
+          <p className="mt-4 text-center text-red-500">
+            Reputation: {reputationError}
+          </p>
+        )}
       </main>
       <BottomNavigation />
     </div>
   );
 };
 
-export default ProviderProfilePage;
+export default SPProfilePage;
