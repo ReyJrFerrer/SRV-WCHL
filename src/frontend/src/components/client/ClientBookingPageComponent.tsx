@@ -244,12 +244,33 @@ const ClientBookingPageComponent: React.FC = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data && data.address) {
-            const { city, town, village, state, suburb } = data.address;
-            const loc = [city || town || village || suburb, state]
+            // Extract address parts
+            const {
+              road,
+              suburb,
+              village,
+              city,
+              town,
+              county,
+              state,
+              municipality,
+              district,
+              region,
+              province,
+            } = data.address;
+            // Prefer barangay/district/suburb/village for district
+            const barangay = suburb || village || district || "";
+            // Prefer city/town/municipality for city
+            const cityPart = city || town || municipality || "";
+            // Prefer county/state/region/province for province
+            const provincePart = county || state || region || province || "";
+            // Compose full address
+            const fullAddress = [road, barangay, cityPart, provincePart]
               .filter(Boolean)
               .join(", ");
             setDisplayAddress(
-              loc || `Lat: ${location.latitude}, Lon: ${location.longitude}`,
+              fullAddress ||
+                `Lat: ${location.latitude}, Lon: ${location.longitude}`,
             );
           } else {
             setDisplayAddress(

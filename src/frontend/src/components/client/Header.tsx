@@ -12,70 +12,69 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
-  // --- UPDATED: Get location data from the AuthContext ---
   const { isAuthenticated, location, locationStatus } = useAuth();
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userLocation, setUserLocation] = useState<string>("Unknown");
-  const [locationLoading, setLocationLoading] = useState(false);
+  const [userAddress, setUserAddress] = useState<string>("Unknown");
+  const [, setUserCoordinates] = useState<string | null>(null);
+  const [userProvince, setUserProvince] = useState<string>("");
+  const [locationLoading, setLocationLoading] = useState(true);
 
-  // --- NEW: Effect to get a readable address from coordinates ---
+  // Effect to get a readable address from coordinates
   useEffect(() => {
-    // Try context first, then fallback to localStorage
-    let lat: number | undefined, lon: number | undefined;
-    if (
-      location &&
-      typeof location.latitude === "number" &&
-      typeof location.longitude === "number"
-    ) {
-      lat = location.latitude;
-      lon = location.longitude;
-    } else {
-      const coordsStr = localStorage.getItem("userCoordinates");
-      if (coordsStr) {
-        try {
-          const coords = JSON.parse(coordsStr);
-          if (
-            typeof coords.latitude === "number" &&
-            typeof coords.longitude === "number"
-          ) {
-            lat = coords.latitude;
-            lon = coords.longitude;
-          }
-        } catch {}
-      }
-    }
-    if (lat !== undefined && lon !== undefined) {
+    if (locationStatus === "allowed" && location) {
       setLocationLoading(true);
       fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
       )
         .then((res) => res.json())
         .then((data) => {
+          let province = "";
           if (data && data.address) {
-            const { city, town, village, state, country, suburb } =
-              data.address;
-            const loc = [city || town || village || suburb, state, country]
+            // Try to extract province from several possible fields
+            province =
+              data.address.county ||
+              data.address.state ||
+              data.address.region ||
+              data.address.province ||
+              "";
+            const { road, suburb, city, town, village } = data.address;
+            const streetPart = road || "";
+            const areaPart = suburb || village || "";
+            const cityPart = city || town || "";
+            const fullAddress = [streetPart, areaPart, cityPart]
               .filter(Boolean)
               .join(", ");
-            setUserLocation(loc || `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+            setUserAddress(fullAddress || "Could not determine address");
+            setUserCoordinates(
+              `(${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`,
+            );
+            setUserProvince(province);
           } else {
-            setUserLocation(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+            setUserAddress("Could not determine address");
+            setUserCoordinates(null);
+            setUserProvince("");
           }
         })
-        .catch(() => setUserLocation(`${lat.toFixed(5)}, ${lon.toFixed(5)}`))
+        .catch(() => {
+          setUserAddress("Could not determine address");
+          setUserCoordinates(null);
+          setUserProvince("");
+        })
         .finally(() => setLocationLoading(false));
     } else {
-      setLocationLoading(true);
-      // Handle cases where location is not available or denied
-      if (locationStatus === "not_set") {
-        setUserLocation("Location not set");
-      } else if (locationStatus === "denied") {
-        setUserLocation("Location not shared");
-      } else {
-        setUserLocation("Unknown");
-      }
       setLocationLoading(false);
+      setUserCoordinates(null);
+      switch (locationStatus) {
+        case "denied":
+          setUserAddress("Location not shared");
+          break;
+        case "not_set":
+        case "unsupported":
+        default:
+          setUserAddress("Location not set");
+          break;
+      }
     }
   }, [location, locationStatus]);
 
@@ -145,30 +144,32 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* --- UPDATED: Location Section --- */}
+      {/* --- Location Section --- */}
       <div className="rounded-lg bg-yellow-200 p-4">
-        <p className="text-sm font-bold text-gray-800">Aking Lokasyon</p>
-        <div className="flex min-h-[1.5rem] items-center">
-          <MapPinIcon className="mr-2 h-5 w-5 text-gray-700" />
-          {locationLoading ? (
-            <span className="animate-pulse text-gray-500">
-              Detecting location...
-            </span>
-          ) : (
-            <span className="text-gray-800">{userLocation}</span>
-          )}
+        <p className="text-sm font-bold text-gray-800">My Location</p>
+        <div className="flex min-h-[2.5rem] flex-col">
+          <div className="mb-1 flex items-center">
+            <MapPinIcon className="mr-2 h-5 w-5 flex-shrink-0 text-gray-700" />
+            {locationLoading ? (
+              <span className="animate-pulse text-gray-500">
+                Detecting location...
+              </span>
+            ) : (
+              <span className="text-gray-800">
+                {userAddress}, {userProvince}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Search Bar */}
         <form
-          className="mt-4 w-full"
+          className="mt-0 w-full"
           onSubmit={(e) => {
             e.preventDefault();
             if (searchQuery.trim()) {
               navigate(
-                `/client/search-results?query=${encodeURIComponent(
-                  searchQuery,
-                )}`,
+                `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
               );
             }
           }}
