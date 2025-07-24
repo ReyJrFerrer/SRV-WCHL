@@ -17,6 +17,7 @@ const ClientChatPage: React.FC = () => {
     document.title = "Messages | SRV";
   }, []);
 
+  const DEFAULT_USER_IMAGE = "/default-provider.svg";
   const handleConversationClick = async (
     conversationId: string,
     otherUserName: string,
@@ -26,12 +27,15 @@ const ClientChatPage: React.FC = () => {
       // Mark conversation as read when clicked
       await markAsRead(conversationId);
 
+      // Use default image if none is provided
+      const imageToUse = otherUserImage || DEFAULT_USER_IMAGE;
+
       // Navigate to the specific chat page and pass conversation info in the state
       navigate(`/client/chat/${conversationId}`, {
         state: {
           conversationId,
           otherUserName,
-          otherUserImage,
+          otherUserImage: imageToUse,
         },
       });
     } catch (error) {
@@ -77,6 +81,8 @@ const ClientChatPage: React.FC = () => {
                   const otherUserName =
                     conversationSummary.otherUserName ||
                     `User ${otherUserId.slice(0, 8)}...`;
+                  // Use default image (otherUserImage not present in EnhancedConversationSummary)
+                  const otherUserImage = DEFAULT_USER_IMAGE;
 
                   // Get unread count for current user
                   const unreadEntry = conversation.unreadCount.find(
@@ -102,12 +108,24 @@ const ClientChatPage: React.FC = () => {
                     <li
                       key={conversation.id}
                       onClick={() =>
-                        handleConversationClick(conversation.id, otherUserName)
+                        handleConversationClick(
+                          conversation.id,
+                          otherUserName,
+                          otherUserImage,
+                        )
                       }
                       className="flex cursor-pointer items-center space-x-4 p-4 transition-colors hover:bg-gray-50"
                     >
                       <div className="relative h-12 w-12 flex-shrink-0">
-                        <UserCircleIcon className="h-12 w-12 text-gray-300" />
+                        {otherUserImage ? (
+                          <img
+                            src={otherUserImage}
+                            alt={otherUserName}
+                            className="h-12 w-12 rounded-full border border-gray-200 object-cover"
+                          />
+                        ) : (
+                          <UserCircleIcon className="h-12 w-12 text-gray-300" />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
