@@ -15,13 +15,14 @@ const getCategoryDisplayName = (name: string): string => {
 
   if (lowerName.includes("electrician")) return "Electician";
   if (lowerName.includes("plumbing")) return "Plumber";
-  if (lowerName.includes("beauty") || lowerName.includes("wellness"))
-    return "Beauty at Wellness";
+  if (lowerName.includes("wellness") || lowerName.includes("wellness"))
+    return "Massage Services";
   if (lowerName.includes("clean")) return "Cleaning Service";
   if (lowerName.includes("auto")) return "Automotive Repair";
   if (lowerName.includes("gadget") || lowerName.includes("tech"))
     return "Gadget Repair";
-  if (lowerName.includes("delivery")) return "Delivery Service";
+  if (lowerName.includes("beauty")) return "Beauty Services";
+  if (lowerName.includes("delivery")) return "Delivery Services";
   if (lowerName.includes("repair") || lowerName.includes("maintenance"))
     return "General Repair";
   if (lowerName.includes("photo")) return "Photography Services";
@@ -40,8 +41,10 @@ const getImageUrlForCategory = (name: string): string => {
     return "/images/categories/auto.svg";
   if (lowerName.includes("gadget") || lowerName.includes("tech"))
     return "/images/categories/gadget repair.svg";
-  if (lowerName.includes("beauty") || lowerName.includes("wellness"))
+  if (lowerName.includes("wellness") || lowerName.includes("wellness"))
     return "/images/categories/wellnes.svg";
+  if (lowerName.includes("beauty"))
+    return "/images/categories/Beauty Services.svg";
   if (lowerName.includes("delivery")) return "/images/categories/delivery.svg";
   if (lowerName.includes("electrician"))
     return "/images/categories/electrician.svg";
