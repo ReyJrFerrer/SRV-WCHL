@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -12,75 +12,24 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
-  // --- UPDATED: Get location data from the AuthContext ---
-  const { isAuthenticated, location, locationStatus } = useAuth();
+  const {
+    isAuthenticated,
+    location,
+    locationStatus,
+    setLocation,
+    isLoading: isAuthLoading,
+  } = useAuth();
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userLocation, setUserLocation] = useState<string>("Unknown");
-  const [locationLoading, setLocationLoading] = useState(false);
+  const [userAddress, setUserAddress] = useState<string>("Unknown");
+  const [userProvince, setUserProvince] = useState<string>("");
+  const [locationLoading, setLocationLoading] = useState(true);
 
-  // --- NEW: Effect to get a readable address from coordinates ---
+  // --- REFACTORED: Combined data fetching into a single, efficient hook ---
   useEffect(() => {
-    // Try context first, then fallback to localStorage
-    let lat: number | undefined, lon: number | undefined;
-    if (
-      location &&
-      typeof location.latitude === "number" &&
-      typeof location.longitude === "number"
-    ) {
-      lat = location.latitude;
-      lon = location.longitude;
-    } else {
-      const coordsStr = localStorage.getItem("userCoordinates");
-      if (coordsStr) {
-        try {
-          const coords = JSON.parse(coordsStr);
-          if (
-            typeof coords.latitude === "number" &&
-            typeof coords.longitude === "number"
-          ) {
-            lat = coords.latitude;
-            lon = coords.longitude;
-          }
-        } catch {}
-      }
-    }
-    if (lat !== undefined && lon !== undefined) {
-      setLocationLoading(true);
-      fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.address) {
-            const { city, town, village, state, country, suburb } =
-              data.address;
-            const loc = [city || town || village || suburb, state, country]
-              .filter(Boolean)
-              .join(", ");
-            setUserLocation(loc || `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
-          } else {
-            setUserLocation(`${lat.toFixed(5)}, ${lon.toFixed(5)}`);
-          }
-        })
-        .catch(() => setUserLocation(`${lat.toFixed(5)}, ${lon.toFixed(5)}`))
-        .finally(() => setLocationLoading(false));
-    } else {
-      setLocationLoading(true);
-      // Handle cases where location is not available or denied
-      if (locationStatus === "not_set") {
-        setUserLocation("Location not set");
-      } else if (locationStatus === "denied") {
-        setUserLocation("Location not shared");
-      } else {
-        setUserLocation("Unknown");
-      }
-      setLocationLoading(false);
-    }
-  }, [location, locationStatus]);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
+    // This function will run only when authentication is no longer loading.
+    const loadInitialData = async () => {
+      // 1. Fetch User Profile if authenticated
       if (isAuthenticated) {
         try {
           const userProfile = await authCanisterService.getMyProfile();
@@ -89,9 +38,80 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           console.error("Failed to fetch profile:", error);
         }
       }
+
+      // 2. Determine and Set Location
+      setLocationLoading(true);
+      if (locationStatus === "allowed" && location) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
+          );
+          const data = await res.json();
+          if (data && data.address) {
+            const { road, suburb, city, town, village, county, state } =
+              data.address;
+            const province =
+              county ||
+              state ||
+              data.address.region ||
+              data.address.province ||
+              "";
+            const streetPart = road || "";
+            const areaPart = suburb || village || "";
+            const cityPart = city || town || "";
+            const fullAddress = [streetPart, areaPart, cityPart]
+              .filter(Boolean)
+              .join(", ");
+            setUserAddress(fullAddress || "Could not determine address");
+            setUserProvince(province);
+          } else {
+            setUserAddress("Could not determine address");
+          }
+        } catch (error) {
+          setUserAddress("Could not determine address");
+        } finally {
+          setLocationLoading(false);
+        }
+      } else {
+        // Handle cases where location is not yet known or denied
+        setLocationLoading(false);
+        switch (locationStatus) {
+          case "denied":
+            setUserAddress("Location not shared");
+            break;
+          case "not_set":
+          case "unsupported":
+          default:
+            setUserAddress("Location not set");
+            break;
+        }
+      }
     };
-    fetchProfile();
-  }, [isAuthenticated]);
+
+    // Only run the data fetching logic after the initial auth check is complete.
+    if (!isAuthLoading) {
+      loadInitialData();
+    }
+  }, [isAuthenticated, isAuthLoading, location, locationStatus]);
+
+  const handleRequestLocation = useCallback(() => {
+    setLocationLoading(true);
+    setUserAddress("Detecting location...");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation("allowed", { latitude, longitude });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocation("denied");
+        },
+      );
+    } else {
+      setLocation("unsupported");
+    }
+  }, [setLocation]);
 
   const handleProfileClick = () => {
     navigate("/client/profile");
@@ -145,30 +165,44 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* --- UPDATED: Location Section --- */}
+      {/* --- Location Section --- */}
       <div className="rounded-lg bg-yellow-200 p-4">
-        <p className="text-sm font-bold text-gray-800">Aking Lokasyon</p>
-        <div className="flex min-h-[1.5rem] items-center">
-          <MapPinIcon className="mr-2 h-5 w-5 text-gray-700" />
-          {locationLoading ? (
-            <span className="animate-pulse text-gray-500">
-              Detecting location...
-            </span>
-          ) : (
-            <span className="text-gray-800">{userLocation}</span>
-          )}
+        <p className="text-sm font-bold text-gray-800">My Location</p>
+        <div className="flex min-h-[2.5rem] flex-col">
+          <div className="mb-1 flex items-center">
+            <MapPinIcon className="mr-2 h-5 w-5 flex-shrink-0 text-gray-700" />
+            {locationLoading || isAuthLoading ? (
+              <span className="animate-pulse text-gray-500">
+                Detecting location...
+              </span>
+            ) : (
+              <span className="text-gray-800">
+                {userAddress}, {userProvince}
+              </span>
+            )}
+          </div>
         </div>
+
+        {!locationLoading &&
+          (locationStatus === "denied" ||
+            locationStatus === "not_set" ||
+            locationStatus === "unsupported") && (
+            <button
+              onClick={handleRequestLocation}
+              className="mt-2 w-full rounded-lg bg-yellow-300 p-2 text-center text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
+            >
+              Share Location
+            </button>
+          )}
 
         {/* Search Bar */}
         <form
-          className="mt-4 w-full"
+          className="mb-2 w-full"
           onSubmit={(e) => {
             e.preventDefault();
             if (searchQuery.trim()) {
               navigate(
-                `/client/search-results?query=${encodeURIComponent(
-                  searchQuery,
-                )}`,
+                `/client/search-results?query=${encodeURIComponent(searchQuery)}`,
               );
             }
           }}

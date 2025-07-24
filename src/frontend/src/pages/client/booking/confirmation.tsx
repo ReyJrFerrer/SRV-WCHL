@@ -14,6 +14,7 @@ interface BookingDetails {
   amountToPay: string;
   packagePrice: string;
   landmark: string;
+  expectedChange?: string;
 }
 
 const BookingConfirmationPage: React.FC = () => {
@@ -60,15 +61,17 @@ const BookingConfirmationPage: React.FC = () => {
               </h3>
 
               <div className="space-y-2 text-sm">
-                <p>
-                  <span className="font-bold text-gray-700">Service:</span>{" "}
-                  {bookingDetails.serviceName}
-                </p>
+                {/* Provider first */}
                 <p>
                   <span className="font-bold text-gray-700">Provider:</span>{" "}
                   {bookingDetails.providerName}
                 </p>
-
+                {/* Service next */}
+                <p>
+                  <span className="font-bold text-gray-700">Service:</span>{" "}
+                  {bookingDetails.serviceName}
+                </p>
+                {/* Packages */}
                 {bookingDetails.packages &&
                   bookingDetails.packages.length > 0 && (
                     <div>
@@ -82,52 +85,85 @@ const BookingConfirmationPage: React.FC = () => {
                       </ul>
                     </div>
                   )}
-
-                <p>
-                  <span className="font-bold text-gray-700">Type:</span>{" "}
-                  {bookingDetails.bookingType === "sameday"
-                    ? "Same Day"
-                    : "Scheduled"}
-                </p>
-                <p>
-                  <span className="font-bold text-gray-700">Date:</span>{" "}
-                  {bookingDetails.date}
-                </p>
-                <p>
-                  <span className="font-bold text-gray-700">Time:</span>{" "}
-                  {bookingDetails.time}
-                </p>
-
-                {bookingDetails.location && (
-                  <p>
-                    <span className="font-bold text-gray-700">Location:</span>{" "}
-                    {bookingDetails.location}
-                    {bookingDetails.landmark &&
-                    bookingDetails.landmark !== "None"
-                      ? ` (${bookingDetails.landmark})`
-                      : ""}
-                  </p>
-                )}
-
-                {bookingDetails.packagePrice && (
-                  <p>
-                    <span className="font-bold text-gray-700">
-                      Package Price:
-                    </span>{" "}
-                    ₱ {bookingDetails.packagePrice || "0.00"}
-                  </p>
-                )}
-
-                {bookingDetails.amountToPay &&
-                  bookingDetails.amountToPay !== "N/A" && (
-                    <p>
-                      <span className="font-bold text-gray-700">
-                        Amount to Pay:
-                      </span>{" "}
-                      ₱ {bookingDetails.amountToPay}
-                    </p>
-                  )}
-
+                {/* Grouped: Type, Date, Time, Location */}
+                <div className="pt-2">
+                  <span className="font-bold text-gray-700">
+                    Booking Details:
+                  </span>
+                  <ul className="mt-1 ml-4 list-inside list-disc">
+                    <li>
+                      <span className="font-semibold">Type:</span>{" "}
+                      {bookingDetails.bookingType === "sameday"
+                        ? "Same Day"
+                        : "Scheduled"}
+                    </li>
+                    <li>
+                      <span className="font-semibold">Date:</span>{" "}
+                      {bookingDetails.date}
+                    </li>
+                    <li>
+                      <span className="font-semibold">Time:</span>{" "}
+                      {bookingDetails.time}
+                    </li>
+                    {bookingDetails.location && (
+                      <li>
+                        <span className="font-semibold">Location:</span>{" "}
+                        {bookingDetails.location}
+                        {bookingDetails.landmark &&
+                        bookingDetails.landmark !== "None"
+                          ? ` (${bookingDetails.landmark})`
+                          : ""}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+                {/* Payment group */}
+                <div className="pt-2">
+                  <span className="font-bold text-gray-700">Payment:</span>
+                  <ul className="mt-1 ml-4 list-inside list-disc">
+                    {bookingDetails.packagePrice && (
+                      <li>
+                        <span className="font-semibold">Package Price:</span> ₱{" "}
+                        {bookingDetails.packagePrice || "0.00"}
+                      </li>
+                    )}
+                    {bookingDetails.amountToPay &&
+                      bookingDetails.amountToPay !== "N/A" && (
+                        <li>
+                          <span className="font-semibold">Amount to Pay:</span>{" "}
+                          ₱ {bookingDetails.amountToPay}
+                        </li>
+                      )}
+                    {/* Show expected change if present, otherwise fallback to calculation */}
+                    {bookingDetails.expectedChange &&
+                    bookingDetails.expectedChange !== "0.00" ? (
+                      <li>
+                        <span className="font-semibold">Expected Change:</span>{" "}
+                        ₱ {bookingDetails.expectedChange}
+                      </li>
+                    ) : (
+                      bookingDetails.amountToPay &&
+                      bookingDetails.amountToPay !== "N/A" &&
+                      bookingDetails.packagePrice &&
+                      (() => {
+                        const paid = parseFloat(bookingDetails.amountToPay);
+                        const price = parseFloat(bookingDetails.packagePrice);
+                        if (!isNaN(paid) && !isNaN(price) && paid > price) {
+                          return (
+                            <li>
+                              <span className="font-semibold">
+                                Expected Change:
+                              </span>{" "}
+                              ₱ {(paid - price).toFixed(2)}
+                            </li>
+                          );
+                        }
+                        return null;
+                      })()
+                    )}
+                  </ul>
+                </div>
+                {/* Notes for Provider */}
                 {bookingDetails.concerns && (
                   <p>
                     <span className="font-bold text-gray-700">
