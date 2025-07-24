@@ -8,12 +8,23 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 
 // Hooks
 import { useServiceManagement } from "../../hooks/serviceManagement";
+import { useAuth } from "../../context/AuthContext"; // Import useAuth to check loading status
 
 const ClientHomePage: React.FC = () => {
+  // Get the master loading status from the AuthContext
+  const { isLoading: isAuthLoading, identity } = useAuth();
+  // Only initialize service management after authentication is ready
+  const [serviceReady, setServiceReady] = React.useState(false);
   const { loadingCategories, error } = useServiceManagement();
 
-  // Display a loading spinner while categories are being fetched by the hook.
-  if (loadingCategories) {
+  // Wait for authentication before allowing service hooks to run
+  React.useEffect(() => {
+    if (!isAuthLoading && identity) {
+      setServiceReady(true);
+    }
+  }, [isAuthLoading, identity]);
+
+  if (isAuthLoading || !serviceReady || loadingCategories) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -23,7 +34,6 @@ const ClientHomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Display an error message if fetching categories failed */}
       {error && (
         <div className="mx-4 mt-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
           <span className="block sm:inline">
@@ -31,7 +41,6 @@ const ClientHomePage: React.FC = () => {
           </span>
         </div>
       )}
-
       <div className="px-4 pt-4 pb-16">
         <Header className="mb-6" />
         <Categories
@@ -41,7 +50,6 @@ const ClientHomePage: React.FC = () => {
         />
         <ServiceList />
       </div>
-
       <BottomNavigation />
     </div>
   );
