@@ -13,6 +13,8 @@ import {
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
+import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
+import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 
 // Reusable component for the reputation score visualization
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
@@ -64,6 +66,71 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
+// Trust Level Badge Component
+const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
+  const getTrustLevelConfig = (level: string) => {
+    switch (level) {
+      case "New":
+        return {
+          color: "bg-gray-100 text-gray-800 border-gray-300",
+          icon: "🆕",
+          description:
+            "New member - Welcome to the platform! Complete your first booking to improve your trust level.",
+        };
+      case "Low":
+        return {
+          color: "bg-red-100 text-red-800 border-red-300",
+          icon: "⚠️",
+          description:
+            "Low trust - Complete more bookings and maintain good conduct to improve your reputation.",
+        };
+      case "Medium":
+        return {
+          color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+          icon: "⭐",
+          description:
+            "Medium trust - You're building a good reputation! Keep up the excellent service.",
+        };
+      case "High":
+        return {
+          color: "bg-blue-100 text-blue-800 border-blue-300",
+          icon: "🏆",
+          description:
+            "High trust - Excellent reputation! Service providers trust you as a reliable client.",
+        };
+      case "VeryHigh":
+        return {
+          color: "bg-green-100 text-green-800 border-green-300",
+          icon: "💎",
+          description:
+            "Very High trust - Premium member with outstanding reputation! You're a valued member of our community.",
+        };
+      default:
+        return {
+          color: "bg-gray-100 text-gray-800 border-gray-300",
+          icon: "❓",
+          description: "Trust level not available.",
+        };
+    }
+  };
+
+  const config = getTrustLevelConfig(trustLevel);
+
+  return (
+    <div className="mt-4 flex flex-col items-center">
+      <div
+        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
+      >
+        <span className="mr-2">{config.icon}</span>
+        {trustLevel} Trust
+      </div>
+      <p className="mt-2 max-w-sm text-center text-xs leading-relaxed text-gray-600">
+        {config.description}
+      </p>
+    </div>
+  );
+};
+
 // Component for displaying client statistics
 const ClientStats: React.FC = () => {
   const stats = [
@@ -97,6 +164,12 @@ const ClientStats: React.FC = () => {
 const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { profile, loading, error, updateProfile } = useClientProfile();
+  const {
+    loading: reputationLoading,
+    error: reputationError,
+    getReputationDisplay,
+  } = useReputation();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -105,7 +178,9 @@ const ClientProfilePage: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const reputationScore = 92; // Dummy score for now
+  // Get reputation score with fallback for display
+  const reputationDisplay = getReputationDisplay();
+  const reputationScore = reputationDisplay?.score ?? 0;
 
   useEffect(() => {
     document.title = "My Profile | SRV";
@@ -308,12 +383,73 @@ const ClientProfilePage: React.FC = () => {
               <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
                 Your Reputation
               </h3>
-              <div className="flex justify-center">
-                <ReputationScore score={reputationScore} />
-              </div>
+
+              {/* Reputation Loading State */}
+              {reputationLoading ? (
+                <div className="flex justify-center">
+                  <div className="flex h-48 w-48 items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                      <p className="text-sm text-gray-500">
+                        Loading reputation...
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : reputationError ? (
+                /* Reputation Error State - Display network error as requested */
+                <div className="flex justify-center">
+                  <div className="flex h-48 w-48 items-center justify-center">
+                    <div className="text-center">
+                      <div className="mb-4 text-red-500">
+                        <svg
+                          className="mx-auto h-16 w-16"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-medium text-red-600">
+                        {reputationError}
+                      </p>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Please check your connection and try again
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Normal Reputation Display */
+                <div className="flex flex-col items-center">
+                  <div className="flex justify-center">
+                    <ReputationScore score={reputationScore} />
+                  </div>
+                  {/* Trust Level Badge */}
+                  {reputationDisplay && (
+                    <TrustLevelBadge trustLevel={reputationDisplay.level} />
+                  )}
+                </div>
+              )}
+
               <p className="mx-auto mt-4 max-w-md text-center text-sm text-gray-500">
-                Your score reflects your reliability and conduct on the
-                platform. A higher score builds trust with service providers.
+                Your reputation reflects your reliability and conduct on the
+                platform. Higher scores and trust levels build stronger
+                relationships with service providers.
+                {reputationDisplay && reputationDisplay.bookings > 0 && (
+                  <span className="mt-1 block text-xs">
+                    Based on {reputationDisplay.bookings} completed booking
+                    {reputationDisplay.bookings !== 1 ? "s" : ""}
+                    {reputationDisplay.rating &&
+                      ` with ${reputationDisplay.rating.toFixed(1)}★ average rating`}
+                  </span>
+                )}
               </p>
               <div className="mt-6 border-t border-gray-200 pt-6">
                 <ClientStats />
@@ -322,6 +458,11 @@ const ClientProfilePage: React.FC = () => {
           </div>
         </div>
         {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+        {reputationError && !error && (
+          <p className="mt-4 text-center text-red-500">
+            Reputation: {reputationError}
+          </p>
+        )}
       </main>
       <BottomNavigation />
     </div>

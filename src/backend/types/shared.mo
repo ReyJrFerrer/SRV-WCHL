@@ -227,6 +227,17 @@ module {
         packageBreakdown: [(Text, Nat)]; // (packageId, count) pairs for package bookings
     };
 
+    public type ClientAnalytics = {
+        clientId: Principal;
+        totalBookings: Nat;
+        servicesCompleted: Nat;
+        totalSpent: Nat; // Only from completed bookings
+        memberSince: Time.Time; // From user profile creation date
+        packageBreakdown: [(Text, Nat)]; // (packageId, count) pairs for package bookings
+        startDate: ?Time.Time;
+        endDate: ?Time.Time;
+    };
+
     // Chat types
     public type MessageStatus = {
         #Sent;

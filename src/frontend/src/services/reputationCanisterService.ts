@@ -86,8 +86,55 @@ class ReputationCanisterService {
       throw error;
     }
   }
+
+  /**
+   * Get the current user's reputation score
+   * @returns Promise<ReputationScore> The user's reputation data
+   * @throws Error if user is not authenticated or reputation cannot be fetched
+   */
+  async getMyReputationScore(): Promise<any> {
+    try {
+      const actor = getReputationActor(true);
+      const result = await actor.getMyReputationScore();
+
+      if ("ok" in result) {
+        return result.ok;
+      } else {
+        console.error("❌ Failed to fetch reputation score:", result.err);
+        throw new Error(`Failed to fetch reputation: ${result.err}`);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching reputation score:", error);
+      throw new Error("Network error: Could not fetch reputation score");
+    }
+  }
+
+  /**
+   * Initialize reputation for a new user
+   * @returns Promise<ReputationScore> The initialized reputation data
+   */
+  async initializeMyReputation(): Promise<any> {
+    try {
+      const actor = getReputationActor(true);
+      const result = await actor.initializeReputation(
+        currentIdentity?.getPrincipal()!,
+        BigInt(Date.now() * 1_000_000), // Convert to nanoseconds
+      );
+
+      if ("ok" in result) {
+        return result.ok;
+      } else {
+        console.error("❌ Failed to initialize reputation:", result.err);
+        throw new Error(`Failed to initialize reputation: ${result.err}`);
+      }
+    } catch (error) {
+      console.error("❌ Error initializing reputation:", error);
+      throw new Error("Network error: Could not initialize reputation");
+    }
+  }
 }
 
 // Export singleton instance
 const reputationCanisterService = new ReputationCanisterService();
+
 export default reputationCanisterService;

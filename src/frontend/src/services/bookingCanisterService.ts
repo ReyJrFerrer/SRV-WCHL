@@ -131,6 +131,17 @@ export interface ProviderAnalytics {
   endDate?: string;
 }
 
+export interface ClientAnalytics {
+  clientId: Principal;
+  totalBookings: number;
+  servicesCompleted: number;
+  totalSpent: number;
+  memberSince: string;
+  packageBreakdown: Array<[string, number]>;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface AvailableSlot {
   date: string;
   timeSlot: TimeSlot;
@@ -313,6 +324,25 @@ const convertCanisterProviderAnalytics = (
     pkg,
     Number(count),
   ]),
+  startDate: analytics.startDate[0]
+    ? new Date(Number(analytics.startDate[0]) / 1000000).toISOString()
+    : undefined,
+  endDate: analytics.endDate[0]
+    ? new Date(Number(analytics.endDate[0]) / 1000000).toISOString()
+    : undefined,
+});
+
+const convertCanisterClientAnalytics = (
+  analytics: any, // Using any for now since we need to import the generated type
+): ClientAnalytics => ({
+  clientId: analytics.clientId,
+  totalBookings: Number(analytics.totalBookings),
+  servicesCompleted: Number(analytics.servicesCompleted),
+  totalSpent: Number(analytics.totalSpent),
+  memberSince: new Date(Number(analytics.memberSince) / 1000000).toISOString(),
+  packageBreakdown: analytics.packageBreakdown.map(
+    ([pkg, count]: [string, bigint]) => [pkg, Number(count)],
+  ),
   startDate: analytics.startDate[0]
     ? new Date(Number(analytics.startDate[0]) / 1000000).toISOString()
     : undefined,
@@ -1031,7 +1061,7 @@ export const bookingCanisterService = {
     clientId: Principal,
     startDate?: Date,
     endDate?: Date,
-  ): Promise<ProviderAnalytics | null> {
+  ): Promise<ClientAnalytics | null> {
     try {
       const actor = getBookingActor();
       const startTimestamp = startDate
@@ -1046,7 +1076,7 @@ export const bookingCanisterService = {
       );
 
       if ("ok" in result) {
-        return convertCanisterProviderAnalytics(result.ok);
+        return convertCanisterClientAnalytics(result.ok);
       } else {
         console.error("Error fetching client analytics:", result.err);
         return null;

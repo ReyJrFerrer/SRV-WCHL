@@ -202,19 +202,19 @@ actor ReviewCanister {
                                             case (null) {};
                                         };
                                         
-                                        // Notify reputation canister
+                                        // Notify reputation canister with LLM-enhanced processing
                                         switch (reputationCanisterId) {
                                             case (?reputationId) {
                                                 let reputationCanister = actor(Principal.toText(reputationId)) : actor {
-                                                    processReview : (Review) -> async Result<Review>;  // ✅ Use existing public method
+                                                    processReviewWithLLM : (Review) -> async Result<Review>;  // ✅ Use LLM-enhanced method
                                                 };
-                                                switch (await reputationCanister.processReview(newReview)) {
+                                                switch (await reputationCanister.processReviewWithLLM(newReview)) {
                                                     case (#ok(processedReview)) {
-                                                        Debug.print("Review processing completed successfully");
+                                                        Debug.print("LLM-enhanced review processing completed successfully");
                                                         // You could use the processed review's status and quality score here
                                                     };
                                                     case (#err(msg)) {
-                                                        Debug.print("Review processing failed: " # msg);
+                                                        Debug.print("LLM-enhanced review processing failed: " # msg);
                                                     };
                                                 };
                                             };
@@ -359,19 +359,19 @@ actor ReviewCanister {
                     case (null) {};
                 };
                 
-                // Notify reputation canister
+                // Notify reputation canister with LLM-enhanced processing
                 switch (reputationCanisterId) {
                     case (?reputationId) {
                         let reputationCanister = actor(Principal.toText(reputationId)) : actor {
-                            processReview : (Review) -> async Result<Review>;  // ✅ Use consistent method name
+                            processReviewWithLLM : (Review) -> async Result<Review>;  // ✅ Use LLM-enhanced method
                         };
-                        switch (await reputationCanister.processReview(updatedReview)) {
+                        switch (await reputationCanister.processReviewWithLLM(updatedReview)) {
                             case (#ok(processedReview)) {
-                                Debug.print("Review processing completed successfully");
+                                Debug.print("LLM-enhanced review processing completed successfully");
                                 // You could use the processed review's status and quality score here
                             };
                             case (#err(msg)) {
-                                Debug.print("Review processing failed: " # msg);
+                                Debug.print("LLM-enhanced review processing failed: " # msg);
                             };
                         };
                     };

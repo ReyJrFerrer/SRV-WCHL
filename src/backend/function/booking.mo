@@ -1115,12 +1115,34 @@ actor BookingCanister {
         clientId : Principal,
         startDate : ?Time.Time,
         endDate : ?Time.Time
-    ) : async Result<Types.ProviderAnalytics> {
+    ) : async Result<Types.ClientAnalytics> {
         let caller = msg.caller;
         
         // Security check: only allow clients to view their own analytics
         if (caller != clientId) {
             return #err("Not authorized to view this client's analytics");
+        };
+
+        // Get user profile for member since date
+        var memberSinceDate : Time.Time = Time.now(); // Default fallback
+        switch (authCanisterId) {
+            case (?authId) {
+                let authCanister = actor(Principal.toText(authId)) : actor {
+                    getProfile : (Principal) -> async Types.Result<Types.Profile>;
+                };
+                
+                switch (await authCanister.getProfile(clientId)) {
+                    case (#ok(profile)) {
+                        memberSinceDate := profile.createdAt;
+                    };
+                    case (#err(_)) {
+                        // Continue with default date if profile not found
+                    };
+                };
+            };
+            case (null) {
+                // Continue with default date if auth canister not set
+            };
         };
         
         let now = Time.now();
@@ -1146,23 +1168,9 @@ actor BookingCanister {
         );
         
         // Count total bookings
-        let totalJobs = clientBookings.size();
+        let totalBookings = clientBookings.size();
         
-        if (totalJobs == 0) {
-            return #ok({
-                providerId = clientId; // Reusing the providerId field for client
-                completedJobs = 0;
-                cancelledJobs = 0;
-                totalJobs = 0;
-                completionRate = 0.0;
-                totalEarnings = 0; // For clients, this is total spending
-                startDate = startDate;
-                endDate = endDate;
-                packageBreakdown = [];
-            });
-        };
-        
-        // Count completed bookings
+        // Count completed bookings only
         let completedBookings = Array.filter<Booking>(
             clientBookings,
             func (booking : Booking) : Bool {
@@ -1170,32 +1178,15 @@ actor BookingCanister {
             }
         );
         
-        let completedJobs = completedBookings.size();
+        let servicesCompleted = completedBookings.size();
         
-        // Count cancelled bookings
-        let cancelledBookings = Array.filter<Booking>(
-            clientBookings,
-            func (booking : Booking) : Bool {
-                return booking.status == #Cancelled;
-            }
-        );
-        
-        let cancelledJobs = cancelledBookings.size();
-        
-        // Calculate completion rate (percentage of bookings client completed)
-        let completionRate = if (totalJobs == 0) {
-            0.0
-        } else {
-            Float.fromInt(completedJobs * 100) / Float.fromInt(totalJobs)
-        };
-        
-        // Calculate total spending from all bookings
-        var totalSpending : Nat = 0;
+        // Calculate total spending from completed bookings only
+        var totalSpent : Nat = 0;
         for (booking in completedBookings.vals()) {
-            totalSpending += booking.price;
+            totalSpent += booking.price;
         };
         
-        // Create a breakdown of package bookings
+        // Create a breakdown of package bookings from completed bookings
         var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
         
         for (booking in completedBookings.vals()) {
@@ -1213,17 +1204,16 @@ actor BookingCanister {
         
         let packageBreakdown = Iter.toArray(packageCounts.entries());
         
-        // Return the analytics data
+        // Return the client analytics data
         return #ok({
-            providerId = clientId; // Reusing the providerId field for client
-            completedJobs = completedJobs;
-            cancelledJobs = cancelledJobs;
-            totalJobs = totalJobs;
-            completionRate = completionRate;
-            totalEarnings = totalSpending; // For clients, this is total spending
+            clientId = clientId;
+            totalBookings = totalBookings;
+            servicesCompleted = servicesCompleted;
+            totalSpent = totalSpent;
+            memberSince = memberSinceDate;
+            packageBreakdown = packageBreakdown;
             startDate = startDate;
             endDate = endDate;
-            packageBreakdown = packageBreakdown;
         });
     };
     
