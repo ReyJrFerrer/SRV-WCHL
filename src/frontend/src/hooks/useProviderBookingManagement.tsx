@@ -785,7 +785,6 @@ export const useProviderBookingManagement =
                 await chatCanisterService.createConversation(
                   clientIdStr,
                   providerIdStr,
-                  bookingId,
                 );
                 console.log(
                   "Conversation created for accepted booking:",

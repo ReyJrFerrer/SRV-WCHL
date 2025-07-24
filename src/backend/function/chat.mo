@@ -124,8 +124,7 @@ actor ChatCanister {
     // Create a conversation (called when booking is completed)
     public shared(msg) func createConversation(
         clientId : Principal,
-        providerId : Principal,
-        bookingId : Text
+        providerId : Principal
     ) : async Result<Conversation> {
         let caller = msg.caller;
         
@@ -142,7 +141,6 @@ actor ChatCanister {
             id = conversationId;
             clientId = clientId;
             providerId = providerId;
-            bookingId = bookingId;
             createdAt = now;
             lastMessageAt = null;
             isActive = true;

@@ -269,7 +269,7 @@ export const useChat = () => {
    * @param bookingId Booking ID that initiated this conversation
    */
   const createConversation = useCallback(
-    async (clientId: string, providerId: string, bookingId: string) => {
+    async (clientId: string, providerId: string) => {
       if (!isAuthenticated || !identity) {
         throw new Error("Authentication required");
       }
@@ -281,7 +281,6 @@ export const useChat = () => {
         const newConversation = await chatCanisterService.createConversation(
           clientId,
           providerId,
-          bookingId,
         );
 
         if (newConversation) {

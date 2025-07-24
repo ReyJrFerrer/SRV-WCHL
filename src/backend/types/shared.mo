@@ -279,7 +279,6 @@ module {
         id: Text;
         clientId: Principal;
         providerId: Principal;
-        bookingId: Text;
         createdAt: Time.Time;
         lastMessageAt: ?Time.Time;
         isActive: Bool;
