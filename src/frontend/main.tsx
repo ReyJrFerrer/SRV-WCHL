@@ -68,7 +68,7 @@ import ProviderReview from "./src/pages/provider/review/[id]";
 import { AuthProvider } from "./src/context/AuthContext";
 import ConversationPage from "./src/pages/client/chat/[providerId]";
 import ProviderConversationPage from "./src/pages/provider/chat/[clientId]";
-import NotificationsPageSP from "./src/components/provider/Notifications";
+import NotificationsPageSP from "./src/pages/provider/notifications";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

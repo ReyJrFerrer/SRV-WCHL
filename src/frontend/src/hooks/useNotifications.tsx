@@ -5,11 +5,23 @@ import { useBookingManagement } from "./bookingManagement"; // Ensure this path 
 export interface Notification {
   id: string;
   message: string;
-  type: "booking_accepted" | "booking_declined" | "review_reminder" | "generic";
+  type:
+    | "booking_accepted"
+    | "booking_declined"
+    | "review_reminder"
+    | "generic"
+    | "new_booking_request"
+    | "booking_confirmation"
+    | "payment_completed"
+    | "service_completion_reminder"
+    | "review_request"
+    | "chat_message";
   timestamp: string;
   read: boolean;
   href: string;
   providerName?: string;
+  clientName?: string;
+  bookingId?: string;
 }
 
 // --- In-memory store for unread count ---
