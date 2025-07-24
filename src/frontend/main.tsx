@@ -67,6 +67,8 @@ import ProviderReview from "./src/pages/provider/review/[id]";
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
 import ConversationPage from "./src/pages/client/chat/[providerId]";
+import ProviderConversationPage from "./src/pages/provider/chat/[clientId]";
+import NotificationsPageSP from "./src/components/provider/Notifications";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -116,8 +118,13 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="home" element={<ProviderHome />} />
             <Route path="bookings" element={<ProviderBookings />} />
             <Route path="chat" element={<ProviderChat />} />
+            <Route
+              path="chat/:clientId"
+              element={<ProviderConversationPage />}
+            />
             <Route path="settings" element={<SettingsPageSP />} />
             <Route path="profile" element={<ProviderProfilePage />} />
+            <Route path="notifications" element={<NotificationsPageSP />} />
 
             {/* Service Management Routes */}
             <Route path="services" element={<ProviderServices />} />

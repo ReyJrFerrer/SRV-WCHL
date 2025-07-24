@@ -79,7 +79,7 @@ const NotificationItem: React.FC<{
   );
 };
 
-const NotificationsPage = () => {
+const NotificationsPageSP = () => {
   const {
     notifications,
     loading,
@@ -99,7 +99,7 @@ const NotificationsPage = () => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    navigate(notification.href || "/client/booking");
+    navigate(notification.href || "/provider/booking");
   };
 
   const { unread, read } = useMemo(() => {
@@ -199,4 +199,4 @@ const NotificationsPage = () => {
   );
 };
 
-export default NotificationsPage;
+export default NotificationsPageSP;
