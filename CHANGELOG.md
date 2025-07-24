@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix font loading issue where pages reverted to Times New Roman on reload by centralizing font definitions globally
+- Fix chat loading state flickering by implementing separate loading states for initial load vs background updates
 - Add provider-specific trust level descriptions in service provider profile page
 - Standardize chat routing structure between client and provider interfaces for consistent navigation
 - Add client analytics system with real booking data integration for profile statistics display

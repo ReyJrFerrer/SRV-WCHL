@@ -19,6 +19,7 @@ const ConversationPage: React.FC = () => {
     currentConversation,
     messages,
     loading,
+    backgroundLoading, // Add backgroundLoading state
     error,
     sendMessage,
     loadConversation,
@@ -45,7 +46,8 @@ const ConversationPage: React.FC = () => {
   useEffect(() => {
     const conversationId = location.state?.conversationId || providerId;
     if (conversationId && identity) {
-      loadConversation(conversationId);
+      // Use non-silent load for initial conversation loading
+      loadConversation(conversationId, false);
     }
   }, [providerId, location.state?.conversationId, identity, loadConversation]);
 
@@ -115,30 +117,6 @@ const ConversationPage: React.FC = () => {
     return senderId === identity.getPrincipal().toString();
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen flex-col bg-gray-50">
-        <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <div className="ml-3">
-            <h1 className="text-lg font-semibold text-gray-900">Loading...</h1>
-          </div>
-        </header>
-        <main className="flex flex-1 items-center justify-center">
-          <p className="text-gray-600">Loading conversation...</p>
-        </main>
-        <div className="fixed bottom-0 left-0 z-30 w-full">
-          <BottomNavigation />
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex h-screen flex-col bg-gray-50">
@@ -189,8 +167,14 @@ const ConversationPage: React.FC = () => {
             <h1 className="text-lg font-semibold text-gray-900">
               {otherUserName}
             </h1>
-            <p className="text-xs text-gray-500">
+            <p className="flex items-center text-xs text-gray-500">
               {currentConversation ? "Active" : "Loading..."}
+              {backgroundLoading && (
+                <span className="ml-2 flex items-center">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
+                  <span className="ml-1">Updating...</span>
+                </span>
+              )}
             </p>
           </div>
         </div>

@@ -28,7 +28,8 @@ export const useChat = () => {
   const [currentConversation, setCurrentConversation] =
     useState<FrontendConversation | null>(null);
   const [messages, setMessages] = useState<FrontendMessage[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // For initial loads only
+  const [backgroundLoading, setBackgroundLoading] = useState(false); // For silent updates
   const [error, setError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
 
@@ -113,31 +114,45 @@ export const useChat = () => {
 
   /**
    * Fetch all conversations for the current user
+   * @param silent Whether to perform a silent background update
    */
-  const fetchConversations = useCallback(async () => {
-    if (!isAuthenticated || !identity) {
-      setConversations([]);
-      return;
-    }
+  const fetchConversations = useCallback(
+    async (silent: boolean = false) => {
+      if (!isAuthenticated || !identity) {
+        setConversations([]);
+        return;
+      }
 
-    setLoading(true);
-    setError(null);
+      if (silent) {
+        setBackgroundLoading(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
 
-    try {
-      const fetchedConversations =
-        await chatCanisterService.getMyConversations();
+      try {
+        const fetchedConversations =
+          await chatCanisterService.getMyConversations();
 
-      // Enhance conversations with user names
-      const enhancedConversations =
-        await enhanceConversationsWithNames(fetchedConversations);
-      setConversations(enhancedConversations);
-    } catch (err) {
-      console.error("Failed to fetch conversations:", err);
-      setError("Could not load conversations.");
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, identity, enhanceConversationsWithNames]);
+        // Enhance conversations with user names
+        const enhancedConversations =
+          await enhanceConversationsWithNames(fetchedConversations);
+        setConversations(enhancedConversations);
+      } catch (err) {
+        console.error("Failed to fetch conversations:", err);
+        if (!silent) {
+          setError("Could not load conversations.");
+        }
+      } finally {
+        if (silent) {
+          setBackgroundLoading(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    },
+    [isAuthenticated, identity, enhanceConversationsWithNames],
+  );
 
   /**
    * Fetch messages for a specific conversation
@@ -173,16 +188,21 @@ export const useChat = () => {
   /**
    * Load messages for the current conversation
    * @param conversationId The ID of the conversation
+   * @param silent Whether to perform a silent background update
    */
   const loadConversation = useCallback(
-    async (conversationId: string) => {
+    async (conversationId: string, silent: boolean = false) => {
       if (!isAuthenticated || !identity) {
         setCurrentConversation(null);
         setMessages([]);
         return;
       }
 
-      setLoading(true);
+      if (silent) {
+        setBackgroundLoading(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
       try {
@@ -198,13 +218,19 @@ export const useChat = () => {
         // Mark messages as read
         await chatCanisterService.markMessagesAsRead(conversationId);
 
-        // Refresh conversations to update unread counts
-        await fetchConversations();
+        // Refresh conversations to update unread counts (silently)
+        await fetchConversations(true);
       } catch (err) {
         console.error("Failed to load conversation:", err);
-        setError("Could not load conversation.");
+        if (!silent) {
+          setError("Could not load conversation.");
+        }
       } finally {
-        setLoading(false);
+        if (silent) {
+          setBackgroundLoading(false);
+        } else {
+          setLoading(false);
+        }
       }
     },
     [isAuthenticated, identity, fetchMessages, fetchConversations],
@@ -244,8 +270,8 @@ export const useChat = () => {
           // Add the new message to the local state immediately for better UX
           setMessages((prevMessages) => [...prevMessages, newMessage]);
 
-          // Refresh conversations to update last message and timestamps
-          await fetchConversations();
+          // Refresh conversations to update last message and timestamps (silently)
+          await fetchConversations(true);
         }
 
         return newMessage;
@@ -284,8 +310,8 @@ export const useChat = () => {
         );
 
         if (newConversation) {
-          // Refresh conversations to include the new one
-          await fetchConversations();
+          // Refresh conversations to include the new one (silently)
+          await fetchConversations(true);
         }
 
         return newConversation;
@@ -312,8 +338,8 @@ export const useChat = () => {
 
       try {
         await chatCanisterService.markMessagesAsRead(conversationId);
-        // Refresh conversations to update unread counts
-        await fetchConversations();
+        // Refresh conversations to update unread counts (silently)
+        await fetchConversations(true);
       } catch (err) {
         console.error("Failed to mark messages as read:", err);
       }
@@ -346,9 +372,9 @@ export const useChat = () => {
     refreshInterval.current = setInterval(() => {
       if (isAuthenticated && identity) {
         // Silently refresh conversations
-        fetchConversations().catch(console.error);
+        fetchConversations(true).catch(console.error);
 
-        // If we have a current conversation, refresh its messages
+        // If we have a current conversation, silently refresh its messages
         if (currentConversation) {
           fetchMessages(currentConversation.id)
             .then((messagePage) => {
@@ -388,7 +414,7 @@ export const useChat = () => {
   // Initialize and fetch conversations on auth state change
   useEffect(() => {
     if (isAuthenticated && identity) {
-      fetchConversations();
+      fetchConversations(false); // Initial load with loading state
       startAutoRefresh();
     } else {
       setConversations([]);
@@ -423,7 +449,8 @@ export const useChat = () => {
     conversations,
     currentConversation,
     messages,
-    loading,
+    loading, // Only shows for initial loads
+    backgroundLoading, // Shows for silent background updates
     error,
     sendingMessage,
 
