@@ -347,6 +347,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const fetchCategories = useCallback(async () => {
     try {
       setLoadingState("categories", true);
+      setCategories([]); // Clear categories to prevent flickering
       // Add delay to ensure agents are ready
       await new Promise((resolve) => setTimeout(resolve, 100));
 
