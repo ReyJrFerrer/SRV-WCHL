@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add frontend chat integration with real-time messaging, conversation management, and notification system
 - Add encrypted chat system enabling direct messaging between clients and service providers after booking completion
 - Add automatic canister references initialization upon successful user login for improved system connectivity
+- Add AI-powered sentiment analysis for review processing using LLM integration
+- Add real-time reputation score display in user profiles with separate data fetching
 - Optimize setCanisterReferences functions to use singleton actors and direct canister ID imports
 - Implement comprehensive router navigation with nested layouts and protected routes for client and provider sections
 

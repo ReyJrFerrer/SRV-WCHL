@@ -5,13 +5,12 @@ import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Option "mo:base/Option";
-import Bool "mo:base/Bool";
 import Result "mo:base/Result";
 import Debug "mo:base/Debug";
-import Hash "mo:base/Hash";
+import Error "mo:base/Error";
+import LLM "mo:llm";
 
 import Types "../types/shared";
 
@@ -39,7 +38,7 @@ actor ReputationCanister {
     // Constants for reputation calculation
     private let BASE_SCORE : Float = 50.0;
     private let MAX_BOOKING_POINTS : Float = 20.0;
-    private let MAX_RATING_POINTS : Float = 20.0;
+    // private let MAX_RATING_POINTS : Float = 20.0;
     private let MAX_AGE_POINTS : Float = 10.0;
     private let MIN_TRUST_SCORE : Float = 0.0;
     private let MAX_TRUST_SCORE : Float = 100.0;
@@ -53,12 +52,12 @@ actor ReputationCanister {
     // New constants for enhanced scoring
     private let RECENCY_WEIGHT : Float = 0.3;
     private let CONSISTENCY_BONUS : Float = 5.0;
-    private let EVIDENCE_QUALITY_WEIGHT : Float = 0.2;
-    private let REVIEW_SENTIMENT_WEIGHT : Float = 0.15;
+    // private let EVIDENCE_QUALITY_WEIGHT : Float = 0.2;
+    // private let REVIEW_SENTIMENT_WEIGHT : Float = 0.15;
     private let ACTIVITY_FREQUENCY_WEIGHT : Float = 0.1;
 
     // State variables for reputation history
-    private stable var reputationHistoryEntries : [(Principal, [(Time.Time, Float)])] = [];
+    // private stable var reputationHistoryEntries : [(Principal, [(Time.Time, Float)])] = [];
     private var reputationHistory = HashMap.HashMap<Principal, [(Time.Time, Float)]>(10, Principal.equal, Principal.hash);
 
     // Initialization
@@ -376,8 +375,87 @@ actor ReputationCanister {
 
     // LLM-based sentiment analysis
     private func analyzeSentimentWithLLM(review : Review) : async Float {
-        // For now, return placeholder value - will implement LLM integration
-        return 0.5;
+        try {
+            // Create a prompt for sentiment analysis
+            let prompt = "Analyze the sentiment of this review comment and rate it from 0.0 (very negative) to 1.0 (very positive). Only respond with a decimal number between 0.0 and 1.0.\n\nReview comment: \"" # review.comment # "\"";
+            
+            // Call LLM for sentiment analysis
+            let response = await LLM.prompt(#Llama3_1_8B, prompt);
+            
+            // Parse the response to extract sentiment score
+            switch (parseFloatFromResponse(response)) {
+                case (?score) {
+                    // Ensure score is within valid range
+                    return Float.max(0.0, Float.min(1.0, score));
+                };
+                case (null) {
+                    // Fallback to basic sentiment analysis if LLM parsing fails
+                    return calculateSentimentScore(review);
+                };
+            };
+        } catch (e) {
+            Debug.print("LLM sentiment analysis failed, falling back to basic analysis: " # Error.message(e));
+            return calculateSentimentScore(review);
+        };
+    };
+
+    // Helper function to parse float from LLM response
+    private func parseFloatFromResponse(response : Text) : ?Float {
+        // Remove whitespace and common prefixes
+        let trimmed = Text.trim(response, #text " \n\r\t");
+        
+        // Try to extract a number from the response
+        // This is a simple parser - in production you might want more robust parsing
+        if (Text.contains(trimmed, #text "0.")) {
+            // Try to parse decimal number
+            switch (parseDecimal(trimmed)) {
+                case (?value) { return ?value };
+                case (null) { return null };
+            };
+        } else if (Text.equal(trimmed, "0")) {
+            return ?0.0;
+        } else if (Text.equal(trimmed, "1")) {
+            return ?1.0;
+        };
+        
+        return null;
+    };
+
+    // Simple decimal parser for LLM responses
+    private func parseDecimal(text : Text) : ?Float {
+        // This is a simplified parser - extract the first decimal number found
+        let chars = Text.toIter(text);
+        var numberText = "";
+        var foundDecimal = false;
+        var foundDigit = false;
+        
+        label parsing for (char in chars) {
+            if (char == '.' and not foundDecimal) {
+                numberText := numberText # ".";
+                foundDecimal := true;
+            } else if (char >= '0' and char <= '9') {
+                numberText := numberText # Text.fromChar(char);
+                foundDigit := true;
+            } else if (foundDigit) {
+                // Stop at first non-digit after we've found digits
+                break parsing;
+            };
+        };
+        
+        // Simple conversion for common decimal values
+        if (Text.equal(numberText, "0.0")) return ?0.0;
+        if (Text.equal(numberText, "0.1")) return ?0.1;
+        if (Text.equal(numberText, "0.2")) return ?0.2;
+        if (Text.equal(numberText, "0.3")) return ?0.3;
+        if (Text.equal(numberText, "0.4")) return ?0.4;
+        if (Text.equal(numberText, "0.5")) return ?0.5;
+        if (Text.equal(numberText, "0.6")) return ?0.6;
+        if (Text.equal(numberText, "0.7")) return ?0.7;
+        if (Text.equal(numberText, "0.8")) return ?0.8;
+        if (Text.equal(numberText, "0.9")) return ?0.9;
+        if (Text.equal(numberText, "1.0")) return ?1.0;
+        
+        return null;
     };
 
     // Get reputation history for a user
@@ -415,6 +493,19 @@ actor ReputationCanister {
     
     // Get reputation score for a user
     public query func getReputationScore(userId : Principal) : async Result<ReputationScore> {
+        switch (reputations.get(userId)) {
+            case (?score) {
+                return #ok(score);
+            };
+            case (null) {
+                return #err("No reputation score found for this user");
+            };
+        };
+    };
+
+    // Get reputation score for the caller (authenticated user)
+    public shared(msg) func getMyReputationScore() : async Result<ReputationScore> {
+        let userId = msg.caller;
         switch (reputations.get(userId)) {
             case (?score) {
                 return #ok(score);
@@ -591,7 +682,7 @@ actor ReputationCanister {
     };
     
     // Set canister references including LLM (admin function)
-    public shared(msg) func setCanisterReferences(
+    public shared(_msg) func setCanisterReferences(
         auth : Principal,
         booking : Principal,
         review : Principal,
