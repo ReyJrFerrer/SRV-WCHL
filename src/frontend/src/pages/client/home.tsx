@@ -45,8 +45,8 @@ const ClientHomePage: React.FC = () => {
         <Header className="mb-6" />
         <Categories
           className="mb-8"
-          moreButtonImageUrl="/images/categories/more.png"
-          lessButtonImageUrl="/images/categories/more.png"
+          moreButtonImageUrl="/images/categories/more.svg"
+          lessButtonImageUrl="/images/categories/more.svg"
         />
         <ServiceList />
       </div>
