@@ -10,6 +10,7 @@ import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 
 const ConversationPage: React.FC = () => {
+  const DEFAULT_USER_IMAGE = "/src/frontend/public/default.svg";
   const { providerId } = useParams<{ providerId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,6 +40,9 @@ const ConversationPage: React.FC = () => {
     } else {
       setOtherUserName(providerId || "Provider");
     }
+    // Optionally set otherUserImage from location.state if available
+    // If you want to use image in header, you can add a state for it
+    // Example: setOtherUserImage(location.state?.otherUserImage || DEFAULT_USER_IMAGE);
   }, [location.state, providerId]);
 
   // Load conversation when conversationId changes
@@ -183,7 +187,19 @@ const ConversationPage: React.FC = () => {
         </button>
         <div className="ml-3 flex items-center">
           <div className="relative h-10 w-10">
-            <UserCircleIcon className="h-10 w-10 text-gray-400" />
+            {location.state?.otherUserImage ? (
+              <img
+                src={location.state.otherUserImage}
+                alt={otherUserName}
+                className="h-10 w-10 rounded-full border border-gray-200 object-cover"
+              />
+            ) : (
+              <img
+                src={DEFAULT_USER_IMAGE}
+                alt="Default user"
+                className="h-10 w-10 rounded-full border border-gray-200 object-cover"
+              />
+            )}
           </div>
           <div className="ml-3">
             <h1 className="text-lg font-semibold text-gray-900">
@@ -214,7 +230,19 @@ const ConversationPage: React.FC = () => {
               >
                 {!fromCurrentUser && (
                   <div className="relative h-8 w-8 flex-shrink-0">
-                    <UserCircleIcon className="h-8 w-8 text-gray-300" />
+                    {location.state?.otherUserImage ? (
+                      <img
+                        src={location.state.otherUserImage}
+                        alt={otherUserName}
+                        className="h-8 w-8 rounded-full border border-gray-200 object-cover"
+                      />
+                    ) : (
+                      <img
+                        src={DEFAULT_USER_IMAGE}
+                        alt="Default user"
+                        className="h-8 w-8 rounded-full border border-gray-200 object-cover"
+                      />
+                    )}
                   </div>
                 )}
                 <div
