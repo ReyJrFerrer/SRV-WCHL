@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             <img src="/logo.svg" alt="SRV Logo" className="h-20 w-auto" />
           </Link>
           <div className="h-8 border-l border-gray-300"></div>
-          <div className="text-2xl text-black-500">
+          <div className="text-black-500 text-2xl">
             <span className="font-bold">Welcome Back,</span> {displayName}
           </div>
         </div>
