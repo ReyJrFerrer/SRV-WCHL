@@ -17,12 +17,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
   retainMobileLayout = false,
 }) => {
   // Use the review management hook for this specific service
-  const {
-    reviews,
-    calculateServiceRating,
-    getAverageRating,
-    error: reviewsError,
-  } = useServiceReviews(service.id);
+  const { reviews, calculateServiceRating, getAverageRating } =
+    useServiceReviews(service.id);
 
   // Local state for service rating data
   const [serviceRating, setServiceRating] = useState<{
@@ -194,16 +190,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
                   {renderRatingStars(0)}
                   <span className="ml-1">No reviews</span>
                 </div>
-              )}
-
-              {/* Show error indicator if reviews failed to load */}
-              {reviewsError && (
-                <span
-                  className="ml-1 text-xs text-red-400"
-                  title={reviewsError}
-                >
-                  ⚠️
-                </span>
               )}
             </div>
           </div>
