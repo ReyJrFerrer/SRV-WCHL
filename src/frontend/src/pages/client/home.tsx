@@ -13,18 +13,15 @@ import { useAuth } from "../../context/AuthContext"; // Import useAuth to check 
 const ClientHomePage: React.FC = () => {
   // Get the master loading status from the AuthContext
   const { isLoading: isAuthLoading, identity } = useAuth();
-  // Only initialize service management after authentication is ready
-  const [serviceReady, setServiceReady] = React.useState(false);
   const { loadingCategories, error } = useServiceManagement();
 
-  // Wait for authentication before allowing service hooks to run
-  React.useEffect(() => {
-    if (!isAuthLoading && identity) {
-      setServiceReady(true);
-    }
-  }, [isAuthLoading, identity]);
+  // Simplified loading state - combine all loading states
+  const isLoading = React.useMemo(() => {
+    return isAuthLoading || loadingCategories;
+  }, [isAuthLoading, loadingCategories]);
 
-  if (isAuthLoading || !serviceReady || loadingCategories) {
+  // Show loading spinner only when actually loading
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>

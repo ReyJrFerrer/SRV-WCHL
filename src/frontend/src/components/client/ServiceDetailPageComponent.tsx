@@ -329,7 +329,7 @@ const ServiceDetailPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 pb-40">
       <div className="relative h-60 w-full">
         <img
-          src={service.heroImage || "/images/default-service.png"}
+          src={service.heroImage || "/../default.svg"}
           alt={name}
           className="h-full w-full object-cover"
         />
@@ -356,7 +356,7 @@ const ServiceDetailPage: React.FC = () => {
               <div className="mb-4 flex items-center">
                 <div className="relative mr-4 h-16 w-16 overflow-hidden rounded-full border-2 border-white">
                   <img
-                    src={providerAvatar || "/images/default-avatar.png"}
+                    src={providerAvatar || "/../default.svg"}
                     alt={providerName}
                     className="h-full w-full object-cover"
                   />
@@ -459,7 +459,6 @@ const ServiceDetailPage: React.FC = () => {
                 <ChatBubbleOvalLeftEllipsisIcon className="mr-2 h-5 w-5" />
               </>
             )}
-            <ChatBubbleOvalLeftEllipsisIcon className="mr-2 h-5 w-5" />
             Chat
           </button>
           <button

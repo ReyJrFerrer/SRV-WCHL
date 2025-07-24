@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix multiple re-rendering issue in client home page causing components to flicker and load multiple times
+- Optimize ServiceListItem component by removing individual review loading and using service rating data directly
+- Add React.memo optimization to ServiceListItem and Categories components to prevent unnecessary re-renders
+- Fix useAllServicesWithProviders hook to prevent rapid appearing/disappearing of components during data loading
+- Add improved loading skeletons to ServiceList component that match actual service card layout
+- Remove artificial delays in useCategories hook that were causing timing-related flickering issues
+
 ### Added
 
 - Add frontend chat integration with real-time messaging, conversation management, and notification system

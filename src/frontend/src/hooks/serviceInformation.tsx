@@ -120,9 +120,16 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
   const fetchServices = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setServices([]); // Clear services to prevent flickering
+
     try {
-      // Fetch all services
+      // Fetch all services first
       const allServices = await serviceCanisterService.getAllServices();
+
+      if (allServices.length === 0) {
+        setServices([]);
+        return;
+      }
 
       // Create a map of all provider IDs to reduce redundant API calls
       const providerIds = Array.from(
@@ -159,12 +166,14 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
         return transformToEnrichedService(service, providerProfile);
       });
 
+      // Set all services at once to prevent flickering
       setServices(enrichedServices);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch services"),
       );
       console.error("Error fetching services:", err);
+      setServices([]); // Ensure empty state on error
     } finally {
       setLoading(false);
     }
@@ -425,24 +434,16 @@ export const useCategories = (): {
   error: Error | null;
   refetch: () => Promise<void>;
 } => {
-  // const { isAuthenticated, currentIdentity } = useAuth();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [initialized, setInitialized] = useState<boolean>(false);
 
   const fetchCategories = useCallback(async () => {
-    // Don't fetch if we're still initializing the auth context
-    if (!initialized) {
-      return;
-    }
-
     setLoading(true);
     setError(null);
-    try {
-      // Add a small delay to ensure agents are ready
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    setCategories([]); // Clear categories to prevent flickering
 
+    try {
       const canisterCategories =
         await serviceCanisterService.getAllCategories();
 
@@ -456,22 +457,11 @@ export const useCategories = (): {
     } finally {
       setLoading(false);
     }
-  }, [initialized]);
-
-  // Wait for auth context to be ready before attempting to fetch
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setInitialized(true);
-    }, 500); // Give auth context time to initialize
-
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (initialized) {
-      fetchCategories();
-    }
-  }, [initialized, fetchCategories]);
+    fetchCategories();
+  }, [fetchCategories]);
 
   return {
     categories,
