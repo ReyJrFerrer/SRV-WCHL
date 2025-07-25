@@ -22,6 +22,10 @@ interface ServiceAvailabilityProps {
     perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
   };
   setFormData: React.Dispatch<React.SetStateAction<any>>;
+  validationErrors?: {
+    availabilitySchedule?: string;
+    timeSlots?: string;
+  };
 }
 
 const allDays: DayOfWeek[] = [
@@ -135,6 +139,7 @@ const TimeSlotInput: React.FC<{
 const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   formData,
   setFormData,
+  validationErrors = {},
 }) => {
   const handleDayToggle = (day: DayOfWeek) => {
     setFormData((prev: { availabilitySchedule: DayOfWeek[] }) => {
@@ -259,6 +264,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             </label>
           ))}
         </div>
+        {validationErrors.availabilitySchedule && (
+          <p className="mt-2 text-sm text-red-600">
+            {validationErrors.availabilitySchedule}
+          </p>
+        )}
       </section>
 
       <section className="rounded-2xl border border-blue-100 bg-blue-50 p-8 shadow-md">
@@ -334,6 +344,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               </div>
             ))}
           </div>
+        )}
+        {validationErrors.timeSlots && (
+          <p className="mt-4 text-sm text-red-600">
+            {validationErrors.timeSlots}
+          </p>
         )}
       </section>
     </div>

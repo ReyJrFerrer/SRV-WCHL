@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { useAuth } from "../../../context/AuthContext";
 import { nanoid } from "nanoid";
 
 // Step Components
@@ -13,6 +12,7 @@ import ServiceLocation from "../../../components/provider/ServiceLocation";
 import {
   useServiceManagement,
   DayOfWeek,
+  ServiceCreateRequest,
 } from "../../../hooks/serviceManagement";
 
 import { ServiceCategory } from "../../../services/serviceCanisterService";
@@ -27,6 +27,27 @@ interface TimeSlotUIData {
   endMinute: string;
   endPeriod: "AM" | "PM";
 }
+
+// Validation errors interface
+interface ValidationErrors {
+  serviceOfferingTitle?: string;
+  categoryId?: string;
+  servicePackages?: string;
+  availabilitySchedule?: string;
+  timeSlots?: string;
+  locationMunicipalityCity?: string;
+  general?: string;
+}
+
+// Backend validation constants (from service.mo)
+const VALIDATION_LIMITS = {
+  MIN_TITLE_LENGTH: 1,
+  MAX_TITLE_LENGTH: 100,
+  MIN_DESCRIPTION_LENGTH: 1,
+  MAX_DESCRIPTION_LENGTH: 1000,
+  MIN_PRICE: 1,
+  MAX_PRICE: 1_000_000,
+};
 
 const initialServiceState = {
   serviceOfferingTitle: "",
@@ -77,10 +98,16 @@ const AddServicePage: React.FC = () => {
     categories,
     loading: loadingCategories,
     getCategories,
+    createService,
+    createPackage,
   } = useServiceManagement();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialServiceState);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {},
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     getCategories();
@@ -98,8 +125,267 @@ const AddServicePage: React.FC = () => {
     }
   }, [categories, formData.categoryId]);
 
-  const handleNext = () => setCurrentStep((prev) => prev + 1);
+  const handleNext = () => {
+    const errors = validateCurrentStep();
+    if (Object.keys(errors).length === 0) {
+      setCurrentStep((prev) => prev + 1);
+      setValidationErrors({});
+    } else {
+      setValidationErrors(errors);
+    }
+  };
+
   const handleBack = () => setCurrentStep((prev) => prev - 1);
+
+  // Validation function for current step
+  const validateCurrentStep = (): ValidationErrors => {
+    const errors: ValidationErrors = {};
+
+    switch (currentStep) {
+      case 1: // Service Details
+        // Validate service title
+        if (!formData.serviceOfferingTitle.trim()) {
+          errors.serviceOfferingTitle = "Service title is required";
+        } else if (
+          formData.serviceOfferingTitle.length <
+          VALIDATION_LIMITS.MIN_TITLE_LENGTH
+        ) {
+          errors.serviceOfferingTitle = `Service title must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+        } else if (
+          formData.serviceOfferingTitle.length >
+          VALIDATION_LIMITS.MAX_TITLE_LENGTH
+        ) {
+          errors.serviceOfferingTitle = `Service title must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+        }
+
+        // Validate category
+        if (!formData.categoryId) {
+          errors.categoryId = "Please select a category";
+        }
+
+        // Validate packages
+        if (formData.servicePackages.length === 0) {
+          errors.servicePackages = "At least one service package is required";
+        } else {
+          const hasValidPackage = formData.servicePackages.some(
+            (pkg) =>
+              pkg.name.trim() &&
+              pkg.description.trim() &&
+              pkg.price &&
+              Number(pkg.price) >= VALIDATION_LIMITS.MIN_PRICE &&
+              Number(pkg.price) <= VALIDATION_LIMITS.MAX_PRICE,
+          );
+
+          if (!hasValidPackage) {
+            errors.servicePackages =
+              "At least one complete package with valid price is required";
+          }
+
+          // Check individual package validation
+          formData.servicePackages.forEach((pkg, index) => {
+            if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
+              if (!pkg.name.trim()) {
+                errors.servicePackages = `Package ${index + 1}: Name is required`;
+              } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
+                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+              } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
+                errors.servicePackages = `Package ${index + 1}: Name must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+              }
+
+              if (!pkg.description.trim()) {
+                errors.servicePackages = `Package ${index + 1}: Description is required`;
+              } else if (
+                pkg.description.length <
+                VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
+              ) {
+                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} character`;
+              } else if (
+                pkg.description.length >
+                VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
+              ) {
+                errors.servicePackages = `Package ${index + 1}: Description must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
+              }
+
+              if (
+                !pkg.price ||
+                Number(pkg.price) < VALIDATION_LIMITS.MIN_PRICE
+              ) {
+                errors.servicePackages = `Package ${index + 1}: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
+              } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
+                errors.servicePackages = `Package ${index + 1}: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
+              }
+            }
+          });
+        }
+        break;
+
+      case 2: // Availability
+        // Validate availability schedule
+        if (formData.availabilitySchedule.length === 0) {
+          errors.availabilitySchedule =
+            "Please select at least one day of availability";
+        }
+
+        // Validate time slots
+        if (formData.useSameTimeForAllDays) {
+          if (formData.commonTimeSlots.length === 0) {
+            errors.timeSlots = "Please add at least one time slot";
+          } else {
+            // Validate each time slot
+            const hasValidTimeSlot = formData.commonTimeSlots.some(
+              (slot) =>
+                slot.startHour &&
+                slot.startMinute &&
+                slot.endHour &&
+                slot.endMinute,
+            );
+            if (!hasValidTimeSlot) {
+              errors.timeSlots = "Please complete at least one time slot";
+            }
+          }
+        } else {
+          // Validate per-day time slots
+          const hasTimeSlots = formData.availabilitySchedule.some(
+            (day) =>
+              formData.perDayTimeSlots[day] &&
+              formData.perDayTimeSlots[day].length > 0,
+          );
+          if (!hasTimeSlots) {
+            errors.timeSlots = "Please add time slots for your available days";
+          }
+        }
+        break;
+
+      case 3: // Location
+        // Validate city (minimum requirement)
+        if (!formData.locationMunicipalityCity.trim()) {
+          errors.locationMunicipalityCity = "City is required";
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return errors;
+  };
+
+  // Convert time slot format for backend
+  const convertTimeSlot = (slot: TimeSlotUIData) => {
+    const convertTo24Hour = (
+      hour: string,
+      minute: string,
+      period: "AM" | "PM",
+    ) => {
+      let hour24 = parseInt(hour);
+      if (period === "PM" && hour24 !== 12) {
+        hour24 += 12;
+      } else if (period === "AM" && hour24 === 12) {
+        hour24 = 0;
+      }
+      return `${hour24.toString().padStart(2, "0")}:${minute}`;
+    };
+
+    return {
+      startTime: convertTo24Hour(
+        slot.startHour,
+        slot.startMinute,
+        slot.startPeriod,
+      ),
+      endTime: convertTo24Hour(slot.endHour, slot.endMinute, slot.endPeriod),
+    };
+  };
+
+  // Handle service submission
+  const handleSubmit = async () => {
+    const errors = validateCurrentStep();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setValidationErrors({});
+
+    try {
+      // Prepare service data
+      const location = {
+        latitude: formData.locationLatitude
+          ? parseFloat(formData.locationLatitude)
+          : 14.676, // Default to Baguio
+        longitude: formData.locationLongitude
+          ? parseFloat(formData.locationLongitude)
+          : 120.9822,
+        address: [
+          formData.locationHouseNumber,
+          formData.locationStreet,
+          formData.locationBarangay,
+        ]
+          .filter(Boolean)
+          .join(", "),
+        city: formData.locationMunicipalityCity,
+        state: formData.locationProvince,
+        country: formData.locationCountry,
+        postalCode: formData.locationPostalCode || "",
+      };
+
+      // Prepare weekly schedule
+      const weeklySchedule = formData.availabilitySchedule.map((day) => ({
+        day,
+        availability: {
+          isAvailable: true,
+          slots: formData.useSameTimeForAllDays
+            ? formData.commonTimeSlots.map(convertTimeSlot)
+            : (formData.perDayTimeSlots[day] || []).map(convertTimeSlot),
+        },
+      }));
+
+      // Create service
+      const serviceRequest: ServiceCreateRequest = {
+        title: formData.serviceOfferingTitle.trim(),
+        description: `Service offering: ${formData.serviceOfferingTitle.trim()}`, // Basic description
+        categoryId: formData.categoryId,
+        price: Math.min(
+          ...formData.servicePackages.map((pkg) => Number(pkg.price)),
+        ), // Use minimum package price as base
+        location,
+        weeklySchedule,
+        instantBookingEnabled: true, // Default to enabled
+        bookingNoticeHours: 2, // Default 2 hours notice
+        maxBookingsPerDay: 10, // Default limit
+      };
+
+      console.log("Creating service with data:", serviceRequest);
+      const newService = await createService(serviceRequest);
+      console.log("Service created successfully:", newService);
+
+      // Create packages for the service
+      const packagePromises = formData.servicePackages
+        .filter((pkg) => pkg.name.trim() && pkg.description.trim() && pkg.price)
+        .map((pkg) =>
+          createPackage({
+            serviceId: newService.id,
+            title: pkg.name.trim(),
+            description: pkg.description.trim(),
+            price: Number(pkg.price),
+          }),
+        );
+
+      console.log("Creating packages...");
+      await Promise.all(packagePromises);
+      console.log("All packages created successfully");
+
+      // Navigate to service details page
+      navigate(`/provider/service-details/${newService.id}`);
+    } catch (error) {
+      console.error("Error creating service:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create service";
+      setValidationErrors({ general: errorMessage });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -158,18 +444,121 @@ const AddServicePage: React.FC = () => {
             handlePackageChange={handlePackageChange}
             addPackage={addPackage}
             removePackage={removePackage}
+            validationErrors={validationErrors}
           />
         );
       case 2:
         return (
-          <ServiceAvailability formData={formData} setFormData={setFormData} />
+          <ServiceAvailability
+            formData={formData}
+            setFormData={setFormData}
+            validationErrors={validationErrors}
+          />
         );
       case 3:
         return (
-          <ServiceLocation formData={formData} setFormData={setFormData} />
+          <ServiceLocation
+            formData={formData}
+            setFormData={setFormData}
+            validationErrors={validationErrors}
+          />
         );
       case 4:
-        return <div>Service Images Page - To be implemented</div>;
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="mb-4 text-2xl font-bold text-gray-800">
+                Review & Submit
+              </h2>
+              <p className="mb-6 text-gray-600">
+                Please review your service details before submitting.
+              </p>
+            </div>
+
+            {/* Service Summary */}
+            <div className="space-y-4 rounded-lg bg-gray-50 p-6">
+              <div>
+                <h3 className="font-semibold text-gray-800">Service Title</h3>
+                <p className="text-gray-600">{formData.serviceOfferingTitle}</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-800">Category</h3>
+                <p className="text-gray-600">
+                  {categories.find((cat) => cat.id === formData.categoryId)
+                    ?.name || "Unknown"}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-800">
+                  Packages ({formData.servicePackages.length})
+                </h3>
+                <div className="space-y-2">
+                  {formData.servicePackages
+                    .filter(
+                      (pkg) =>
+                        pkg.name.trim() && pkg.description.trim() && pkg.price,
+                    )
+                    .map((pkg, index) => (
+                      <div
+                        key={pkg.id}
+                        className="flex items-center justify-between rounded border bg-white p-3"
+                      >
+                        <div>
+                          <p className="font-medium">{pkg.name}</p>
+                          <p className="text-sm text-gray-600">
+                            {pkg.description}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-green-600">
+                          ₱{Number(pkg.price).toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-800">Availability</h3>
+                <p className="text-gray-600">
+                  {formData.availabilitySchedule.join(", ")}
+                  {formData.availabilitySchedule.length > 0 && (
+                    <span className="mt-1 block text-sm">
+                      {formData.useSameTimeForAllDays
+                        ? `Same hours for all days (${formData.commonTimeSlots.length} time slots)`
+                        : "Custom hours per day"}
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-800">Location</h3>
+                <p className="text-gray-600">
+                  {[
+                    formData.locationHouseNumber,
+                    formData.locationStreet,
+                    formData.locationBarangay,
+                    formData.locationMunicipalityCity,
+                    formData.locationProvince,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                </p>
+              </div>
+            </div>
+
+            {/* Error Display */}
+            {validationErrors.general && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <p className="text-sm text-red-600">
+                  {validationErrors.general}
+                </p>
+              </div>
+            )}
+          </div>
+        );
       default:
         return <div>Review and Submit</div>;
     }
@@ -198,7 +587,8 @@ const AddServicePage: React.FC = () => {
           {currentStep > 1 && (
             <button
               onClick={handleBack}
-              className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
+              disabled={isSubmitting}
+              className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
             >
               Back
             </button>
@@ -206,13 +596,25 @@ const AddServicePage: React.FC = () => {
           {currentStep < 4 ? (
             <button
               onClick={handleNext}
-              className="ml-auto rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              disabled={isSubmitting}
+              className="ml-auto rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               Next
             </button>
           ) : (
-            <button className="ml-auto rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-              Submit
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="ml-auto flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                  Creating Service...
+                </>
+              ) : (
+                "Create Service"
+              )}
             </button>
           )}
         </div>

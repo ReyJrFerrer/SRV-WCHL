@@ -16,6 +16,9 @@ interface ServiceLocationProps {
     serviceRadiusUnit: "km" | "mi";
   };
   setFormData: React.Dispatch<React.SetStateAction<any>>;
+  validationErrors?: {
+    locationMunicipalityCity?: string;
+  };
 }
 
 const ServiceLocation: React.FC<ServiceLocationProps> = ({

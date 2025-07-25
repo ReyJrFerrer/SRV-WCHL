@@ -706,7 +706,7 @@ const EditServicePage: React.FC = () => {
       // Update the main service
       await updateService(
         serviceToEdit.id,
-        String(selectedCategory),
+        String(selectedCategory.id),
         formData.serviceOfferingTitle,
         formData.serviceOfferingTitle, // description
         parseFloat(validPackages[0].price) || 0,

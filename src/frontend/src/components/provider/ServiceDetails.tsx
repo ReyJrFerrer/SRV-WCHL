@@ -29,6 +29,11 @@ interface ServiceDetailsProps {
   ) => void;
   addPackage: () => void;
   removePackage: (id: string) => void;
+  validationErrors?: {
+    serviceOfferingTitle?: string;
+    categoryId?: string;
+    servicePackages?: string;
+  };
 }
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
@@ -39,6 +44,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   handlePackageChange,
   addPackage,
   removePackage,
+  validationErrors = {},
 }) => {
   return (
     <div className="mx-auto max-w-5xl p-4">
@@ -58,9 +64,18 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   value={formData.serviceOfferingTitle}
                   onChange={handleChange}
                   required
-                  className="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className={`mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-blue-500 sm:text-sm ${
+                    validationErrors.serviceOfferingTitle
+                      ? "border-red-300 bg-red-50 focus:border-red-500"
+                      : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                  }`}
                   placeholder="e.g., Professional Hair Styling"
                 />
+                {validationErrors.serviceOfferingTitle && (
+                  <p className="text-sm text-red-600">
+                    {validationErrors.serviceOfferingTitle}
+                  </p>
+                )}
               </div>
             </section>
 
@@ -68,14 +83,18 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               <h2 className="mb-2 text-lg font-bold text-blue-700">
                 Category <span className="text-red-500">*</span>
               </h2>
-              <div>
+              <div className="space-y-2">
                 <select
                   name="categoryId"
                   id="categoryId"
                   value={formData.categoryId}
                   onChange={handleChange}
                   required
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-blue-500 sm:text-sm ${
+                    validationErrors.categoryId
+                      ? "border-red-300 bg-red-50 focus:border-red-500"
+                      : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                  }`}
                 >
                   <option value="" disabled>
                     Select a category
@@ -92,6 +111,11 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       ))
                   )}
                 </select>
+                {validationErrors.categoryId && (
+                  <p className="text-sm text-red-600">
+                    {validationErrors.categoryId}
+                  </p>
+                )}
               </div>
             </section>
           </div>
@@ -197,6 +221,11 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               >
                 + Add Package
               </button>
+              {validationErrors.servicePackages && (
+                <p className="mt-2 text-sm text-red-600">
+                  {validationErrors.servicePackages}
+                </p>
+              )}
             </fieldset>
           </section>
         </div>
