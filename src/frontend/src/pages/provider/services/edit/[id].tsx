@@ -37,6 +37,7 @@ import {
 
 // Import AvailabilityConfiguration component
 import AvailabilityConfiguration from "../../../../components/provider/AvailabilityConfiguration";
+import ServiceLocation from "../../../../components/provider/ServiceLocation";
 
 // Interfaces for form data (same as add.tsx)
 interface TimeSlotUIData {
@@ -62,6 +63,18 @@ const initialServiceFormState = {
   serviceOfferingTitle: "",
   categoryId: "",
   locationAddress: "",
+
+  // Enhanced Location fields (matching add.tsx)
+  locationHouseNumber: "",
+  locationStreet: "",
+  locationBarangay: "",
+  locationMunicipalityCity: "",
+  locationProvince: "",
+  locationCountry: "Philippines",
+  locationPostalCode: "",
+  locationLatitude: "",
+  locationLongitude: "",
+
   serviceRadius: "5",
   serviceRadiusUnit: "km" as "km" | "mi",
 
@@ -348,6 +361,18 @@ const EditServicePage: React.FC = () => {
             serviceOfferingTitle: service.title,
             categoryId: service.category?.id || "",
             locationAddress: service.location.address,
+
+            // Enhanced Location fields with existing data
+            locationHouseNumber: "", // Could be parsed from address if needed
+            locationStreet: "", // Could be parsed from address if needed
+            locationBarangay: "", // Could be parsed from address if needed
+            locationMunicipalityCity: service.location.city || "",
+            locationProvince: service.location.state || "",
+            locationCountry: service.location.country || "Philippines",
+            locationPostalCode: service.location.postalCode || "",
+            locationLatitude: service.location.latitude?.toString() || "",
+            locationLongitude: service.location.longitude?.toString() || "",
+
             serviceRadius: "5",
             serviceRadiusUnit: "km" as "km" | "mi",
             // Populate availability from loaded data
@@ -1082,42 +1107,8 @@ const EditServicePage: React.FC = () => {
               onCommonTimeSlotsChange={handleCommonTimeSlotsChange}
               onPerDayTimeSlotsChange={handlePerDayTimeSlotsChange}
             />
-            {/* Service Location */}
-            <fieldset className="rounded-md border border-gray-300 p-4">
-              <legend className="px-1 text-sm font-medium text-gray-700">
-                Service Location*
-              </legend>
-              <div className="mt-2">
-                <label
-                  htmlFor="locationAddress"
-                  className="mb-1 block text-xs font-medium text-gray-600"
-                >
-                  Primary Service Address/Area Description
-                </label>
-                <input
-                  type="text"
-                  name="locationAddress"
-                  id="locationAddress"
-                  value={formData.locationAddress}
-                  onChange={handleChange}
-                  required
-                  placeholder="e.g., Within Baguio City limits"
-                  className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none sm:text-sm"
-                />
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-4">
-                {/* <div>
-                        <label htmlFor="serviceRadius" className="block text-xs font-medium text-gray-600 mb-1">Service Radius</label>
-                        <input type="number" name="serviceRadius" id="serviceRadius" value={formData.serviceRadius} onChange={handleChange} required placeholder="e.g., 5" min="0" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="serviceRadiusUnit" className="block text-xs font-medium text-gray-600 mb-1">Radius Unit</label>
-                        <select name="serviceRadiusUnit" id="serviceRadiusUnit" value={formData.serviceRadiusUnit} onChange={handleChange} className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm h-[42px]">
-                            <option value="km">km</option><option value="mi">mi</option>
-                        </select>
-                    </div> */}
-              </div>
-            </fieldset>
+            {/* Enhanced Service Location */}
+            <ServiceLocation formData={formData} setFormData={setFormData} />
             {/* Image Upload Section */}{" "}
             {/* Display Existing Images (Simplified) */}{" "}
             {/* Display New Image Previews */}

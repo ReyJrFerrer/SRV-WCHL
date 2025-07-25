@@ -256,10 +256,34 @@ const AddServicePage: React.FC = () => {
         }
         break;
 
-      case 3: // Location
-        // Validate city (minimum requirement)
-        if (!formData.locationMunicipalityCity.trim()) {
-          errors.locationMunicipalityCity = "City is required";
+      case 3: // Location - Enhanced validation matching ClientBookingPageComponent
+        // Check if using GPS location or manual address
+        const hasGPSCoordinates =
+          formData.locationLatitude && formData.locationLongitude;
+        const hasManualAddress =
+          formData.locationProvince &&
+          formData.locationMunicipalityCity &&
+          formData.locationBarangay &&
+          formData.locationStreet &&
+          formData.locationHouseNumber;
+
+        if (!hasGPSCoordinates && !hasManualAddress) {
+          errors.locationMunicipalityCity =
+            "Please provide your service location by enabling GPS or entering address manually";
+        } else if (!hasGPSCoordinates) {
+          // Validate manual address fields
+          if (!formData.locationProvince.trim()) {
+            errors.locationMunicipalityCity = "Province is required";
+          } else if (!formData.locationMunicipalityCity.trim()) {
+            errors.locationMunicipalityCity = "Municipality/City is required";
+          } else if (!formData.locationBarangay.trim()) {
+            errors.locationMunicipalityCity = "Barangay is required";
+          } else if (!formData.locationStreet.trim()) {
+            errors.locationMunicipalityCity = "Street name is required";
+          } else if (!formData.locationHouseNumber.trim()) {
+            errors.locationMunicipalityCity =
+              "House number/building is required";
+          }
         }
         break;
 

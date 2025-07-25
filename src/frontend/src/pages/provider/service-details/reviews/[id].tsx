@@ -170,7 +170,7 @@ const ServiceReviewsPage: React.FC = () => {
   }
 
   const providerName = service.providerName || "Service Provider";
-  const providerAvatar = service.providerAvatar;
+  const providerAvatar = "/default-provider.svg";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -190,13 +190,13 @@ const ServiceReviewsPage: React.FC = () => {
                 : `Reviews for ${service.name}`}
             </h1>
           </div>
-          <button
+          {/* <button
             onClick={refreshReviews}
             className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
             title="Refresh reviews"
           >
             🔄
-          </button>
+          </button> */}
         </div>
       </header>
 
@@ -402,7 +402,7 @@ const ServiceReviewsPage: React.FC = () => {
                       <img
                         src={
                           review.clientProfile.profilePicture.imageUrl ||
-                          "/default-provider.svg"
+                          "/default.svg"
                         }
                         alt={review.clientName || "Client"}
                         className="h-full w-full object-cover"

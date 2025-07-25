@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -12,12 +12,24 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const {
+    isAuthenticated,
+    location,
+    locationStatus,
+    setLocation,
+    isLoading: isAuthLoading,
+  } = useAuth();
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userAddress, setUserAddress] = useState<string>("Unknown");
+  const [userProvince, setUserProvince] = useState<string>("");
+  const [locationLoading, setLocationLoading] = useState(true);
 
+  // --- REFACTORED: Combined data fetching into a single, efficient hook ---
   useEffect(() => {
-    const fetchProfile = async () => {
+    // This function will run only when authentication is no longer loading.
+    const loadInitialData = async () => {
+      // 1. Fetch User Profile if authenticated
       if (isAuthenticated) {
         try {
           const userProfile = await authCanisterService.getMyProfile();
@@ -26,12 +38,82 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           console.error("Failed to fetch profile:", error);
         }
       }
+
+      // 2. Determine and Set Location
+      setLocationLoading(true);
+      if (locationStatus === "allowed" && location) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
+          );
+          const data = await res.json();
+          if (data && data.address) {
+            const { road, suburb, city, town, village, county, state } =
+              data.address;
+            const province =
+              county ||
+              state ||
+              data.address.region ||
+              data.address.province ||
+              "";
+            const streetPart = road || "";
+            const areaPart = suburb || village || "";
+            const cityPart = city || town || "";
+            const fullAddress = [streetPart, areaPart, cityPart]
+              .filter(Boolean)
+              .join(", ");
+            setUserAddress(fullAddress || "Could not determine address");
+            setUserProvince(province);
+          } else {
+            setUserAddress("Could not determine address");
+          }
+        } catch (error) {
+          setUserAddress("Could not determine address");
+        } finally {
+          setLocationLoading(false);
+        }
+      } else {
+        // Handle cases where location is not yet known or denied
+        setLocationLoading(false);
+        switch (locationStatus) {
+          case "denied":
+            setUserAddress("Location not shared");
+            break;
+          case "not_set":
+          case "unsupported":
+          default:
+            setUserAddress("Location not set");
+            break;
+        }
+      }
     };
-    fetchProfile();
-  }, [isAuthenticated]);
+
+    // Only run the data fetching logic after the initial auth check is complete.
+    if (!isAuthLoading) {
+      loadInitialData();
+    }
+  }, [isAuthenticated, isAuthLoading, location, locationStatus]);
+
+  const handleRequestLocation = useCallback(() => {
+    setLocationLoading(true);
+    setUserAddress("Detecting location...");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation("allowed", { latitude, longitude });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocation("denied");
+        },
+      );
+    } else {
+      setLocation("unsupported");
+    }
+  }, [setLocation]);
 
   const handleProfileClick = () => {
-    // Navigate to the user's profile page
     navigate("/provider/profile");
   };
 
@@ -44,11 +126,11 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
       {/* --- Desktop Header --- */}
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-4">
-          <Link to="/provider/home">
+          <Link to="/client/home">
             <img src="/logo.svg" alt="SRV Logo" className="h-20 w-auto" />
           </Link>
           <div className="h-8 border-l border-gray-300"></div>
-          <div className="text-black-500 text-2xl">
+          <div className="text-2xl text-gray-700">
             <span className="font-bold">Welcome Back,</span> {displayName}
           </div>
         </div>
@@ -65,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
       {/* --- Mobile Header --- */}
       <div className="md:hidden">
         <div className="flex items-center justify-between">
-          <Link to="/provider/home">
+          <Link to="/client/home">
             <img src="/logo.svg" alt="SRV Logo" className="h-10 w-auto" />
           </Link>
           {isAuthenticated && (
@@ -83,36 +165,35 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* Location Section */}
+      {/* --- Location Section --- */}
       <div className="rounded-lg bg-yellow-200 p-4">
         <p className="text-sm font-bold text-gray-800">My Location</p>
-        <div className="flex items-center">
-          <MapPinIcon className="mr-2 h-5 w-5 text-gray-700" />
-          <span className="text-gray-800">Baguio City</span>
+        <div className="flex min-h-[2.5rem] flex-col">
+          <div className="mb-1 flex items-center">
+            <MapPinIcon className="mr-2 h-5 w-5 flex-shrink-0 text-gray-700" />
+            {locationLoading || isAuthLoading ? (
+              <span className="animate-pulse text-gray-500">
+                Detecting location...
+              </span>
+            ) : (
+              <span className="text-gray-800">
+                {userAddress}, {userProvince}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Search Bar with padding above */}
-        <form
-          className="mt-4 w-full"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (searchQuery.trim()) {
-              navigate(
-                `/provider/search-results?query=${encodeURIComponent(searchQuery)}`,
-              );
-            }
-          }}
-        >
-          <div className="flex w-full items-center rounded-md bg-white p-3 shadow-sm">
-            <input
-              type="text"
-              className="flex-1 border-none bg-transparent p-0 text-gray-800 placeholder-gray-500 focus:ring-0"
-              placeholder="Search for service"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
+        {!locationLoading &&
+          (locationStatus === "denied" ||
+            locationStatus === "not_set" ||
+            locationStatus === "unsupported") && (
+            <button
+              onClick={handleRequestLocation}
+              className="mt-2 w-full rounded-lg bg-yellow-300 p-2 text-center text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
+            >
+              Share Location
+            </button>
+          )}
       </div>
     </header>
   );
