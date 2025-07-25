@@ -350,34 +350,6 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
             {validationErrors.locationMunicipalityCity}
           </div>
         )}
-
-        {/* Service Radius Section */}
-        <div className="mt-6 border-t border-gray-200 pt-4">
-          <h4 className="mb-3 text-sm font-semibold text-gray-700">
-            Service Coverage Area
-          </h4>
-          <div className="flex items-center space-x-3">
-            <input
-              name="serviceRadius"
-              type="number"
-              value={formData.serviceRadius}
-              onChange={handleLocationFieldChange}
-              min="1"
-              max="50"
-              className="w-20 rounded-md border border-gray-300 px-3 py-2 text-sm"
-            />
-            <select
-              name="serviceRadiusUnit"
-              value={formData.serviceRadiusUnit}
-              onChange={handleLocationFieldChange}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="km">km</option>
-              <option value="mi">miles</option>
-            </select>
-            <span className="text-sm text-gray-600">radius</span>
-          </div>
-        </div>
       </section>
     </div>
   );

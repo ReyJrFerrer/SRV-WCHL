@@ -371,8 +371,8 @@ export default function AboutUs({
 
       <section className="pillars-section">
         <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Our Core Pillars</h2>
+          <div className="section-header-ab">
+            <h2 className="section-title-ab">Our Core Pillars</h2>
           </div>
 
           <div className="pillars-impact-container">
@@ -479,8 +479,8 @@ export default function AboutUs({
       </section>
 
       <section className="additional-info-section">
-        <div className="section-header">
-          <h2 className="section-title">Ways to Connect</h2>
+        <div className="section-header-ab">
+          <h2 className="section-title-ab">Ways to Connect</h2>
         </div>
 
         <div className="container">
@@ -573,11 +573,7 @@ export default function AboutUs({
               </div>
               <div className="member-info">
                 <h3 className="member-name">Don Daryll Dela Concha</h3>
-                <p className="member-role">Chief Product Officer</p>
-                <p className="member-bio">
-                  Drives product innovation and strategy to deliver value to
-                  customers and boost business performance.
-                </p>
+                <p className="member-role">Frontend Support</p>
               </div>
             </div>
             <div className="team-member">
@@ -620,11 +616,7 @@ export default function AboutUs({
               </div>
               <div className="member-info">
                 <h3 className="member-name">Jan Dale Zarate</h3>
-                <p className="member-role">Chief Executive Officer</p>
-                <p className="member-bio">
-                  Leads the company's overall strategy and vision, ensuring
-                  long-term growth and success.
-                </p>
+                <p className="member-role">Frontend Developer</p>
               </div>
             </div>
             <div className="team-member">
@@ -667,59 +659,7 @@ export default function AboutUs({
               </div>
               <div className="member-info">
                 <h3 className="member-name">Reynaldo Jr Ferrer</h3>
-                <p className="member-role">Chief Technology Officer</p>
-                <p className="member-bio">
-                  Aligns technology with business goals to enable innovation,
-                  scalability, and competitive advantage.
-                </p>
-              </div>
-            </div>
-
-            <div className="team-member">
-              <div className="member-image-container">
-                <div className="member-image-wrapper">
-                  <img
-                    src="about-us/mark.jpeg"
-                    alt="Mark - Team Member"
-                    className="member-image"
-                  />
-                </div>
-                <div className="member-social">
-                  <a
-                    href="https://www.facebook.com/Albior788/"
-                    className="social-link"
-                    aria-label="Facebook"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-facebook.svg"
-                      alt="Facebook"
-                      className="social-icon"
-                    />
-                  </a>
-                  <a
-                    href="https://www.linkedin.com/in/albior788/"
-                    className="social-link"
-                    aria-label="LinkedIn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="socials/brand-linkedin.svg"
-                      alt="LinkedIn"
-                      className="social-icon"
-                    />
-                  </a>
-                </div>
-              </div>
-              <div className="member-info">
-                <h3 className="member-name">Mark Kim Albior</h3>
-                <p className="member-role">Chief Architect</p>
-                <p className="member-bio">
-                  Designs and oversees technical systems to ensure they are
-                  scalable, efficient, and future-ready.
-                </p>
+                <p className="member-role">Lead Programmer</p>
               </div>
             </div>
 
@@ -763,25 +703,21 @@ export default function AboutUs({
               </div>
               <div className="member-info">
                 <h3 className="member-name">Princess Hannah Arzadon</h3>
-                <p className="member-role">Chief Operating Officer</p>
-                <p className="member-bio">
-                  Oversees daily operations and ensures the team delivers
-                  seamless, high-quality service experiences for all users.
-                </p>
+                <p className="member-role">Project Manager</p>
               </div>
             </div>
             <div className="team-member">
               <div className="member-image-container">
                 <div className="member-image-wrapper">
                   <img
-                    src="about-us/alexie2.png"
+                    src="about-us/yanni.jpg"
                     alt="Alexie - Team Member"
                     className="member-image"
                   />
                 </div>
                 <div className="member-social">
                   <a
-                    href="https://www.facebook.com/share/1aLoigCQzR/?mibextid=wwXIfr"
+                    href="https://www.facebook.com/hyaeniferrer"
                     className="social-link"
                     aria-label="Facebook"
                     target="_blank"
@@ -794,7 +730,7 @@ export default function AboutUs({
                     />
                   </a>
                   <a
-                    href="https://www.linkedin.com/in/alexie-johanna-pagal-0627b731a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
+                    href=""
                     className="social-link"
                     aria-label="LinkedIn"
                     target="_blank"
@@ -809,12 +745,8 @@ export default function AboutUs({
                 </div>
               </div>
               <div className="member-info">
-                <h3 className="member-name">Alexie Johann Pagal</h3>
-                <p className="member-role">Chief Financial Officer</p>
-                <p className="member-bio">
-                  Manages financial health and strategy to ensure stability,
-                  profitability, and informed decision-making.
-                </p>
+                <h3 className="member-name">Hyaeni Ferrer</h3>
+                <p className="member-role">UI/UX Designer</p>
               </div>
             </div>
           </div>
