@@ -28,9 +28,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
-  const { identity } = useAuth();
-  const { conversations, loading: chatLoading, error: chatError } = useChat(); // Add the useChat hook
-  const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
 
   // Set document title
   useEffect(() => {

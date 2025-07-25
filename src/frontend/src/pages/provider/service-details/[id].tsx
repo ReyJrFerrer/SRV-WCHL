@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -19,6 +19,32 @@ import {
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import { ServicePackage } from "../../../services/serviceCanisterService";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
+import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
+
+// Simple Tooltip component for validation messages
+interface TooltipProps {
+  children: React.ReactNode;
+  content: string;
+  disabled?: boolean;
+}
+
+const Tooltip: React.FC<TooltipProps> = ({
+  children,
+  content,
+  disabled = false,
+}) => {
+  if (!disabled) return <>{children}</>;
+
+  return (
+    <div className="group relative">
+      {children}
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform rounded-lg bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        {content}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 transform border-4 border-transparent border-t-gray-800"></div>
+      </div>
+    </div>
+  );
+};
 
 const ProviderServiceDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +59,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     getServicePackages,
     error: hookError,
   } = useServiceManagement();
+
+  // Use provider booking management hook for validation
+  const { bookings: providerBookings } = useProviderBookingManagement();
 
   const [service, setService] = useState<EnhancedService | null>(null);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -50,6 +79,33 @@ const ProviderServiceDetailPage: React.FC = () => {
     }
   }, [service]);
   const [retryCount, setRetryCount] = useState(0);
+
+  // Helper function to check if service has active bookings
+  const hasActiveBookings = useMemo(() => {
+    if (!service || !providerBookings.length) return false;
+
+    // Active booking statuses that should prevent editing/deletion
+    const activeStatuses = ["Requested", "Accepted", "InProgress"];
+
+    return providerBookings.some(
+      (booking) =>
+        booking.serviceId === service.id &&
+        activeStatuses.includes(booking.status),
+    );
+  }, [service, providerBookings]);
+
+  // Get count of active bookings for tooltip message
+  const activeBookingsCount = useMemo(() => {
+    if (!service || !providerBookings.length) return 0;
+
+    const activeStatuses = ["Requested", "Accepted", "InProgress"];
+
+    return providerBookings.filter(
+      (booking) =>
+        booking.serviceId === service.id &&
+        activeStatuses.includes(booking.status),
+    ).length;
+  }, [service, providerBookings]);
 
   // Load service data
   useEffect(() => {
@@ -257,6 +313,39 @@ const ProviderServiceDetailPage: React.FC = () => {
       )} */}
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
+        {/* Active Bookings Warning */}
+        {hasActiveBookings && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-amber-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-amber-800">
+                  Service has active bookings
+                </h3>
+                <div className="mt-2 text-sm text-amber-700">
+                  <p>
+                    This service has {activeBookingsCount} active booking
+                    {activeBookingsCount !== 1 ? "s" : ""} and cannot be edited
+                    or deleted until all bookings are completed or cancelled.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero Image and Basic Info Card */}
         <div className="mt-8 overflow-hidden rounded-xl bg-white shadow-lg">
           {/* {heroImageUrl && (
@@ -504,12 +593,27 @@ const ProviderServiceDetailPage: React.FC = () => {
           )} */}
         {/* Action Buttons Card */}
         <div className="flex flex-col space-y-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:space-y-0 sm:space-x-3">
-          <Link
-            to={`/provider/services/edit/${service.id}`}
-            className="text-black-500 flex flex-1 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-100"
+          <Tooltip
+            content={`Cannot edit service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+            disabled={hasActiveBookings}
           >
-            <PencilIcon className="mr-2 h-5 w-5" /> Edit Service
-          </Link>
+            <Link
+              to={
+                hasActiveBookings
+                  ? "#"
+                  : `/provider/services/edit/${service.id}`
+              }
+              className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                hasActiveBookings
+                  ? "text-black-500 cursor-not-allowed bg-white hover:bg-gray-100"
+                  : "text-black-500 bg-white hover:bg-gray-100"
+              }`}
+              onClick={(e) => hasActiveBookings && e.preventDefault()}
+            >
+              <PencilIcon className="mr-2 h-5 w-5" /> Edit Service
+            </Link>
+          </Tooltip>
+
           <button
             onClick={handleStatusToggle}
             disabled={isUpdatingStatus}
@@ -526,14 +630,24 @@ const ProviderServiceDetailPage: React.FC = () => {
                 ? "Deactivate"
                 : "Activate"}
           </button>
-          <button
-            onClick={handleDeleteService}
-            disabled={isDeleting}
-            className="flex flex-1 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-gray-100 disabled:opacity-50"
+
+          <Tooltip
+            content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+            disabled={hasActiveBookings}
           >
-            <TrashIcon className="mr-2 h-5 w-5" />
-            {isDeleting ? "Deleting..." : "Delete Service"}
-          </button>
+            <button
+              onClick={hasActiveBookings ? undefined : handleDeleteService}
+              disabled={isDeleting || hasActiveBookings}
+              className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                hasActiveBookings
+                  ? "text-black-500 cursor-not-allowed bg-white hover:bg-gray-100"
+                  : "bg-white text-red-500 hover:bg-gray-100 disabled:opacity-50"
+              }`}
+            >
+              <TrashIcon className="mr-2 h-5 w-5" />
+              {isDeleting ? "Deleting..." : "Delete Service"}
+            </button>
+          </Tooltip>
         </div>
       </main>
       <div className="md:hidden">

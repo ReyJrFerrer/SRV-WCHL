@@ -63,7 +63,10 @@ const SettingsPage: React.FC = () => {
                     <div className="mr-4 h-12 w-12 animate-pulse rounded-full bg-gray-200"></div>
                   ) : (
                     <img
-                      src={profile?.profilePicture?.imageUrl || "/don.jpg"} // Fallback to a default avatar
+                      src={
+                        profile?.profilePicture?.imageUrl ||
+                        "/default-provider.svg"
+                      } // Fallback to a default avatar
                       alt="Profile"
                       className="mr-4 h-12 w-12 rounded-full object-cover"
                     />

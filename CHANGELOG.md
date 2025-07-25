@@ -18,7 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add service creation functionality with step-by-step form validation and backend error handling
 - Add form validation for service details, availability, and location with proper field highlighting
 - Add backend integration for service creation with comprehensive error handling and success navigation
+- Add validation to prevent service editing/deletion when provider has active bookings
+- Add disabled state with tooltips for edit/delete buttons when active bookings exist
+- Integrate useProviderBookingManagement hook for real-time booking status validation
 - Add enhanced location tracking with GPS detection and comprehensive Philippine address forms to service creation and editing
+- Convert service edit page to multi-step wizard matching add page UI pattern while preserving existing functionality
+- Convert service edit page to multi-step wizard with improved UI components
 
 ### Fixed
 

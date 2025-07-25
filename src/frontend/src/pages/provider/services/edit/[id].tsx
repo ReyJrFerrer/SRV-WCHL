@@ -39,6 +39,31 @@ import {
 import AvailabilityConfiguration from "../../../../components/provider/AvailabilityConfiguration";
 import ServiceLocation from "../../../../components/provider/ServiceLocation";
 
+// Step Components for multi-step wizard
+import ServiceDetails from "../../../../components/provider/ServiceDetails";
+import ServiceAvailability from "../../../../components/provider/ServiceAvailability";
+
+// Validation errors interface (same as add.tsx)
+interface ValidationErrors {
+  serviceOfferingTitle?: string;
+  categoryId?: string;
+  servicePackages?: string;
+  availabilitySchedule?: string;
+  timeSlots?: string;
+  locationMunicipalityCity?: string;
+  general?: string;
+}
+
+// Backend validation constants (from service.mo)
+const VALIDATION_LIMITS = {
+  MIN_TITLE_LENGTH: 1,
+  MAX_TITLE_LENGTH: 100,
+  MIN_DESCRIPTION_LENGTH: 1,
+  MAX_DESCRIPTION_LENGTH: 1000,
+  MIN_PRICE: 1,
+  MAX_PRICE: 1_000_000,
+};
+
 // Interfaces for form data (same as add.tsx)
 interface TimeSlotUIData {
   id: string;
@@ -302,6 +327,12 @@ const EditServicePage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
+  // Step management state (same as add.tsx)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {},
+  );
+
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -454,6 +485,176 @@ const EditServicePage: React.FC = () => {
       document.title = "Edit Service - SRV Provider";
     }
   }, [serviceToEdit]);
+
+  // Step navigation and validation functions (same as add.tsx)
+  const handleNext = () => {
+    const errors = validateCurrentStep();
+    if (Object.keys(errors).length === 0) {
+      setCurrentStep((prev) => prev + 1);
+      setValidationErrors({});
+    } else {
+      setValidationErrors(errors);
+    }
+  };
+
+  const handleBack = () => setCurrentStep((prev) => prev - 1);
+
+  // Validation function for current step (adapted from add.tsx)
+  const validateCurrentStep = (): ValidationErrors => {
+    const errors: ValidationErrors = {};
+
+    switch (currentStep) {
+      case 1: // Service Details
+        // Validate service title
+        if (!formData.serviceOfferingTitle.trim()) {
+          errors.serviceOfferingTitle = "Service title is required";
+        } else if (
+          formData.serviceOfferingTitle.length <
+          VALIDATION_LIMITS.MIN_TITLE_LENGTH
+        ) {
+          errors.serviceOfferingTitle = `Service title must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+        } else if (
+          formData.serviceOfferingTitle.length >
+          VALIDATION_LIMITS.MAX_TITLE_LENGTH
+        ) {
+          errors.serviceOfferingTitle = `Service title must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+        }
+
+        // Validate category
+        if (!formData.categoryId) {
+          errors.categoryId = "Please select a category";
+        }
+
+        // Validate packages
+        if (formData.servicePackages.length === 0) {
+          errors.servicePackages = "At least one service package is required";
+        } else {
+          const hasValidPackage = formData.servicePackages.some(
+            (pkg) =>
+              pkg.name.trim() &&
+              pkg.description.trim() &&
+              pkg.price &&
+              Number(pkg.price) >= VALIDATION_LIMITS.MIN_PRICE &&
+              Number(pkg.price) <= VALIDATION_LIMITS.MAX_PRICE,
+          );
+
+          if (!hasValidPackage) {
+            errors.servicePackages =
+              "At least one complete package with valid price is required";
+          }
+
+          // Check individual package validation
+          formData.servicePackages.forEach((pkg, index) => {
+            if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
+              if (!pkg.name.trim()) {
+                errors.servicePackages = `Package ${index + 1}: Name is required`;
+              } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
+                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+              } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
+                errors.servicePackages = `Package ${index + 1}: Name must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+              }
+
+              if (!pkg.description.trim()) {
+                errors.servicePackages = `Package ${index + 1}: Description is required`;
+              } else if (
+                pkg.description.length <
+                VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
+              ) {
+                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} character`;
+              } else if (
+                pkg.description.length >
+                VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
+              ) {
+                errors.servicePackages = `Package ${index + 1}: Description must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
+              }
+
+              if (
+                !pkg.price ||
+                Number(pkg.price) < VALIDATION_LIMITS.MIN_PRICE
+              ) {
+                errors.servicePackages = `Package ${index + 1}: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
+              } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
+                errors.servicePackages = `Package ${index + 1}: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
+              }
+            }
+          });
+        }
+        break;
+
+      case 2: // Availability
+        // Validate availability schedule
+        if (formData.availabilitySchedule.length === 0) {
+          errors.availabilitySchedule =
+            "Please select at least one day of availability";
+        }
+
+        // Validate time slots
+        if (formData.useSameTimeForAllDays) {
+          if (formData.commonTimeSlots.length === 0) {
+            errors.timeSlots = "Please add at least one time slot";
+          } else {
+            // Validate each time slot
+            const hasValidTimeSlot = formData.commonTimeSlots.some(
+              (slot) =>
+                slot.startHour &&
+                slot.startMinute &&
+                slot.endHour &&
+                slot.endMinute,
+            );
+            if (!hasValidTimeSlot) {
+              errors.timeSlots = "Please complete at least one time slot";
+            }
+          }
+        } else {
+          // Validate per-day time slots
+          const hasTimeSlots = formData.availabilitySchedule.some(
+            (day) =>
+              formData.perDayTimeSlots[day] &&
+              formData.perDayTimeSlots[day].length > 0,
+          );
+          if (!hasTimeSlots) {
+            errors.timeSlots = "Please add time slots for your available days";
+          }
+        }
+        break;
+
+      case 3: // Location - Enhanced validation matching ClientBookingPageComponent
+        // Check if using GPS location or manual address
+        const hasGPSCoordinates =
+          formData.locationLatitude && formData.locationLongitude;
+        const hasManualAddress =
+          formData.locationProvince &&
+          formData.locationMunicipalityCity &&
+          formData.locationBarangay &&
+          formData.locationStreet &&
+          formData.locationHouseNumber;
+
+        if (!hasGPSCoordinates && !hasManualAddress) {
+          errors.locationMunicipalityCity =
+            "Please provide your service location by enabling GPS or entering address manually";
+        } else if (!hasGPSCoordinates) {
+          // Validate manual address fields
+          if (!formData.locationProvince.trim()) {
+            errors.locationMunicipalityCity = "Province is required";
+          } else if (!formData.locationMunicipalityCity.trim()) {
+            errors.locationMunicipalityCity = "Municipality/City is required";
+          } else if (!formData.locationBarangay.trim()) {
+            errors.locationMunicipalityCity = "Barangay is required";
+          } else if (!formData.locationStreet.trim()) {
+            errors.locationMunicipalityCity = "Street name is required";
+          } else if (!formData.locationHouseNumber.trim()) {
+            errors.locationMunicipalityCity =
+              "House number/building is required";
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return errors;
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
