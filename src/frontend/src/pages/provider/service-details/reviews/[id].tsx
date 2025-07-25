@@ -400,7 +400,10 @@ const ServiceReviewsPage: React.FC = () => {
                   <div className="relative mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-100 bg-gray-200">
                     {review.clientProfile?.profilePicture?.imageUrl ? (
                       <img
-                        src="./images/rey.png"
+                        src={
+                          review.clientProfile.profilePicture.imageUrl ||
+                          "/default-provider.svg"
+                        }
                         alt={review.clientName || "Client"}
                         className="h-full w-full object-cover"
                       />

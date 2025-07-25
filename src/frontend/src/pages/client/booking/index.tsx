@@ -207,7 +207,7 @@ const MyBookingsPage: React.FC = () => {
 
       <div className="flex min-h-screen flex-col bg-gray-100">
         {/* Search/Filter Bar */}
-        <div className="sticky top-[57px] z-10 border-b border-gray-200 bg-white">
+        <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
           <div className="hide-scrollbar flex justify-start overflow-x-auto p-2 whitespace-nowrap sm:justify-center">
             <nav className="flex space-x-1 rounded-full bg-gray-200 p-1">
               {TAB_ITEMS.map((tab) => (
@@ -227,7 +227,7 @@ const MyBookingsPage: React.FC = () => {
           </div>
 
           <div className="container mx-auto px-4 pt-2 pb-3">
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-grow">
                 <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input

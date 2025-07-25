@@ -28,7 +28,7 @@ export function adaptServiceData(services: any[]) {
         service.media[0].url,
       );
     } else {
-      adaptedService.heroImage = "/images/default-service.jpg"; // Fallback
+      adaptedService.heroImage = "/default-provider.svg"; // Fallback
     }
 
     if (adaptedService.media) {
@@ -78,5 +78,5 @@ function convertImageToObjectOrPath(image: any): any {
   }
   // Fallback if the structure is not recognized or it's not what <Image> expects
   // Ensure this path points to an image in your `public` directory
-  return "/images/default-service.jpg";
+  return "/images/default-provider.svg";
 }

@@ -188,12 +188,7 @@ const ServiceDetailPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
   const { getServicePackages } = useServiceManagement(); // Use the hook for package fetching
-  const {
-    conversations,
-    createConversation,
-    loading: chatLoading,
-    error: chatError,
-  } = useChat(); // Add the useChat hook
+  const { conversations, createConversation, loading: chatLoading } = useChat(); // Add the useChat hook
 
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState<boolean>(true);
@@ -455,9 +450,7 @@ const ServiceDetailPage: React.FC = () => {
                 Creating Chat...
               </>
             ) : (
-              <>
-                <ChatBubbleOvalLeftEllipsisIcon className="mr-2 h-5 w-5" />
-              </>
+              <></>
             )}
             Chat
           </button>

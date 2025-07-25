@@ -140,7 +140,7 @@ const ServiceReviewsPage: React.FC = () => {
   }
 
   const providerName = service.providerName || "Service Provider";
-  const providerAvatar = "/images/rey.png"; // Placeholder
+  const providerAvatar = "/default-provider.svg"; // Placeholder
 
   return (
     <div className="min-h-screen bg-gray-50">
