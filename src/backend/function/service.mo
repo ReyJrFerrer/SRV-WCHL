@@ -515,6 +515,7 @@ actor ServiceCanister {
     // Update service details (comprehensive update function)
     public shared(msg) func updateService(
         serviceId : Text,
+        categoryId : Text,
         title : ?Text,
         description : ?Text,
         price : ?Nat
@@ -551,6 +552,14 @@ actor ServiceCanister {
                     };
                     case (null) existingService.description;
                 };
+                 // Validate category exists
+                let updatedCategory = switch (categories.get(categoryId)) {
+                    case (?cat) cat;
+                    case (null) {
+                        return #err("Category not found");
+                    };
+                };
+        
                 
                 let updatedPrice = switch (price) {
                     case (?p) {
@@ -567,7 +576,7 @@ actor ServiceCanister {
                     providerId = existingService.providerId;
                     title = updatedTitle;
                     description = updatedDescription;
-                    category = existingService.category;
+                    category = updatedCategory;
                     price = updatedPrice;
                     location = existingService.location;
                     status = existingService.status;

@@ -123,6 +123,7 @@ interface ServiceManagementHook {
   createService: (request: ServiceCreateRequest) => Promise<EnhancedService>;
   updateService: (
     serviceId: string,
+    categoryId: string,
     title: string,
     description: string,
     price: number,
@@ -444,6 +445,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const updateService = useCallback(
     async (
       serviceId: string,
+      categoryId: string,
       title: string,
       description: string,
       price: number,
@@ -452,6 +454,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
         setOperationLoading("updateService", true);
         const updatedService = await serviceCanisterService.updateService(
           serviceId,
+          categoryId,
           title,
           description,
           price,

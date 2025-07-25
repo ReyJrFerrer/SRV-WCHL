@@ -905,6 +905,7 @@ export const serviceCanisterService = {
    */
   async updateService(
     serviceId: string,
+    categoryId: string,
     title?: string,
     description?: string,
     price?: number,
@@ -913,6 +914,7 @@ export const serviceCanisterService = {
       const actor = await getServiceActor(true);
       const result = await actor.updateService(
         serviceId,
+        categoryId,
         title ? [title] : [],
         description ? [description] : [],
         price ? [BigInt(price)] : [],
