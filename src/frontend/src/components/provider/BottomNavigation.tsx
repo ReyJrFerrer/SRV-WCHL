@@ -8,16 +8,14 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 
-// Assuming these hooks are available in your new project structure
-// You may need to adjust the import paths
-//import { useNotifications } from "../../hooks/useNotifications";
-//import { useChatNotifications } from "../../hooks/useChatNotifications";
+import { useNotifications } from "../../hooks/useNotifications";
+import { useChatNotifications } from "../../hooks/useChatNotifications";
 
 const BottomNavigation: React.FC = () => {
   // useLocation is the replacement for Next.js's useRouter to get the current path
   const location = useLocation();
-  //const { unreadCount } = useNotifications();
-  //const { unreadChatCount } = useChatNotifications();
+  const { unreadCount } = useNotifications();
+  const { unreadChatCount } = useChatNotifications();
 
   const navItems = [
     { to: "/provider/home", label: "Home", icon: HomeIcon, count: 0 },
@@ -31,13 +29,13 @@ const BottomNavigation: React.FC = () => {
       to: "/provider/chat",
       label: "Chat",
       icon: ChatBubbleOvalLeftEllipsisIcon,
-      //count: unreadChatCount,
+      count: unreadChatCount,
     },
     {
       to: "/provider/notifications",
       label: "Notifications",
       icon: BellIcon,
-      //count: unreadCount,
+      count: unreadCount,
     },
     {
       to: "/provider/settings",
@@ -71,9 +69,9 @@ const BottomNavigation: React.FC = () => {
                 {item.label}
               </span>
               {/* Notification badge */}
-              {/* {item.count > 0 && (
+              {item.count > 0 && (
                 <span className="absolute top-1 right-5 block h-2 w-2 rounded-full bg-red-500"></span>
-              )} */}
+              )}
             </Link>
           );
         })}

@@ -169,7 +169,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
     const success = await acceptBookingById(booking.id);
     if (success) {
-      // window.location.reload();
+      navigate(`../../provider/booking/${booking.id}`);
     } else {
       console.error(`❌ Failed to accept booking ${booking.id}`);
     }
@@ -185,8 +185,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         "Declined by provider",
       );
       if (success) {
-        window.location.reload();
-        // await refreshBookings();
+        navigate(`../../provider/home`);
       } else {
         console.error(`❌ Failed to decline booking ${booking.id}`);
       }
