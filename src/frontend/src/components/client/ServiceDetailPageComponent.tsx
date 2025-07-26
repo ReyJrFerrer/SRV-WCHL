@@ -362,6 +362,19 @@ const ServiceDetailPage: React.FC = () => {
                   <p className="text-sm text-gray-500">
                     {category?.name ?? "General"}
                   </p>
+                  {/* Availability Badge */}
+                  {service &&
+                    service.availability &&
+                    typeof service.availability.isAvailableNow ===
+                      "boolean" && (
+                      <span
+                        className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${service.availability.isAvailableNow ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}
+                      >
+                        {service.availability.isAvailableNow
+                          ? "Available"
+                          : "Not Available"}
+                      </span>
+                    )}
                 </div>
               </div>
               <div className="flex items-center text-sm text-gray-600">
