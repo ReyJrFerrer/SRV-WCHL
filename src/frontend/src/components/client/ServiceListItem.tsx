@@ -84,7 +84,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           {/* Image container */}
           <div className="aspect-video w-full">
             <img
-              src={service.providerAvatar || "/default-client.svg"}
+              src={service.providerAvatar || "/default-provider.svg"}
               alt={service.title}
               className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />

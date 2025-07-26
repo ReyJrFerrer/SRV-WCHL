@@ -73,7 +73,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   // Extract booking data with fallbacks
   const serviceTitle = booking.serviceName;
   const serviceImage =
-    booking.providerProfile?.profilePicture?.imageUrl || "/default-client.svg";
+    booking.providerProfile?.profilePicture?.imageUrl ||
+    "/default-provider.svg";
   const providerName = booking.providerProfile?.name;
 
   const bookingLocation =
@@ -270,7 +271,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 alt={serviceTitle!}
                 className="h-full w-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/default-client.svg";
+                  (e.target as HTMLImageElement).src = "/default-provider.svg";
                 }}
               />
             </div>
