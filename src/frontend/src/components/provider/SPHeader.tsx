@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid"; // Import BellIcon
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import authCanisterService, {
   FrontendProfile,
 } from "../../services/authCanisterService";
+import { useProviderNotifications } from "../../hooks/useProviderNotifications"; // Import the hook
 
-interface HeaderProps {
+interface SPHeaderProps {
   className?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ className = "" }) => {
+const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
   const {
     isAuthenticated,
@@ -24,11 +25,14 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);
 
+  // Use the provider notifications hook
+  const { unreadCount } = useProviderNotifications();
+
   // --- REFACTORED: Combined data fetching into a single, efficient hook ---
   useEffect(() => {
     // This function will run only when authentication is no longer loading.
     const loadInitialData = async () => {
-      // 1. Fetch User Profile if authenticated
+      // 1. Fetch User Profile if authenticated (still good to have for displayName)
       if (isAuthenticated) {
         try {
           const userProfile = await authCanisterService.getMyProfile();
@@ -112,8 +116,9 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
     }
   }, [setLocation]);
 
-  const handleProfileClick = () => {
-    navigate("/provider/profile");
+  // Changed to navigate to notifications
+  const handleNotificationsClick = () => {
+    navigate("/provider/notifications");
   };
 
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
@@ -134,11 +139,17 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           </div>
         </div>
         {isAuthenticated && (
+          // Changed button to point to notifications
           <button
-            onClick={handleProfileClick}
+            onClick={handleNotificationsClick}
             className="group relative rounded-full bg-gray-100 p-3 hover:bg-yellow-100"
           >
-            <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+            <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+            {(unreadCount ?? 0) > 0 && (
+              <span className="absolute -top-0 -right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                {unreadCount}
+              </span>
+            )}
           </button>
         )}
       </div>
@@ -150,11 +161,17 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             <img src="/logo.svg" alt="SRV Logo" className="h-10 w-auto" />
           </Link>
           {isAuthenticated && (
+            // Changed button to point to notifications
             <button
-              onClick={handleProfileClick}
+              onClick={handleNotificationsClick}
               className="group relative rounded-full bg-gray-100 p-3 hover:bg-yellow-100"
             >
-              <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              {(unreadCount ?? 0) > 0 && (
+                <span className="absolute -top-0 -right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           )}
         </div>
@@ -198,4 +215,4 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   );
 };
 
-export default Header;
+export default SPHeader;

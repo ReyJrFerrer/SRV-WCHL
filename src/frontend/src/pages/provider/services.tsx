@@ -68,7 +68,7 @@ const MyServicesPage: React.FC = () => {
 
   const renderIcon = (service: EnhancedService) => {
     const iconKey = getCategoryIcon(
-      service.category?.name || service.title || "",
+      service.category?.name || service.title || ""
     );
     const IconComponent = iconMap[iconKey] || iconMap.default;
     return <IconComponent className="h-8 w-8 text-blue-600" />;
@@ -150,7 +150,7 @@ const MyServicesPage: React.FC = () => {
           </div>
         </header>
 
-        <main className="container mx-auto flex-grow p-4 sm:p-6">
+        <main className="container mx-auto flex-grow p-10 sm:p-6">
           {loading && (
             <div className="py-16 text-center">
               <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -188,14 +188,14 @@ const MyServicesPage: React.FC = () => {
           )}
 
           {!loading && !error && userServices.length > 0 && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {userServices.map((service) => {
                 const statusDisplay = getStatusDisplay(service.status);
 
                 return (
                   <div
                     key={service.id}
-                    className="rounded-xl bg-white p-6 shadow-lg"
+                    className="mt-8 rounded-xl bg-white p-6 shadow-lg"
                   >
                     <div className="flex flex-col md:flex-row md:items-start md:space-x-4">
                       {/* Service Icon */}
