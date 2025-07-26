@@ -842,7 +842,7 @@ const AddServicePage: React.FC = () => {
         <div className="mt-8 rounded-xl bg-white p-6 shadow-lg sm:p-8">
           {renderStep()}
         </div>
-        <div className="mt-6 flex justify-between">
+        <div className="mt-6 mb-8 flex justify-between">
           {currentStep > 1 && (
             <button
               onClick={handleBack}
