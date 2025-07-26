@@ -1411,7 +1411,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                       />
                       <button
                         onClick={() => handleRemoveImage(index)}
-                        className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                        className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                         aria-label="Remove image"
                       >
                         <XMarkIcon className="h-4 w-4" />
@@ -1621,7 +1621,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                     <textarea
                       id="packageDescription"
                       value={packageFormDescription}
-                      onChange={(e) => setPackageFormDescription(e.target.value)}
+                      onChange={(e) =>
+                        setPackageFormDescription(e.target.value)
+                      }
                       rows={3}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
                       placeholder="Brief description of what's included in this package"
@@ -1665,109 +1667,107 @@ const ProviderServiceDetailPage: React.FC = () => {
                       {packageFormLoading
                         ? "Saving..."
                         : currentPackageId
-                        ? "Update Package"
-                        : "Create Package"}
+                          ? "Update Package"
+                          : "Create Package"}
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {packages.length > 0 ? (
-              packages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className="rounded-lg border border-gray-200 bg-gray-50 p-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="text-md font-semibold text-gray-800">
-                        {pkg.title}
-                      </h4>
-                      <p className="mt-1 text-sm text-gray-600">
-                        {pkg.description}
-                      </p>
+            {packages.length > 0
+              ? packages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800">
+                          {pkg.title}
+                        </h4>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {pkg.description}
+                        </p>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <span className="text-md font-semibold text-green-600">
+                          ₱{pkg.price.toFixed(2)}
+                        </span>
+                        <Tooltip
+                          content={`Cannot edit with ${activeBookingsCount} active booking${
+                            activeBookingsCount !== 1 ? "s" : ""
+                          }`}
+                          disabled={hasActiveBookings}
+                        >
+                          <button
+                            onClick={
+                              hasActiveBookings
+                                ? undefined
+                                : () => handleEditPackage(pkg)
+                            }
+                            className={`rounded-full p-1 text-gray-500 hover:bg-gray-200 ${
+                              hasActiveBookings
+                                ? "cursor-not-allowed opacity-50"
+                                : ""
+                            }`}
+                            aria-label={`Edit ${pkg.title}`}
+                            disabled={
+                              hasActiveBookings || isAddingOrEditingPackage
+                            } // Disable if another package is being edited/added
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip
+                          content={`Cannot delete with ${activeBookingsCount} active booking${
+                            activeBookingsCount !== 1 ? "s" : ""
+                          }`}
+                          disabled={hasActiveBookings}
+                        >
+                          <button
+                            onClick={
+                              hasActiveBookings
+                                ? undefined
+                                : () => handleDeletePackage(pkg.id)
+                            }
+                            className={`rounded-full p-1 text-red-600 hover:bg-red-100 ${
+                              hasActiveBookings
+                                ? "cursor-not-allowed opacity-50"
+                                : ""
+                            }`}
+                            aria-label={`Delete ${pkg.title}`}
+                            disabled={
+                              hasActiveBookings || isAddingOrEditingPackage
+                            } // Disable if another package is being edited/added
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                      </div>
                     </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <span className="text-md font-semibold text-green-600">
-                        ₱{pkg.price.toFixed(2)}
+                    <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                      <span>
+                        Created: {new Date(pkg.createdAt).toLocaleDateString()}
                       </span>
-                      <Tooltip
-                        content={`Cannot edit with ${activeBookingsCount} active booking${
-                          activeBookingsCount !== 1 ? "s" : ""
-                        }`}
-                        disabled={hasActiveBookings}
-                      >
-                        <button
-                          onClick={
-                            hasActiveBookings
-                              ? undefined
-                              : () => handleEditPackage(pkg)
-                          }
-                          className={`rounded-full p-1 text-gray-500 hover:bg-gray-200 ${
-                            hasActiveBookings
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          }`}
-                          aria-label={`Edit ${pkg.title}`}
-                          disabled={
-                            hasActiveBookings || isAddingOrEditingPackage
-                          } // Disable if another package is being edited/added
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                      </Tooltip>
-                      <Tooltip
-                        content={`Cannot delete with ${activeBookingsCount} active booking${
-                          activeBookingsCount !== 1 ? "s" : ""
-                        }`}
-                        disabled={hasActiveBookings}
-                      >
-                        <button
-                          onClick={
-                            hasActiveBookings
-                              ? undefined
-                              : () => handleDeletePackage(pkg.id)
-                          }
-                          className={`rounded-full p-1 text-red-600 hover:bg-red-100 ${
-                            hasActiveBookings
-                              ? "cursor-not-allowed opacity-50"
-                              : ""
-                          }`}
-                          aria-label={`Delete ${pkg.title}`}
-                          disabled={
-                            hasActiveBookings || isAddingOrEditingPackage
-                          } // Disable if another package is being edited/added
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </Tooltip>
+                      <span>
+                        Updated: {new Date(pkg.updatedAt).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                    <span>
-                      Created: {new Date(pkg.createdAt).toLocaleDateString()}
-                    </span>
-                    <span>
-                      Updated: {new Date(pkg.updatedAt).toLocaleDateString()}
-                    </span>
+                ))
+              : !isAddingOrEditingPackage && ( // Only show placeholder if no packages and not adding
+                  <div className="py-8 text-center">
+                    <BriefcaseIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+                    <p className="mb-4 text-gray-500">
+                      No packages available for this service
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Packages help customers choose specific service options
+                      with different pricing
+                    </p>
                   </div>
-                </div>
-              ))
-            ) : (
-              !isAddingOrEditingPackage && ( // Only show placeholder if no packages and not adding
-                <div className="py-8 text-center">
-                  <BriefcaseIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-                  <p className="mb-4 text-gray-500">
-                    No packages available for this service
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Packages help customers choose specific service options with
-                    different pricing
-                  </p>
-                </div>
-              )
-            )}
+                )}
           </div>
         </div>
 
@@ -1791,8 +1791,8 @@ const ProviderServiceDetailPage: React.FC = () => {
             {isUpdatingStatus
               ? "Updating..."
               : service.status === "Available"
-              ? "Deactivate"
-              : "Activate"}
+                ? "Deactivate"
+                : "Activate"}
           </button>
 
           {/* Delete Service Button */}
