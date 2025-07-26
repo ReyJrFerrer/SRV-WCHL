@@ -68,7 +68,7 @@ const MyServicesPage: React.FC = () => {
 
   const renderIcon = (service: EnhancedService) => {
     const iconKey = getCategoryIcon(
-      service.category?.name || service.title || ""
+      service.category?.name || service.title || "",
     );
     const IconComponent = iconMap[iconKey] || iconMap.default;
     return <IconComponent className="h-8 w-8 text-blue-600" />;
