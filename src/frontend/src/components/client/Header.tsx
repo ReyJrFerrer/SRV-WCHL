@@ -189,7 +189,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             locationStatus === "unsupported") && (
             <button
               onClick={handleRequestLocation}
-              className="mt-2 w-full rounded-lg bg-yellow-300 p-2 text-center text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
+              className="w-10px mt-2 mb-4 rounded-lg bg-yellow-300 px-4 py-3 text-center text-base font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
             >
               Share Location
             </button>

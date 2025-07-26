@@ -10,100 +10,84 @@ import {
   CalendarIcon,
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon, // Added for the switch button
+  InformationCircleIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 
-// Reusable component for the reputation score visualization
-const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
-  const getScoreColor = (value: number) => {
-    if (value >= 80) return "#22c55e"; // green-500
-    if (value >= 60) return "#facc15"; // yellow-400
-    if (value >= 40) return "#f97316"; // orange-500
-    return "#ef4444"; // red-500
-  };
-
-  const color = getScoreColor(score);
-  const circumference = 2 * Math.PI * 45; // 45 is the radius
-  const offset = circumference - (score / 100) * circumference;
-
-  return (
-    <div className="relative flex h-48 w-48 items-center justify-center">
-      <svg className="absolute h-full w-full" viewBox="0 0 100 100">
-        <circle
-          className="text-gray-200"
-          strokeWidth="10"
-          stroke="currentColor"
-          fill="transparent"
-          r="45"
-          cx="50"
-          cy="50"
-        />
-        <circle
-          stroke={color}
-          strokeWidth="10"
-          strokeLinecap="round"
-          fill="transparent"
-          r="45"
-          cx="50"
-          cy="50"
-          style={{
-            strokeDasharray: circumference,
-            strokeDashoffset: offset,
-            transform: "rotate(-90deg)",
-            transformOrigin: "50% 50%",
-            transition: "stroke-dashoffset 0.5s ease-in-out",
-          }}
-        />
-      </svg>
-      <div className="text-center">
-        <span className="text-5xl font-bold text-gray-800">{score}</span>
-        <p className="text-sm text-gray-500">Reputation</p>
-      </div>
-    </div>
-  );
-};
-
-// Trust Level Badge Component
-const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
+// --- Provider's advanced TrustLevelBadge ---
+interface TrustLevelBadgeProps {
+  trustLevel: string;
+  onInfoClick?: () => void;
+  infoOpen?: boolean;
+}
+const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
+  trustLevel,
+  onInfoClick,
+  infoOpen,
+}) => {
   const getTrustLevelConfig = (level: string) => {
     switch (level) {
       case "New":
         return {
-          color: "bg-gray-100 text-gray-800 border-gray-300",
+          color: "bg-blue-50 text-blue-900 border-blue-200",
           icon: "🆕",
-          description:
-            "New member - Welcome to the platform! Complete your first booking to improve your trust level.",
+          description: (
+            <>
+              <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-blue-700">
+                <span className="inline-block text-2xl">🎉</span> Welcome to
+                SRV!
+                {onInfoClick && (
+                  <button
+                    type="button"
+                    aria-label="Show info about reputation score"
+                    className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    onClick={onInfoClick}
+                  >
+                    <InformationCircleIcon
+                      className={`h-5 w-5 text-blue-500 transition-transform ${infoOpen ? "rotate-90" : ""}`}
+                    />
+                  </button>
+                )}
+              </span>
+              <span className="mb-1 block text-sm font-medium text-blue-800">
+                New client
+              </span>
+              <span className="block text-gray-700">
+                Complete your first booking to start building your reputation.
+              </span>
+            </>
+          ),
         };
       case "Low":
         return {
           color: "bg-red-100 text-red-800 border-red-300",
           icon: "⚠️",
           description:
-            "Low trust - Complete more bookings and maintain good conduct to improve your reputation.",
+            "Building trust - Focus on completing bookings and maintaining good conduct to improve your client rating.",
         };
       case "Medium":
         return {
           color: "bg-yellow-100 text-yellow-800 border-yellow-300",
           icon: "⭐",
           description:
-            "Medium trust - You're building a good reputation! Keep up the excellent service.",
+            "Reliable client - You're building a good reputation! Keep up the excellent conduct.",
         };
       case "High":
         return {
           color: "bg-blue-100 text-blue-800 border-blue-300",
           icon: "🏆",
           description:
-            "High trust - Excellent reputation! Service providers trust you as a reliable client.",
+            "Trusted client - Excellent reputation! Service providers trust you as a reliable client.",
         };
       case "VeryHigh":
         return {
           color: "bg-green-100 text-green-800 border-green-300",
           icon: "💎",
           description:
-            "Very High trust - Premium member with outstanding reputation! You're a valued member of our community.",
+            "Elite client - Outstanding reputation! You're among the top-rated clients on our platform.",
         };
       default:
         return {
@@ -113,9 +97,7 @@ const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
         };
     }
   };
-
   const config = getTrustLevelConfig(trustLevel);
-
   return (
     <div className="mt-4 flex flex-col items-center">
       <div
@@ -124,9 +106,48 @@ const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
         <span className="mr-2">{config.icon}</span>
         {trustLevel} Trust
       </div>
-      <p className="mt-2 max-w-sm text-center text-xs leading-relaxed text-gray-600">
-        {config.description}
-      </p>
+      <div className="mt-3 flex w-full max-w-md flex-col items-center">
+        {trustLevel === "New" ? (
+          <div className="w-full rounded-lg border border-blue-100 bg-blue-50 p-4 text-center shadow-sm">
+            {config.description}
+          </div>
+        ) : (
+          <p className="max-w-sm text-center text-xs leading-relaxed text-gray-600">
+            {config.description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Collapsible About Reputation Info Section
+interface AboutReputationInfoProps {
+  show: boolean;
+  reputationDisplay: any;
+}
+const AboutReputationInfo: React.FC<AboutReputationInfoProps> = ({
+  show,
+  reputationDisplay,
+}) => {
+  if (!show) return null;
+  return (
+    <div className="mx-auto mt-2 max-w-md">
+      <div className="animate-fade-in rounded-lg border border-gray-200 bg-gray-50 p-4 text-center shadow-sm">
+        <span className="mb-1 block text-sm text-gray-600">
+          Your reputation reflects your reliability and conduct on the platform.
+          Higher scores and trust levels build stronger relationships with
+          service providers.
+        </span>
+        {reputationDisplay && reputationDisplay.bookings > 0 && (
+          <span className="mt-1 block text-xs text-gray-500">
+            Based on {reputationDisplay.bookings} completed booking
+            {reputationDisplay.bookings !== 1 ? "s" : ""}
+            {reputationDisplay.rating &&
+              ` with ${reputationDisplay.rating.toFixed(1)}★ average rating`}
+          </span>
+        )}
+      </div>
     </div>
   );
 };
@@ -146,21 +167,25 @@ const ClientStats: React.FC = () => {
       name: "Total Bookings",
       value: formattedStats.totalBookings,
       icon: BriefcaseIcon,
+      bg: "bg-blue-100 text-blue-600",
     },
     {
       name: "Services Completed",
       value: formattedStats.servicesCompleted,
       icon: CheckBadgeIcon,
+      bg: "bg-green-100 text-green-600",
     },
     {
       name: "Total Spent",
       value: formattedStats.totalSpent,
       icon: CurrencyEuroIcon,
+      bg: "bg-yellow-100 text-yellow-600",
     },
     {
       name: "Member Since",
       value: formattedStats.memberSince,
       icon: CalendarIcon,
+      bg: "bg-gray-100 text-gray-600",
     },
   ];
 
@@ -170,15 +195,15 @@ const ClientStats: React.FC = () => {
         <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
           Your Statistics
         </h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {[...Array(4)].map((_, index) => (
             <div
               key={index}
-              className="flex flex-col items-center justify-center rounded-lg bg-gray-50 p-4 text-center"
+              className="flex animate-pulse flex-col items-center justify-center rounded-2xl bg-white p-6 shadow"
             >
-              <div className="mb-2 h-8 w-8 animate-pulse rounded bg-gray-300" />
-              <div className="mb-1 h-6 w-12 animate-pulse rounded bg-gray-300" />
-              <div className="h-3 w-20 animate-pulse rounded bg-gray-300" />
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-200" />
+              <div className="mb-2 h-6 w-16 rounded bg-gray-200" />
+              <div className="h-3 w-20 rounded bg-gray-100" />
             </div>
           ))}
         </div>
@@ -203,20 +228,35 @@ const ClientStats: React.FC = () => {
 
   return (
     <div className="mt-8">
-      <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
+      <h3 className="mb-4 text-center text-lg font-semibold tracking-tight text-gray-800">
         Your Statistics
       </h3>
-      <div className="grid grid-cols-2 gap-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.name}
-            className="flex flex-col items-center justify-center rounded-lg bg-gray-50 p-4 text-center"
-          >
-            <stat.icon className="mb-2 h-8 w-8 text-blue-600" />
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-xs text-gray-500">{stat.name}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+        {stats.map((stat) => {
+          const isMemberSince = stat.name === "Member Since";
+          return (
+            <div
+              key={stat.name}
+              className={`flex flex-col items-center rounded-2xl border border-gray-100 bg-white p-6 shadow-md transition-shadow hover:shadow-lg duration-200${isMemberSince ? "w-full text-center" : ""}`}
+            >
+              <div
+                className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${stat.bg} shadow-inner`}
+              >
+                <stat.icon className="h-7 w-7" />
+              </div>
+              <p
+                className={`text-2xl font-extrabold text-gray-900 mb-1${isMemberSince ? "w-full text-center" : ""}`}
+              >
+                {stat.value}
+              </p>
+              <p
+                className={`text-xs font-medium text-gray-500 tracking-wide${isMemberSince || stat.name === "Services Completed" ? "w-full text-center" : "text-center"}`}
+              >
+                {stat.name}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -240,6 +280,7 @@ const ClientProfilePage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Get reputation score with fallback for display
+  const [showAboutInfo, setShowAboutInfo] = useState(false);
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
@@ -440,11 +481,10 @@ const ClientProfilePage: React.FC = () => {
 
           {/* Right Column: Reputation and Stats */}
           <div className="mt-8 lg:col-span-2 lg:mt-0">
-            <div className="rounded-xl bg-white p-6 shadow-md">
-              <h3 className="mb-4 text-center text-lg font-semibold text-gray-800">
-                Your Reputation
+            <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+              <h3 className="mb-6 text-center text-2xl font-bold tracking-tight text-blue-900 drop-shadow-sm">
+                Your Reputation Score
               </h3>
-
               {/* Reputation Loading State */}
               {reputationLoading ? (
                 <div className="flex justify-center">
@@ -452,13 +492,12 @@ const ClientProfilePage: React.FC = () => {
                     <div className="text-center">
                       <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
                       <p className="text-sm text-gray-500">
-                        Loading reputation...
+                        Loading reputation score...
                       </p>
                     </div>
                   </div>
                 </div>
               ) : reputationError ? (
-                /* Reputation Error State - Display network error as requested */
                 <div className="flex justify-center">
                   <div className="flex h-48 w-48 items-center justify-center">
                     <div className="text-center">
@@ -487,32 +526,42 @@ const ClientProfilePage: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                /* Normal Reputation Display */
-                <div className="flex flex-col items-center">
-                  <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-6">
+                  <div className="mb-2 flex justify-center">
                     <ReputationScore score={reputationScore} />
                   </div>
                   {/* Trust Level Badge */}
                   {reputationDisplay && (
-                    <TrustLevelBadge trustLevel={reputationDisplay.level} />
+                    <>
+                      <div className="flex w-full justify-center">
+                        <TrustLevelBadge
+                          trustLevel={reputationDisplay.level}
+                          onInfoClick={
+                            reputationDisplay.level === "New"
+                              ? () => setShowAboutInfo((v) => !v)
+                              : undefined
+                          }
+                          infoOpen={
+                            reputationDisplay.level === "New"
+                              ? showAboutInfo
+                              : undefined
+                          }
+                        />
+                      </div>
+                      {reputationDisplay.level === "New" && (
+                        <div className="flex w-full justify-center">
+                          <AboutReputationInfo
+                            show={showAboutInfo}
+                            reputationDisplay={reputationDisplay}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
-
-              <p className="mx-auto mt-4 max-w-md text-center text-sm text-gray-500">
-                Your reputation reflects your reliability and conduct on the
-                platform. Higher scores and trust levels build stronger
-                relationships with service providers.
-                {reputationDisplay && reputationDisplay.bookings > 0 && (
-                  <span className="mt-1 block text-xs">
-                    Based on {reputationDisplay.bookings} completed booking
-                    {reputationDisplay.bookings !== 1 ? "s" : ""}
-                    {reputationDisplay.rating &&
-                      ` with ${reputationDisplay.rating.toFixed(1)}★ average rating`}
-                  </span>
-                )}
-              </p>
-              <div className="mt-6 border-t border-gray-200 pt-6">
+              {/* AboutReputationInfo is now shown only for New trust level above */}
+              <div className="mt-8 border-t border-gray-200 pt-8">
                 <ClientStats />
               </div>
             </div>
@@ -526,6 +575,55 @@ const ClientProfilePage: React.FC = () => {
         )}
       </main>
       <BottomNavigation />
+    </div>
+  );
+};
+
+// Reusable component for the reputation score visualization (restored advanced version)
+const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
+  const getScoreColor = (value: number) => {
+    if (value >= 80) return "#22c55e"; // green-500
+    if (value >= 60) return "#facc15"; // yellow-400
+    if (value >= 40) return "#f97316"; // orange-500
+    return "#ef4444"; // red-500
+  };
+
+  const color = getScoreColor(score);
+  const circumference = 2 * Math.PI * 45; // 45 is the radius
+  const offset = circumference - (score / 100) * circumference;
+
+  return (
+    <div className="relative flex h-48 w-48 items-center justify-center">
+      <svg className="absolute h-full w-full" viewBox="0 0 100 100">
+        <circle
+          className="text-gray-200"
+          strokeWidth="10"
+          stroke="currentColor"
+          fill="transparent"
+          r="45"
+          cx="50"
+          cy="50"
+        />
+        <circle
+          stroke={color}
+          strokeWidth="10"
+          strokeLinecap="round"
+          fill="transparent"
+          r="45"
+          cx="50"
+          cy="50"
+          style={{
+            strokeDasharray: circumference,
+            strokeDashoffset: offset,
+            transform: "rotate(-90deg)",
+            transformOrigin: "50% 50%",
+            transition: "stroke-dashoffset 0.5s ease-in-out",
+          }}
+        />
+      </svg>
+      <div className="text-center">
+        <span className="text-5xl font-bold text-gray-800">{score}</span>
+      </div>
     </div>
   );
 };
