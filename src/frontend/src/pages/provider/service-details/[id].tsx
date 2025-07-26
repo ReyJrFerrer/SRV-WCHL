@@ -6,7 +6,6 @@ import {
   TrashIcon,
   MapPinIcon,
   CalendarDaysIcon,
-  ClockIcon,
   TagIcon,
   BriefcaseIcon,
   CogIcon,
@@ -278,10 +277,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     );
   }
 
-  // const heroImageUrl = typeof service.heroImage === 'string'
-  //   ? service.heroImage
-  //   : (service.heroImage as any)?.default?.src || (service.heroImage as any)?.src;
-
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       <header className="sticky top-0 z-30 bg-white shadow-sm">
@@ -299,18 +294,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           <div className="w-8"></div>
         </div>
       </header>
-
-      {/* Show loading overlay for operations while keeping content visible */}
-      {/* {(isUpdatingStatus || isDeleting) && (
-        <div className="bg-opacity-20 fixed inset-0 z-40 flex items-center justify-center bg-black">
-          <div className="flex items-center rounded-lg bg-white p-4 shadow-lg">
-            <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-            <span className="ml-3 text-gray-700">
-              {isUpdatingStatus ? "Updating status..." : "Deleting service..."}
-            </span>
-          </div>
-        </div>
-      )} */}
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Active Bookings Warning */}
@@ -348,16 +331,6 @@ const ProviderServiceDetailPage: React.FC = () => {
 
         {/* Hero Image and Basic Info Card */}
         <div className="mt-8 overflow-hidden rounded-xl bg-white shadow-lg">
-          {/* {heroImageUrl && (
-              <div className="relative w-full aspect-[16/6] bg-gray-200 overflow-hidden">
-                <Image
-                  src={heroImageUrl}
-                  alt={service.title}
-                  layout="fill"
-                  objectFit="cover"
-                />
-              </div>
-            )} */}
           <div className="p-6">
             <div className="mb-2 flex items-start justify-between">
               <div className="min-w-0 flex-1">
@@ -378,7 +351,6 @@ const ProviderServiceDetailPage: React.FC = () => {
                 {service.status}
               </span>
             </div>
-            {/* <p className="text-gray-600 text-sm leading-relaxed mt-1">{service.description}</p> */}
           </div>
         </div>
 
@@ -395,14 +367,6 @@ const ProviderServiceDetailPage: React.FC = () => {
               variant="card"
               className="mt-2"
             />
-            {/* <p className="flex items-center text-sm">
-                <CurrencyDollarIcon className="h-5 w-5 mr-2 text-green-500"/>
-                Price: <span className="font-medium ml-1">{service.formattedPrice || formatServicePrice(service.price)}</span>
-              </p> */}
-            {/* <p className="flex items-center text-sm">
-                <StarSolid className="h-5 w-5 mr-2 text-yellow-400"/>
-                Rating: <span className="font-medium ml-1">{service.averageRating?.toFixed(1) || '0.0'} ({service.totalReviews || 0} reviews)</span>
-              </p> */}
           </div>
 
           {/* Location & provider details */}
@@ -411,64 +375,72 @@ const ProviderServiceDetailPage: React.FC = () => {
               <MapPinIcon className="h-6 w-6 text-blue-500" />
               Location & Provider Details
             </h3>
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-2 rounded-lg bg-gray-50 p-4 sm:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <dt className="text-black-500 text-xs font-semibold whitespace-nowrap">
-                  Full Address:
-                </dt>
-                <dd className="text-black-1000 m-0 p-0 text-sm">
-                  {service.location.address && (
-                    <span>{service.location.address}, </span>
-                  )}
+            <div className="col-span-1 sm:col-span-2">
+              <dt className="mb-1 text-xs font-semibold text-gray-500">
+                Full Address
+              </dt>
+              <dd className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800">
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="h-4 w-4 text-blue-400"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.5 10.5c0 2.485-2.015 4.5-4.5 4.5s-4.5-2.015-4.5-4.5S9.015 6 11.5 6s4.5 2.015 4.5 4.5z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 14.5v4"
+                    />
+                  </svg>
                   <span>
+                    {service.location.address && (
+                      <span>{service.location.address}, </span>
+                    )}
                     {service.location.city}
                     {service.location.state && `, ${service.location.state}`}
                     {service.location.postalCode &&
                       ` ${service.location.postalCode}`}
+                    {service.location.country && (
+                      <span className="text-gray-500">
+                        , {service.location.country}
+                      </span>
+                    )}
                   </span>
-                  {service.location.country && (
-                    <span className="text-gray-500">
-                      , {service.location.country}
-                    </span>
-                  )}
-                </dd>
-              </div>
-              {/* {(service.location.latitude !== undefined && service.location.longitude !== undefined) && (
-                <>
-                  <dt className="text-xs font-semibold text-gray-500">Coordinates</dt>
-                  <dd className="text-xs font-mono text-gray-700">
-                    {service.location.latitude.toFixed(6)}, {service.location.longitude.toFixed(6)}
-                  </dd>
-                </>
-              )} */}
-            </dl>
-            {/* {service.providerProfile && (
-                <div className="flex items-center text-sm">
-                  <span className="font-medium mr-1">Provider:</span> {service.providerProfile.name}
-                </div>
-              )} */}
+                </span>
+              </dd>
+            </div>
+
             {service.weeklySchedule && service.weeklySchedule.length > 0 && (
-              <div className="mt-4 space-y-4">
-                <div className="rounded-lg bg-gray-50 p-4">
-                  <div className="mb-2 flex items-center gap-2">
-                    <CalendarDaysIcon className="text-black-500 h-6 w-6" />
-                    <span className="text-black-700 text-xs font-semibold">
-                      Availability
-                    </span>
-                  </div>
-                  <div className="space-y-2">
+              <div className="mt-4 flex flex-col gap-4">
+                {/* Availability Section */}
+                <div className="col-span-1 sm:col-span-2">
+                  <dt className="mb-1 flex items-center gap-2 text-xs font-semibold text-gray-500">
+                    <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                    Availability
+                  </dt>
+                  <dd className="flex flex-wrap gap-4 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800">
                     {service.weeklySchedule
                       .filter((entry) => entry.availability.isAvailable)
                       .map((entry) => (
-                        <div key={entry.day} className="flex items-start gap-2">
-                          <span className="text-black-700 w-24 flex-shrink-0 text-sm font-medium">
-                            {entry.day}:
+                        <div
+                          key={entry.day}
+                          className="flex min-w-[120px] flex-col items-start"
+                        >
+                          <span className="mb-1 rounded-full bg-blue-100 px-3 py-0.5 text-xs font-bold text-blue-700 shadow-sm">
+                            {entry.day}
                           </span>
-                          <span className="text-black-900 text-sm font-medium">
+                          <span className="text-sm font-medium text-blue-900">
                             {entry.availability.slots &&
                             entry.availability.slots.length > 0 ? (
-                              entry.availability.slots
-                                .map((slot) => {
+                              <ul className="ml-4 list-disc space-y-0.5">
+                                {entry.availability.slots.map((slot, idx) => {
                                   const formatTime = (time: string) => {
                                     const [hourStr, minuteStr] =
                                       time.split(":");
@@ -479,11 +451,21 @@ const ProviderServiceDetailPage: React.FC = () => {
                                     if (hour === 0) hour = 12;
                                     return `${hour}:${minute.padStart(2, "0")} ${ampm}`;
                                   };
-                                  return `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
-                                })
-                                .join(" | ")
+                                  return (
+                                    <li
+                                      key={idx}
+                                      className="text-xs text-blue-800"
+                                    >
+                                      {formatTime(slot.startTime)} -{" "}
+                                      {formatTime(slot.endTime)}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
                             ) : (
-                              <span className="text-gray-400">No slots</span>
+                              <span className="text-xs text-gray-400">
+                                No slots
+                              </span>
                             )}
                           </span>
                         </div>
@@ -493,23 +475,64 @@ const ProviderServiceDetailPage: React.FC = () => {
                     ).length === 0 && (
                       <span className="text-gray-400">Not specified</span>
                     )}
-                  </div>
+                  </dd>
                 </div>
-                {service.bookingNoticeHours !== undefined && (
-                  <div className="flex items-start gap-2 rounded-lg bg-gray-50 p-4">
-                    <ClockIcon className="text-black-500 mt-0.5 h-6 w-6" />
-                    <div>
-                      <div className="text-black-700 mb-1 text-xs font-semibold">
-                        Advance Notice
-                      </div>
-                      <div className="text-black-900 text-sm font-medium">
-                        {service.bookingNoticeHours} hours required
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Service Images Placeholder */}
+        <div className="mb-6 rounded-xl bg-white p-6 shadow-lg">
+          <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-700">
+            <span className="mr-2 inline-block h-5 w-5 align-middle">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-5 w-5 text-gray-500"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5V7.125C3 6.504 3.504 6 4.125 6h15.75c.621 0 1.125.504 1.125 1.125V16.5M3 16.5A2.25 2.25 0 005.25 18.75h13.5A2.25 2.25 0 0021 16.5M3 16.5l4.72-4.72a1.5 1.5 0 012.12 0l2.44 2.44a1.5 1.5 0 002.12 0l3.44-3.44a1.5 1.5 0 012.12 0L21 13.5"
+                />
+              </svg>
+            </span>
+            Service Images
+          </h3>
+          <div className="py-8 text-center text-gray-400">
+            <p>Service images will appear here.</p>
+          </div>
+        </div>
+
+        {/* Certifications Placeholder */}
+        <div className="rounded-xl bg-white p-6 shadow-lg">
+          <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-700">
+            <span className="mr-2 inline-block h-5 w-5 align-middle">
+              {/* Award/Certificate icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-5 w-5 text-gray-500"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 10.5V6.75A3.75 3.75 0 008.25 6.75v3.75m6.75 0a3.75 3.75 0 01-7.5 0m7.5 0H6.75m10.5 0v6.75a2.25 2.25 0 01-2.25 2.25H9a2.25 2.25 0 01-2.25-2.25V10.5"
+                />
+                <circle cx="12" cy="10.5" r="3" />
+              </svg>
+            </span>
+            Certifications
+          </h3>
+          <div className="py-8 text-center text-gray-400">
+            <p>Certifications will appear here.</p>
           </div>
         </div>
 
@@ -568,31 +591,10 @@ const ProviderServiceDetailPage: React.FC = () => {
             </div>
           </div>
         )}
-        {/*           
-          {service.media && service.media.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-                <CameraSolidIcon className="h-5 w-5 mr-2 text-gray-500"/>Gallery
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {service.media.map((item, index) => (
-                  item.type === 'IMAGE' && (
-                    <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 relative">
-                      <Image 
-                        src={item.url} 
-                        alt={`Service gallery image ${index + 1}`} 
-                        layout="fill" 
-                        objectFit="cover" 
-                        className="hover:scale-105 transition-transform"
-                      />
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          )} */}
+
         {/* Action Buttons Card */}
-        <div className="flex flex-col space-y-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:space-y-0 sm:space-x-3">
+        <div className="mb-8 flex flex-col gap-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:gap-3">
+          {/* Edit Service Button */}
           <Tooltip
             content={`Cannot edit service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
             disabled={hasActiveBookings}
@@ -603,27 +605,29 @@ const ProviderServiceDetailPage: React.FC = () => {
                   ? "#"
                   : `/provider/services/edit/${service.id}`
               }
-              className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-500 bg-white px-4 py-2.5 text-sm font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
                 hasActiveBookings
-                  ? "text-black-500 cursor-not-allowed bg-white hover:bg-gray-100"
-                  : "text-black-500 bg-white hover:bg-gray-100"
+                  ? "cursor-not-allowed opacity-60"
+                  : "hover:bg-blue-500 hover:text-white"
               }`}
               onClick={(e) => hasActiveBookings && e.preventDefault()}
+              tabIndex={hasActiveBookings ? -1 : 0}
             >
-              <PencilIcon className="mr-2 h-5 w-5" /> Edit Service
+              <PencilIcon className="h-5 w-5" /> Edit Service
             </Link>
           </Tooltip>
 
+          {/* Deactivate/Activate Button */}
           <button
             onClick={handleStatusToggle}
             disabled={isUpdatingStatus}
-            className={`text-black-500 text-transition-colors flex flex-1 items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
               service.status === "Available"
-                ? "bg-white-500 text-yellow-500 hover:bg-gray-100"
-                : "bg-white-500 text-green-500 hover:bg-gray-100"
+                ? "text-yellow-600 hover:bg-yellow-500 hover:text-white"
+                : "text-green-600 hover:bg-green-500 hover:text-white"
             }`}
           >
-            <CogIcon className="mr-2 h-5 w-5" />
+            <CogIcon className="h-5 w-5" />
             {isUpdatingStatus
               ? "Updating..."
               : service.status === "Available"
@@ -631,6 +635,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 : "Activate"}
           </button>
 
+          {/* Delete Service Button */}
           <Tooltip
             content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
             disabled={hasActiveBookings}
@@ -638,13 +643,14 @@ const ProviderServiceDetailPage: React.FC = () => {
             <button
               onClick={hasActiveBookings ? undefined : handleDeleteService}
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-500 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
                 hasActiveBookings
-                  ? "text-black-500 cursor-not-allowed bg-white hover:bg-gray-100"
-                  : "bg-white text-red-500 hover:bg-gray-100 disabled:opacity-50"
+                  ? "cursor-not-allowed opacity-60"
+                  : "hover:bg-red-500 hover:text-white"
               }`}
+              tabIndex={hasActiveBookings ? -1 : 0}
             >
-              <TrashIcon className="mr-2 h-5 w-5" />
+              <TrashIcon className="h-5 w-5" />
               {isDeleting ? "Deleting..." : "Delete Service"}
             </button>
           </Tooltip>
