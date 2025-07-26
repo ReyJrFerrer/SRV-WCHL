@@ -11,7 +11,7 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon, // Added for the switch button
 } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
 import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
