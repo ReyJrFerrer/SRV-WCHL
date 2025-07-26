@@ -405,48 +405,53 @@ const AddServicePage: React.FC = () => {
     try {
       // Prepare service data
       let location;
-      // If using detected address (automatic), use locationAddress and coordinates
+      // Always provide non-empty strings for required fields
       if (formData.locationAddress && formData.locationAddress.trim()) {
-        // Use detected address, but ensure all required fields are non-empty strings
-        let city = formData.locationMunicipalityCity?.trim() || "";
-        let state = formData.locationProvince?.trim() || "";
-        let postalCode = formData.locationPostalCode?.trim() || "";
-        // The canister may require these fields to be non-empty, so use a safe fallback if truly missing
-        // if (!city) city = "N/A";
-        // if (!state) state = "N/A";
-        // if (!postalCode) postalCode = "0000";
+        // Use detected address, fallback to safe defaults if missing
+        let city = formData.locationMunicipalityCity?.trim() || "N/A";
+        let state = formData.locationProvince?.trim() || "N/A";
+        let postalCode = formData.locationPostalCode?.trim() || "0000";
+        let address = formData.locationAddress?.trim() || "N/A";
         location = {
-          latitude: formData.locationLatitude
-            ? parseFloat(formData.locationLatitude)
-            : 14.676,
-          longitude: formData.locationLongitude
-            ? parseFloat(formData.locationLongitude)
-            : 120.9822,
-          address: formData.locationAddress,
+          latitude:
+            formData.locationLatitude && formData.locationLatitude.trim() !== ""
+              ? parseFloat(formData.locationLatitude)
+              : 14.676,
+          longitude:
+            formData.locationLongitude &&
+            formData.locationLongitude.trim() !== ""
+              ? parseFloat(formData.locationLongitude)
+              : 120.9822,
+          address,
           city,
           state,
-          country: formData.locationCountry,
+          country: formData.locationCountry || "Philippines",
           postalCode,
         };
       } else {
-        // Manual address
-        let city = formData.locationMunicipalityCity?.trim() || "Unknown City";
-        let state = formData.locationProvince?.trim() || "Unknown Province";
+        // Manual address, fallback to safe defaults if missing
+        let city = formData.locationMunicipalityCity?.trim() || "N/A";
+        let state = formData.locationProvince?.trim() || "N/A";
         let postalCode = formData.locationPostalCode?.trim() || "0000";
-        location = {
-          latitude: formData.locationLatitude
-            ? parseFloat(formData.locationLatitude)
-            : 14.676,
-          longitude: formData.locationLongitude
-            ? parseFloat(formData.locationLongitude)
-            : 120.9822,
-          address: [
-            formData.locationHouseNumber,
-            formData.locationStreet,
-            formData.locationBarangay,
+        let address =
+          [
+            formData.locationHouseNumber?.trim() || "",
+            formData.locationStreet?.trim() || "",
+            formData.locationBarangay?.trim() || "",
           ]
             .filter(Boolean)
-            .join(", "),
+            .join(", ") || "N/A";
+        location = {
+          latitude:
+            formData.locationLatitude && formData.locationLatitude.trim() !== ""
+              ? parseFloat(formData.locationLatitude)
+              : 14.676,
+          longitude:
+            formData.locationLongitude &&
+            formData.locationLongitude.trim() !== ""
+              ? parseFloat(formData.locationLongitude)
+              : 120.9822,
+          address,
           city,
           state,
           country: formData.locationCountry || "Philippines",
@@ -614,109 +619,204 @@ const AddServicePage: React.FC = () => {
         );
       case 5:
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="mb-4 text-2xl font-bold text-gray-800">
-                Review & Submit
-              </h2>
-              <p className="mb-6 text-gray-600">
-                Please review your service details before submitting.
-              </p>
-            </div>
-
-            {/* Service Summary */}
-            <div className="space-y-4 rounded-lg bg-gray-50 p-6">
-              <div>
-                <h3 className="font-semibold text-gray-800">Service Title</h3>
-                <p className="text-gray-600">{formData.serviceOfferingTitle}</p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-gray-800">Category</h3>
+          <div className="flex flex-col items-center space-y-8">
+            <div className="w-full max-w-2xl rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+              <div className="mb-8 flex flex-col items-center text-center">
+                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
+                  <svg
+                    className="h-8 w-8 text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="mb-2 text-2xl font-bold text-blue-900">
+                  Review & Submit
+                </h2>
                 <p className="text-gray-600">
-                  {categories.find((cat) => cat.id === formData.categoryId)
-                    ?.name || "Unknown"}
+                  Please review your service details before submitting.
                 </p>
               </div>
-
-              <div>
-                <h3 className="font-semibold text-gray-800">
-                  Packages ({formData.servicePackages.length})
-                </h3>
-                <div className="space-y-2">
-                  {formData.servicePackages
-                    .filter(
-                      (pkg) =>
-                        pkg.name.trim() && pkg.description.trim() && pkg.price,
-                    )
-                    .map((pkg) => (
-                      <div
-                        key={pkg.id}
-                        className="flex items-center justify-between rounded border bg-white p-3"
-                      >
-                        <div>
-                          <p className="font-medium">{pkg.name}</p>
-                          <p className="text-sm text-gray-600">
-                            {pkg.description}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    {/* Title icon: Identification/Document */}
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <rect x="4" y="4" width="16" height="16" rx="2" />
+                      <path d="M8 9h8M8 13h6" strokeLinecap="round" />
+                    </svg>
+                    <h3 className="font-semibold text-gray-800">
+                      Service Title
+                    </h3>
+                  </div>
+                  <p className="text-gray-600">
+                    {formData.serviceOfferingTitle}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    {/* Category icon: Tag */}
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M7 7a2 2 0 114 0 2 2 0 01-4 0z" />
+                      <path d="M3 11V7a2 2 0 012-2h4l10 10a2 2 0 010 2.83l-4.17 4.17a2 2 0 01-2.83 0L3 11z" />
+                    </svg>
+                    <h3 className="font-semibold text-gray-800">Category</h3>
+                  </div>
+                  <p className="text-gray-600">
+                    {categories.find((cat) => cat.id === formData.categoryId)
+                      ?.name || "Unknown"}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white p-4 shadow-sm md:col-span-2">
+                  <div className="mb-4 flex items-center gap-2">
+                    {/* Packages icon: Box/Package */}
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <rect x="3" y="7" width="18" height="13" rx="2" />
+                      <path d="M16 3v4M8 3v4M3 7h18" />
+                    </svg>
+                    <h3 className="font-semibold text-gray-800">Packages</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.servicePackages
+                      .filter(
+                        (pkg) =>
+                          pkg.name.trim() &&
+                          pkg.description.trim() &&
+                          pkg.price,
+                      )
+                      .map((pkg) => (
+                        <div
+                          key={pkg.id}
+                          className="flex items-center justify-between rounded border bg-gray-50 p-3"
+                        >
+                          <div>
+                            <p className="font-medium">{pkg.name}</p>
+                            <p className="text-sm text-gray-600">
+                              {pkg.description}
+                            </p>
+                          </div>
+                          <p className="font-semibold text-green-600">
+                            ₱{Number(pkg.price).toLocaleString()}
                           </p>
                         </div>
-                        <p className="font-semibold text-green-600">
-                          ₱{Number(pkg.price).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
+                      ))}
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-gray-800">Availability</h3>
-                <p className="text-gray-600">
-                  {formData.availabilitySchedule.join(", ")}
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    {/* Availability icon: Calendar */}
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <rect x="3" y="5" width="18" height="16" rx="2" />
+                      <path d="M16 3v2M8 3v2M3 9h18" />
+                    </svg>
+                    <h3 className="font-semibold text-gray-800">
+                      Availability
+                    </h3>
+                  </div>
+                  <p className="text-gray-600">
+                    {formData.availabilitySchedule.join(", ")}
+                  </p>
                   {formData.availabilitySchedule.length > 0 && (
-                    <span className="mt-1 block text-sm">
+                    <span className="mt-1 block text-sm text-gray-500">
                       {formData.useSameTimeForAllDays
                         ? `Same hours for all days (${formData.commonTimeSlots.length} time slots)`
                         : "Custom hours per day"}
                     </span>
                   )}
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-gray-800">Location</h3>
-                <div className="text-gray-600">
-                  {formData.locationAddress &&
-                  formData.locationAddress.trim() ? (
-                    <div>
-                      {[
-                        formData.locationAddress,
-                        formData.locationMunicipalityCity,
-                        formData.locationProvince,
-                      ].join(", ")}
-                    </div>
-                  ) : (
-                    <div>
-                      <span className="font-medium">Manual Address: </span>
-                      {[
-                        formData.locationHouseNumber,
-                        formData.locationStreet,
-                        formData.locationBarangay,
-                        formData.locationMunicipalityCity,
-                        formData.locationProvince,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </div>
-                  )}
+                </div>
+                <div className="rounded-lg bg-white p-4 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    {/* Location icon: Map Pin */}
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 21c-4.418 0-8-4.03-8-9a8 8 0 1116 0c0 4.97-3.582 9-8 9z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <h3 className="font-semibold text-gray-800">Location</h3>
+                  </div>
+                  <div className="text-gray-600">
+                    {formData.locationAddress &&
+                    formData.locationAddress.trim() ? (
+                      <div>
+                        {[
+                          formData.locationAddress,
+                          formData.locationMunicipalityCity,
+                          formData.locationProvince,
+                        ].join(", ")}
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="font-medium">Manual Address: </span>
+                        {[
+                          formData.locationHouseNumber,
+                          formData.locationStreet,
+                          formData.locationBarangay,
+                          formData.locationMunicipalityCity,
+                          formData.locationProvince,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-
               {/* Service Images Preview */}
               {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
-                <div>
-                  <h3 className="mb-2 font-semibold text-gray-800">
-                    Service Images
-                  </h3>
+                <div className="mt-8">
+                  <div className="mb-2 flex items-center gap-2">
+                    {/* Images icon: Photo */}
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <rect x="3" y="5" width="18" height="14" rx="2" />
+                      <circle cx="8.5" cy="12.5" r="1.5" />
+                      <path d="M21 19l-5.5-7-4.5 6-3-4-4 5" />
+                    </svg>
+                    <h3 className="font-semibold text-gray-800">
+                      Service Images
+                    </h3>
+                  </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {serviceImageFiles.length > 0
                       ? serviceImageFiles.map((file, idx) => (
@@ -746,14 +846,26 @@ const AddServicePage: React.FC = () => {
                   </div>
                 </div>
               )}
-
               {/* Certifications Preview */}
               {(certificationFiles?.length > 0 ||
                 certificationPreviews?.length > 0) && (
-                <div className="mt-6">
-                  <h3 className="mb-2 font-semibold text-gray-800">
-                    Certifications
-                  </h3>
+                <div className="mt-8">
+                  <div className="mb-2 flex items-center gap-2">
+                    {/* Certifications icon: Certificate/Award */}
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M8.21 13.89l-2.39 2.39a2 2 0 002.83 2.83l2.39-2.39m2.36-2.36l2.39 2.39a2 2 0 002.83-2.83l-2.39-2.39" />
+                    </svg>
+                    <h3 className="font-semibold text-gray-800">
+                      Certifications
+                    </h3>
+                  </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {certificationFiles && certificationFiles.length > 0
                       ? certificationFiles.map((file, idx) => {
@@ -806,16 +918,15 @@ const AddServicePage: React.FC = () => {
                   </div>
                 </div>
               )}
+              {/* Error Display */}
+              {validationErrors.general && (
+                <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm text-red-600">
+                    {validationErrors.general}
+                  </p>
+                </div>
+              )}
             </div>
-
-            {/* Error Display */}
-            {validationErrors.general && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                <p className="text-sm text-red-600">
-                  {validationErrors.general}
-                </p>
-              </div>
-            )}
           </div>
         );
       default:
@@ -842,7 +953,7 @@ const AddServicePage: React.FC = () => {
         <div className="mt-8 rounded-xl bg-white p-6 shadow-lg sm:p-8">
           {renderStep()}
         </div>
-        <div className="mt-6 flex justify-between">
+        <div className="mt-6 mb-8 flex justify-between">
           {currentStep > 1 && (
             <button
               onClick={handleBack}
