@@ -144,7 +144,8 @@ const MyServicesPage: React.FC = () => {
               className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4"
             >
               <PlusIcon className="mr-1.5 h-5 w-5" />
-              Add New Service
+              {/* This span will be hidden on screens up to 320px, and visible on 321px and larger. */}
+              <span className="hidden min-[400px]:inline">Add New Service</span>
             </Link>
           </div>
         </header>
