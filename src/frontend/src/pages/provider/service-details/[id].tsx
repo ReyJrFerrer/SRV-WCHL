@@ -24,7 +24,6 @@ import {
   EnhancedService,
   DayOfWeek,
   DayAvailability,
-  TimeSlot,
 } from "../../../hooks/serviceManagement";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import { ServicePackage } from "../../../services/serviceCanisterService";
