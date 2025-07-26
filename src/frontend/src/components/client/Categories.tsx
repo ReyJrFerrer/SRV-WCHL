@@ -15,7 +15,7 @@ const getCategoryDisplayName = (name: string): string => {
 
   if (lowerName.includes("electrician")) return "Electician";
   if (lowerName.includes("plumbing")) return "Plumber";
-  if (lowerName.includes("wellness") || lowerName.includes("wellness"))
+  if (lowerName.includes("massage") || lowerName.includes("massage"))
     return "Massage Services";
   if (lowerName.includes("clean")) return "Cleaning Service";
   if (lowerName.includes("auto")) return "Automotive Repair";
@@ -41,7 +41,7 @@ const getImageUrlForCategory = (name: string): string => {
     return "/images/categories/auto.svg";
   if (lowerName.includes("gadget") || lowerName.includes("tech"))
     return "/images/categories/gadget repair.svg";
-  if (lowerName.includes("wellness") || lowerName.includes("wellness"))
+  if (lowerName.includes("massage") || lowerName.includes("massage"))
     return "/images/categories/wellnes.svg";
   if (lowerName.includes("beauty"))
     return "/images/categories/Beauty Services.svg";
