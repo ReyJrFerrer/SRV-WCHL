@@ -71,13 +71,15 @@ const BottomNavigation: React.FC = () => {
                 className={`mb-1 h-6 w-6 ${isActive ? "text-blue-600" : "text-gray-500 group-hover:text-yellow-500"}`}
               />
               <span
-                className={`text-xs ${isActive ? "text-blue-600" : "text-gray-500 group-hover:text-yellow-500"}`}
+                className={`hidden text-xs ${
+                  isActive ? "text-blue-600" : "text-gray-500 group-hover:text-yellow-500"
+                } sm:block`}
               >
                 {item.label}
               </span>
               {/* Notification badge */}
               {item.count > 0 && (
-                <span className="absolute top-1 right-5 block h-2 w-2 rounded-full bg-red-500"></span>
+                <span className="absolute right-5 top-1 block h-2 w-2 rounded-full bg-red-500"></span>
               )}
             </Link>
           );
