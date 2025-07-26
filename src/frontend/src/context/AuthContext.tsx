@@ -58,7 +58,7 @@ const initializeCanisters = async (
     try {
       await initializeCanisterReferences();
     } catch (error) {
-      console.warn("Failed to initialize canister references:", error);
+      // console.warn("Failed to initialize canister references:", error);
     }
   }
 };
