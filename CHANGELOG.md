@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add separate provider notifications hook with dedicated notification types and localStorage storage
+- Add provider-specific notification types including booking requests, payment completion, and service reminders
+
 - Add service creation functionality with step-by-step form validation and backend error handling
 - Add form validation for service details, availability, and location with proper field highlighting
 - Add backend integration for service creation with comprehensive error handling and success navigation
