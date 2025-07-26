@@ -8,7 +8,6 @@ import { canisterId as authCanisterId } from "../../../declarations/auth";
 import { canisterId as bookingCanisterId } from "../../../declarations/booking";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
 import { canisterId as serviceCanisterId } from "../../../declarations/service";
-import { getAdminHttpAgent } from "../utils/icpClient";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as ReviewService,

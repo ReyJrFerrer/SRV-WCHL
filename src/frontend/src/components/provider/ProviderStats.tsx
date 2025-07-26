@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  CurrencyDollarIcon,
   ClockIcon,
   CheckCircleIcon,
   StarIcon,
@@ -163,8 +162,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       <div className={`p-4 ${className}`}>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">
-            Error loading stats:{" "}
-            {error?.message || reviewsError?.message || "Unknown error"}
+            Error loading stats: {error || reviewsError || "Unknown error"}
           </p>
         </div>
       </div>

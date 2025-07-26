@@ -79,7 +79,7 @@ const BottomNavigation: React.FC = () => {
                 {item.label}
               </span>
               {/* Notification badge */}
-              {item.count > 0 && (
+              {(item.count ?? 0) > 0 && (
                 <span className="absolute top-1 right-5 block h-2 w-2 rounded-full bg-red-500"></span>
               )}
             </Link>

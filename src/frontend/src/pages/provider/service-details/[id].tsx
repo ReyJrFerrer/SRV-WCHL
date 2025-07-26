@@ -222,7 +222,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     updatePackage,
     deletePackage,
     error: hookError,
-    loading: serviceHookLoading,
   } = useServiceManagement();
 
   const { bookings: providerBookings } = useProviderBookingManagement();
@@ -618,7 +617,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     event.target.value = "";
   };
 
-  const handleRemoveImage = async (indexToRemove: number) => {
+  const handleRemoveImage = async () => {
     if (!service) return;
 
     // For now, images are static - just show a message
@@ -661,7 +660,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     event.target.value = "";
   };
 
-  const handleRemoveCertification = async (indexToRemove: number) => {
+  const handleRemoveCertification = async () => {
     if (!service) return;
 
     // For now, certifications are static - just show a message

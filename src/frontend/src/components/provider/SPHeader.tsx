@@ -20,7 +20,6 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
     isLoading: isAuthLoading,
   } = useAuth();
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [userAddress, setUserAddress] = useState<string>("Unknown");
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);

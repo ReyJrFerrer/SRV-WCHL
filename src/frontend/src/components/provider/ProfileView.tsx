@@ -199,3 +199,4 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({
     </div>
   );
 };
+export default PublicProfileView;

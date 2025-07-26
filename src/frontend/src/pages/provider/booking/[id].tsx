@@ -18,8 +18,6 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
-import { useChat } from "../../../hooks/useChat"; // Import the chat hook
-import { useAuth } from "../../../context/AuthContext"; // Import auth context
 
 const ProviderBookingDetailsPage: React.FC = () => {
   const navigate = useNavigate();

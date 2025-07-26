@@ -41,20 +41,20 @@ export default function AboutUs({
         goToSlide(index);
       });
 
-      indicators.appendChild(indicator);
+      indicators?.appendChild(indicator);
     });
 
-    nextBtn.addEventListener("click", () => {
+    nextBtn?.addEventListener("click", () => {
       currentIndex = (currentIndex + 1) % slides.length;
       updateGallery();
     });
 
-    prevBtn.addEventListener("click", () => {
+    prevBtn?.addEventListener("click", () => {
       currentIndex = (currentIndex - 1 + slides.length) % slides.length;
       updateGallery();
     });
 
-    function goToSlide(index) {
+    function goToSlide(index: number) {
       currentIndex = index;
       updateGallery();
     }

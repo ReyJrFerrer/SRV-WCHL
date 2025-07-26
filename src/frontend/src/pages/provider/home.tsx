@@ -34,17 +34,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     error: bookingsError,
     getPendingBookings,
     getUpcomingBookings,
-    refreshBookings,
-    isProviderAuthenticated,
   } = useProviderBookingManagement();
-
-  // Provider stats state
-  const [providerStats, setProviderStats] = useState({
-    totalServices: 0,
-    activeServices: 0,
-    totalBookings: 0,
-    averageRating: 0,
-  });
 
   // Only create a legacy provider object for components that still need the old interface
   const legacyProvider = useMemo(() => {
@@ -90,8 +80,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
         setInitializationAttempts(0);
 
         // Load provider stats
-        const stats = await getProviderStats();
-        setProviderStats(stats);
       } catch (error) {
         console.error("Error loading provider data:", error);
       } finally {
@@ -168,10 +156,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
 
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Use userProfile directly for SPHeaderNextjs */}
-        <SPHeaderNextjs
-          provider={userProfile}
-          notificationCount={bookingCounts.pendingCount}
-        />
+        <SPHeaderNextjs />
 
         <div className="mx-auto max-w-7xl p-4">
           {/* Use legacyProvider for components that still need the old interface */}

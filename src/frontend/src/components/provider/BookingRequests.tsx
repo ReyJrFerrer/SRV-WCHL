@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  CalendarDaysIcon,
-  CalendarIcon,
-  ArrowRightIcon,
-} from "@heroicons/react/24/solid";
+import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 
 interface BookingRequestsProps {

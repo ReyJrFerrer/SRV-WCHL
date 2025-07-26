@@ -65,11 +65,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
     const [mobileExpanded, setMobileExpanded] = useState(false);
 
     // Memoize expensive calculations
-    const {
-      initialCategoriesOnMobile,
-      shouldShowMoreButton,
-      categoriesToDisplay,
-    } = useMemo(() => {
+    const { shouldShowMoreButton, categoriesToDisplay } = useMemo(() => {
       const initialMobileCount = 3;
       const initialCategoriesOnMobile = categories.slice(0, initialMobileCount);
       const shouldShowMoreButton = categories.length > initialMobileCount;

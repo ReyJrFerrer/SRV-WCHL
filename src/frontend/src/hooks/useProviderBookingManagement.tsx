@@ -335,18 +335,6 @@ export const useProviderBookingManagement =
       [packageDetails],
     );
 
-    // Utility functions for loading states
-    const isAnyLoading = useCallback((): boolean => {
-      return (
-        loadingStates.bookings ||
-        loadingStates.profile ||
-        loadingStates.clients ||
-        loadingStates.services ||
-        loadingStates.packages ||
-        loadingStates.analytics
-      );
-    }, [loadingStates]);
-
     // Enhanced client profile loading
     const loadClientProfile = useCallback(
       async (clientId: string): Promise<FrontendProfile | null> => {
@@ -828,7 +816,7 @@ export const useProviderBookingManagement =
     );
 
     const declineBooking = useCallback(
-      async (bookingId: string, reason?: string) => {
+      async (bookingId: string) => {
         try {
           setLoadingState(`decline-${bookingId}`, true);
           clearError();
@@ -894,7 +882,7 @@ export const useProviderBookingManagement =
     );
 
     const completeBooking = useCallback(
-      async (bookingId: string, finalPrice?: number) => {
+      async (bookingId: string) => {
         try {
           setLoadingState(`complete-${bookingId}`, true);
           clearError();
@@ -927,7 +915,7 @@ export const useProviderBookingManagement =
     );
 
     const disputeBooking = useCallback(
-      async (bookingId: string, reason: string) => {
+      async (bookingId: string) => {
         try {
           setLoadingState(`dispute-${bookingId}`, true);
           clearError();
@@ -957,121 +945,6 @@ export const useProviderBookingManagement =
         handleBookingError,
         enrichBookingWithClientData,
       ],
-    );
-
-    // Individual booking lookup and action functions
-    const getBookingById = useCallback(
-      (bookingId: string): ProviderEnhancedBooking | null => {
-        return (
-          providerBookings.find((booking) => booking.id === bookingId) || null
-        );
-      },
-      [providerBookings],
-    );
-
-    const getBookingWithClientData = useCallback(
-      async (bookingId: string): Promise<ProviderEnhancedBooking | null> => {
-        try {
-          const booking = getBookingById(bookingId);
-          if (!booking) {
-            console.warn(`Booking ${bookingId} not found in current bookings`);
-            return null;
-          }
-
-          // If client data is already loaded, return the booking
-          if (booking.isClientDataLoaded) {
-            return booking;
-          }
-
-          // Re-enrich with fresh client data
-          const rawBooking = await bookingCanisterService.getBooking(bookingId);
-          if (rawBooking) {
-            return await enrichBookingWithClientData(rawBooking);
-          }
-
-          return booking;
-        } catch (error) {
-          console.error(
-            `Error getting booking ${bookingId} with client data:`,
-            error,
-          );
-          return getBookingById(bookingId);
-        }
-      },
-      [getBookingById, enrichBookingWithClientData],
-    );
-
-    const acceptBookingById = useCallback(
-      async (bookingId: string, scheduledDate?: Date): Promise<boolean> => {
-        try {
-          await acceptBooking(bookingId, scheduledDate);
-          return true;
-        } catch (error) {
-          console.error(`Failed to accept booking ${bookingId}:`, error);
-          return false;
-        }
-      },
-      [acceptBooking],
-    );
-
-    const declineBookingById = useCallback(
-      async (bookingId: string, reason?: string): Promise<boolean> => {
-        try {
-          await declineBooking(bookingId, reason);
-          return true;
-        } catch (error) {
-          console.error(`Failed to decline booking ${bookingId}:`, error);
-          return false;
-        }
-      },
-      [declineBooking],
-    );
-
-    const startBookingById = useCallback(
-      async (bookingId: string): Promise<boolean> => {
-        try {
-          await startBooking(bookingId);
-          return true;
-        } catch (error) {
-          console.error(`Failed to start booking ${bookingId}:`, error);
-          return false;
-        }
-      },
-      [startBooking],
-    );
-
-    const completeBookingById = useCallback(
-      async (bookingId: string, finalPrice?: number): Promise<boolean> => {
-        try {
-          await completeBooking(bookingId, finalPrice);
-          return true;
-        } catch (error) {
-          console.error(`Failed to complete booking ${bookingId}:`, error);
-          return false;
-        }
-      },
-      [completeBooking],
-    );
-
-    const disputeBookingById = useCallback(
-      async (bookingId: string, reason: string): Promise<boolean> => {
-        try {
-          await disputeBooking(bookingId, reason);
-          return true;
-        } catch (error) {
-          console.error(`Failed to dispute booking ${bookingId}:`, error);
-          return false;
-        }
-      },
-      [disputeBooking],
-    );
-
-    const isBookingActionInProgress = useCallback(
-      (bookingId: string, action: string): boolean => {
-        const operationKey = `${action}-${bookingId}`;
-        return isOperationInProgress(operationKey);
-      },
-      [isOperationInProgress],
     );
 
     // Data filtering and categorization functions
@@ -1449,9 +1322,9 @@ export const useProviderBookingManagement =
           return false;
         }
       },
-      declineBookingById: async (bookingId: string, reason?: string) => {
+      declineBookingById: async (bookingId: string) => {
         try {
-          await declineBooking(bookingId, reason);
+          await declineBooking(bookingId);
           return true;
         } catch {
           return false;
@@ -1465,17 +1338,17 @@ export const useProviderBookingManagement =
           return false;
         }
       },
-      completeBookingById: async (bookingId: string, finalPrice?: number) => {
+      completeBookingById: async (bookingId: string) => {
         try {
-          await completeBooking(bookingId, finalPrice);
+          await completeBooking(bookingId);
           return true;
         } catch {
           return false;
         }
       },
-      disputeBookingById: async (bookingId: string, reason: string) => {
+      disputeBookingById: async (bookingId: string) => {
         try {
-          await disputeBooking(bookingId, reason);
+          await disputeBooking(bookingId);
           return true;
         } catch {
           return false;

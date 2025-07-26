@@ -83,19 +83,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLocationState(null);
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocationStatus("allowed");
-        setLocationState({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-      },
-      (err) => {
-        setLocationStatus("denied");
-        setLocationState(null);
-      },
-    );
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setLocationStatus("allowed");
+      setLocationState({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+      });
+    });
   }, []);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);

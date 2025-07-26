@@ -21,16 +21,15 @@ import ProviderHomePage from "./pages/provider/home";
  */
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, identity, login, isLoading, error } = useAuth();
+  const { isAuthenticated, identity, login, isLoading } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
-  const [profileError, setProfileError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
       if (isAuthenticated && identity) {
         setIsCheckingProfile(true);
-        setProfileError(null);
+
         try {
           const profile = await authCanisterService.getMyProfile();
           if (profile) {
@@ -43,9 +42,6 @@ const LandingPage = () => {
           }
         } catch (err) {
           console.error("Profile check error:", err);
-          setProfileError(
-            err instanceof Error ? err.message : "Error checking profile.",
-          );
         } finally {
           setIsCheckingProfile(false);
         }

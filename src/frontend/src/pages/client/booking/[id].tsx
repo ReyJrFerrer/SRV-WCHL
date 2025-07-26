@@ -114,7 +114,7 @@ const BookingDetailsPage: React.FC = () => {
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const { identity } = useAuth();
-  const { conversations, loading: chatLoading, error: chatError } = useChat(); // Add the useChat hook
+  const { conversations, loading: chatLoading } = useChat(); // Add the useChat hook
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
 
   const {
