@@ -1,3 +1,21 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeftIcon,
+  PencilIcon,
+  CameraIcon,
+  BriefcaseIcon,
+  CheckBadgeIcon,
+  CurrencyEuroIcon,
+  CalendarIcon,
+  ArrowPathRoundedSquareIcon,
+  ChevronRightIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/24/solid";
+import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
+import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
+import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
+import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
 // Reusable component for the reputation score visualization
@@ -187,24 +205,6 @@ const AboutReputationInfo: React.FC<AboutReputationInfoProps> = ({
     </div>
   );
 };
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeftIcon,
-  PencilIcon,
-  CameraIcon,
-  BriefcaseIcon,
-  CheckBadgeIcon,
-  CurrencyEuroIcon,
-  CalendarIcon,
-  ArrowPathRoundedSquareIcon,
-  ChevronRightIcon,
-  InformationCircleIcon,
-} from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
-import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
-import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
-import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 
 // Component for displaying client statistics
 const ClientStats: React.FC = () => {

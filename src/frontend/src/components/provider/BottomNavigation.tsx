@@ -9,13 +9,13 @@ import {
   BriefcaseIcon,
 } from "@heroicons/react/24/solid";
 
-import { useNotifications } from "../../hooks/useNotifications";
+import { useProviderNotifications } from "../../hooks/useProviderNotifications";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
 
 const BottomNavigation: React.FC = () => {
   // useLocation is the replacement for Next.js's useRouter to get the current path
   const location = useLocation();
-  const { unreadCount } = useNotifications();
+  const { unreadCount } = useProviderNotifications();
   const { unreadChatCount } = useChatNotifications();
 
   const navItems = [

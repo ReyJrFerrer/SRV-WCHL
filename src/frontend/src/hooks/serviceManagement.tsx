@@ -974,6 +974,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     try {
       // Add delay to ensure agents are ready
       await new Promise((resolve) => setTimeout(resolve, 100));
+      setCategories([]);
 
       return await serviceCanisterService.getAllCategories();
     } catch (error) {

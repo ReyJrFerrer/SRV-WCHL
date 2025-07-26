@@ -19,7 +19,7 @@ module {
     public let STATIC_CATEGORIES : [(Text, ServiceCategory)] = [
         ("cat-001", {
             id = "cat-001";
-            name = "Home Services";
+            name = "Home Repairs";
             description = "Professional home maintenance and improvement services";
             parentId = null;
             slug = "home-services";
@@ -67,7 +67,7 @@ module {
         }),
         ("cat-007", {
             id = "cat-007";
-            name = "Beauty & Wellness";
+            name = "Massage Services";
             description = "Professional wellness and spa services";
             parentId = null;
             slug = "beauty-wellness";
