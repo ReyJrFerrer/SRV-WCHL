@@ -968,9 +968,7 @@ const AddServicePage: React.FC = () => {
               onClick={handleNext}
               disabled={isSubmitting}
               className="ml-auto rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              Next
-            </button>
+            ></button>
           ) : (
             <button
               onClick={handleSubmit}
