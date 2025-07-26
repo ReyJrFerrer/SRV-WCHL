@@ -5,7 +5,6 @@ import {
   MapPinIcon,
   UserCircleIcon,
   CheckBadgeIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
 } from "@heroicons/react/24/solid";
 import { CameraIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
 
