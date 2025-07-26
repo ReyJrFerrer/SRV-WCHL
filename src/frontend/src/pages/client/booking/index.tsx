@@ -59,7 +59,7 @@ const MyBookingsPage: React.FC = () => {
 
   // Set the document title
   useEffect(() => {
-    document.title = "My Bookings - SRV";
+    document.title = "My Bookings | SRV";
   }, []);
 
   const bookingCategories = useMemo(() => {
