@@ -6,6 +6,7 @@ import {
   ChatBubbleOvalLeftEllipsisIcon,
   BellIcon,
   Cog6ToothIcon,
+  BriefcaseIcon,
 } from "@heroicons/react/24/solid";
 
 import { useNotifications } from "../../hooks/useNotifications";
@@ -32,6 +33,12 @@ const BottomNavigation: React.FC = () => {
       count: unreadChatCount,
     },
     {
+      to: "/provider/services",
+      label: "Services",
+      icon: BriefcaseIcon,
+      count: unreadCount,
+    },
+    {
       to: "/provider/notifications",
       label: "Notifications",
       icon: BellIcon,
@@ -47,7 +54,7 @@ const BottomNavigation: React.FC = () => {
 
   return (
     <div className="fixed bottom-0 left-0 z-50 h-16 w-full border-t border-gray-200 bg-white">
-      <div className="mx-auto grid h-full max-w-lg grid-cols-5 font-medium">
+      <div className="mx-auto grid h-full max-w-lg grid-cols-6 font-medium">
         {navItems.map((item) => {
           // Check if the current URL path starts with the link's path
           const isActive = location.pathname.startsWith(item.to);

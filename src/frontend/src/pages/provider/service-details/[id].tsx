@@ -283,7 +283,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       <header className="sticky top-0 z-30 bg-white shadow-sm">
         <div className="container mx-auto flex items-center justify-between px-6 py-6">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/provider/home")}
             className="rounded-full p-2 transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >
@@ -595,29 +595,6 @@ const ProviderServiceDetailPage: React.FC = () => {
 
         {/* Action Buttons Card */}
         <div className="mb-8 flex flex-col gap-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:gap-3">
-          {/* Edit Service Button */}
-          <Tooltip
-            content={`Cannot edit service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-            disabled={hasActiveBookings}
-          >
-            <Link
-              to={
-                hasActiveBookings
-                  ? "#"
-                  : `/provider/services/edit/${service.id}`
-              }
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-500 bg-white px-4 py-2.5 text-sm font-semibold text-blue-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
-                hasActiveBookings
-                  ? "cursor-not-allowed opacity-60"
-                  : "hover:bg-blue-500 hover:text-white"
-              }`}
-              onClick={(e) => hasActiveBookings && e.preventDefault()}
-              tabIndex={hasActiveBookings ? -1 : 0}
-            >
-              <PencilIcon className="h-5 w-5" /> Edit Service
-            </Link>
-          </Tooltip>
-
           {/* Deactivate/Activate Button */}
           <button
             onClick={handleStatusToggle}
