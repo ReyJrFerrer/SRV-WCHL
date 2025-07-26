@@ -127,13 +127,16 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
               district,
               region,
               province,
+              country,
             } = data.address;
             const barangay = suburb || village || district || "";
             const cityPart = city || town || municipality || "";
             const provincePart = county || state || region || province || "";
+            const formAddress = [road, barangay].filter(Boolean).join(", ");
             const fullAddress = [road, barangay, cityPart, provincePart]
               .filter(Boolean)
               .join(", ");
+
             setDisplayAddress(
               fullAddress ||
                 `Lat: ${location.latitude}, Lon: ${location.longitude}`,
@@ -143,7 +146,10 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
               ...prev,
               locationLatitude: location.latitude.toString(),
               locationLongitude: location.longitude.toString(),
-              locationAddress: fullAddress,
+              locationAddress: formAddress,
+              locationMunicipalityCity: cityPart,
+              locationProvince: provincePart,
+              locationCountry: country,
             }));
           } else {
             setDisplayAddress(

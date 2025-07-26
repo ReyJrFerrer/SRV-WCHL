@@ -412,9 +412,9 @@ const AddServicePage: React.FC = () => {
         let state = formData.locationProvince?.trim() || "";
         let postalCode = formData.locationPostalCode?.trim() || "";
         // The canister may require these fields to be non-empty, so use a safe fallback if truly missing
-        if (!city) city = "N/A";
-        if (!state) state = "N/A";
-        if (!postalCode) postalCode = "0000";
+        // if (!city) city = "N/A";
+        // if (!state) state = "N/A";
+        // if (!postalCode) postalCode = "0000";
         location = {
           latitude: formData.locationLatitude
             ? parseFloat(formData.locationLatitude)
@@ -425,7 +425,7 @@ const AddServicePage: React.FC = () => {
           address: formData.locationAddress,
           city,
           state,
-          country: formData.locationCountry || "Philippines",
+          country: formData.locationCountry,
           postalCode,
         };
       } else {
@@ -687,7 +687,13 @@ const AddServicePage: React.FC = () => {
                 <div className="text-gray-600">
                   {formData.locationAddress &&
                   formData.locationAddress.trim() ? (
-                    <div>{formData.locationAddress}</div>
+                    <div>
+                      {[
+                        formData.locationAddress,
+                        formData.locationMunicipalityCity,
+                        formData.locationProvince,
+                      ].join(", ")}
+                    </div>
                   ) : (
                     <div>
                       <span className="font-medium">Manual Address: </span>

@@ -103,9 +103,7 @@ actor ServiceCanister {
     private func validateLocation(location : Location) : Bool {
         location.latitude >= -90.0 and location.latitude <= 90.0 and
         location.longitude >= -180.0 and location.longitude <= 180.0 and
-        location.address.size() > 0 and
-        location.city.size() > 0 and
-        location.country.size() > 0
+        location.address.size() > 0
     };
 
     private func validateProvider(providerId : Principal) : async Result<Bool> {
