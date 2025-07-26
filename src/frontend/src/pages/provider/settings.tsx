@@ -35,7 +35,7 @@ const SettingsPage: React.FC = () => {
     },
   ];
 
-  const handleSwitchToProvider = () => {
+  const handleSwitchToClient = () => {
     // Placeholder function for future implementation
     console.log("Attempting to switch to Service Provider mode...");
     alert("Feature coming soon!");
@@ -83,18 +83,18 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {/* --- NEW: Switch to SRVice Provider Button --- */}
-            <div className="rounded-lg bg-yellow-300 shadow-sm">
+            <div className="rounded-lg bg-blue-600 text-white shadow-sm">
               <button
-                onClick={handleSwitchToProvider}
-                className="group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors hover:bg-blue-600"
+                onClick={handleSwitchToClient}
+                className="group flex w-full items-center justify-between rounded-lg p-4 text-left text-black transition-colors hover:bg-yellow-300"
               >
                 <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-black group-hover:text-white" />
-                  <span className="text-md font-medium text-gray-800 group-hover:text-white">
-                    Switch into SRV Client
+                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-white group-hover:text-black" />
+                  <span className="text-md font-medium text-white group-hover:text-black">
+                    Switch into Client Mode
                   </span>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+                <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
               </button>
             </div>
 
