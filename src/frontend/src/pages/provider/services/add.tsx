@@ -404,25 +404,55 @@ const AddServicePage: React.FC = () => {
 
     try {
       // Prepare service data
-      const location = {
-        latitude: formData.locationLatitude
-          ? parseFloat(formData.locationLatitude)
-          : 14.676, // Default to Baguio
-        longitude: formData.locationLongitude
-          ? parseFloat(formData.locationLongitude)
-          : 120.9822,
-        address: [
-          formData.locationHouseNumber,
-          formData.locationStreet,
-          formData.locationBarangay,
-        ]
-          .filter(Boolean)
-          .join(", "),
-        city: formData.locationMunicipalityCity,
-        state: formData.locationProvince,
-        country: formData.locationCountry,
-        postalCode: formData.locationPostalCode || "",
-      };
+      let location;
+      // If using detected address (automatic), use locationAddress and coordinates
+      if (formData.locationAddress && formData.locationAddress.trim()) {
+        // Use detected address, but ensure all required fields are non-empty strings
+        let city = formData.locationMunicipalityCity?.trim() || "";
+        let state = formData.locationProvince?.trim() || "";
+        let postalCode = formData.locationPostalCode?.trim() || "";
+        // The canister may require these fields to be non-empty, so use a safe fallback if truly missing
+        if (!city) city = "N/A";
+        if (!state) state = "N/A";
+        if (!postalCode) postalCode = "0000";
+        location = {
+          latitude: formData.locationLatitude
+            ? parseFloat(formData.locationLatitude)
+            : 14.676,
+          longitude: formData.locationLongitude
+            ? parseFloat(formData.locationLongitude)
+            : 120.9822,
+          address: formData.locationAddress,
+          city,
+          state,
+          country: formData.locationCountry || "Philippines",
+          postalCode,
+        };
+      } else {
+        // Manual address
+        let city = formData.locationMunicipalityCity?.trim() || "Unknown City";
+        let state = formData.locationProvince?.trim() || "Unknown Province";
+        let postalCode = formData.locationPostalCode?.trim() || "0000";
+        location = {
+          latitude: formData.locationLatitude
+            ? parseFloat(formData.locationLatitude)
+            : 14.676,
+          longitude: formData.locationLongitude
+            ? parseFloat(formData.locationLongitude)
+            : 120.9822,
+          address: [
+            formData.locationHouseNumber,
+            formData.locationStreet,
+            formData.locationBarangay,
+          ]
+            .filter(Boolean)
+            .join(", "),
+          city,
+          state,
+          country: formData.locationCountry || "Philippines",
+          postalCode,
+        };
+      }
 
       // Prepare weekly schedule
       const weeklySchedule = formData.availabilitySchedule.map((day) => ({
@@ -438,16 +468,16 @@ const AddServicePage: React.FC = () => {
       // Create service
       const serviceRequest: ServiceCreateRequest = {
         title: formData.serviceOfferingTitle.trim(),
-        description: `Service offering: ${formData.serviceOfferingTitle.trim()}`, // Basic description
+        description: `Service offering: ${formData.serviceOfferingTitle.trim()}`,
         categoryId: formData.categoryId,
         price: Math.min(
           ...formData.servicePackages.map((pkg) => Number(pkg.price)),
-        ), // Use minimum package price as base
+        ),
         location,
         weeklySchedule,
-        instantBookingEnabled: true, // Default to enabled
-        bookingNoticeHours: 2, // Default 2 hours notice
-        maxBookingsPerDay: 10, // Default limit
+        instantBookingEnabled: true,
+        bookingNoticeHours: 2,
+        maxBookingsPerDay: 10,
       };
 
       console.log("Creating service with data:", serviceRequest);

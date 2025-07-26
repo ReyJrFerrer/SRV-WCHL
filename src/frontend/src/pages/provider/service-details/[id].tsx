@@ -73,7 +73,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   // Set document title
   useEffect(() => {
     if (service) {
-      document.title = `Details: ${service.title} | SRV Provider`;
+      document.title = `${service.title} | SRV Provider`;
     } else {
       document.title = "Service Details | SRV Provider";
     }
