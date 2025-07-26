@@ -8,7 +8,8 @@ import {
   CalendarDaysIcon,
   TagIcon,
   BriefcaseIcon,
-  CogIcon,
+  LockClosedIcon,
+  LockOpenIcon,
 } from "@heroicons/react/24/solid";
 
 import {
@@ -627,7 +628,11 @@ const ProviderServiceDetailPage: React.FC = () => {
                 : "text-green-600 hover:bg-green-500 hover:text-white"
             }`}
           >
-            <CogIcon className="h-5 w-5" />
+            {service.status === "Available" ? (
+              <LockClosedIcon className="h-5 w-5" />
+            ) : (
+              <LockOpenIcon className="h-5 w-5" />
+            )}
             {isUpdatingStatus
               ? "Updating..."
               : service.status === "Available"
