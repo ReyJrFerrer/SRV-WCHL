@@ -199,17 +199,19 @@ const MyBookingsPage: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-center px-4 py-4">
-          <h1 className="text-xl font-bold text-gray-900">My Bookings</h1>
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+            My Bookings
+          </h1>
         </div>
       </header>
 
-      <div className="flex min-h-screen flex-col bg-gray-100">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
         {/* Search/Filter Bar */}
         <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
           <div className="hide-scrollbar flex justify-start overflow-x-auto p-2 whitespace-nowrap sm:justify-center">
-            <nav className="flex space-x-1 rounded-full bg-gray-200 p-1">
+            <nav className="flex space-x-1 rounded-full p-1">
               {TAB_ITEMS.map((tab) => (
                 <button
                   key={tab}
@@ -218,7 +220,7 @@ const MyBookingsPage: React.FC = () => {
                       tab: tab.toLowerCase().replace("_", "-"),
                     })
                   }
-                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${activeTab === tab ? "bg-blue-600 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
+                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${activeTab === tab ? "bg-blue-600 text-white shadow" : "text-gray-600 hover:bg-yellow-200"}`}
                 >
                   {tab.replace("_", " ")} ({getBookingCountForTab(tab)})
                 </button>
@@ -268,7 +270,7 @@ const MyBookingsPage: React.FC = () => {
               <p className="mt-4 text-gray-500">Loading bookings...</p>
             </div>
           ) : bookingManagement.error ? (
-            <div className="mt-4 rounded-lg bg-white py-16 text-center shadow">
+            <div className="mt-4 rounded-2xl border border-red-100 bg-white py-16 text-center shadow-md">
               <ExclamationTriangleIcon className="mx-auto mb-4 h-16 w-16 text-red-300" />
               <p className="mb-4 text-lg text-red-500">
                 {bookingManagement.error}
@@ -281,16 +283,16 @@ const MyBookingsPage: React.FC = () => {
               </button>
             </div>
           ) : filteredBookings.length > 0 ? (
-            <div className="space-y-8">
+            <div className="space-y-10">
               {sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
                     <SparklesIcon className="mr-2 h-6 w-6 text-yellow-500" />
-                    <h2 className="text-lg font-bold text-yellow-600">
+                    <h2 className="text-lg font-bold tracking-wide text-yellow-600">
                       Same Day Bookings
                     </h2>
                   </div>
-                  <div className="space-y-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 md:space-y-6">
+                  <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
                     {sameDayBookings.map((booking) => (
                       <ClientBookingItemCard
                         key={booking.id}
@@ -304,12 +306,12 @@ const MyBookingsPage: React.FC = () => {
               {scheduledBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
-                    <CalendarDaysIcon className="mr-2 h-6 w-6 text-gray-500" />
-                    <h2 className="text-lg font-bold text-gray-700">
+                    <CalendarDaysIcon className="mr-2 h-6 w-6 text-blue-500" />
+                    <h2 className="text-lg font-bold tracking-wide text-blue-700">
                       Scheduled Bookings
                     </h2>
                   </div>
-                  <div className="space-y-4 md:space-y-6">
+                  <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
                     {scheduledBookings.map((booking) => (
                       <ClientBookingItemCard
                         key={booking.id}
@@ -322,7 +324,7 @@ const MyBookingsPage: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="mt-4 rounded-lg bg-white py-16 text-center shadow">
+            <div className="mt-4 rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
               <ClipboardDocumentListIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
               <p className="text-lg text-gray-500">
                 No bookings found with the current filters.

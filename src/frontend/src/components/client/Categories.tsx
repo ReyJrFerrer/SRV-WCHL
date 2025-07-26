@@ -65,11 +65,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
     const [mobileExpanded, setMobileExpanded] = useState(false);
 
     // Memoize expensive calculations
-    const {
-      initialCategoriesOnMobile,
-      shouldShowMoreButton,
-      categoriesToDisplay,
-    } = useMemo(() => {
+    const { shouldShowMoreButton, categoriesToDisplay } = useMemo(() => {
       const initialMobileCount = 3;
       const initialCategoriesOnMobile = categories.slice(0, initialMobileCount);
       const shouldShowMoreButton = categories.length > initialMobileCount;
@@ -138,7 +134,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
     return (
       <div className={`${className}`}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">Mga Kategorya</h2>
+          <h2 className="text-xl font-bold">Categories</h2>
         </div>
 
         {/* Mobile Layout */}

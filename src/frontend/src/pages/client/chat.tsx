@@ -44,21 +44,23 @@ const ClientChatPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-xl font-bold text-gray-900">Messages</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+            Messages
+          </h1>
         </div>
       </header>
 
-      <div className="mx-auto mt-4 max-w-5xl">
+      <div className="mx-auto mt-6 max-w-2xl px-2 md:px-0">
         {isAuthenticated ? (
           loading ? (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
+            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
               <p className="text-lg text-gray-600">Loading conversations...</p>
             </div>
           ) : error ? (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
+            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
               <p className="mb-4 text-lg text-red-600">{error}</p>
               <button
                 onClick={() => window.location.reload()}
@@ -68,8 +70,8 @@ const ClientChatPage: React.FC = () => {
               </button>
             </div>
           ) : conversations.length > 0 ? (
-            <div className="bg-white">
-              <ul className="divide-y divide-gray-200">
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+              <ul className="divide-y divide-gray-100">
                 {conversations.map((conversationSummary) => {
                   const conversation = conversationSummary.conversation;
                   const lastMessage = conversationSummary.lastMessage;
@@ -114,39 +116,43 @@ const ClientChatPage: React.FC = () => {
                           otherUserImage,
                         )
                       }
-                      className="flex cursor-pointer items-center space-x-4 p-4 transition-colors hover:bg-gray-50"
+                      className="group flex cursor-pointer items-center space-x-4 p-4 transition-all hover:bg-blue-50"
                     >
-                      <div className="relative h-12 w-12 flex-shrink-0">
+                      <div className="relative h-14 w-14 flex-shrink-0">
                         {otherUserImage ? (
                           <img
                             src={otherUserImage}
                             alt={otherUserName}
-                            className="h-12 w-12 rounded-full border border-gray-200 object-cover"
+                            className="h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow transition-all group-hover:border-yellow-400"
                           />
                         ) : (
-                          <UserCircleIcon className="h-12 w-12 text-gray-300" />
+                          <UserCircleIcon className="h-14 w-14 text-gray-300" />
+                        )}
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
+                            {unreadCount}
+                          </span>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="truncate text-sm font-semibold text-gray-900">
+                          <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
                             {otherUserName}
                           </p>
                           <p
-                            className={`text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-500"}`}
+                            className={`ml-2 text-xs whitespace-nowrap ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
                           >
                             {formatTimestamp(lastMessage?.createdAt)}
                           </p>
                         </div>
                         <div className="mt-1 flex items-start justify-between">
-                          <p className="truncate text-sm text-gray-500">
-                            {lastMessage?.content || "No messages yet"}
+                          <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
+                            {lastMessage?.content || (
+                              <span className="text-gray-400 italic">
+                                No messages yet
+                              </span>
+                            )}
                           </p>
-                          {unreadCount > 0 && (
-                            <span className="ml-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
-                              {unreadCount}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </li>
@@ -155,7 +161,7 @@ const ClientChatPage: React.FC = () => {
               </ul>
             </div>
           ) : (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
+            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
               <p className="mb-4 text-lg text-gray-600">No conversations yet</p>
               <p className="text-sm text-gray-500">
                 Your conversations with service providers will appear here after
@@ -164,12 +170,12 @@ const ClientChatPage: React.FC = () => {
             </div>
           )
         ) : (
-          <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
+          <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
             <p className="mb-4 text-lg text-red-600">
               Please log in to access your messages
             </p>
             <button
-              onClick={() => navigate("/login")} // Navigate to a login page
+              onClick={() => navigate("/login")}
               className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
             >
               Log In

@@ -342,7 +342,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 onClick={handleBookAgainClick}
                 className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 sm:w-auto"
               >
-                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Magbook ulit
+                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Book Now ulit
               </button>
             )}
 

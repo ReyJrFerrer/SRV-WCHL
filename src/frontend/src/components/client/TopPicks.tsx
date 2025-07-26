@@ -86,7 +86,7 @@ const TopPicks: React.FC<TopPicksProps> = ({
   return (
     <div className={`px-4 ${style ?? ""}`}>
       <div className="mb-4 flex flex-row items-center justify-between">
-        <span className="text-xl font-bold text-gray-800">Magbook Na!</span>
+        <span className="text-xl font-bold text-gray-800">Book Now!!</span>
         <button
           onClick={onViewAllPress}
           className="group flex flex-row items-center"
