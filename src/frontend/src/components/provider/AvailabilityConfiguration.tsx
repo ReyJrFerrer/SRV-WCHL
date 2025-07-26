@@ -1,11 +1,6 @@
-import React, { useState } from "react";
-import { ClockIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import {
-  DayOfWeek,
-  TimeSlot,
-  DayAvailability,
-} from "../../services/serviceCanisterService";
-
+import React from "react";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { DayOfWeek } from "../../services/serviceCanisterService";
 interface TimeSlotUIData {
   id: string;
   startHour: string;
@@ -41,16 +36,10 @@ interface AvailabilityConfigurationProps {
 }
 
 const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
-  instantBookingEnabled,
-  bookingNoticeHours,
-  maxBookingsPerDay,
   availabilitySchedule,
   useSameTimeForAllDays,
   commonTimeSlots,
   perDayTimeSlots,
-  onInstantBookingChange,
-  onBookingNoticeHoursChange,
-  onMaxBookingsPerDayChange,
   onAvailabilityScheduleChange,
   onUseSameTimeChange,
   onCommonTimeSlotsChange,
@@ -93,7 +82,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
     onCommonTimeSlotsChange(updatedSlots);
   };
 
-  const addCommonTimeSlot = () => {
+  () => {
     const newSlot: TimeSlotUIData = {
       id: `slot-${Date.now()}`,
       startHour: "09",

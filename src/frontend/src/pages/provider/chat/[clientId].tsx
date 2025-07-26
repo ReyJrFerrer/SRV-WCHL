@@ -18,7 +18,6 @@ const ConversationPage: React.FC = () => {
   const {
     currentConversation,
     messages,
-    loading,
     backgroundLoading, // Add backgroundLoading state
     error,
     sendMessage,

@@ -222,7 +222,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     updatePackage,
     deletePackage,
     error: hookError,
-    loading: serviceHookLoading,
   } = useServiceManagement();
 
   const { bookings: providerBookings } = useProviderBookingManagement();
@@ -618,7 +617,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     event.target.value = "";
   };
 
-  const handleRemoveImage = async (indexToRemove: number) => {
+  const handleRemoveImage = async () => {
     if (!service) return;
 
     // For now, images are static - just show a message
@@ -661,7 +660,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     event.target.value = "";
   };
 
-  const handleRemoveCertification = async (indexToRemove: number) => {
+  const handleRemoveCertification = async () => {
     if (!service) return;
 
     // For now, certifications are static - just show a message
@@ -1338,7 +1337,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         className="h-full w-full object-cover"
                       />
                       <button
-                        onClick={() => handleRemoveImage(index)}
+                        onClick={() => handleRemoveImage()}
                         className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                         aria-label="Remove image"
                       >
@@ -1452,7 +1451,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                     >
                       <span>{certName}</span>
                       <button
-                        onClick={() => handleRemoveCertification(index)}
+                        onClick={() => handleRemoveCertification()}
                         className="rounded-full p-1 text-red-600 hover:bg-red-100"
                         aria-label="Remove certification"
                       >

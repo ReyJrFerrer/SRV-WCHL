@@ -64,7 +64,6 @@ const ProviderBookingsPage: React.FC = () => {
     bookings,
     loading,
     error,
-    refreshing,
     getPendingBookings,
     getUpcomingBookings,
     getCompletedBookings,

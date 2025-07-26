@@ -52,6 +52,19 @@
       ],
       "type": "motoko",
       "main": "src/backend/main.mo"
+    },
+    "frontend": {
+      "dependencies": [
+        "llm",
+        "auth",
+        "booking",
+        "reputation",
+        "review",
+        "service",
+        "chat"
+      ],
+      "type": "assets",
+      "source": ["src/frontend/dist/"]
     }
   },
   "defaults": {

@@ -193,11 +193,11 @@ export const chatCanisterService = {
       if ("ok" in result) {
         return result.ok;
       } else {
-        console.error("Error setting chat canister references:", result.err);
+        // console.error("Error setting chat canister references:", result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error("Error setting chat canister references:", error);
+      // console.error("Error setting chat canister references:", error);
       throw new Error(`Failed to set chat canister references: ${error}`);
     }
   },

@@ -1,5 +1,5 @@
-import { Service } from "@app/services/serviceCanisterService";
-import { FrontendProfile } from "@app/services/authCanisterService";
+import { Service } from "../services/serviceCanisterService";
+import { FrontendProfile } from "../services/authCanisterService";
 import { Principal } from "@dfinity/principal";
 
 export interface EnrichedService extends Service {

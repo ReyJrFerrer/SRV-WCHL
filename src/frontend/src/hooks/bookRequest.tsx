@@ -8,7 +8,6 @@ import serviceCanisterService, {
 } from "../services/serviceCanisterService";
 import bookingCanisterService, {
   Booking,
-  BookingStatus,
 } from "../services/bookingCanisterService";
 import authCanisterService, {
   FrontendProfile,

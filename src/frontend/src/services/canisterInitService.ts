@@ -51,15 +51,10 @@ export const initializeCanisterReferences = async (): Promise<{
     initializationTasks.map(async ({ name, task }) => {
       try {
         await task;
-        console.log(`✅ ${name} canister references initialized successfully`);
         return { name, success: true };
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
-        console.warn(
-          `⚠️ Failed to initialize ${name} canister references:`,
-          errorMessage,
-        );
         return { name, success: false, error: errorMessage };
       }
     }),
@@ -72,14 +67,6 @@ export const initializeCanisterReferences = async (): Promise<{
       : { name: "Unknown", success: false, error: "Promise rejected" },
   );
   const overallSuccess = results.every((result) => result.success);
-
-  if (overallSuccess) {
-    console.log("🎉 All canister references initialized instantly!");
-  } else {
-    console.warn(
-      "⚠️ Some canister references failed to initialize - check warnings above",
-    );
-  }
 
   return { success: overallSuccess, results };
 };

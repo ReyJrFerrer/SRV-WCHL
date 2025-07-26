@@ -39,7 +39,7 @@ const BookingPage: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1">
-        <ClientBookingPageComponent serviceSlug={serviceSlug} />
+        <ClientBookingPageComponent />
       </main>
     </div>
   );

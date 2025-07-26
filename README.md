@@ -37,8 +37,7 @@ Our platform revolutionizes local service booking by leveraging ICP's unique cap
 - **Booking System**: Seamless appointment scheduling with calendar integration
 - **Ratings & Reviews**: Community-driven feedback system with AI verification
 - **COD Payments**: Secure cash-on-delivery payment options
-- **Profile Switching** : Easily switch between client and local service provider accounts
-- **PWA** : Push notifications
+- **Account Reputation**: View your reputation as a user
 
 ---
 

@@ -14,7 +14,7 @@ const ServiceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
   // Use our custom hook to fetch service details
-  const { service, provider, loading, error } = useServiceDetail(id as string);
+  const { service, loading, error } = useServiceDetail(id as string);
 
   // Set document title
   useEffect(() => {
@@ -70,7 +70,7 @@ const ServiceDetailPage: React.FC = () => {
             <span className="block sm:inline">{error}</span>
           </div>
         )}
-        <ServiceDetailPageComponent service={service} provider={provider} />
+        <ServiceDetailPageComponent />
       </main>
 
       {/* Bottom Navigation - Hidden on large screens */}

@@ -49,7 +49,6 @@ import ProviderProfilePage from "./src/pages/provider/profile";
 // Provider Service Management
 import ProviderServices from "./src/pages/provider/services";
 import ProviderAddService from "./src/pages/provider/services/add";
-import ProviderEditService from "./src/pages/provider/services/edit/[id]";
 
 // Provider Service Details
 import ProviderServiceDetails from "./src/pages/provider/service-details/[id]";
@@ -129,7 +128,6 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             {/* Service Management Routes */}
             <Route path="services" element={<ProviderServices />} />
             <Route path="services/add" element={<ProviderAddService />} />
-            <Route path="services/edit/:id" element={<ProviderEditService />} />
 
             {/* Service Details Routes */}
             <Route

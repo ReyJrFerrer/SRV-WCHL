@@ -75,14 +75,14 @@ class ReputationCanisterService {
 
       if ("ok" in result) {
       } else {
-        console.error(
-          "❌ Failed to set reputation canister references:",
-          result.err,
-        );
+        // console.error(
+        //   "❌ Failed to set reputation canister references:",
+        //   result.err,
+        // );
         throw new Error(`Failed to set canister references: ${result.err}`);
       }
     } catch (error) {
-      console.error("❌ Error setting reputation canister references:", error);
+      // console.error("❌ Error setting reputation canister references:", error);
       throw error;
     }
   }

@@ -9,7 +9,6 @@ import {
   MapPinIcon,
   CalendarIcon,
   ClockIcon,
-  UserIcon,
   CurrencyDollarIcon,
   PhoneIcon,
   InformationCircleIcon,
@@ -21,25 +20,6 @@ import {
   StarIcon,
 } from "@heroicons/react/24/outline";
 
-const calculateDuration = (
-  start: string | Date,
-  end: string | Date,
-): string => {
-  const startTime = new Date(start);
-  const endTime = new Date(end);
-  const durationMs = endTime.getTime() - startTime.getTime();
-  if (isNaN(durationMs) || durationMs < 0) return "N/A";
-  const hours = Math.floor(durationMs / (1000 * 60 * 60));
-  const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-  let durationStr = "";
-  if (hours > 0) durationStr += `${hours} hr${hours > 1 ? "s" : ""} `;
-  if (minutes > 0) durationStr += `${minutes} min${minutes > 1 ? "s" : ""}`;
-  return (
-    durationStr.trim() ||
-    (hours === 0 && minutes === 0 ? "Short duration" : "N/A")
-  );
-};
-
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
 }
@@ -47,7 +27,7 @@ interface ProviderBookingItemCardProps {
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   booking,
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails] = useState(false);
   const navigate = useNavigate();
   const {
     acceptBookingById,
@@ -55,7 +35,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     startBookingById,
     completeBookingById,
     isBookingActionInProgress,
-    getStatusColor,
     formatBookingDate,
     formatBookingTime,
     refreshBookings,
@@ -112,12 +91,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     booking.serviceDetails?.description || booking.packageName || "Service";
   const serviceImage = "/images/Tutoring-LanguageTutor1.jpg";
   const packageTitle = booking.packageName;
-  const scheduledDate = booking.scheduledDate
-    ? new Date(booking.scheduledDate)
-    : null;
   const duration = booking.serviceDuration || "N/A";
   const price = booking.price;
-  const priceLabel = "Service Price";
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
 
@@ -236,8 +211,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const canStart = booking.canStart;
   const canComplete = booking.canComplete;
   const isCompleted = status === "Completed";
-  const isCancelled = status === "Cancelled";
-  const isFinished = isCompleted || isCancelled;
   const isInProgress = status === "InProgress"; // ✅ Add this check
 
   return (
