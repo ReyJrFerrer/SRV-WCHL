@@ -7,6 +7,7 @@ import { nanoid } from "nanoid";
 import ServiceDetails from "../../../components/provider/ServiceDetails";
 import ServiceAvailability from "../../../components/provider/ServiceAvailability";
 import ServiceLocation from "../../../components/provider/ServiceLocation";
+import ServiceImageUpload from "../../../components/provider/ServiceImageUpload";
 
 // Service Management Hook & Types
 import {
@@ -108,6 +109,76 @@ const AddServicePage: React.FC = () => {
     {},
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Service image upload state
+  const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  // Certification upload state
+  const [certificationFiles, setCertificationFiles] = useState<File[]>([]);
+  const [certificationPreviews, setCertificationPreviews] = useState<string[]>(
+    [],
+  );
+
+  // Handle image file selection
+  const handleImageFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+    setServiceImageFiles((prev) => [...prev, ...files]);
+    // Generate previews in order and avoid duplicates
+    const fileReaders: FileReader[] = [];
+    const newPreviews: string[] = [];
+    let loaded = 0;
+    files.forEach((file, idx) => {
+      const reader = new FileReader();
+      fileReaders.push(reader);
+      reader.onloadend = () => {
+        newPreviews[idx] = reader.result as string;
+        loaded++;
+        if (loaded === files.length) {
+          setImagePreviews((prev) => [...prev, ...newPreviews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  // Handle certification file selection
+  const handleCertificationFilesChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+    setCertificationFiles((prev) => [...prev, ...files]);
+    // Generate previews in order and avoid duplicates
+    const fileReaders: FileReader[] = [];
+    const newPreviews: string[] = [];
+    let loaded = 0;
+    files.forEach((file, idx) => {
+      const reader = new FileReader();
+      fileReaders.push(reader);
+      reader.onloadend = () => {
+        newPreviews[idx] = reader.result as string;
+        loaded++;
+        if (loaded === files.length) {
+          setCertificationPreviews((prev) => [...prev, ...newPreviews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  // Remove image by index
+  const handleRemoveImage = (index: number) => {
+    setServiceImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove certification by index
+  const handleRemoveCertification = (index: number) => {
+    setCertificationFiles((prev) => prev.filter((_, i) => i !== index));
+    setCertificationPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     getCategories();
@@ -492,6 +563,30 @@ const AddServicePage: React.FC = () => {
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="mb-4 text-2xl font-bold text-gray-800">
+                Upload Service Images & Certifications
+              </h2>
+              <p className="mb-6 text-gray-600">
+                Add images of your past work and upload certifications. This
+                step is optional but highly recommended.
+              </p>
+            </div>
+            <ServiceImageUpload
+              serviceImageFiles={serviceImageFiles}
+              imagePreviews={imagePreviews}
+              handleImageFilesChange={handleImageFilesChange}
+              handleRemoveImage={handleRemoveImage}
+              certificationFiles={certificationFiles}
+              certificationPreviews={certificationPreviews}
+              handleCertificationFilesChange={handleCertificationFilesChange}
+              handleRemoveCertification={handleRemoveCertification}
+            />
+          </div>
+        );
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="mb-4 text-2xl font-bold text-gray-800">
                 Review & Submit
               </h2>
               <p className="mb-6 text-gray-600">
@@ -524,7 +619,7 @@ const AddServicePage: React.FC = () => {
                       (pkg) =>
                         pkg.name.trim() && pkg.description.trim() && pkg.price,
                     )
-                    .map((pkg, index) => (
+                    .map((pkg) => (
                       <div
                         key={pkg.id}
                         className="flex items-center justify-between rounded border bg-white p-3"
@@ -559,18 +654,122 @@ const AddServicePage: React.FC = () => {
 
               <div>
                 <h3 className="font-semibold text-gray-800">Location</h3>
-                <p className="text-gray-600">
-                  {[
-                    formData.locationHouseNumber,
-                    formData.locationStreet,
-                    formData.locationBarangay,
-                    formData.locationMunicipalityCity,
-                    formData.locationProvince,
-                  ]
-                    .filter(Boolean)
-                    .join(", ")}
-                </p>
+                <div className="text-gray-600">
+                  {formData.locationAddress &&
+                  formData.locationAddress.trim() ? (
+                    <div>{formData.locationAddress}</div>
+                  ) : (
+                    <div>
+                      <span className="font-medium">Manual Address: </span>
+                      {[
+                        formData.locationHouseNumber,
+                        formData.locationStreet,
+                        formData.locationBarangay,
+                        formData.locationMunicipalityCity,
+                        formData.locationProvince,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Service Images Preview */}
+              {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
+                <div>
+                  <h3 className="mb-2 font-semibold text-gray-800">
+                    Service Images
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {serviceImageFiles.length > 0
+                      ? serviceImageFiles.map((file, idx) => (
+                          <div
+                            key={file.name + idx}
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                          >
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Service Image ${idx + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))
+                      : imagePreviews.map((previewUrl, idx) => (
+                          <div
+                            key={previewUrl}
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                          >
+                            <img
+                              src={previewUrl}
+                              alt={`Service Image ${idx + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Certifications Preview */}
+              {(certificationFiles?.length > 0 ||
+                certificationPreviews?.length > 0) && (
+                <div className="mt-6">
+                  <h3 className="mb-2 font-semibold text-gray-800">
+                    Certifications
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {certificationFiles && certificationFiles.length > 0
+                      ? certificationFiles.map((file, idx) => {
+                          const isPdf =
+                            file.type === "application/pdf" ||
+                            file.name.endsWith(".pdf");
+                          return (
+                            <div
+                              key={file.name + idx}
+                              className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                            >
+                              {isPdf ? (
+                                <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-500">
+                                  <span className="material-icons text-3xl">
+                                    picture_as_pdf
+                                  </span>
+                                  PDF File
+                                </div>
+                              ) : (
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Certification ${idx + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                            </div>
+                          );
+                        })
+                      : certificationPreviews?.map((previewUrl, idx) => (
+                          <div
+                            key={previewUrl}
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                          >
+                            {previewUrl.endsWith(".pdf") ? (
+                              <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-500">
+                                <span className="material-icons text-3xl">
+                                  picture_as_pdf
+                                </span>
+                                PDF File
+                              </div>
+                            ) : (
+                              <img
+                                src={previewUrl}
+                                alt={`Certification ${idx + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                            )}
+                          </div>
+                        ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Error Display */}
@@ -599,12 +798,12 @@ const AddServicePage: React.FC = () => {
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="text-xl font-semibold text-gray-800">
-            Add New Service (Step {currentStep}/4)
+            Add New Service (Step {currentStep}/5)
           </h1>
         </div>
       </header>
       <main className="container mx-auto flex-grow p-4 sm:p-6">
-        <div className="rounded-xl bg-white p-6 shadow-lg sm:p-8">
+        <div className="mt-8 rounded-xl bg-white p-6 shadow-lg sm:p-8">
           {renderStep()}
         </div>
         <div className="mt-6 flex justify-between">
@@ -617,7 +816,7 @@ const AddServicePage: React.FC = () => {
               Back
             </button>
           )}
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <button
               onClick={handleNext}
               disabled={isSubmitting}

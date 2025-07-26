@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  PlusIcon,
-  StarIcon,
-  ArrowRightIcon,
-  ScissorsIcon,
-} from "@heroicons/react/24/solid";
+import { PlusIcon, StarIcon, ScissorsIcon } from "@heroicons/react/24/solid";
 import {
   PaintBrushIcon,
   WrenchScrewdriverIcon,

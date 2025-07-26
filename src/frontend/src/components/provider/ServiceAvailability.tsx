@@ -272,7 +272,9 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
       </section>
 
       <section className="rounded-2xl border border-blue-100 bg-blue-50 p-8 shadow-md">
-        <h2 className="mb-2 text-2xl font-bold text-blue-700">Working Hours</h2>
+        <h2 className="mb-2 text-2xl font-bold text-blue-700">
+          Working Hours <span className="text-base text-red-500">*</span>
+        </h2>
         <div className="mb-4 flex items-center">
           <input
             type="checkbox"

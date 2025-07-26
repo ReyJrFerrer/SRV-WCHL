@@ -210,7 +210,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
     <div className="mx-auto max-w-2xl space-y-8 p-4">
       <section className="rounded-2xl border border-blue-100 bg-blue-50 p-6 shadow-md">
         <h3 className="mb-4 text-xl font-bold text-blue-700">
-          Service Location
+          Service Location<span className="text-base text-red-500">*</span>
         </h3>
 
         {/* Current Location Display */}
