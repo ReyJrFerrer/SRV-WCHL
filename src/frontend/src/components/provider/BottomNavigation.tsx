@@ -36,7 +36,6 @@ const BottomNavigation: React.FC = () => {
       to: "/provider/services",
       label: "Services",
       icon: BriefcaseIcon,
-      count: unreadCount,
     },
     {
       to: "/provider/notifications",
