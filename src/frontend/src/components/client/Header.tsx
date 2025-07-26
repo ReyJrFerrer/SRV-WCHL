@@ -48,18 +48,34 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           );
           const data = await res.json();
           if (data && data.address) {
-            const { road, suburb, city, town, village, county, state } =
-              data.address;
+            const {
+              house_number,
+              building,
+              road,
+              suburb,
+              city,
+              town,
+              village,
+              county,
+              state,
+            } = data.address;
             const province =
               county ||
               state ||
               data.address.region ||
               data.address.province ||
               "";
+            // Compose address with house number/building if available
+            const houseOrBuilding = house_number || building || "";
             const streetPart = road || "";
             const areaPart = suburb || village || "";
             const cityPart = city || town || "";
-            const fullAddress = [streetPart, areaPart, cityPart]
+            const fullAddress = [
+              houseOrBuilding,
+              streetPart,
+              areaPart,
+              cityPart,
+            ]
               .filter(Boolean)
               .join(", ");
             setUserAddress(fullAddress || "Could not determine address");
