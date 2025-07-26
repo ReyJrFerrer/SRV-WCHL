@@ -38,6 +38,9 @@ export interface EnhancedService extends Service {
   formattedPrice?: string;
   averageRating?: number;
   totalReviews?: number;
+  // Additional fields for frontend use (static for now)
+  images?: string[];
+  certifications?: string[];
 }
 
 // Service creation/update request types

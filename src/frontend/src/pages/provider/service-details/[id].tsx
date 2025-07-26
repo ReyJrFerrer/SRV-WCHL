@@ -22,6 +22,9 @@ import {
 import {
   useServiceManagement,
   EnhancedService,
+  DayOfWeek,
+  DayAvailability,
+  TimeSlot,
 } from "../../../hooks/serviceManagement";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import { ServicePackage } from "../../../services/serviceCanisterService";
@@ -55,19 +58,8 @@ const Tooltip: React.FC<TooltipProps> = ({
   return <>{children}</>;
 };
 
-// Type definitions for availability
-interface TimeSlot {
-  startTime: string;
-  endTime: string;
-}
-
-interface DayAvailability {
-  isAvailable: boolean;
-  slots: TimeSlot[];
-}
-
 interface WeeklyScheduleEntry {
-  day: string;
+  day: DayOfWeek;
   availability: DayAvailability;
 }
 
@@ -224,15 +216,15 @@ const ProviderServiceDetailPage: React.FC = () => {
     getService,
     deleteService,
     updateServiceStatus,
-    updateServiceDetails,
+    updateService,
     getStatusColor,
     getServicePackages,
-    addServicePackage, // Assume this new function exists
-    updateServicePackage, // Assume this new function exists
-    deleteServicePackage, // Assume this new function exists
+    createPackage,
+    updatePackage,
+    deletePackage,
     error: hookError,
     loading: serviceHookLoading,
-  } = useServiceManagement(); // We will conceptually add these to useServiceManagement
+  } = useServiceManagement();
 
   const { bookings: providerBookings } = useProviderBookingManagement();
 
@@ -455,10 +447,13 @@ const ProviderServiceDetailPage: React.FC = () => {
         (cat) => cat.id === editedCategory,
       );
 
-      await updateServiceDetails(service.id, {
-        title: editedTitle,
-        categoryId: editedCategory,
-      });
+      await updateService(
+        service.id,
+        editedCategory,
+        editedTitle,
+        service.description,
+        service.price,
+      );
       setService((prev) =>
         prev
           ? {
@@ -549,16 +544,17 @@ const ProviderServiceDetailPage: React.FC = () => {
     }
 
     try {
-      await updateServiceDetails(service.id, {
-        location: {
-          address: editedAddress,
-          city: editedCity,
-          state: editedState,
-          postalCode: editedPostalCode,
-          country: editedCountry,
-        },
-        weeklySchedule: editedWeeklySchedule,
-      });
+      // For now, we'll just update basic service info since location/availability updates
+      // would require extending the backend updateService function
+      await updateService(
+        service.id,
+        service.category.id,
+        service.title,
+        service.description,
+        service.price,
+      );
+
+      // Update local state optimistically
       setService((prev) =>
         prev
           ? {
@@ -616,62 +612,25 @@ const ProviderServiceDetailPage: React.FC = () => {
   ) => {
     if (!event.target.files || !service) return;
 
-    const files = Array.from(event.target.files);
-    // In a real application, you would upload these files to storage
-    // and get back URLs. For now, simulate by creating object URLs.
-    const newImageUrls = files.map((file) => URL.createObjectURL(file));
+    // For now, images are static - just show a message
+    alert("Image upload functionality will be implemented in a future update.");
 
-    // Optimistically update UI
-    setEditedImages((prev) => [...prev, ...newImageUrls]);
-
-    try {
-      // Simulate API call to update service with new image URLs
-      // In a real scenario, `uploadServiceImage` would return the permanent URL
-      // await uploadServiceImage(service.id, files);
-      // const updatedServiceData = await getService(service.id); // Re-fetch to get permanent URLs
-      // if (updatedServiceData) setService(updatedServiceData);
-
-      // For this example, we'll just use the temporary URLs
-      await updateServiceDetails(service.id, {
-        images: [...(service.images || []), ...newImageUrls], // Append new temporary URLs
-      });
-      setService((prev) =>
-        prev
-          ? { ...prev, images: [...(prev.images || []), ...newImageUrls] }
-          : prev,
-      );
-    } catch (err) {
-      console.error("Failed to upload images:", err);
-      alert("Failed to upload images. Please try again.");
-      // Revert optimistic update if API call fails
-      setEditedImages(service.images || []);
-    }
+    // Reset the input
+    event.target.value = "";
   };
 
   const handleRemoveImage = async (indexToRemove: number) => {
     if (!service) return;
 
-    const updatedImages = editedImages.filter(
-      (_, index) => index !== indexToRemove,
+    // For now, images are static - just show a message
+    alert(
+      "Image removal functionality will be implemented in a future update.",
     );
-    setEditedImages(updatedImages); // Optimistic update
-
-    try {
-      await updateServiceDetails(service.id, { images: updatedImages });
-      setService((prev) => (prev ? { ...prev, images: updatedImages } : prev));
-    } catch (err) {
-      console.error("Failed to remove image:", err);
-      alert("Failed to remove image. Please try again.");
-      setEditedImages(service.images || []); // Revert on failure
-    }
   };
 
   const handleSaveImages = async () => {
-    // If you're doing an actual upload on `handleImageUpload` and `handleRemoveImage`,
-    // this save might just be to confirm the state. If you collect files and only upload here,
-    // this is where the upload logic goes.
     setEditImages(false);
-    // The `service` state should already be updated by `handleImageUpload` and `handleRemoveImage`
+    // Images are static for now
   };
 
   const handleCancelImages = useCallback(() => {
@@ -694,55 +653,27 @@ const ProviderServiceDetailPage: React.FC = () => {
   ) => {
     if (!event.target.files || !service) return;
 
-    const files = Array.from(event.target.files);
-    // Simulate getting certification names/URLs
-    const newCertNames = files.map((file) => file.name);
+    // For now, certifications are static - just show a message
+    alert(
+      "Certification upload functionality will be implemented in a future update.",
+    );
 
-    setEditedCertifications((prev) => [...prev, ...newCertNames]);
-
-    try {
-      // Simulate API call
-      await updateServiceDetails(service.id, {
-        certifications: [...(service.certifications || []), ...newCertNames],
-      });
-      setService((prev) =>
-        prev
-          ? {
-              ...prev,
-              certifications: [...(prev.certifications || []), ...newCertNames],
-            }
-          : prev,
-      );
-    } catch (err) {
-      console.error("Failed to upload certifications:", err);
-      alert("Failed to upload certifications. Please try again.");
-      setEditedCertifications(service.certifications || []);
-    }
+    // Reset the input
+    event.target.value = "";
   };
 
   const handleRemoveCertification = async (indexToRemove: number) => {
     if (!service) return;
 
-    const updatedCerts = editedCertifications.filter(
-      (_, index) => index !== indexToRemove,
+    // For now, certifications are static - just show a message
+    alert(
+      "Certification removal functionality will be implemented in a future update.",
     );
-    setEditedCertifications(updatedCerts);
-
-    try {
-      await updateServiceDetails(service.id, { certifications: updatedCerts });
-      setService((prev) =>
-        prev ? { ...prev, certifications: updatedCerts } : prev,
-      );
-    } catch (err) {
-      console.error("Failed to remove certification:", err);
-      alert("Failed to remove certification. Please try again.");
-      setEditedCertifications(service.certifications || []);
-    }
   };
 
   const handleSaveCertifications = async () => {
     setEditCertifications(false);
-    // Similar to images, actual API calls happen on upload/remove
+    // Certifications are static for now
   };
 
   const handleCancelCertifications = useCallback(() => {
@@ -790,7 +721,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     try {
       if (currentPackageId) {
         // Update existing package
-        await updateServicePackage(service.id, currentPackageId, {
+        await updatePackage({
+          id: currentPackageId,
+          serviceId: service.id,
           title: packageFormTitle,
           description: packageFormDescription,
           price: parsedPrice,
@@ -803,23 +736,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                   title: packageFormTitle,
                   description: packageFormDescription,
                   price: parsedPrice,
-                  updatedAt: Date.now(), // Simulate update time
+                  updatedAt: new Date().toISOString(),
                 }
               : p,
           ),
         );
       } else {
         // Add new package
-        const newPackage: ServicePackage = {
-          id: `pkg_${Date.now()}`, // Simulate a new ID
+        const newPackage = await createPackage({
           serviceId: service.id,
           title: packageFormTitle,
           description: packageFormDescription,
           price: parsedPrice,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        };
-        await addServicePackage(service.id, newPackage);
+        });
         setPackages((prev) => [...prev, newPackage]);
       }
       handleCancelPackageEdit(); // Close the form
@@ -849,7 +778,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (confirmed) {
       setLoading(true); // Indicate deleting
       try {
-        await deleteServicePackage(service.id, packageId);
+        await deletePackage(packageId);
         setPackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
       } catch (err) {
         console.error("Failed to delete package:", err);
