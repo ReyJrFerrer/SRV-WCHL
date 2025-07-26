@@ -64,7 +64,6 @@ const ServiceReviewsPage: React.FC = () => {
     getRatingDistribution,
     formatReviewDate,
     getRelativeTime,
-    refreshReviews,
   } = useServiceReviews(serviceId as string);
 
   // Local state for filtering and sorting

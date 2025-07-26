@@ -2,15 +2,6 @@
  * This adapter converts React Native image objects to strings for Next.js compatibility
  */
 
-interface RNImageObject {
-  uri: string;
-  __packager_asset: boolean;
-  width?: number;
-  height?: number;
-  scale?: number;
-  // Add other potential properties of RN image objects
-}
-
 // In serviceDataAdapter.ts
 export function adaptServiceData(services: any[]) {
   return services.map((service) => {

@@ -1337,7 +1337,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         className="h-full w-full object-cover"
                       />
                       <button
-                        onClick={() => handleRemoveImage(index)}
+                        onClick={() => handleRemoveImage()}
                         className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                         aria-label="Remove image"
                       >
@@ -1451,7 +1451,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                     >
                       <span>{certName}</span>
                       <button
-                        onClick={() => handleRemoveCertification(index)}
+                        onClick={() => handleRemoveCertification()}
                         className="rounded-full p-1 text-red-600 hover:bg-red-100"
                         aria-label="Remove certification"
                       >
