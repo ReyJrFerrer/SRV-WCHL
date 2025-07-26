@@ -65,7 +65,10 @@ const SettingsPage: React.FC = () => {
                     <div className="mr-4 h-14 w-14 animate-pulse rounded-full bg-gray-200" />
                   ) : (
                     <img
-                      src={profile?.profilePicture?.imageUrl || "/default.svg"}
+                      src={
+                        profile?.profilePicture?.imageUrl ||
+                        "/default-client.svg"
+                      }
                       alt="Profile"
                       className="mr-4 h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow"
                     />

@@ -323,7 +323,7 @@ const ServiceDetailPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 pb-40">
       <div className="relative h-60 w-full">
         <img
-          src={service.heroImage || "/../default.svg"}
+          src={service.heroImage || "/../default-client.svg"}
           alt={name}
           className="h-full w-full object-cover"
         />
@@ -350,7 +350,7 @@ const ServiceDetailPage: React.FC = () => {
               <div className="mb-4 flex items-center">
                 <div className="relative mr-4 h-16 w-16 overflow-hidden rounded-full border-2 border-white">
                   <img
-                    src={providerAvatar || "/../default.svg"}
+                    src={providerAvatar || "/../default-client.svg"}
                     alt={providerName}
                     className="h-full w-full object-cover"
                   />

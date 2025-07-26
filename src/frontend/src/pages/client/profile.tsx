@@ -292,7 +292,9 @@ const ClientProfilePage: React.FC = () => {
     if (profile) {
       setName(profile.name);
       setPhone(profile.phone || "");
-      setPreviewImage(profile.profilePicture?.imageUrl || "/default.svg");
+      setPreviewImage(
+        profile.profilePicture?.imageUrl || "/default-client.svg",
+      );
     }
   }, [profile]);
 
@@ -363,11 +365,12 @@ const ClientProfilePage: React.FC = () => {
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
                   <img
-                    src={previewImage || "/default.svg"}
+                    src={previewImage || "/default-client.svg"}
                     alt="Profile Picture"
                     className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/default.svg";
+                      (e.target as HTMLImageElement).src =
+                        "/default-client.svg";
                     }}
                   />
                   {isEditing && (

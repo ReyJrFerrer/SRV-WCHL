@@ -401,7 +401,7 @@ const ServiceReviewsPage: React.FC = () => {
                       <img
                         src={
                           review.clientProfile.profilePicture.imageUrl ||
-                          "/default.svg"
+                          "/default-client.svg"
                         }
                         alt={review.clientName || "Client"}
                         className="h-full w-full object-cover"
