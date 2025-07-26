@@ -10,9 +10,25 @@ dotenv.config({ path: "../../.env" });
 
 export default defineConfig({
   root: __dirname,
+  base: "./",
   build: {
     outDir: "dist/",
     emptyOutDir: true,
+    assetsDir: "assets",
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          // Keep original structure for images and fonts
+          if (assetInfo.name?.match(/\.(png|jpe?g|svg|gif|webp)$/)) {
+            return "images/[name][extname]";
+          }
+          if (assetInfo.name?.match(/\.(woff2?|eot|ttf|otf)$/)) {
+            return "fonts/[name][extname]";
+          }
+          return "assets/[name]-[hash][extname]";
+        },
+      },
+    },
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -27,9 +43,24 @@ export default defineConfig({
       "/api": {
         target: "http://127.0.0.1:4943",
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("error", (err) => {
+            console.log("proxy error", err);
+          });
+          proxy.on("proxyReq", (_proxyReq, req) => {
+            console.log("Sending Request to the Target:", req.method, req.url);
+          });
+          proxy.on("proxyRes", (proxyRes, req) => {
+            console.log(
+              "Received Response from the Target:",
+              proxyRes.statusCode,
+              req.url,
+            );
+          });
+        },
       },
     },
-    allowedHosts: [],
+    allowedHosts: true,
   },
   plugins: [
     react(),
