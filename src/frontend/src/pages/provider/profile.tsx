@@ -9,7 +9,8 @@ import {
   CurrencyEuroIcon,
   CalendarIcon,
   ArrowPathRoundedSquareIcon,
-  ChevronRightIcon, // Added for the switch button
+  ChevronRightIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
 import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
@@ -68,15 +69,49 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
 };
 
 // Trust Level Badge Component
-const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
+interface TrustLevelBadgeProps {
+  trustLevel: string;
+  onInfoClick?: () => void;
+  infoOpen?: boolean;
+}
+const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
+  trustLevel,
+  onInfoClick,
+  infoOpen,
+}) => {
   const getTrustLevelConfig = (level: string) => {
     switch (level) {
       case "New":
         return {
-          color: "bg-gray-100 text-gray-800 border-gray-300",
+          color: "bg-blue-50 text-blue-900 border-blue-200",
           icon: "🆕",
-          description:
-            "New provider - Welcome to SRV! Complete your first service booking to start building your professional reputation.",
+          description: (
+            <>
+              <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-blue-700">
+                <span className="inline-block text-2xl">🎉</span> Welcome to
+                SRV!
+                {onInfoClick && (
+                  <button
+                    type="button"
+                    aria-label="Show info about reputation score"
+                    className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    onClick={onInfoClick}
+                  >
+                    <InformationCircleIcon
+                      className={`h-5 w-5 text-blue-500 transition-transform ${infoOpen ? "rotate-90" : ""}`}
+                    />
+                  </button>
+                )}
+              </span>
+              <span className="mb-1 block text-sm font-medium text-blue-800">
+                New provider
+              </span>
+              <span className="block text-gray-700">
+                Complete your first service booking to start building your
+                professional reputation.
+              </span>
+            </>
+          ),
         };
       case "Low":
         return {
@@ -125,9 +160,48 @@ const TrustLevelBadge: React.FC<{ trustLevel: string }> = ({ trustLevel }) => {
         <span className="mr-2">{config.icon}</span>
         {trustLevel} Trust
       </div>
-      <p className="mt-2 max-w-sm text-center text-xs leading-relaxed text-gray-600">
-        {config.description}
-      </p>
+      <div className="mt-3 flex w-full max-w-md flex-col items-center">
+        {trustLevel === "New" ? (
+          <div className="w-full rounded-lg border border-blue-100 bg-blue-50 p-4 text-center shadow-sm">
+            {config.description}
+          </div>
+        ) : (
+          <p className="max-w-sm text-center text-xs leading-relaxed text-gray-600">
+            {config.description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Collapsible About Reputation Info Section
+interface AboutReputationInfoProps {
+  show: boolean;
+  reputationDisplay: any;
+}
+const AboutReputationInfo: React.FC<AboutReputationInfoProps> = ({
+  show,
+  reputationDisplay,
+}) => {
+  if (!show) return null;
+  return (
+    <div className="mx-auto mt-2 max-w-md">
+      <div className="animate-fade-in rounded-lg border border-gray-200 bg-gray-50 p-4 text-center shadow-sm">
+        <span className="mb-1 block text-sm text-gray-600">
+          Your reputation reflects your professionalism and service quality on
+          the platform. Higher scores and trust levels attract more clients and
+          build stronger business relationships.
+        </span>
+        {reputationDisplay && reputationDisplay.bookings > 0 && (
+          <span className="mt-1 block text-xs text-gray-500">
+            Based on {reputationDisplay.bookings} completed service
+            {reputationDisplay.bookings !== 1 ? "s" : ""}
+            {reputationDisplay.rating &&
+              ` with ${reputationDisplay.rating.toFixed(1)}★ average rating`}
+          </span>
+        )}
+      </div>
     </div>
   );
 };
@@ -240,6 +314,7 @@ const SPProfilePage: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showAboutInfo, setShowAboutInfo] = useState(false);
 
   // Get reputation score with fallback for display
   const reputationDisplay = getReputationDisplay();
@@ -253,7 +328,9 @@ const SPProfilePage: React.FC = () => {
     if (profile) {
       setName(profile.name);
       setPhone(profile.phone || "");
-      setPreviewImage(profile.profilePicture?.imageUrl || "/default.svg");
+      setPreviewImage(
+        profile.profilePicture?.imageUrl || "/default-provider.svg",
+      );
     }
   }, [profile]);
 
@@ -288,9 +365,9 @@ const SPProfilePage: React.FC = () => {
     }
   };
 
-  const handleSwitchToProvider = () => {
+  const handleSwitchToClient = () => {
     // Placeholder function for future implementation
-    console.log("Attempting to switch to Service Provider mode...");
+    console.log("Attempting to switch to Client mode...");
     alert("Feature coming soon!");
   };
 
@@ -424,18 +501,18 @@ const SPProfilePage: React.FC = () => {
               </div>
             </div>
             {/* --- Switch to SRVice Provider Button --- */}
-            <div className="rounded-lg bg-yellow-300 shadow-sm">
+            <div className="rounded-lg bg-blue-600 text-white shadow-sm">
               <button
-                onClick={handleSwitchToProvider}
-                className="group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors hover:bg-blue-600"
+                onClick={handleSwitchToClient}
+                className="group flex w-full items-center justify-between rounded-lg p-4 text-left text-black transition-colors hover:bg-yellow-300"
               >
                 <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-black group-hover:text-white" />
-                  <span className="text-md font-medium text-gray-800 group-hover:text-white">
-                    Switch into SRVice Provider
+                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-white group-hover:text-black" />
+                  <span className="text-md font-medium text-white group-hover:text-black">
+                    Switch into Client Mode
                   </span>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+                <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
               </button>
             </div>
           </div>
@@ -496,24 +573,32 @@ const SPProfilePage: React.FC = () => {
                   </div>
                   {/* Trust Level Badge */}
                   {reputationDisplay && (
-                    <TrustLevelBadge trustLevel={reputationDisplay.level} />
+                    <>
+                      <TrustLevelBadge
+                        trustLevel={reputationDisplay.level}
+                        onInfoClick={
+                          reputationDisplay.level === "New"
+                            ? () => setShowAboutInfo((v) => !v)
+                            : undefined
+                        }
+                        infoOpen={
+                          reputationDisplay.level === "New"
+                            ? showAboutInfo
+                            : undefined
+                        }
+                      />
+                      {reputationDisplay.level === "New" && (
+                        <AboutReputationInfo
+                          show={showAboutInfo}
+                          reputationDisplay={reputationDisplay}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               )}
 
-              <p className="mx-auto mt-4 max-w-md text-center text-sm text-gray-500">
-                Your reputation reflects your professionalism and service
-                quality on the platform. Higher scores and trust levels attract
-                more clients and build stronger business relationships.
-                {reputationDisplay && reputationDisplay.bookings > 0 && (
-                  <span className="mt-1 block text-xs">
-                    Based on {reputationDisplay.bookings} completed service
-                    {reputationDisplay.bookings !== 1 ? "s" : ""}
-                    {reputationDisplay.rating &&
-                      ` with ${reputationDisplay.rating.toFixed(1)}★ average rating`}
-                  </span>
-                )}
-              </p>
+              {/* AboutReputationInfo is now shown only for New trust level above */}
               <div className="mt-6 border-t border-gray-200 pt-6">
                 <ClientStats />
               </div>
