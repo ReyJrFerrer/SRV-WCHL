@@ -208,7 +208,7 @@ const ServiceDetailPage: React.FC = () => {
           const fetchedPackages = await getServicePackages(service.id);
           setPackages(fetchedPackages);
         } catch (error) {
-          console.error("Failed to fetch service packages:", error);
+          // Failed to fetch service packages
         } finally {
           setLoadingPackages(false);
         }
@@ -248,11 +248,12 @@ const ServiceDetailPage: React.FC = () => {
       );
 
       if (existingConversation) {
-        // Navigate to existing conversation
-        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+        // Navigate to existing conversation, use providerId (Principal) as route param
+        navigate(`/client/chat/${service.providerId}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
+            otherUserImage: service.providerAvatar,
           },
         });
       } else {
@@ -263,17 +264,17 @@ const ServiceDetailPage: React.FC = () => {
         );
 
         if (newConversation) {
-          // Navigate to new conversation
-          navigate(`/client/chat/${newConversation.id}`, {
+          // Navigate to new conversation, use providerId (Principal) as route param
+          navigate(`/client/chat/${service.providerId}`, {
             state: {
               conversationId: newConversation.id,
               otherUserName: service.providerName,
+              otherUserImage: service.providerAvatar,
             },
           });
         }
       }
     } catch (error) {
-      console.error("Failed to handle chat:", error);
       setChatErrorMessage(
         error instanceof Error
           ? error.message
