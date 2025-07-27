@@ -70,6 +70,14 @@ const BottomNavigation: React.FC = () => {
                 key={item.label}
                 to={item.to}
                 className="group relative flex h-16 flex-col items-center justify-center px-3 hover:bg-gray-50"
+                onClick={(e) => {
+                  if (isActive) {
+                    e.preventDefault();
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 120);
+                  }
+                }}
                 onMouseEnter={() => {
                   if (!isActive)
                     setIconSrc(
@@ -94,11 +102,11 @@ const BottomNavigation: React.FC = () => {
                   <img
                     src={iconSrc}
                     alt={item.label}
-                    className={
+                    className={`transition-all duration-300 ease-in-out ${
                       isActive
-                        ? "transition-all"
-                        : "mb-1 h-7 w-7 transition-all"
-                    }
+                        ? "scale-110 drop-shadow-lg"
+                        : "mb-1 h-7 w-7 group-hover:scale-105 group-hover:drop-shadow-md"
+                    }`}
                     style={
                       isActive
                         ? {
@@ -121,13 +129,19 @@ const BottomNavigation: React.FC = () => {
                   />
                 </div>
                 {/* Hide label when selected */}
-                {!isActive && (
-                  <span
-                    className={`text-xs text-blue-900 group-hover:text-yellow-500`}
-                  >
-                    {item.label}
-                  </span>
-                )}
+                <span
+                  className={`text-xs transition duration-300 ease-in-out ${
+                    isActive
+                      ? "scale-105 font-bold text-blue-900"
+                      : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
+                  }`}
+                  style={{
+                    opacity: isActive ? 1 : 0.9,
+                    transform: isActive ? "scale(1.05)" : undefined,
+                  }}
+                >
+                  {item.label}
+                </span>
                 {/* Notification badge */}
                 {item.count > 0 && (
                   <span className="absolute top-1 right-5 block h-2 w-2 rounded-full bg-red-500"></span>
@@ -141,9 +155,25 @@ const BottomNavigation: React.FC = () => {
               key={item.label}
               to={item.to}
               className="group relative inline-flex h-16 flex-col items-center justify-center px-3 hover:bg-gray-50"
+              onClick={(e) => {
+                if (isActive) {
+                  e.preventDefault();
+                  setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }, 120);
+                }
+              }}
             >
               <span
-                className={`text-xs ${isActive ? "text-blue-600" : "text-gray-500 group-hover:text-yellow-500"}`}
+                className={`text-xs transition duration-300 ease-in-out ${
+                  isActive
+                    ? "scale-105 font-bold text-blue-900"
+                    : "text-gray-500 group-hover:scale-105 group-hover:text-yellow-500"
+                }`}
+                style={{
+                  opacity: isActive ? 1 : 0.9,
+                  transform: isActive ? "scale(1.05)" : undefined,
+                }}
               >
                 {item.label}
               </span>

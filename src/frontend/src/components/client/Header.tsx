@@ -143,7 +143,11 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-4">
           <Link to="/client/home">
-            <img src="/logo.svg" alt="SRV Logo" className="h-20 w-auto" />
+            <img
+              src="/logo.svg"
+              alt="SRV Logo"
+              className="h-20 w-auto transition-all duration-300 hover:scale-110"
+            />
           </Link>
           <div className="h-8 border-l border-gray-300"></div>
           <div className="text-2xl text-gray-700">
@@ -155,7 +159,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             onClick={handleProfileClick}
             className="group relative rounded-full bg-gray-100 p-3 hover:bg-yellow-100"
           >
-            <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+            <UserCircleIcon className="h-8 w-8 text-blue-700 transition-colors group-hover:text-yellow-500" />
           </button>
         )}
       </div>
@@ -164,7 +168,11 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
       <div className="md:hidden">
         <div className="flex items-center justify-between">
           <Link to="/client/home">
-            <img src="/logo.svg" alt="SRV Logo" className="h-10 w-auto" />
+            <img
+              src="/logo.svg"
+              alt="SRV Logo"
+              className="h-16 w-auto transition-all duration-300 hover:scale-110"
+            />
           </Link>
           {isAuthenticated && (
             <button

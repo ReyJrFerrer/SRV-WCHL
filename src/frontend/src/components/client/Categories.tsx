@@ -99,7 +99,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       [],
     );
 
-    const imageSize = 60;
+    const imageSize = 50; // Fixed size for category images
     const textClass = useMemo(
       () =>
         "text-sm md:text-base font-medium text-gray-700 h-12 flex items-center text-center",
@@ -150,7 +150,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                 alt={category.name}
                 width={imageSize}
                 height={imageSize}
-                className="mb-2 object-cover"
+                className="mb-2 object-cover transition-transform duration-200 ease-in-out hover:scale-110"
               />
               <span className={textClass}>
                 {getCategoryDisplayName(category.name)}
@@ -168,7 +168,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                 alt={mobileExpanded ? "Less Categories" : "More Categories"}
                 width={imageSize}
                 height={imageSize}
-                className={`mb-2 object-cover ${mobileExpanded ? "rotate-180 transform" : ""}`}
+                className={`mb-2 object-cover transition-transform duration-200 ease-in-out hover:scale-110 ${mobileExpanded ? "rotate-180 transform" : ""}`}
               />
               <span className={textClass}>
                 {mobileExpanded ? "Bawasan" : "Iba pa"}
@@ -191,7 +191,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                   alt={category.name}
                   width={imageSize}
                   height={imageSize}
-                  className="mb-2 object-cover"
+                  className="mb-2 object-cover transition-transform duration-200 ease-in-out hover:scale-110"
                 />
                 <span className={textClass}>
                   {getCategoryDisplayName(category.name)}
