@@ -167,25 +167,25 @@ const ClientStats: React.FC = () => {
       name: "Total Bookings",
       value: formattedStats.totalBookings,
       icon: BriefcaseIcon,
-      bg: "bg-yellow-100 text-yellow-400",
+      bg: "bg-blue-100 text-blue-700",
     },
     {
       name: "Services Completed",
       value: formattedStats.servicesCompleted,
       icon: CheckBadgeIcon,
-      bg: "bg-yellow-100 text-yellow-400",
+      bg: "bg-blue-100 text-blue-700",
     },
     {
       name: "Total Spent",
       value: formattedStats.totalSpent,
       icon: CurrencyEuroIcon,
-      bg: "bg-yellow-100 text-yellow-400",
+      bg: "bg-blue-100 text-blue-700",
     },
     {
       name: "Member Since",
       value: formattedStats.memberSince,
       icon: CalendarIcon,
-      bg: "bg-yellow-100 text-yellow-400",
+      bg: "bg-blue-100 text-blue-700",
     },
   ];
 
@@ -231,7 +231,7 @@ const ClientStats: React.FC = () => {
       <h3 className="mb-4 text-center text-xl font-bold tracking-tight text-black">
         Your Booking & Activity Summary
       </h3>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         {stats.map((stat) => {
           const isMemberSince = stat.name === "Member Since";
           return (
