@@ -4,6 +4,7 @@ import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
+import authCanisterService from "../../../services/authCanisterService";
 
 const ConversationPage: React.FC = () => {
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
@@ -26,9 +27,12 @@ const ConversationPage: React.FC = () => {
 
   const [messageText, setMessageText] = useState("");
   const [otherUserName, setOtherUserName] = useState<string>("");
+  const [otherUserImage, setOtherUserImage] =
+    useState<string>(DEFAULT_USER_IMAGE);
 
   // Get conversation info from location state or use defaults
   useEffect(() => {
+    let isMounted = true;
     if (location.state?.otherUserName) {
       setOtherUserName(location.state.otherUserName);
     } else if (location.state?.conversationId) {
@@ -36,9 +40,34 @@ const ConversationPage: React.FC = () => {
     } else {
       setOtherUserName(providerId || "Provider");
     }
-    // Optionally set otherUserImage from location.state if available
-    // If you want to use image in header, you can add a state for it
-    // Example: setOtherUserImage(location.state?.otherUserImage || DEFAULT_USER_IMAGE);
+    const navImage = location.state?.otherUserImage;
+    const isDefault = !navImage || navImage === DEFAULT_USER_IMAGE;
+    setOtherUserImage(isDefault ? DEFAULT_USER_IMAGE : navImage);
+
+    // Fetch provider profile if providerId exists, is a valid Principal, and no real image in navigation state
+    const principalRegex = /^[a-z0-9\-]{27,63}$/i;
+    if (isDefault && providerId) {
+      if (principalRegex.test(providerId)) {
+        authCanisterService
+          .getProfile(providerId)
+          .then((profile) => {
+            if (
+              isMounted &&
+              profile &&
+              profile.profilePicture &&
+              profile.profilePicture.imageUrl
+            ) {
+              setOtherUserImage(profile.profilePicture.imageUrl);
+            }
+          })
+          .catch(() => {
+            /* ignore errors, fallback to default already set */
+          });
+      }
+    }
+    return () => {
+      isMounted = false;
+    };
   }, [location.state, providerId]);
 
   // Load conversation when conversationId changes
@@ -60,7 +89,7 @@ const ConversationPage: React.FC = () => {
           : currentConversation.clientId;
 
       // Fetch the other user's name
-      getUserName(otherUserId).then(setOtherUserName).catch(console.error);
+      getUserName(otherUserId).then(setOtherUserName);
     }
   }, [currentConversation, identity, getUserName]);
 
@@ -97,9 +126,7 @@ const ConversationPage: React.FC = () => {
 
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    }
+    } catch {}
   };
 
   // Format timestamp for display
@@ -118,16 +145,16 @@ const ConversationPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col bg-gray-50">
-        <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
+      <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
+        <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full p-2 hover:bg-blue-100"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+            <ArrowLeftIcon className="h-6 w-6 text-blue-700" />
           </button>
           <div className="ml-3">
-            <h1 className="text-lg font-semibold text-gray-900">Error</h1>
+            <h1 className="text-lg font-bold text-blue-900">Error</h1>
           </div>
         </header>
         <main className="flex flex-1 items-center justify-center">
@@ -149,35 +176,25 @@ const ConversationPage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
+    <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
+      <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
         <button
           onClick={() => navigate(-1)}
-          className="rounded-full p-2 hover:bg-gray-100"
+          className="rounded-full p-2 hover:bg-yellow-100"
         >
-          <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+          <ArrowLeftIcon className="h-6 w-6 text-blue-700 hover:text-yellow-600" />
         </button>
         <div className="ml-3 flex items-center">
-          <div className="relative h-10 w-10">
-            {location.state?.otherUserImage ? (
-              <img
-                src={location.state.otherUserImage}
-                alt={otherUserName}
-                className="h-10 w-10 rounded-full border border-gray-200 object-cover"
-              />
-            ) : (
-              <img
-                src={DEFAULT_USER_IMAGE}
-                alt="Default user"
-                className="h-10 w-10 rounded-full border border-gray-200 object-cover"
-              />
-            )}
+          <div className="relative h-11 w-11">
+            <img
+              src={otherUserImage}
+              alt={otherUserName}
+              className="h-11 w-11 rounded-full border-2 border-blue-100 object-cover shadow"
+            />
           </div>
           <div className="ml-3">
-            <h1 className="text-lg font-semibold text-gray-900">
-              {otherUserName}
-            </h1>
+            <h1 className="text-lg font-bold text-black">{otherUserName}</h1>
             <p className="flex items-center text-xs text-gray-500">
               {currentConversation ? "Active" : "Loading..."}
               {backgroundLoading && (
@@ -195,7 +212,7 @@ const ConversationPage: React.FC = () => {
       <main className="flex-1 space-y-4 overflow-y-auto p-4 pb-32">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-gray-500">
+            <p className="text-lg text-gray-500 italic">
               No messages yet. Start the conversation!
             </p>
           </div>
@@ -208,30 +225,22 @@ const ConversationPage: React.FC = () => {
                 className={`flex items-end gap-2 ${fromCurrentUser ? "justify-end" : "justify-start"}`}
               >
                 {!fromCurrentUser && (
-                  <div className="relative h-8 w-8 flex-shrink-0">
-                    {location.state?.otherUserImage ? (
-                      <img
-                        src={location.state.otherUserImage}
-                        alt={otherUserName}
-                        className="h-8 w-8 rounded-full border border-gray-200 object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={DEFAULT_USER_IMAGE}
-                        alt="Default user"
-                        className="h-8 w-8 rounded-full border border-gray-200 object-cover"
-                      />
-                    )}
+                  <div className="relative h-9 w-9 flex-shrink-0">
+                    <img
+                      src={otherUserImage}
+                      alt={otherUserName}
+                      className="h-9 w-9 rounded-full border-2 border-blue-100 object-cover shadow"
+                    />
                   </div>
                 )}
                 <div
-                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${
+                  className={`max-w-xs rounded-2xl px-5 py-3 shadow-sm md:max-w-md lg:max-w-lg ${
                     fromCurrentUser
                       ? "rounded-br-none bg-blue-600 text-white"
                       : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-base leading-snug">{message.content}</p>
                   <p
                     className={`mt-1 text-right text-xs ${
                       fromCurrentUser ? "text-blue-100" : "text-gray-400"
@@ -248,7 +257,7 @@ const ConversationPage: React.FC = () => {
       </main>
 
       {/* Message Input */}
-      <footer className="fixed bottom-16 left-0 z-20 w-full border-t border-gray-200 bg-white p-3">
+      <footer className="fixed bottom-16 left-0 z-20 w-full border-t border-gray-200 bg-white p-3 shadow-md">
         <form
           onSubmit={handleSendMessage}
           className="mx-auto flex max-w-3xl items-center gap-3"
@@ -260,14 +269,14 @@ const ConversationPage: React.FC = () => {
             placeholder="Type a message..."
             maxLength={500}
             disabled={sendingMessage || !currentConversation}
-            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
+            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 text-base focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={
               sendingMessage || !messageText.trim() || !currentConversation
             }
-            className="rounded-full bg-blue-600 p-3 text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+            className="rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
           >
             <PaperAirplaneIcon className="h-5 w-5" />
           </button>

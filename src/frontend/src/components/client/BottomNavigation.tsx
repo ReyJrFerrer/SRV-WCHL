@@ -1,12 +1,5 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  HomeIcon,
-  ClipboardDocumentListIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
-  BellIcon,
-  Cog6ToothIcon,
-} from "@heroicons/react/24/solid";
 
 // Assuming these hooks are available in your new project structure
 // You may need to adjust the import paths
@@ -20,29 +13,29 @@ const BottomNavigation: React.FC = () => {
   const { unreadChatCount } = useChatNotifications();
 
   const navItems = [
-    { to: "/client/home", label: "Home", icon: HomeIcon, count: 0 },
+    { to: "/client/home", label: "Home", icon: null, count: 0 },
     {
       to: "/client/booking",
-      label: "Bookings",
-      icon: ClipboardDocumentListIcon,
+      label: "booking",
+      icon: null, // will use custom SVG
       count: 0,
     },
     {
       to: "/client/chat",
-      label: "Chat",
-      icon: ChatBubbleOvalLeftEllipsisIcon,
+      label: "chat",
+      icon: null, // will use custom SVG
       count: unreadChatCount,
     },
     {
       to: "/client/notifications",
-      label: "Notifications",
-      icon: BellIcon,
+      label: "notifications",
+      icon: null, // will use custom SVG
       count: unreadCount,
     },
     {
       to: "/client/settings",
-      label: "Settings",
-      icon: Cog6ToothIcon,
+      label: "settings",
+      icon: null, // will use custom SVG
       count: 0,
     },
   ];
@@ -51,20 +44,104 @@ const BottomNavigation: React.FC = () => {
     <div className="fixed bottom-0 left-0 z-50 h-16 w-full border-t border-gray-200 bg-white">
       <div className="mx-auto grid h-full max-w-lg grid-cols-5 font-medium">
         {navItems.map((item) => {
-          // Check if the current URL path starts with the link's path
           const isActive = location.pathname.startsWith(item.to);
-          const IconComponent = item.icon;
-
+          // For Home and Bookings, use custom SVGs for default, hover, and selected
+          if (
+            ["Home", "booking", "settings", "notifications", "chat"].includes(
+              item.label,
+            )
+          ) {
+            // Use React state to manage the icon src
+            const [iconSrc, setIconSrc] = React.useState(
+              isActive
+                ? `/images/navigation icons/${item.label.toLowerCase()}-selected.svg`
+                : `/images/navigation icons/${item.label.toLowerCase()}.svg`,
+            );
+            // Update icon if route changes
+            React.useEffect(() => {
+              setIconSrc(
+                isActive
+                  ? `/images/navigation icons/${item.label.toLowerCase()}-selected.svg`
+                  : `/images/navigation icons/${item.label.toLowerCase()}.svg`,
+              );
+            }, [isActive, item.label]);
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="group relative flex h-16 flex-col items-center justify-center px-3 hover:bg-gray-50"
+                onMouseEnter={() => {
+                  if (!isActive)
+                    setIconSrc(
+                      `/images/navigation icons/${item.label.toLowerCase()}-hover.svg`,
+                    );
+                }}
+                onMouseLeave={() => {
+                  if (!isActive)
+                    setIconSrc(
+                      `/images/navigation icons/${item.label.toLowerCase()}.svg`,
+                    );
+                }}
+              >
+                <div
+                  className={
+                    isActive
+                      ? "flex w-full flex-1 items-center justify-center"
+                      : ""
+                  }
+                  style={isActive ? { minHeight: 0, minWidth: 0 } : {}}
+                >
+                  <img
+                    src={iconSrc}
+                    alt={item.label}
+                    className={
+                      isActive
+                        ? "transition-all"
+                        : "mb-1 h-7 w-7 transition-all"
+                    }
+                    style={
+                      isActive
+                        ? {
+                            height: "56px",
+                            width: "56px",
+                            maxHeight: "64px",
+                            maxWidth: "64px",
+                            margin: "0 auto",
+                            pointerEvents: "none",
+                          }
+                        : {
+                            height: "28px",
+                            width: "28px",
+                            maxHeight: "28px",
+                            maxWidth: "28px",
+                            pointerEvents: "none",
+                          }
+                    }
+                    draggable={false}
+                  />
+                </div>
+                {/* Hide label when selected */}
+                {!isActive && (
+                  <span
+                    className={`text-xs text-blue-900 group-hover:text-yellow-500`}
+                  >
+                    {item.label}
+                  </span>
+                )}
+                {/* Notification badge */}
+                {item.count > 0 && (
+                  <span className="absolute top-1 right-5 block h-2 w-2 rounded-full bg-red-500"></span>
+                )}
+              </Link>
+            );
+          }
+          // All other nav items
           return (
-            // Use the Link component from react-router-dom
             <Link
               key={item.label}
               to={item.to}
-              className="group relative inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50"
+              className="group relative inline-flex h-16 flex-col items-center justify-center px-3 hover:bg-gray-50"
             >
-              <IconComponent
-                className={`mb-1 h-6 w-6 ${isActive ? "text-blue-600" : "text-gray-500 group-hover:text-yellow-500"}`}
-              />
               <span
                 className={`text-xs ${isActive ? "text-blue-600" : "text-gray-500 group-hover:text-yellow-500"}`}
               >

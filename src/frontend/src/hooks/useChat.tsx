@@ -13,6 +13,7 @@ export interface EnhancedConversationSummary
   extends FrontendConversationSummary {
   otherUserName?: string;
   otherUserId: string;
+  otherUserImage?: string; // provider/client profile image
 }
 
 /**
@@ -98,10 +99,26 @@ export const useChat = () => {
             // Fetch the other user's name
             const otherUserName = await getUserName(otherUserId);
 
+            // Fetch the other user's profile for image
+            let otherUserImage: string | undefined = undefined;
+            try {
+              const profile = await authCanisterService.getProfile(otherUserId);
+              if (
+                profile &&
+                profile.profilePicture &&
+                profile.profilePicture.imageUrl
+              ) {
+                otherUserImage = profile.profilePicture.imageUrl;
+              }
+            } catch (e) {
+              // ignore image fetch errors, fallback to undefined
+            }
+
             return {
               ...summary,
               otherUserId,
               otherUserName,
+              otherUserImage,
             };
           },
         ),

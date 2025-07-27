@@ -73,7 +73,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   if (error) {
     return (
       <div className={`p-4 ${className}`}>
-        <h2 className="mb-4 text-lg font-bold sm:text-xl">Magbook Na!</h2>
+        <h2 className="mb-4 text-lg font-bold sm:text-xl">Book Now!</h2>
         <p className="text-red-500">Error loading services: {error.message}</p>
       </div>
     );
@@ -82,7 +82,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   return (
     <div className={`${className}`}>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold sm:text-xl">Magbook Na!</h2>
+        <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
       {services.length === 0 ? (

@@ -5,7 +5,6 @@ import {
   CalendarDaysIcon,
   MapPinIcon,
   CurrencyDollarIcon,
-  UserCircleIcon,
   ChatBubbleLeftRightIcon,
   XCircleIcon,
   StarIcon,
@@ -406,19 +405,14 @@ const BookingDetailsPage: React.FC = () => {
             </h3>
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0">
-                {providerProfile?.profilePicture ? (
-                  <img
-                    src={
-                      providerProfile.profilePicture.imageUrl ||
-                      providerProfile.profilePicture.thumbnailUrl ||
-                      ""
-                    }
-                    alt={providerProfile.name || "Provider"}
-                    className="h-16 w-16 rounded-full object-cover"
-                  />
-                ) : (
-                  <UserCircleIcon className="h-16 w-16 text-gray-300" />
-                )}
+                <img
+                  src={
+                    providerProfile?.profilePicture?.imageUrl ||
+                    "/default-provider.svg"
+                  }
+                  alt={providerProfile?.name || "Provider"}
+                  className="h-16 w-16 rounded-full object-cover"
+                />
               </div>
               <div className="flex-1">
                 <p className="font-bold text-gray-800">

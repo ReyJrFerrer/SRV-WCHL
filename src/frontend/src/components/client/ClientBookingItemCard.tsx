@@ -73,7 +73,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   // Extract booking data with fallbacks
   const serviceTitle = booking.serviceName;
   const serviceImage =
-    booking.providerProfile?.profilePicture?.imageUrl || "/default.svg";
+    booking.providerProfile?.profilePicture?.imageUrl ||
+    "/default-provider.svg";
   const providerName = booking.providerProfile?.name;
 
   const bookingLocation =
@@ -270,7 +271,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 alt={serviceTitle!}
                 className="h-full w-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/default.svg";
+                  (e.target as HTMLImageElement).src = "/default-provider.svg";
                 }}
               />
             </div>
@@ -342,7 +343,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 onClick={handleBookAgainClick}
                 className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 sm:w-auto"
               >
-                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Magbook ulit
+                <ArrowPathIcon className="mr-1.5 h-4 w-4" /> Book Again
               </button>
             )}
 

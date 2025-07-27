@@ -48,18 +48,34 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           );
           const data = await res.json();
           if (data && data.address) {
-            const { road, suburb, city, town, village, county, state } =
-              data.address;
+            const {
+              house_number,
+              building,
+              road,
+              suburb,
+              city,
+              town,
+              village,
+              county,
+              state,
+            } = data.address;
             const province =
               county ||
               state ||
               data.address.region ||
               data.address.province ||
               "";
+            // Compose address with house number/building if available
+            const houseOrBuilding = house_number || building || "";
             const streetPart = road || "";
             const areaPart = suburb || village || "";
             const cityPart = city || town || "";
-            const fullAddress = [streetPart, areaPart, cityPart]
+            const fullAddress = [
+              houseOrBuilding,
+              streetPart,
+              areaPart,
+              cityPart,
+            ]
               .filter(Boolean)
               .join(", ");
             setUserAddress(fullAddress || "Could not determine address");
@@ -189,9 +205,10 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             locationStatus === "unsupported") && (
             <button
               onClick={handleRequestLocation}
-              className="w-10px mt-2 mb-4 rounded-lg bg-yellow-300 px-4 py-3 text-center text-base font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
+              className="mt-2 mb-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-300 to-yellow-400 px-6 py-2 text-base font-bold text-blue-800 shadow-md transition-all hover:scale-105 hover:from-yellow-400 hover:to-yellow-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
             >
-              Share Location
+              <MapPinIcon className="h-5 w-5 text-blue-600" />
+              <span>Share Location</span>
             </button>
           )}
 

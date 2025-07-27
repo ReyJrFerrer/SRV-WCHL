@@ -228,8 +228,8 @@ const ClientStats: React.FC = () => {
 
   return (
     <div className="mt-8">
-      <h3 className="mb-4 text-center text-lg font-semibold tracking-tight text-gray-800">
-        Your Statistics
+      <h3 className="mb-4 text-center text-xl font-bold tracking-tight text-black">
+        Your Booking & Activity Summary
       </h3>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
         {stats.map((stat) => {
@@ -292,7 +292,9 @@ const ClientProfilePage: React.FC = () => {
     if (profile) {
       setName(profile.name);
       setPhone(profile.phone || "");
-      setPreviewImage(profile.profilePicture?.imageUrl || "/default.svg");
+      setPreviewImage(
+        profile.profilePicture?.imageUrl || "/default-client.svg",
+      );
     }
   }, [profile]);
 
@@ -363,11 +365,12 @@ const ClientProfilePage: React.FC = () => {
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
                   <img
-                    src={previewImage || "/default.svg"}
+                    src={previewImage || "/default-client.svg"}
                     alt="Profile Picture"
                     className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/default.svg";
+                      (e.target as HTMLImageElement).src =
+                        "/default-client.svg";
                     }}
                   />
                   {isEditing && (
@@ -482,7 +485,7 @@ const ClientProfilePage: React.FC = () => {
           {/* Right Column: Reputation and Stats */}
           <div className="mt-8 lg:col-span-2 lg:mt-0">
             <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-              <h3 className="mb-6 text-center text-2xl font-bold tracking-tight text-blue-900 drop-shadow-sm">
+              <h3 className="mb-6 text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
                 Your Reputation Score
               </h3>
               {/* Reputation Loading State */}

@@ -11,20 +11,35 @@ import {
   InboxIcon,
 } from "@heroicons/react/24/solid";
 
-// Helper to get the right icon for each notification type
+// Helper to get the right icon for each notification type, with colored backgrounds
 const NotificationIcon: React.FC<{ type: Notification["type"] }> = ({
   type,
 }) => {
+  let icon, bg;
   switch (type) {
     case "booking_accepted":
-      return <CheckCircleIcon className="h-8 w-8 text-green-500" />;
+      icon = <CheckCircleIcon className="h-6 w-6 text-green-600" />;
+      bg = "bg-green-100";
+      break;
     case "booking_declined":
-      return <XCircleIcon className="h-8 w-8 text-red-500" />;
+      icon = <XCircleIcon className="h-6 w-6 text-red-600" />;
+      bg = "bg-red-100";
+      break;
     case "review_reminder":
-      return <StarIcon className="h-8 w-8 text-yellow-500" />;
+      icon = <StarIcon className="h-6 w-6 text-yellow-500" />;
+      bg = "bg-yellow-100";
+      break;
     default:
-      return <BellAlertIcon className="h-8 w-8 text-blue-500" />;
+      icon = <BellAlertIcon className="h-6 w-6 text-blue-600" />;
+      bg = "bg-blue-100";
   }
+  return (
+    <span
+      className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${bg}`}
+    >
+      {icon}
+    </span>
+  );
 };
 
 // Reusable component for a single notification item
@@ -51,7 +66,7 @@ const NotificationItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex cursor-pointer items-start space-x-4 p-4 transition-colors duration-200 ${
+      className={`flex cursor-pointer items-start gap-4 rounded-xl border border-transparent p-4 shadow-sm transition-all duration-200 hover:border-blue-200 ${
         !notification.read
           ? "bg-blue-50 hover:bg-blue-100"
           : "bg-white hover:bg-gray-50"
@@ -60,11 +75,13 @@ const NotificationItem: React.FC<{
       <div className="mt-1 flex-shrink-0">
         <NotificationIcon type={notification.type} />
       </div>
-      <div className="flex-1">
-        <p className="text-sm text-gray-800">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-blue-900">
           {notification.message}{" "}
           {notification.providerName && (
-            <span className="font-bold">{notification.providerName}</span>
+            <span className="font-bold text-blue-700">
+              {notification.providerName}
+            </span>
           )}
           .
         </p>
@@ -120,16 +137,18 @@ const NotificationsPage = () => {
   }, [notifications]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div
-          className={`mx-auto flex max-w-4xl items-center px-4 py-3 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
+          className={`mx-auto flex max-w-3xl items-center px-4 py-4 ${unreadCount > 0 ? "justify-between" : "justify-center"}`}
         >
-          <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+            Notifications
+          </h1>
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+              className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
             >
               <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
               Mark all as read
@@ -152,14 +171,14 @@ const NotificationsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="mx-auto mt-4 max-w-4xl">
-            <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+          <div className="mx-auto mt-6 max-w-2xl px-2 md:px-0">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
-                  <h2 className="border-b bg-blue-500 px-4 py-2 text-sm font-semibold text-white">
+                  <h2 className="border-b bg-gradient-to-r from-blue-500 to-blue-400 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-sm">
                     New
                   </h2>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-blue-100">
                     {unread.map((notif) => (
                       <NotificationItem
                         key={notif.id}
@@ -173,10 +192,10 @@ const NotificationsPage = () => {
               {unread.length > 0 && read.length > 0 && <div className="my-4" />}
               {read.length > 0 && (
                 <section>
-                  <h2 className="bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-800">
+                  <h2 className="bg-gradient-to-r from-gray-200 to-gray-100 px-4 py-2 text-sm font-semibold tracking-wide text-gray-700 shadow-sm">
                     Earlier
                   </h2>
-                  <div className="divide-y divide-gray-200">
+                  <div className="divide-y divide-gray-100">
                     {read.map((notif) => (
                       <NotificationItem
                         key={notif.id}

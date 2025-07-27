@@ -208,7 +208,7 @@ const ServiceDetailPage: React.FC = () => {
           const fetchedPackages = await getServicePackages(service.id);
           setPackages(fetchedPackages);
         } catch (error) {
-          console.error("Failed to fetch service packages:", error);
+          // Failed to fetch service packages
         } finally {
           setLoadingPackages(false);
         }
@@ -248,11 +248,12 @@ const ServiceDetailPage: React.FC = () => {
       );
 
       if (existingConversation) {
-        // Navigate to existing conversation
-        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+        // Navigate to existing conversation, use providerId (Principal) as route param
+        navigate(`/client/chat/${service.providerId}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
+            otherUserImage: service.providerAvatar,
           },
         });
       } else {
@@ -263,17 +264,17 @@ const ServiceDetailPage: React.FC = () => {
         );
 
         if (newConversation) {
-          // Navigate to new conversation
-          navigate(`/client/chat/${newConversation.id}`, {
+          // Navigate to new conversation, use providerId (Principal) as route param
+          navigate(`/client/chat/${service.providerId}`, {
             state: {
               conversationId: newConversation.id,
               otherUserName: service.providerName,
+              otherUserImage: service.providerAvatar,
             },
           });
         }
       }
     } catch (error) {
-      console.error("Failed to handle chat:", error);
       setChatErrorMessage(
         error instanceof Error
           ? error.message
@@ -323,7 +324,7 @@ const ServiceDetailPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 pb-40">
       <div className="relative h-60 w-full">
         <img
-          src={service.heroImage || "/../default.svg"}
+          src={service.heroImage || "/../default-provider.svg"}
           alt={name}
           className="h-full w-full object-cover"
         />
@@ -350,7 +351,7 @@ const ServiceDetailPage: React.FC = () => {
               <div className="mb-4 flex items-center">
                 <div className="relative mr-4 h-16 w-16 overflow-hidden rounded-full border-2 border-white">
                   <img
-                    src={providerAvatar || "/../default.svg"}
+                    src={providerAvatar || "/../default-provider.svg"}
                     alt={providerName}
                     className="h-full w-full object-cover"
                   />
@@ -362,6 +363,19 @@ const ServiceDetailPage: React.FC = () => {
                   <p className="text-sm text-gray-500">
                     {category?.name ?? "General"}
                   </p>
+                  {/* Availability Badge */}
+                  {service &&
+                    service.availability &&
+                    typeof service.availability.isAvailableNow ===
+                      "boolean" && (
+                      <span
+                        className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${service.availability.isAvailableNow ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}
+                      >
+                        {service.availability.isAvailableNow
+                          ? "Available"
+                          : "Not Available"}
+                      </span>
+                    )}
                 </div>
               </div>
               <div className="flex items-center text-sm text-gray-600">

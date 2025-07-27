@@ -42,7 +42,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       ? "mt-0.5 sm:mt-0 sm:ml-2"
       : "sm:ml-2";
     const priceMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
-    const locationMarginClass = !retainMobileLayout ? "mt-0.5 sm:mt-0" : "";
 
     // Helper function to render rating stars
     const renderRatingStars = (rating: number, size: string = "h-3 w-3") => {
@@ -85,17 +84,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           {/* Image container */}
           <div className="aspect-video w-full">
             <img
-              src={service.providerAvatar || "/default.svg"}
+              src={service.providerAvatar || "/default-provider.svg"}
               alt={service.title}
               className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-          {/* Category badge */}
-          {/* {service.category && (
-            <div className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow bg-blue-600">
-              {service.category.name}
-            </div>
-          )} */}
           {/* Availability badge */}
           <div
             className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
@@ -153,6 +146,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                     {service.location.state
                       ? `, ${service.location.state}`
                       : ""}
+                    {service.location.serviceRadius &&
+                      service.location.serviceRadiusUnit && (
+                        <>
+                          {" "}
+                          ( {service.location.serviceRadius}{" "}
+                          {service.location.serviceRadiusUnit} )
+                        </>
+                      )}
                   </span>
                 </div>
               )}
@@ -165,15 +166,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               {`₱${service.price.amount.toFixed(2)}`}
               {/* <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span> */}
             </p>
-            <div
-              className={`flex items-center text-xs text-blue-800 ${locationMarginClass}`}
-            >
-              <MapPinIcon className="mr-0.5 h-3 w-3" />
-              <span>
-                {service.location.serviceRadius}{" "}
-                {service.location.serviceRadiusUnit}
-              </span>
-            </div>
+            {/* Removed service radius from bottom row, now shown with location above */}
           </div>
         </div>
       </Link>
