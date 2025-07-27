@@ -228,8 +228,8 @@ const ClientStats: React.FC = () => {
 
   return (
     <div className="mt-8">
-      <h3 className="mb-4 text-center text-lg font-semibold tracking-tight text-gray-800">
-        Your Statistics
+      <h3 className="mb-4 text-center text-xl font-bold tracking-tight text-black">
+        Your Booking & Activity Summary
       </h3>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
         {stats.map((stat) => {
@@ -485,7 +485,7 @@ const ClientProfilePage: React.FC = () => {
           {/* Right Column: Reputation and Stats */}
           <div className="mt-8 lg:col-span-2 lg:mt-0">
             <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-              <h3 className="mb-6 text-center text-2xl font-bold tracking-tight text-blue-900 drop-shadow-sm">
+              <h3 className="mb-6 text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
                 Your Reputation Score
               </h3>
               {/* Reputation Loading State */}
