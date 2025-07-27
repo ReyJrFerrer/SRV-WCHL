@@ -177,9 +177,9 @@ const Categories: React.FC<CategoriesProps> = React.memo(
           )}
         </div>
 
-        {/* Desktop Layout: Centered, horizontally scrollable row */}
-        <div className="hidden w-full max-w-full overflow-x-hidden md:flex md:justify-center">
-          <div className="flex w-full max-w-full space-x-6 overflow-x-auto pb-4">
+        {/* Desktop Layout: Fit all categories in one row, no extra space */}
+        <div className="hidden w-full md:flex">
+          <div className="flex w-full justify-between gap-2">
             {categories.map((category: ServiceCategory) => (
               <button
                 key={category.id}
