@@ -138,7 +138,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
         </div>
 
         {/* Mobile Layout */}
-        <div className="grid grid-cols-4 gap-2 md:hidden">
+        <div className="grid grid-cols-4 justify-items-center gap-2 md:hidden">
           {categoriesToDisplay.map((category: ServiceCategory) => (
             <button
               key={category.id}
@@ -178,8 +178,8 @@ const Categories: React.FC<CategoriesProps> = React.memo(
         </div>
 
         {/* Desktop Layout: Centered, horizontally scrollable row */}
-        <div className="hidden md:flex md:justify-center">
-          <div className="flex space-x-6 overflow-x-auto pb-4">
+        <div className="hidden w-full max-w-full overflow-x-hidden md:flex md:justify-center">
+          <div className="flex w-full max-w-full space-x-6 overflow-x-auto pb-4">
             {categories.map((category: ServiceCategory) => (
               <button
                 key={category.id}

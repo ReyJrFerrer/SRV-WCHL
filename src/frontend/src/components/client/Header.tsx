@@ -137,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
 
   return (
     <header
-      className={`space-y-4 rounded-lg bg-white p-4 shadow-sm ${className}`}
+      className={`w-full max-w-full space-y-4 rounded-lg bg-white p-4 shadow-sm ${className}`}
     >
       {/* --- Desktop Header --- */}
       <div className="hidden items-center justify-between md:flex">
