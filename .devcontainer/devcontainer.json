@@ -9,7 +9,9 @@
     },
     "5173": {
       "label": "vite",
-      "onAutoForward": "openBrowser"
+      "onAutoForward": "openBrowser",
+      "protocol": "http",
+      "requireLocalPort": false
     },
     "11434": {
       "label": "ollama",
@@ -75,5 +77,9 @@
   },
 
   "features": {},
-  "mounts": []
+  "mounts": [],
+  "appPort": ["5173:5173"],
+  "containerEnv": {
+    "VITE_HOST": "0.0.0.0"
+  }
 }
