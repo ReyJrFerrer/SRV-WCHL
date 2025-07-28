@@ -16,6 +16,39 @@ import { useAuth } from "../../context/AuthContext"; // Import auth context
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { ServicePackage } from "../../services/serviceCanisterService";
 
+const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
+  let iconColor = "text-blue-600";
+  let bgColor = "bg-blue-50";
+  let textColor = "text-blue-700";
+  if (score >= 80) {
+    iconColor = "text-blue-600";
+    bgColor = "bg-blue-50";
+    textColor = "text-blue-700";
+  } else if (score >= 60) {
+    iconColor = "text-blue-400";
+    bgColor = "bg-blue-100";
+    textColor = "text-blue-700";
+  } else if (score >= 40) {
+    iconColor = "text-yellow-400";
+    bgColor = "bg-yellow-50";
+    textColor = "text-yellow-700";
+  } else {
+    iconColor = "text-yellow-600";
+    bgColor = "bg-yellow-100";
+    textColor = "text-yellow-700";
+  }
+  return (
+    <span
+      className={`mt-2 mb-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
+      style={{ minWidth: 0 }}
+    >
+      <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
+      <span className="mr-2">Reputation Score:</span>
+      <span className="font-bold">{score}</span>
+    </span>
+  );
+};
+
 // --- Sub-component for Star Rating Display ---
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
@@ -219,7 +252,7 @@ const ServiceDetailPage: React.FC = () => {
 
   const handleBookNow = () => {
     if (!service) return;
-    navigate(`/client/book/${service.id}`);
+    navigate(`/client/book/${service.providerId}`);
   };
 
   const handleChatProviderClick = async () => {
@@ -315,7 +348,6 @@ const ServiceDetailPage: React.FC = () => {
     name,
     category,
     location,
-    description,
   } = service;
   const averageRating = rating?.average ?? 0;
   const reviewCount = rating?.count ?? 0;
@@ -344,12 +376,12 @@ const ServiceDetailPage: React.FC = () => {
           </div>
         )}
 
-        <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-1">
+        <div className="flex flex-col lg:flex-row lg:justify-center lg:gap-8">
+          {/* Left Column: Provider Info */}
+          <div className="w-full lg:w-[400px]">
             <div className="h-full rounded-xl bg-white p-6 shadow-lg">
               <div className="mb-4 flex items-center">
-                <div className="relative mr-4 h-16 w-16 overflow-hidden rounded-full border-2 border-white">
+                <div className="relative mr-6 h-24 w-24 overflow-hidden rounded-full border-2 border-white">
                   <img
                     src={providerAvatar || "/../default-provider.svg"}
                     alt={providerName}
@@ -376,37 +408,39 @@ const ServiceDetailPage: React.FC = () => {
                           : "Not Available"}
                       </span>
                     )}
+                  {/* Reputation Score (below availability, above verification note) */}
+                  <ReputationScore score={50} />
+                  {/* Verification Note (below reputation score) */}
+                  {isVerified && (
+                    <span className="mt-2 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
+                      <CheckBadgeIcon className="mr-2 h-5 w-5" />
+                      <span>This service provider is verified.</span>
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <StarIcon className="mr-1 h-5 w-5 text-yellow-400" />
-                <span className="font-semibold">
-                  {averageRating.toFixed(1)}
-                </span>
-                <span className="ml-1">({reviewCount} reviews)</span>
-              </div>
-              {isVerified && (
-                <div className="mt-4 flex items-center rounded-lg bg-blue-50 p-3 text-sm text-blue-600">
-                  <CheckBadgeIcon className="mr-2 h-5 w-5" />
-                  <span>This service provider is verified.</span>
-                </div>
-              )}
+              {/* Compact provider info: only provider, category, availability */}
             </div>
           </div>
 
           {/* Right Column */}
-          <div className="mt-6 lg:col-span-2 lg:mt-0">
+          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
             <div className="h-full rounded-xl bg-white p-6 shadow-lg">
               <h1 className="mb-2 text-2xl font-bold text-gray-900">{name}</h1>
               <div className="mb-4 flex items-center text-sm text-gray-600">
                 <MapPinIcon className="mr-1 h-5 w-5 text-gray-400" />
                 <span>{location?.address || "Baguio City"}</span>
               </div>
-              <div>
-                <h3 className="mb-2 text-lg font-semibold text-gray-800">
-                  About this service
-                </h3>
-                <p className="leading-relaxed text-gray-600">{description}</p>
+              {/* Review count and verification note side by side */}
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                <span className="flex items-center">
+                  <StarIcon className="mr-1 h-5 w-5 text-yellow-400" />
+                  <span className="font-semibold">
+                    {averageRating.toFixed(1)}
+                  </span>
+                  <span className="ml-1">({reviewCount} reviews)</span>
+                </span>
+                {/* Verification note removed from service info section as requested */}
               </div>
             </div>
           </div>
