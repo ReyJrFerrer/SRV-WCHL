@@ -38,9 +38,7 @@ const ClientChatPage: React.FC = () => {
           otherUserImage: imageToUse,
         },
       });
-    } catch (error) {
-      console.error("Error handling conversation click:", error);
-    }
+    } catch {}
   };
 
   return (
@@ -83,8 +81,9 @@ const ClientChatPage: React.FC = () => {
                   const otherUserName =
                     conversationSummary.otherUserName ||
                     `User ${otherUserId.slice(0, 8)}...`;
-                  // Use default image (otherUserImage not present in EnhancedConversationSummary)
-                  const otherUserImage = DEFAULT_USER_IMAGE;
+                  // Use otherUserImage (profile image) if available, fallback to default image
+                  const otherUserImage =
+                    conversationSummary.otherUserImage || DEFAULT_USER_IMAGE;
 
                   // Get unread count for current user
                   const unreadEntry = conversation.unreadCount.find(

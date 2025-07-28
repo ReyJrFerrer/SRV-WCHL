@@ -4,6 +4,7 @@ import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
+import authCanisterService from "../../../services/authCanisterService";
 
 const ConversationPage: React.FC = () => {
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
@@ -26,9 +27,12 @@ const ConversationPage: React.FC = () => {
 
   const [messageText, setMessageText] = useState("");
   const [otherUserName, setOtherUserName] = useState<string>("");
+  const [otherUserImage, setOtherUserImage] =
+    useState<string>(DEFAULT_USER_IMAGE);
 
   // Get conversation info from location state or use defaults
   useEffect(() => {
+    let isMounted = true;
     if (location.state?.otherUserName) {
       setOtherUserName(location.state.otherUserName);
     } else if (location.state?.conversationId) {
@@ -36,9 +40,34 @@ const ConversationPage: React.FC = () => {
     } else {
       setOtherUserName(providerId || "Provider");
     }
-    // Optionally set otherUserImage from location.state if available
-    // If you want to use image in header, you can add a state for it
-    // Example: setOtherUserImage(location.state?.otherUserImage || DEFAULT_USER_IMAGE);
+    const navImage = location.state?.otherUserImage;
+    const isDefault = !navImage || navImage === DEFAULT_USER_IMAGE;
+    setOtherUserImage(isDefault ? DEFAULT_USER_IMAGE : navImage);
+
+    // Fetch provider profile if providerId exists, is a valid Principal, and no real image in navigation state
+    const principalRegex = /^[a-z0-9\-]{27,63}$/i;
+    if (isDefault && providerId) {
+      if (principalRegex.test(providerId)) {
+        authCanisterService
+          .getProfile(providerId)
+          .then((profile) => {
+            if (
+              isMounted &&
+              profile &&
+              profile.profilePicture &&
+              profile.profilePicture.imageUrl
+            ) {
+              setOtherUserImage(profile.profilePicture.imageUrl);
+            }
+          })
+          .catch(() => {
+            /* ignore errors, fallback to default already set */
+          });
+      }
+    }
+    return () => {
+      isMounted = false;
+    };
   }, [location.state, providerId]);
 
   // Load conversation when conversationId changes
@@ -60,7 +89,7 @@ const ConversationPage: React.FC = () => {
           : currentConversation.clientId;
 
       // Fetch the other user's name
-      getUserName(otherUserId).then(setOtherUserName).catch(console.error);
+      getUserName(otherUserId).then(setOtherUserName);
     }
   }, [currentConversation, identity, getUserName]);
 
@@ -97,9 +126,7 @@ const ConversationPage: React.FC = () => {
 
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    }
+    } catch {}
   };
 
   // Format timestamp for display
@@ -160,19 +187,11 @@ const ConversationPage: React.FC = () => {
         </button>
         <div className="ml-3 flex items-center">
           <div className="relative h-11 w-11">
-            {location.state?.otherUserImage ? (
-              <img
-                src={location.state.otherUserImage}
-                alt={otherUserName}
-                className="h-11 w-11 rounded-full border-2 border-blue-100 object-cover shadow"
-              />
-            ) : (
-              <img
-                src={DEFAULT_USER_IMAGE}
-                alt="Default user"
-                className="h-11 w-11 rounded-full border-2 border-blue-100 object-cover shadow"
-              />
-            )}
+            <img
+              src={otherUserImage}
+              alt={otherUserName}
+              className="h-11 w-11 rounded-full border-2 border-blue-100 object-cover shadow"
+            />
           </div>
           <div className="ml-3">
             <h1 className="text-lg font-bold text-black">{otherUserName}</h1>
@@ -207,19 +226,11 @@ const ConversationPage: React.FC = () => {
               >
                 {!fromCurrentUser && (
                   <div className="relative h-9 w-9 flex-shrink-0">
-                    {location.state?.otherUserImage ? (
-                      <img
-                        src={location.state.otherUserImage}
-                        alt={otherUserName}
-                        className="h-9 w-9 rounded-full border-2 border-blue-100 object-cover shadow"
-                      />
-                    ) : (
-                      <img
-                        src={DEFAULT_USER_IMAGE}
-                        alt="Default user"
-                        className="h-9 w-9 rounded-full border-2 border-blue-100 object-cover shadow"
-                      />
-                    )}
+                    <img
+                      src={otherUserImage}
+                      alt={otherUserName}
+                      className="h-9 w-9 rounded-full border-2 border-blue-100 object-cover shadow"
+                    />
                   </div>
                 )}
                 <div
