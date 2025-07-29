@@ -5,10 +5,24 @@ import { useAuth } from "../../context/AuthContext";
 import authCanisterService, {
   FrontendProfile,
 } from "../../services/authCanisterService";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
 interface HeaderProps {
   className?: string;
 }
+
+// Fix leaflet marker icon (required for proper marker display)
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const navigate = useNavigate();
@@ -25,8 +39,11 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);
 
-  // --- REFACTORED: Combined data fetching into a single, efficient hook ---
+  // New: Show/hide map modal
+  const [showMap, setShowMap] = useState(false);
+
   useEffect(() => {
+    // ...existing code unchanged...
     // This function will run only when authentication is no longer loading.
     const loadInitialData = async () => {
       // 1. Fetch User Profile if authenticated
@@ -135,6 +152,55 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
 
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
 
+  // --- New: Map Modal Component ---
+  const MapModal: React.FC = () => {
+    if (!location || locationStatus !== "allowed") return null;
+
+    // Close modal if background is clicked
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        setShowMap(false);
+      }
+    };
+
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+        onClick={handleBackdropClick}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="relative flex h-[70vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-lg">
+          {/* Close Button - always visible */}
+          <button
+            className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+            onClick={() => setShowMap(false)}
+            aria-label="Close map"
+            tabIndex={0}
+          >
+            <span className="text-xl font-bold text-gray-700">&times;</span>
+          </button>
+          <div className="flex-1 overflow-hidden rounded-b-lg">
+            <MapContainer
+              center={[location.latitude, location.longitude]}
+              zoom={16}
+              scrollWheelZoom={true}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[location.latitude, location.longitude]}>
+                <Popup>You are here</Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <header
       className={`w-full max-w-full space-y-4 rounded-lg bg-white p-4 shadow-sm ${className}`}
@@ -200,7 +266,18 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
                 Detecting location...
               </span>
             ) : (
-              <span className="text-gray-800">
+              // Make location text look normal but clickable
+              <span
+                role="button"
+                tabIndex={0}
+                className="cursor-pointer text-gray-800 select-text focus:outline-none"
+                style={{ textDecoration: "none" }}
+                onClick={() => setShowMap(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setShowMap(true);
+                }}
+                aria-label="Show my location on map"
+              >
                 {userAddress}, {userProvince}
               </span>
             )}
@@ -243,6 +320,9 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           </div>
         </form>
       </div>
+
+      {/* Map Modal */}
+      {showMap && <MapModal />}
     </header>
   );
 };

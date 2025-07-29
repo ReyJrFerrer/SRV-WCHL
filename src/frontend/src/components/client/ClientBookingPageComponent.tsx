@@ -277,9 +277,14 @@ const ClientBookingPageComponent: React.FC = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data && data.address) {
-            // Extract address parts
+            // Extract address parts, including more possible fields
             const {
+              house_number,
+              building,
+              landmark,
+              neighbourhood,
               road,
+              street,
               suburb,
               village,
               city,
@@ -291,18 +296,27 @@ const ClientBookingPageComponent: React.FC = () => {
               region,
               province,
             } = data.address;
-            // Prefer barangay/district/suburb/village for district
+            // Compose a more complete address
+            const houseOrBuilding =
+              [house_number, building, landmark, neighbourhood]
+                .filter(Boolean)
+                .join(" ") || "";
+            const streetPart = road || street || "";
             const barangay = suburb || village || district || "";
-            // Prefer city/town/municipality for city
             const cityPart = city || town || municipality || "";
-            // Prefer county/state/region/province for province
             const provincePart = county || state || region || province || "";
-            // Compose full address
-            const fullAddress = [road, barangay, cityPart, provincePart]
+            const fullAddress = [
+              houseOrBuilding,
+              streetPart,
+              barangay,
+              cityPart,
+              provincePart,
+            ]
               .filter(Boolean)
               .join(", ");
             setDisplayAddress(
               fullAddress ||
+                data.display_name ||
                 `Lat: ${location.latitude}, Lon: ${location.longitude}`,
             );
           } else {
