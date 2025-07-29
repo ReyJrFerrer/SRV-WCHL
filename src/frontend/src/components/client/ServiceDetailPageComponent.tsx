@@ -252,7 +252,7 @@ const ServiceDetailPage: React.FC = () => {
 
   const handleBookNow = () => {
     if (!service) return;
-    navigate(`/client/book/${service.providerId}`);
+    navigate(`/client/book/${service.id}`);
   };
 
   const handleChatProviderClick = async () => {
