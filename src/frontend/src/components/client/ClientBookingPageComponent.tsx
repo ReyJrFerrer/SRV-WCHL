@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
 import {
   CurrencyDollarIcon,
@@ -17,6 +20,17 @@ import {
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
 import { useAuth } from "../../context/AuthContext";
 import { DayOfWeek } from "../../services/serviceCanisterService";
+
+// Fix leaflet marker icon (required for proper marker display)
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 // Helper Data and Types
 const dayIndexToName = (dayIndex: number): string => {
@@ -176,6 +190,9 @@ const ClientBookingPageComponent: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
   const { location, locationStatus } = useAuth();
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
+    null,
+  );
 
   const {
     service,
@@ -190,6 +207,16 @@ const ClientBookingPageComponent: React.FC = () => {
     createBookingRequest,
     calculateTotalPrice,
   } = useBookRequest();
+
+  // Memoize map center for performance
+  const mapCenter = useMemo<[number, number]>(() => {
+    if (markerPosition) return markerPosition;
+    if (locationStatus === "allowed" && location) {
+      return [location.latitude, location.longitude];
+    }
+    // Default to Baguio City if not available
+    return [16.4023, 120.596];
+  }, [markerPosition, location, locationStatus]);
 
   // State Management
   const [packages, setPackages] = useState<
@@ -235,6 +262,12 @@ const ClientBookingPageComponent: React.FC = () => {
       setPackages(hookPackages.map((pkg) => ({ ...pkg, checked: false })));
     }
   }, [hookPackages]);
+
+  useEffect(() => {
+    if (locationStatus === "allowed" && location) {
+      setMarkerPosition([location.latitude, location.longitude]);
+    }
+  }, [location, locationStatus]);
 
   useEffect(() => {
     if (locationStatus === "allowed" && location) {
@@ -333,6 +366,48 @@ const ClientBookingPageComponent: React.FC = () => {
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*\.?\d{0,2}$/.test(value)) setAmountPaid(value);
+  };
+
+  // Reverse geocode on marker drag end
+  const handleMarkerDragEnd = async (e: L.LeafletEvent) => {
+    const marker = e.target;
+    const latlng = marker.getLatLng();
+    setMarkerPosition([latlng.lat, latlng.lng]);
+    // Reverse geocode to update displayAddress
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`,
+      );
+      const data = await res.json();
+      if (data && data.address) {
+        const {
+          road,
+          suburb,
+          village,
+          city,
+          town,
+          county,
+          state,
+          municipality,
+          district,
+          region,
+          province,
+        } = data.address;
+        const barangay = suburb || village || district || "";
+        const cityPart = city || town || municipality || "";
+        const provincePart = county || state || region || province || "";
+        const fullAddress = [road, barangay, cityPart, provincePart]
+          .filter(Boolean)
+          .join(", ");
+        setDisplayAddress(
+          fullAddress || `Lat: ${latlng.lat}, Lon: ${latlng.lng}`,
+        );
+      } else {
+        setDisplayAddress(`Lat: ${latlng.lat}, Lon: ${latlng.lng}`);
+      }
+    } catch {
+      setDisplayAddress(`Lat: ${latlng.lat}, Lon: ${latlng.lng}`);
+    }
   };
 
   const handleConfirmBooking = async () => {
@@ -635,6 +710,37 @@ const ClientBookingPageComponent: React.FC = () => {
                     </p>
                   </div>
                 </div>
+                {/* --- OpenStreetMap Visual with Draggable Marker --- */}
+                {addressMode === "context" &&
+                  locationStatus === "allowed" &&
+                  markerPosition && (
+                    <div
+                      className="mt-3 overflow-hidden rounded-lg"
+                      style={{ height: 220 }}
+                    >
+                      <MapContainer
+                        center={mapCenter}
+                        zoom={16}
+                        scrollWheelZoom={false}
+                        style={{ height: "100%", width: "100%" }}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker
+                          position={markerPosition}
+                          draggable={true}
+                          eventHandlers={{
+                            dragend: handleMarkerDragEnd,
+                          }}
+                        >
+                          <Popup>Drag me to adjust your location!</Popup>
+                        </Marker>
+                      </MapContainer>
+                    </div>
+                  )}
+                {/* --- End OpenStreetMap Visual --- */}
               </div>
               <button
                 onClick={() =>
