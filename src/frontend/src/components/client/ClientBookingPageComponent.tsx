@@ -734,13 +734,13 @@ const ClientBookingPageComponent: React.FC = () => {
                   markerPosition && (
                     <div
                       className="mt-3 overflow-hidden rounded-lg"
-                      style={{ height: 220 }}
+                      style={{ height: 220, marginBottom: 24, zIndex: 0 }}
                     >
                       <MapContainer
                         center={mapCenter}
                         zoom={16}
                         scrollWheelZoom={false}
-                        style={{ height: "100%", width: "100%" }}
+                        style={{ height: "100%", width: "100%", zIndex: 0 }}
                       >
                         <TileLayer
                           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -879,7 +879,7 @@ const ClientBookingPageComponent: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 border-t bg-white p-4">
+      <div className="sticky bottom-0 z-10 border-t bg-white p-4">
         <div className="mx-auto max-w-md">
           {formError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
