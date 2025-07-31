@@ -1,6 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { StarIcon, MapPinIcon } from "@heroicons/react/24/solid";
+import {
+  StarIcon,
+  MapPinIcon,
+  CheckBadgeIcon,
+} from "@heroicons/react/24/solid";
+import useServiceById from "../../hooks/serviceDetail";
 import { EnrichedService } from "../../hooks/serviceInformation";
 
 interface ServiceListItemProps {
@@ -12,6 +17,9 @@ interface ServiceListItemProps {
 
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
   ({ service, isGridItem = false, retainMobileLayout = false }) => {
+    // Fetch the latest service data to get isVerified
+    const { service: fetchedService } = useServiceById(service.id);
+    const isVerified = fetchedService?.isVerified === true;
     // Use service rating data directly from props instead of loading it individually
     const serviceRating = {
       average: service.rating?.average || 0,
@@ -94,9 +102,15 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             <p className="text-md mb-1 truncate leading-tight font-bold text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
               {service.title}
             </p>
-            {/* Provider name below service title */}
-            <p className="mb-2 truncate text-sm text-blue-700">
+            {/* Provider name below service title, with blue check if verified */}
+            <p className="mb-2 flex items-center gap-1 truncate text-sm text-blue-700">
               {service.providerName}
+              {isVerified && (
+                <CheckBadgeIcon
+                  className="ml-1 h-4 w-4 text-blue-500"
+                  title="Verified provider"
+                />
+              )}
             </p>
 
             {/* Location info - city/address if available */}
