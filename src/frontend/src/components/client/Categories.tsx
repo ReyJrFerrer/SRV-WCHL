@@ -64,21 +64,30 @@ const Categories: React.FC<CategoriesProps> = React.memo(
     const { categories, loadingCategories, error } = useServiceManagement();
     const [mobileExpanded, setMobileExpanded] = useState(false);
 
-    // Memoize expensive calculations
-    const { shouldShowMoreButton, categoriesToDisplay } = useMemo(() => {
-      const initialMobileCount = 3;
-      const initialCategoriesOnMobile = categories.slice(0, initialMobileCount);
-      const shouldShowMoreButton = categories.length > initialMobileCount;
-      const categoriesToDisplay = mobileExpanded
-        ? categories
-        : initialCategoriesOnMobile;
+    // Responsive: determine how many categories to show in main row based on screen size
+    const [mainRowCount, setMainRowCount] = useState(3);
+    React.useEffect(() => {
+      function updateMainRowCount() {
+        if (window.innerWidth < 768) {
+          setMainRowCount(3); // mobile: 3 + More
+        } else if (window.innerWidth < 1024) {
+          setMainRowCount(5); // tablet: 5 + More
+        } else {
+          setMainRowCount(7); // desktop: 7 + More
+        }
+      }
+      updateMainRowCount();
+      window.addEventListener("resize", updateMainRowCount);
+      return () => window.removeEventListener("resize", updateMainRowCount);
+    }, []);
 
-      return {
-        initialCategoriesOnMobile,
-        shouldShowMoreButton,
-        categoriesToDisplay,
-      };
-    }, [categories, mobileExpanded]);
+    const isDesktop =
+      typeof window !== "undefined" && window.innerWidth >= 1024;
+    const shouldShowMoreButton = !isDesktop && categories.length > mainRowCount;
+    const mainRowCategories = isDesktop
+      ? categories
+      : categories.slice(0, mainRowCount);
+    const extraCategories = isDesktop ? [] : categories.slice(mainRowCount);
 
     // Memoize callback functions
     const handleCategoryClick = useCallback(
@@ -99,10 +108,10 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       [],
     );
 
-    const imageSize = 60;
+    const imageSize = 50; // Fixed size for category images
     const textClass = useMemo(
       () =>
-        "text-sm md:text-base font-medium text-gray-700 h-12 flex items-center text-center",
+        "text-base md:text-lg font-semibold text-gray-700 h-12 flex items-center text-center transition-all duration-150",
       [],
     );
 
@@ -132,74 +141,131 @@ const Categories: React.FC<CategoriesProps> = React.memo(
     }
 
     return (
-      <div className={`${className}`}>
-        <div className="mb-4 flex items-center justify-between">
+      <div
+        className={`${className} mx-auto flex w-full max-w-screen-lg flex-col items-center`}
+      >
+        <div className="mb-4 flex w-full items-center justify-between">
           <h2 className="text-xl font-bold">Categories</h2>
         </div>
-
-        {/* Mobile Layout */}
-        <div className="grid grid-cols-4 gap-2 md:hidden">
-          {categoriesToDisplay.map((category: ServiceCategory) => (
+        {/* Main row: N categories (all for desktop, responsive for others) + More button if needed */}
+        <div className="flex w-full justify-center gap-x-0 sm:gap-x-0 md:gap-x-1">
+          {mainRowCategories.map((category: ServiceCategory) => (
             <button
               key={category.id}
               onClick={() => handleCategoryClick(category.slug)}
-              className={itemBaseClass}
+              className={
+                itemBaseClass +
+                ` group min-w-0 hover:scale-105 hover:text-blue-700 ${mainRowCount === 3 ? "min-w-0 flex-1" : mainRowCount === 5 ? "w-1/6" : "w-1/8"}`
+              }
             >
-              <img
-                src={getImageUrlForCategory(category.name)}
-                alt={category.name}
-                width={imageSize}
-                height={imageSize}
-                className="mb-2 object-cover"
-              />
-              <span className={textClass}>
-                {getCategoryDisplayName(category.name)}
-              </span>
-            </button>
-          ))}
-          {shouldShowMoreButton && (
-            <button onClick={toggleMobileExpanded} className={itemBaseClass}>
-              <img
-                src={
-                  mobileExpanded
-                    ? lessButtonImageUrl || moreButtonImageUrl
-                    : moreButtonImageUrl
-                }
-                alt={mobileExpanded ? "Less Categories" : "More Categories"}
-                width={imageSize}
-                height={imageSize}
-                className={`mb-2 object-cover ${mobileExpanded ? "rotate-180 transform" : ""}`}
-              />
-              <span className={textClass}>
-                {mobileExpanded ? "Bawasan" : "Iba pa"}
-              </span>
-            </button>
-          )}
-        </div>
-
-        {/* Desktop Layout: Centered, horizontally scrollable row */}
-        <div className="hidden md:flex md:justify-center">
-          <div className="flex space-x-6 overflow-x-auto pb-4">
-            {categories.map((category: ServiceCategory) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryClick(category.slug)}
-                className={itemBaseClass}
-              >
+              <span className="flex flex-col items-center transition-all duration-200 group-hover:scale-110 group-hover:text-blue-700">
                 <img
                   src={getImageUrlForCategory(category.name)}
                   alt={category.name}
                   width={imageSize}
                   height={imageSize}
-                  className="mb-2 object-cover"
+                  className="mb-2 object-cover transition-transform duration-200 ease-in-out"
                 />
-                <span className={textClass}>
-                  {getCategoryDisplayName(category.name)}
+                <span
+                  className={
+                    textClass + " w-full truncate group-hover:text-blue-700"
+                  }
+                >
+                  {(() => {
+                    const label = getCategoryDisplayName(category.name);
+                    const words = label.split(" ");
+                    if (words.length === 1) return label;
+                    return (
+                      <>
+                        {words[0]}
+                        <br />
+                        {words.slice(1).join(" ")}
+                      </>
+                    );
+                  })()}
                 </span>
-              </button>
-            ))}
-          </div>
+              </span>
+            </button>
+          ))}
+          {shouldShowMoreButton && (
+            <button
+              onClick={toggleMobileExpanded}
+              className={
+                itemBaseClass +
+                ` group min-w-0 hover:scale-105 hover:text-blue-700 ${mainRowCount === 3 ? "min-w-0 flex-1" : mainRowCount === 5 ? "w-1/6" : "w-1/8"}`
+              }
+            >
+              <span className="flex flex-col items-center transition-all duration-200 group-hover:scale-110 group-hover:text-blue-700">
+                <img
+                  src={
+                    mobileExpanded
+                      ? lessButtonImageUrl || moreButtonImageUrl
+                      : moreButtonImageUrl
+                  }
+                  alt={mobileExpanded ? "Less Categories" : "More Categories"}
+                  width={imageSize}
+                  height={imageSize}
+                  className={`mb-2 object-cover transition-transform duration-200 ease-in-out ${mobileExpanded ? "rotate-180 transform" : ""}`}
+                />
+                <span
+                  className={
+                    textClass + " w-full truncate group-hover:text-blue-700"
+                  }
+                >
+                  {mobileExpanded ? "Bawasan" : "Iba pa"}
+                </span>
+              </span>
+            </button>
+          )}
         </div>
+        {/* Dropdown row for extra categories (not for desktop) */}
+        {shouldShowMoreButton &&
+          mobileExpanded &&
+          extraCategories.length > 0 &&
+          !isDesktop && (
+            <div
+              className={`animate-fade-in-down mt-2 grid w-full justify-center gap-x-0 sm:gap-x-0.5 md:gap-x-1 ${mainRowCount === 3 ? "grid-cols-4" : mainRowCount === 5 ? "grid-cols-4 md:grid-cols-6" : "grid-cols-4 md:grid-cols-8"}`}
+            >
+              {extraCategories.map((category: ServiceCategory) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category.slug)}
+                  className={
+                    itemBaseClass +
+                    " group w-full min-w-0 hover:scale-105 hover:text-blue-700"
+                  }
+                >
+                  <span className="flex flex-col items-center transition-all duration-200 group-hover:scale-110 group-hover:text-blue-700">
+                    <img
+                      src={getImageUrlForCategory(category.name)}
+                      alt={category.name}
+                      width={imageSize}
+                      height={imageSize}
+                      className="mb-2 object-cover transition-transform duration-200 ease-in-out"
+                    />
+                    <span
+                      className={
+                        textClass + " w-full truncate group-hover:text-blue-700"
+                      }
+                    >
+                      {(() => {
+                        const label = getCategoryDisplayName(category.name);
+                        const words = label.split(" ");
+                        if (words.length === 1) return label;
+                        return (
+                          <>
+                            {words[0]}
+                            <br />
+                            {words.slice(1).join(" ")}
+                          </>
+                        );
+                      })()}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
       </div>
     );
   },

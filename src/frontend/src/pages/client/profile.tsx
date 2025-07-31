@@ -167,25 +167,25 @@ const ClientStats: React.FC = () => {
       name: "Total Bookings",
       value: formattedStats.totalBookings,
       icon: BriefcaseIcon,
-      bg: "bg-blue-100 text-blue-600",
+      bg: "bg-blue-100 text-blue-700",
     },
     {
       name: "Services Completed",
       value: formattedStats.servicesCompleted,
       icon: CheckBadgeIcon,
-      bg: "bg-green-100 text-green-600",
+      bg: "bg-blue-100 text-blue-700",
     },
     {
       name: "Total Spent",
       value: formattedStats.totalSpent,
       icon: CurrencyEuroIcon,
-      bg: "bg-yellow-100 text-yellow-600",
+      bg: "bg-blue-100 text-blue-700",
     },
     {
       name: "Member Since",
       value: formattedStats.memberSince,
       icon: CalendarIcon,
-      bg: "bg-gray-100 text-gray-600",
+      bg: "bg-blue-100 text-blue-700",
     },
   ];
 
@@ -231,7 +231,7 @@ const ClientStats: React.FC = () => {
       <h3 className="mb-4 text-center text-xl font-bold tracking-tight text-black">
         Your Booking & Activity Summary
       </h3>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         {stats.map((stat) => {
           const isMemberSince = stat.name === "Member Since";
           return (
@@ -585,10 +585,10 @@ const ClientProfilePage: React.FC = () => {
 // Reusable component for the reputation score visualization (restored advanced version)
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   const getScoreColor = (value: number) => {
-    if (value >= 80) return "#22c55e"; // green-500
-    if (value >= 60) return "#facc15"; // yellow-400
-    if (value >= 40) return "#f97316"; // orange-500
-    return "#ef4444"; // red-500
+    if (value >= 80) return "#2563eb"; // blue-600
+    if (value >= 60) return "#60a5fa"; // blue-300
+    if (value >= 40) return "#facc15"; // yellow-400
+    return "#fef08a"; // yellow-200
   };
 
   const color = getScoreColor(score);
