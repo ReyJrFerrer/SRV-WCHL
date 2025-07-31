@@ -27,6 +27,7 @@ const getCategoryDisplayName = (name: string): string => {
     return "General Repair";
   if (lowerName.includes("photo")) return "Photography Services";
   if (lowerName.includes("tutor")) return "Tutoring";
+  if (lowerName.includes("others")) return "Others";
 
   return name;
 };
@@ -35,7 +36,7 @@ const getCategoryDisplayName = (name: string): string => {
 const getImageUrlForCategory = (name: string): string => {
   const lowerName = name.toLowerCase();
   if (lowerName.includes("home") || lowerName.includes("house"))
-    return "/images/categories/home.svg";
+    return "/images/categories/repairs.svg";
   if (lowerName.includes("clean")) return "/images/categories/cleaning.svg";
   if (lowerName.includes("auto") || lowerName.includes("car"))
     return "/images/categories/auto.svg";
@@ -49,10 +50,9 @@ const getImageUrlForCategory = (name: string): string => {
   if (lowerName.includes("electrician"))
     return "/images/categories/electrician.svg";
   if (lowerName.includes("plumbing")) return "/images/categories/plumber.svg";
-  if (lowerName.includes("repair") || lowerName.includes("maintenance"))
-    return "/images/categories/plumber.svg";
   if (lowerName.includes("photo")) return "/images/categories/photography.svg";
   if (lowerName.includes("tutor")) return "/images/categories/tutor.svg";
+  if (lowerName.includes("others")) return "/images/categories/others.svg";
 
   // Fallback image if no match is found
   return "/images/default-category.svg";
@@ -81,13 +81,33 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       return () => window.removeEventListener("resize", updateMainRowCount);
     }, []);
 
+    const categoriesWithOthers = useMemo(() => {
+      const hasOthers = categories.some(
+        (cat: ServiceCategory) =>
+          cat.name.toLowerCase().includes("others") ||
+          cat.slug.toLowerCase().includes("others"),
+      );
+      if (hasOthers) return categories;
+      return [
+        ...categories,
+        {
+          id: "others",
+          name: "Others",
+          slug: "others",
+        } as ServiceCategory,
+      ];
+    }, [categories]);
+
     const isDesktop =
       typeof window !== "undefined" && window.innerWidth >= 1024;
-    const shouldShowMoreButton = !isDesktop && categories.length > mainRowCount;
+    const shouldShowMoreButton =
+      !isDesktop && categoriesWithOthers.length > mainRowCount;
     const mainRowCategories = isDesktop
-      ? categories
-      : categories.slice(0, mainRowCount);
-    const extraCategories = isDesktop ? [] : categories.slice(mainRowCount);
+      ? categoriesWithOthers
+      : categoriesWithOthers.slice(0, mainRowCount);
+    const extraCategories = isDesktop
+      ? []
+      : categoriesWithOthers.slice(mainRowCount);
 
     // Memoize callback functions
     const handleCategoryClick = useCallback(
