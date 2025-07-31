@@ -458,7 +458,11 @@ const ServiceDetailPage: React.FC = () => {
           ) : packages.length > 0 ? (
             <div className="space-y-3">
               {packages.map((pkg) => (
-                <div key={pkg.id} className="rounded-lg border bg-gray-50 p-4">
+                <div
+                  key={pkg.id}
+                  className="rounded-lg border border-yellow-500 bg-gray-50 p-4 transition-all duration-200 hover:scale-95 hover:shadow-md"
+                  style={{ willChange: "transform" }}
+                >
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-gray-800">{pkg.title}</h4>
                     <p className="text-lg font-bold text-blue-600">
