@@ -28,19 +28,10 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const isAvailable = service.availability?.isAvailable ?? false;
     const availabilityText = isAvailable ? "Available" : "Not Available";
 
-    // Define responsive classes based on retainMobileLayout
-    const nameRatingContainerClass = retainMobileLayout
-      ? "flex flex-row justify-between items-start mb-1" // Name and Rating on same line
-      : "flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1"; // Default responsive
-
     const priceLocationContainerClass = retainMobileLayout
       ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100" // Price and Location on same line
       : "flex flex-col items-start sm:flex-row sm:justify-between sm:items-center mt-auto pt-2 border-t border-gray-100"; // Default responsive
 
-    const nameMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
-    const ratingMarginClass = !retainMobileLayout
-      ? "mt-0.5 sm:mt-0 sm:ml-2"
-      : "sm:ml-2";
     const priceMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
 
     // Helper function to render rating stars
@@ -99,43 +90,15 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
         <div className="service-content flex flex-grow flex-col p-3">
           <div className="flex-grow">
-            {" "}
-            {/* This div helps push price/location to bottom */}
-            <div className={nameRatingContainerClass}>
-              <h3
-                className={`text-md leading-tight font-bold text-blue-800 transition-colors group-hover:text-yellow-400 ${nameMarginClass} truncate`}
-              >
-                {service.providerName}
-              </h3>
-
-              {/* Enhanced rating display */}
-              <div
-                className={`flex flex-shrink-0 items-center text-xs text-blue-800 ${ratingMarginClass}`}
-              >
-                {serviceRating.loading ? (
-                  <div className="flex items-center">
-                    <div className="h-3 w-12 animate-pulse rounded bg-gray-300"></div>
-                    <span className="ml-1 text-gray-400">Loading...</span>
-                  </div>
-                ) : serviceRating.count > 0 ? (
-                  <>
-                    {renderRatingStars(serviceRating.average)}
-                    <span className="ml-1">
-                      {serviceRating.average.toFixed(1)} ({serviceRating.count})
-                    </span>
-                  </>
-                ) : (
-                  <div className="flex items-center text-gray-400">
-                    {renderRatingStars(0)}
-                    <span className="ml-1">No reviews</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* Display service title */}
-            <p className="mb-2 text-sm leading-snug text-blue-700">
+            {/* Service title at the top */}
+            <p className="text-md mb-1 truncate leading-tight font-bold text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
               {service.title}
             </p>
+            {/* Provider name below service title */}
+            <p className="mb-2 truncate text-sm text-blue-700">
+              {service.providerName}
+            </p>
+
             {/* Location info - city/address if available */}
             {service.location &&
               (service.location.city || service.location.address) && (
@@ -160,14 +123,34 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           </div>
 
           <div className={priceLocationContainerClass}>
-            <p
-              className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}
-            >
-              {`₱${service.price.amount.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}`}
-            </p>
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p
+                className={`text-lg font-bold text-blue-800 ${priceMarginClass} flex items-center gap-2`}
+              >
+                {`₱${service.price.amount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
+              </p>
+              <div className="flex items-center text-xs text-blue-800">
+                {serviceRating.count > 0 ? (
+                  <>
+                    {renderRatingStars(serviceRating.average, "h-4 w-4")}
+                    <span className="ml-1 font-semibold">
+                      {serviceRating.average.toFixed(1)}
+                    </span>
+                    <span className="ml-1 text-gray-500">
+                      ({serviceRating.count})
+                    </span>
+                  </>
+                ) : (
+                  <div className="flex items-center text-gray-400">
+                    {renderRatingStars(0, "h-4 w-4")}
+                    <span className="ml-1">No reviews</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </Link>
