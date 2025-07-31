@@ -102,12 +102,43 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       typeof window !== "undefined" && window.innerWidth >= 1024;
     const shouldShowMoreButton =
       !isDesktop && categoriesWithOthers.length > mainRowCount;
+    // Reorder categories according to the specified order
+    const categoryOrder = [
+      "General Repair",
+      "Cleaning Service",
+      "Gadget Repair",
+      "Automotive Repair",
+      "Beauty Services",
+      "Massage Services",
+      "Tutoring",
+      "Delivery Services",
+      "Photography Services",
+      "Others",
+    ];
+
+    const orderedCategories = useMemo(() => {
+      // Map display names to categories
+      const displayNameMap = new Map();
+      categoriesWithOthers.forEach((cat) => {
+        displayNameMap.set(getCategoryDisplayName(cat.name), cat);
+      });
+      // Build ordered list
+      const ordered = categoryOrder
+        .map((name) => displayNameMap.get(name))
+        .filter(Boolean);
+      // Add any categories not in the order list at the end
+      const remaining = categoriesWithOthers.filter(
+        (cat) => !categoryOrder.includes(getCategoryDisplayName(cat.name)),
+      );
+      return [...ordered, ...remaining];
+    }, [categoriesWithOthers]);
+
     const mainRowCategories = isDesktop
-      ? categoriesWithOthers
-      : categoriesWithOthers.slice(0, mainRowCount);
+      ? orderedCategories
+      : orderedCategories.slice(0, mainRowCount);
     const extraCategories = isDesktop
       ? []
-      : categoriesWithOthers.slice(mainRowCount);
+      : orderedCategories.slice(mainRowCount);
 
     // Memoize callback functions
     const handleCategoryClick = useCallback(
@@ -164,8 +195,8 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       <div
         className={`${className} mx-auto flex w-full max-w-screen-lg flex-col items-center`}
       >
-        <div className="mb-4 flex w-full items-center justify-between">
-          <h2 className="text-xl font-bold">Categories</h2>
+        <div className="mb-4 w-full">
+          {/* Categories label removed; now handled by parent */}
         </div>
         {/* Main row: N categories (all for desktop, responsive for others) + More button if needed */}
         <div className="flex w-full justify-center gap-x-0 sm:gap-x-0 md:gap-x-1">

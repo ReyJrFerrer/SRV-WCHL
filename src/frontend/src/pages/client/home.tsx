@@ -23,6 +23,7 @@ const ClientHomePage: React.FC = () => {
       )}
       <div className="w-full max-w-full px-4 pt-4 pb-16">
         <Header className="mb-6 w-full max-w-full" />
+        <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>
         <Categories
           className="mb-8 w-full max-w-full"
           moreButtonImageUrl="/images/categories/more.svg"
