@@ -124,14 +124,27 @@ const BookingConfirmationPage: React.FC = () => {
                     {bookingDetails.packagePrice && (
                       <li>
                         <span className="font-semibold">Package Price:</span> ₱{" "}
-                        {bookingDetails.packagePrice || "0.00"}
+                        {Number(bookingDetails.packagePrice).toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        )}
                       </li>
                     )}
                     {bookingDetails.amountToPay &&
                       bookingDetails.amountToPay !== "N/A" && (
                         <li>
                           <span className="font-semibold">Amount to Pay:</span>{" "}
-                          ₱ {bookingDetails.amountToPay}
+                          ₱{" "}
+                          {Number(bookingDetails.amountToPay).toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}
                         </li>
                       )}
                     {/* Show expected change if present, otherwise fallback to calculation */}
@@ -139,7 +152,14 @@ const BookingConfirmationPage: React.FC = () => {
                     bookingDetails.expectedChange !== "0.00" ? (
                       <li>
                         <span className="font-semibold">Expected Change:</span>{" "}
-                        ₱ {bookingDetails.expectedChange}
+                        ₱{" "}
+                        {Number(bookingDetails.expectedChange).toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        )}
                       </li>
                     ) : (
                       bookingDetails.amountToPay &&
@@ -154,7 +174,11 @@ const BookingConfirmationPage: React.FC = () => {
                               <span className="font-semibold">
                                 Expected Change:
                               </span>{" "}
-                              ₱ {(paid - price).toFixed(2)}
+                              ₱{" "}
+                              {(paid - price).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </li>
                           );
                         }
