@@ -38,12 +38,24 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
   const [userAddress, setUserAddress] = useState<string>("Unknown");
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);
+  const searchPlaceholders = [
+    "Looking for a plumber?",
+    "Looking for an electrician?",
+    "Looking for a cleaner?",
+    "Looking for a tutor?",
+    "Looking for a mechanic?",
+    "Looking for a photographer?",
+    "Looking for a pet sitter?",
+    "Looking for a gardener?",
+    "Looking for a painter?",
+    "Looking for a babysitter?",
+  ];
+  const [placeholder, setPlaceholder] = useState(searchPlaceholders[0]);
 
   // New: Show/hide map modal
   const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
-    // ...existing code unchanged...
     // This function will run only when authentication is no longer loading.
     const loadInitialData = async () => {
       // 1. Fetch User Profile if authenticated
@@ -125,6 +137,10 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
     if (!isAuthLoading) {
       loadInitialData();
     }
+
+    setPlaceholder(
+      searchPlaceholders[Math.floor(Math.random() * searchPlaceholders.length)],
+    );
   }, [isAuthenticated, isAuthLoading, location, locationStatus]);
 
   const handleRequestLocation = useCallback(() => {
@@ -313,7 +329,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             <input
               type="text"
               className="flex-1 border-none bg-transparent p-0 text-gray-800 placeholder-gray-500 focus:ring-0"
-              placeholder="Search for service"
+              placeholder={placeholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
