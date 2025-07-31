@@ -163,10 +163,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             <p
               className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}
             >
-              {`₱${service.price.amount.toFixed(2)}`}
-              {/* <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span> */}
+              {`₱${service.price.amount.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`}
             </p>
-            {/* Removed service radius from bottom row, now shown with location above */}
           </div>
         </div>
       </Link>

@@ -462,7 +462,11 @@ const ServiceDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-gray-800">{pkg.title}</h4>
                     <p className="text-lg font-bold text-blue-600">
-                      ₱{Number(pkg.price).toFixed(2)}
+                      ₱
+                      {Number(pkg.price).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
                   <p className="mt-1 text-sm text-gray-600">

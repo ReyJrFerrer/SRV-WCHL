@@ -608,7 +608,11 @@ const ClientBookingPageComponent: React.FC = () => {
                       {pkg.description}
                     </div>
                     <div className="text-sm font-medium text-blue-600">
-                      ₱{pkg.price}
+                      ₱
+                      {pkg.price.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                   </div>
                 </label>
