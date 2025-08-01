@@ -38,9 +38,9 @@ import ClientCategory from "./src/pages/client/categories/[slug]";
 import ClientReview from "./src/pages/client/review/[id]";
 import ClientProfilePage from "./src/pages/client/profile";
 import SettingsPageC from "./src/pages/client/settings";
-import TermsAndConditionsPage from "./src/pages/client/terms";
-import ReportIssuePage from "./src/pages/client/report";
-import HelpSupportPage from "./src/pages/client/help";
+import TermsAndConditionsPage from "./src/pages/terms";
+import ReportIssuePage from "./src/pages/report";
+import HelpSupportPage from "./src/pages/help";
 
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
