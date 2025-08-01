@@ -79,7 +79,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
       {paymentMethod === "cash" && packages.some((p) => p.checked) && (
         <div className="pt-2 pl-4">
           <label className="text-sm font-medium text-gray-700">
-            Amount to Pay
+            Change for how much?
           </label>
           <input
             type="text"

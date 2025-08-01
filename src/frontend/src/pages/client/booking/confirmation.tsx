@@ -143,7 +143,9 @@ const BookingConfirmationPage: React.FC = () => {
                     {bookingDetails.amountToPay &&
                       bookingDetails.amountToPay !== "N/A" && (
                         <li>
-                          <span className="font-semibold">Amount to Pay:</span>{" "}
+                          <span className="font-semibold">
+                            Amount To Pay In Cash:
+                          </span>{" "}
                           ₱{" "}
                           {Number(bookingDetails.amountToPay).toLocaleString(
                             undefined,

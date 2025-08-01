@@ -120,13 +120,15 @@ export const BookingReviewPage: React.FC = () => {
         : await submitReview(bookingId as string, formData);
 
       if (result) {
-        // Navigate to receipt page with state
+        // Navigate to receipt page with review info in state
         navigate(`/client/booking/receipt/${bookingId}`, {
           state: {
             price: booking?.price || 0,
             paid: booking?.price || 0,
             change: 0,
             method: "Cash",
+            userRating: rating,
+            userComment: trimmedFeedback,
           },
         });
       }

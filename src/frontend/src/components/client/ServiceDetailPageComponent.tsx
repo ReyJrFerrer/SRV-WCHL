@@ -509,9 +509,27 @@ const ServiceDetailPage: React.FC = () => {
       {/* Sticky Footer for Actions */}
       <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3">
         <div className="mx-auto flex max-w-3xl items-center space-x-3">
+          {/* Vouch button (Lefts) */}
+          <button
+            className="flex w-1/4 items-center justify-center rounded-lg bg-yellow-200 py-3 font-bold text-yellow-800 hover:bg-yellow-300"
+            type="button"
+            // TODO: Add vouching logic here
+          >
+            Vouch
+          </button>
+
+          {/* Book Now button (center, bigger) */}
+          <button
+            onClick={handleBookNow}
+            disabled={packages.length === 0}
+            className="w-2/4 rounded-lg bg-blue-600 py-3 font-bold text-white shadow-md transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+          >
+            Book Now
+          </button>
+          {/* Chat button (Right) */}
           <button
             onClick={handleChatProviderClick}
-            className="flex w-1/3 items-center justify-center rounded-lg bg-gray-200 py-3 font-bold text-gray-800 hover:bg-gray-300"
+            className="flex w-1/4 items-center justify-center rounded-lg bg-gray-200 py-3 font-bold text-gray-800 hover:bg-gray-300"
           >
             {chatLoading ? (
               <>
@@ -522,13 +540,6 @@ const ServiceDetailPage: React.FC = () => {
               <></>
             )}
             Chat
-          </button>
-          <button
-            onClick={handleBookNow}
-            disabled={packages.length === 0}
-            className="w-2/3 rounded-lg bg-blue-600 py-3 font-bold text-white shadow-md transition-colors hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            Book Now
           </button>
         </div>
       </div>
