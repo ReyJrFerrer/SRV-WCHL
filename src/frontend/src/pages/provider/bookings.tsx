@@ -145,7 +145,8 @@ const ProviderBookingsPage: React.FC = () => {
         // IMPORTANT: Replace 'booking.scheduledDateTime' with the actual property
         // that holds the date/time information for your bookings.
         // If no such property exists, this timing filter cannot work as intended.
-        const dateString = (booking as any).scheduledDateTime || (booking as any).createdAt; // Placeholder for actual date property
+        const dateString =
+          (booking as any).scheduledDateTime || (booking as any).createdAt; // Placeholder for actual date property
         // Using 'any' as a temporary workaround if the type doesn't include it.
         // The ideal fix is to update `ProviderEnhancedBooking` type definition.
 
