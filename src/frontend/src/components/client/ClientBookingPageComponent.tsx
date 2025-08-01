@@ -682,14 +682,22 @@ const ClientBookingPageComponent: React.FC = () => {
                           availableSlots
                             .filter((slot) => slot.isAvailable)
                             .map((slot, index) => {
+                              const to12Hour = (t: string) => {
+                                const [h, m] = t.split(":").map(Number);
+                                const hour = h % 12 || 12;
+                                const ampm = h < 12 ? "AM" : "PM";
+                                return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
+                              };
                               const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
+                              const [start, end] = time.split("-");
+                              const formatted = `${to12Hour(start)} - ${to12Hour(end)}`;
                               return (
                                 <button
                                   key={index}
                                   onClick={() => setSelectedTime(time)}
                                   className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${selectedTime === time ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
                                 >
-                                  {time}
+                                  {formatted}
                                 </button>
                               );
                             })
