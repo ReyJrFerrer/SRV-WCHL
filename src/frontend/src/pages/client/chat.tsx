@@ -70,93 +70,105 @@ const ClientChatPage: React.FC = () => {
           ) : conversations.length > 0 ? (
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <ul className="divide-y divide-gray-100">
-                {conversations.map((conversationSummary) => {
-                  const conversation = conversationSummary.conversation;
-                  const lastMessage = conversationSummary.lastMessage;
+                {/* Sort conversations by most recent message (received or replied) */}
+                {conversations
+                  .slice() // copy array to avoid mutating original
+                  .sort((a, b) => {
+                    const aTime = a.lastMessage?.createdAt
+                      ? new Date(a.lastMessage.createdAt).getTime()
+                      : 0;
+                    const bTime = b.lastMessage?.createdAt
+                      ? new Date(b.lastMessage.createdAt).getTime()
+                      : 0;
+                    return bTime - aTime;
+                  })
+                  .map((conversationSummary) => {
+                    const conversation = conversationSummary.conversation;
+                    const lastMessage = conversationSummary.lastMessage;
 
-                  // Use the enhanced data from useChat hook
-                  const currentUserId =
-                    identity?.getPrincipal().toString() || "";
-                  const otherUserId = conversationSummary.otherUserId;
-                  const otherUserName =
-                    conversationSummary.otherUserName ||
-                    `User ${otherUserId.slice(0, 8)}...`;
-                  // Use otherUserImage (profile image) if available, fallback to default image
-                  const otherUserImage =
-                    conversationSummary.otherUserImage || DEFAULT_USER_IMAGE;
+                    // Use the enhanced data from useChat hook
+                    const currentUserId =
+                      identity?.getPrincipal().toString() || "";
+                    const otherUserId = conversationSummary.otherUserId;
+                    const otherUserName =
+                      conversationSummary.otherUserName ||
+                      `User ${otherUserId.slice(0, 8)}...`;
+                    // Use otherUserImage (profile image) if available, fallback to default image
+                    const otherUserImage =
+                      conversationSummary.otherUserImage || DEFAULT_USER_IMAGE;
 
-                  // Get unread count for current user
-                  const unreadEntry = conversation.unreadCount.find(
-                    (entry) => entry.userId === currentUserId,
-                  );
-                  const unreadCount = unreadEntry?.count || 0;
+                    // Get unread count for current user
+                    const unreadEntry = conversation.unreadCount.find(
+                      (entry) => entry.userId === currentUserId,
+                    );
+                    const unreadCount = unreadEntry?.count || 0;
 
-                  // Format timestamp
-                  const formatTimestamp = (date?: Date) => {
-                    if (!date) return "";
-                    const now = new Date();
-                    const diffMs = now.getTime() - date.getTime();
-                    const diffHours = diffMs / (1000 * 60 * 60);
-                    const diffDays = diffHours / 24;
+                    // Format timestamp
+                    const formatTimestamp = (date?: Date) => {
+                      if (!date) return "";
+                      const now = new Date();
+                      const diffMs = now.getTime() - date.getTime();
+                      const diffHours = diffMs / (1000 * 60 * 60);
+                      const diffDays = diffHours / 24;
 
-                    if (diffHours < 1) return "Just now";
-                    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
-                    if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
-                    return date.toLocaleDateString();
-                  };
+                      if (diffHours < 1) return "Just now";
+                      if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
+                      if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
+                      return date.toLocaleDateString();
+                    };
 
-                  return (
-                    <li
-                      key={conversation.id}
-                      onClick={() =>
-                        handleConversationClick(
-                          conversation.id,
-                          otherUserName,
-                          otherUserImage,
-                        )
-                      }
-                      className="group flex cursor-pointer items-center space-x-4 p-4 transition-all hover:bg-blue-50"
-                    >
-                      <div className="relative h-14 w-14 flex-shrink-0">
-                        {otherUserImage ? (
-                          <img
-                            src={otherUserImage}
-                            alt={otherUserName}
-                            className="h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow transition-all group-hover:border-yellow-400"
-                          />
-                        ) : (
-                          <UserCircleIcon className="h-14 w-14 text-gray-300" />
-                        )}
-                        {unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
-                            {otherUserName}
-                          </p>
-                          <p
-                            className={`ml-2 text-xs whitespace-nowrap ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
-                          >
-                            {formatTimestamp(lastMessage?.createdAt)}
-                          </p>
+                    return (
+                      <li
+                        key={conversation.id}
+                        onClick={() =>
+                          handleConversationClick(
+                            conversation.id,
+                            otherUserName,
+                            otherUserImage,
+                          )
+                        }
+                        className="group flex cursor-pointer items-center space-x-4 p-4 transition-all hover:bg-blue-50"
+                      >
+                        <div className="relative h-14 w-14 flex-shrink-0">
+                          {otherUserImage ? (
+                            <img
+                              src={otherUserImage}
+                              alt={otherUserName}
+                              className="h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow transition-all group-hover:border-yellow-400"
+                            />
+                          ) : (
+                            <UserCircleIcon className="h-14 w-14 text-gray-300" />
+                          )}
+                          {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
+                              {unreadCount}
+                            </span>
+                          )}
                         </div>
-                        <div className="mt-1 flex items-start justify-between">
-                          <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
-                            {lastMessage?.content || (
-                              <span className="text-gray-400 italic">
-                                No messages yet
-                              </span>
-                            )}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
+                              {otherUserName}
+                            </p>
+                            <p
+                              className={`ml-2 text-xs whitespace-nowrap ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
+                            >
+                              {formatTimestamp(lastMessage?.createdAt)}
+                            </p>
+                          </div>
+                          <div className="mt-1 flex items-start justify-between">
+                            <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
+                              {lastMessage?.content || (
+                                <span className="text-gray-400 italic">
+                                  No messages yet
+                                </span>
+                              )}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  })}
               </ul>
             </div>
           ) : (
