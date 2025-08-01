@@ -328,7 +328,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           <div className="flex w-full items-center rounded-md bg-white p-3 shadow-sm">
             <input
               type="text"
-              className="flex-1 border-none bg-transparent p-0 text-gray-800 placeholder-gray-500 focus:ring-0"
+              className="flex-1 border-none bg-transparent p-0 text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
               placeholder={placeholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

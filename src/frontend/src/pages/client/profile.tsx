@@ -52,9 +52,6 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
                   </button>
                 )}
               </span>
-              <span className="mb-1 block text-sm font-medium text-blue-800">
-                New client
-              </span>
               <span className="block text-gray-700">
                 Complete your first booking to start building your reputation.
               </span>
