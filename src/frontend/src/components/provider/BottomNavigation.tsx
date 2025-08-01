@@ -4,18 +4,15 @@ import {
   HomeIcon,
   ClipboardDocumentListIcon,
   ChatBubbleOvalLeftEllipsisIcon,
-  BellIcon,
   Cog6ToothIcon,
   BriefcaseIcon,
 } from "@heroicons/react/24/solid";
 
-import { useProviderNotifications } from "../../hooks/useProviderNotifications";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
 
 const BottomNavigation: React.FC = () => {
   // useLocation is the replacement for Next.js's useRouter to get the current path
   const location = useLocation();
-  const { unreadCount } = useProviderNotifications();
   const { unreadChatCount } = useChatNotifications();
 
   const navItems = [
@@ -36,12 +33,6 @@ const BottomNavigation: React.FC = () => {
       to: "/provider/services",
       label: "Services",
       icon: BriefcaseIcon,
-    },
-    {
-      to: "/provider/notifications",
-      label: "Notifications",
-      icon: BellIcon,
-      count: unreadCount,
     },
     {
       to: "/provider/settings",
