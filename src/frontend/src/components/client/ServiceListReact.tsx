@@ -25,7 +25,10 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     price: {
       amount: service.price.amount,
       unit: service.price.unit,
-      display: `₱${service.price.amount.toFixed(2)}`,
+      display: `₱${service.price.amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
     },
     location: {
       serviceRadius: service.location?.serviceRadius,

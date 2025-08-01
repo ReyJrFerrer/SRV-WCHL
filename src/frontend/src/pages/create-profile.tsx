@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authCanisterService } from "../services/authCanisterService";
+import TermsAndConditionsModal from "../components/common/TermsAndConditionsModal";
 import {
   UserIcon,
   WrenchScrewdriverIcon,
@@ -12,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function CreateProfilePage() {
+  const [showTerms, setShowTerms] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, identity, login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -26,15 +28,9 @@ export default function CreateProfilePage() {
   });
   const [reauthRequired, setReauthRequired] = useState(false);
 
-  // Setting document title
   // Set document title using React 19 approach
   useEffect(() => {
-    document.title = "description";
-    // You could add a meta description here too if needed
-    // const metaDescription = document.querySelector('meta[name="description"]');
-    // if (metaDescription) {
-    //   metaDescription.setAttribute('content', 'Find the best service providers near you');
-    // }
+    document.title = "Create Profile | SRV";
   }, []);
 
   useEffect(() => {
@@ -97,8 +93,17 @@ export default function CreateProfilePage() {
       return;
     }
 
+    // Show terms modal before actual profile creation
+    setShowTerms(true);
+  };
+
+  // Actual profile creation after agreeing to terms
+  const handleCreateProfile = async () => {
+    setShowTerms(false);
     setIsLoading(true);
     setSuccess(false);
+    setError("");
+    setReauthRequired(false);
 
     if (!isAuthenticated || !identity) {
       setError("Authentication session not found.");
@@ -111,7 +116,7 @@ export default function CreateProfilePage() {
       const result = await authCanisterService.createProfile(
         formData.name.trim(),
         formData.phone.trim(),
-        selectedRole,
+        selectedRole as "Client" | "ServiceProvider",
       );
 
       if (!result) {
@@ -298,12 +303,7 @@ export default function CreateProfilePage() {
                             className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-10 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                           />
                         </div>
-                        {/* <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                            </div> */}
+
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <PhoneIcon className="h-5 w-5 text-gray-400" />
@@ -348,6 +348,12 @@ export default function CreateProfilePage() {
           </div>
         </div>
       </div>
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        open={showTerms}
+        onClose={() => setShowTerms(false)}
+        onAgree={handleCreateProfile}
+      />
     </>
   );
 }

@@ -15,7 +15,17 @@ export interface Notification {
     | "payment_completed"
     | "service_completion_reminder"
     | "review_request"
-    | "chat_message";
+    | "chat_message"
+    | "booking_cancelled"
+    | "booking_completed"
+    | "payment_received"
+    | "payment_failed"
+    | "provider_message"
+    | "system_announcement"
+    | "service_rescheduled"
+    | "service_reminder"
+    | "promo_offer"
+    | "provider_on_the_way";
   timestamp: string;
   read: boolean;
   href: string;

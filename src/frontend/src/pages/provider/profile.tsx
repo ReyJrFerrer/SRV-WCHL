@@ -74,6 +74,7 @@ interface TrustLevelBadgeProps {
   onInfoClick?: () => void;
   infoOpen?: boolean;
 }
+// ...existing code...
 const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
   trustLevel,
   onInfoClick,
@@ -104,7 +105,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
                 )}
               </span>
               <span className="mb-1 block text-sm font-medium text-blue-800">
-                New provider
+                New user
               </span>
               <span className="block text-gray-700">
                 Complete your first service booking to start building your
@@ -152,13 +153,17 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
 
   const config = getTrustLevelConfig(trustLevel);
 
+  // Determine label: "New user" for new, "[Level] Trust Level" for others
+  const badgeLabel =
+    trustLevel === "New" ? "New user" : `${trustLevel} Trust Level`;
+
   return (
     <div className="mt-4 flex flex-col items-center">
       <div
         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
       >
         <span className="mr-2">{config.icon}</span>
-        {trustLevel} Trust
+        {badgeLabel}
       </div>
       <div className="mt-3 flex w-full max-w-md flex-col items-center">
         {trustLevel === "New" ? (
@@ -174,6 +179,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
     </div>
   );
 };
+// ...existing code...
 
 // Collapsible About Reputation Info Section
 interface AboutReputationInfoProps {
@@ -599,7 +605,6 @@ const SPProfilePage: React.FC = () => {
                 </div>
               )}
 
-              {/* AboutReputationInfo is now shown only for New trust level above */}
               <div className="mt-6 border-t border-gray-200 pt-6">
                 <ClientStats />
               </div>

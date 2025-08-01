@@ -27,6 +27,7 @@ const getCategoryDisplayName = (name: string): string => {
     return "General Repair";
   if (lowerName.includes("photo")) return "Photography Services";
   if (lowerName.includes("tutor")) return "Tutoring";
+  if (lowerName.includes("others")) return "Others";
 
   return name;
 };
@@ -35,7 +36,7 @@ const getCategoryDisplayName = (name: string): string => {
 const getImageUrlForCategory = (name: string): string => {
   const lowerName = name.toLowerCase();
   if (lowerName.includes("home") || lowerName.includes("house"))
-    return "/images/categories/home.svg";
+    return "/images/categories/repairs.svg";
   if (lowerName.includes("clean")) return "/images/categories/cleaning.svg";
   if (lowerName.includes("auto") || lowerName.includes("car"))
     return "/images/categories/auto.svg";
@@ -49,10 +50,9 @@ const getImageUrlForCategory = (name: string): string => {
   if (lowerName.includes("electrician"))
     return "/images/categories/electrician.svg";
   if (lowerName.includes("plumbing")) return "/images/categories/plumber.svg";
-  if (lowerName.includes("repair") || lowerName.includes("maintenance"))
-    return "/images/categories/plumber.svg";
   if (lowerName.includes("photo")) return "/images/categories/photography.svg";
   if (lowerName.includes("tutor")) return "/images/categories/tutor.svg";
+  if (lowerName.includes("others")) return "/images/categories/others.svg";
 
   // Fallback image if no match is found
   return "/images/default-category.svg";
@@ -81,13 +81,64 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       return () => window.removeEventListener("resize", updateMainRowCount);
     }, []);
 
+    const categoriesWithOthers = useMemo(() => {
+      const hasOthers = categories.some(
+        (cat: ServiceCategory) =>
+          cat.name.toLowerCase().includes("others") ||
+          cat.slug.toLowerCase().includes("others"),
+      );
+      if (hasOthers) return categories;
+      return [
+        ...categories,
+        {
+          id: "others",
+          name: "Others",
+          slug: "others",
+        } as ServiceCategory,
+      ];
+    }, [categories]);
+
     const isDesktop =
       typeof window !== "undefined" && window.innerWidth >= 1024;
-    const shouldShowMoreButton = !isDesktop && categories.length > mainRowCount;
+    const shouldShowMoreButton =
+      !isDesktop && categoriesWithOthers.length > mainRowCount;
+    // Reorder categories according to the specified order
+    const categoryOrder = [
+      "General Repair",
+      "Cleaning Service",
+      "Gadget Repair",
+      "Automotive Repair",
+      "Beauty Services",
+      "Massage Services",
+      "Tutoring",
+      "Delivery Services",
+      "Photography Services",
+      "Others",
+    ];
+
+    const orderedCategories = useMemo(() => {
+      // Map display names to categories
+      const displayNameMap = new Map();
+      categoriesWithOthers.forEach((cat) => {
+        displayNameMap.set(getCategoryDisplayName(cat.name), cat);
+      });
+      // Build ordered list
+      const ordered = categoryOrder
+        .map((name) => displayNameMap.get(name))
+        .filter(Boolean);
+      // Add any categories not in the order list at the end
+      const remaining = categoriesWithOthers.filter(
+        (cat) => !categoryOrder.includes(getCategoryDisplayName(cat.name)),
+      );
+      return [...ordered, ...remaining];
+    }, [categoriesWithOthers]);
+
     const mainRowCategories = isDesktop
-      ? categories
-      : categories.slice(0, mainRowCount);
-    const extraCategories = isDesktop ? [] : categories.slice(mainRowCount);
+      ? orderedCategories
+      : orderedCategories.slice(0, mainRowCount);
+    const extraCategories = isDesktop
+      ? []
+      : orderedCategories.slice(mainRowCount);
 
     // Memoize callback functions
     const handleCategoryClick = useCallback(
@@ -144,8 +195,8 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       <div
         className={`${className} mx-auto flex w-full max-w-screen-lg flex-col items-center`}
       >
-        <div className="mb-4 flex w-full items-center justify-between">
-          <h2 className="text-xl font-bold">Categories</h2>
+        <div className="mb-4 w-full">
+          {/* Categories label removed; now handled by parent */}
         </div>
         {/* Main row: N categories (all for desktop, responsive for others) + More button if needed */}
         <div className="flex w-full justify-center gap-x-0 sm:gap-x-0 md:gap-x-1">

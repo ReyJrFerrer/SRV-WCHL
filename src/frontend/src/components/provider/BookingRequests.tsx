@@ -18,10 +18,10 @@ const BookingRequests: React.FC<BookingRequestsProps> = ({
       <h2 className="mb-6 pt-4 text-4xl font-extrabold text-black">Bookings</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Pending Requests Card */}
-        <div className="flex flex-col rounded-xl border-t-[16px] border-[#ffdb6f] bg-white p-6 pt-4 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+        <div className="flex flex-col rounded-xl border-t-[16px] border-[#FFD32C] bg-white p-6 pt-4 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
           <div className="flex-1">
             <div className="mb-4 flex items-center space-x-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ffdb6f]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FFD32C]">
                 <span className="text-3xl font-bold text-white">
                   {pendingRequests}
                 </span>
@@ -46,10 +46,10 @@ const BookingRequests: React.FC<BookingRequestsProps> = ({
         </div>
 
         {/* Upcoming Jobs Card */}
-        <div className="flex flex-col rounded-xl border-t-[16px] border-[#ffdb6f] bg-white p-6 pt-4 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+        <div className="flex flex-col rounded-xl border-t-[16px] border-[#FFD32C] bg-white p-6 pt-4 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
           <div className="flex-1">
             <div className="mb-4 flex items-center space-x-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ffdb6f]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FFD32C]">
                 <span className="text-3xl font-bold text-white">
                   {upcomingJobs}
                 </span>

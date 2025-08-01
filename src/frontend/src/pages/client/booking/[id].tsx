@@ -458,34 +458,41 @@ const BookingDetailsPage: React.FC = () => {
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex items-start">
-                <BriefcaseIcon className="mt-0.5 mr-2 h-5 w-5 text-gray-500" />
+                <BriefcaseIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Service:</strong> {serviceName}
                 </span>
               </div>
               <div className="flex items-start">
-                <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 text-gray-500" />
+                <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Package:</strong> {packageName}
                 </span>
               </div>
               <div className="flex items-start">
-                <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-500" />
+                <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Scheduled:</strong>{" "}
                   {formatDate(requestedDate || createdAt)}
                 </span>
               </div>
               <div className="flex items-start">
-                <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-500" />
+                <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
                   <strong>Location:</strong>{" "}
-                  {formattedLocation || "Not specified"}
+                  {(formattedLocation || "Not specified")
+                    .split(" ")
+                    .map(
+                      (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase(),
+                    )
+                    .join(" ")}
                 </span>
               </div>
               {price != null && (
                 <div className="flex items-start">
-                  <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-green-500" />
+                  <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                   <span>
                     <strong>Payment:</strong> ₱{price.toFixed(2)} (Cash)
                   </span>

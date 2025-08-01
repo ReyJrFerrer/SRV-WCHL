@@ -151,7 +151,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         className={`services-section rounded-xl p-6 shadow-lg ${className} mt-4`}
       >
         {displayedServices.length > 0 ? (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {displayedServices.map((service) => {
               const statusDisplay = getStatusDisplay(service.status);
 
@@ -159,7 +159,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 <Link
                   key={service.id}
                   to={`/provider/service-details/${service.id}`}
-                  className="service-card-item block cursor-pointer rounded-lg bg-gray-50 p-4 shadow-sm transition-shadow hover:shadow-md"
+                  className="service-card-item block cursor-pointer rounded-lg bg-[#FFFAFA] p-4 shadow-sm transition-shadow hover:shadow-md"
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:space-x-4">
                     {/* Service Icon */}

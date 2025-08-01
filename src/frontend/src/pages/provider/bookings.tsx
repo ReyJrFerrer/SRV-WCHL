@@ -15,16 +15,8 @@ type BookingStatusTab =
   | "COMPLETED"
   | "CANCELLED";
 
-type BookingFilterType =
-  | "All Types"
-  | "Delivery Service"
-  | "Beauty and Wellness"
-  | "Tutoring"
-  | "Photography Services"
-  | "Home Services"
-  | "Cleaning Services"
-  | "Automotive Repair"
-  | "Gadget Repair";
+// Filter for "Same Day" or "Scheduled" booking types
+type BookingTimingFilter = "All" | "Same Day" | "Scheduled";
 
 const TAB_ITEMS: BookingStatusTab[] = [
   "ALL",
@@ -35,17 +27,8 @@ const TAB_ITEMS: BookingStatusTab[] = [
   "CANCELLED",
 ];
 
-const FILTER_TYPES: BookingFilterType[] = [
-  "All Types",
-  "Delivery Service",
-  "Beauty and Wellness",
-  "Tutoring",
-  "Photography Services",
-  "Home Services",
-  "Cleaning Services",
-  "Automotive Repair",
-  "Gadget Repair",
-];
+// Options for the timing filter
+const TIMING_FILTERS: BookingTimingFilter[] = ["All", "Same Day", "Scheduled"];
 
 const ProviderBookingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,12 +37,12 @@ const ProviderBookingsPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filterType, setFilterType] = useState<BookingFilterType>("All Types");
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false); // New state for dropdown visibility
+  const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
+  const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
+    useState<boolean>(false);
 
-  const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the dropdown to handle clicks outside
+  const timingDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Use the provider booking management hook
   const {
     bookings,
     loading,
@@ -88,14 +71,13 @@ const ProviderBookingsPage: React.FC = () => {
     document.title = "My Bookings | SRV Provider";
   }, []);
 
-  // Effect to close the dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        timingDropdownRef.current &&
+        !timingDropdownRef.current.contains(event.target as Node)
       ) {
-        setIsDropdownOpen(false);
+        setIsTimingDropdownOpen(false);
       }
     };
 
@@ -105,7 +87,6 @@ const ProviderBookingsPage: React.FC = () => {
     };
   }, []);
 
-  // Categorize bookings based on the hook's filtering functions
   const categorizedBookings = useMemo(() => {
     const cancelledBookings = getBookingsByStatus("Cancelled");
     const declinedBookings = getBookingsByStatus("Declined");
@@ -134,7 +115,6 @@ const ProviderBookingsPage: React.FC = () => {
     bookings,
   ]);
 
-  // Calculate counts for each tab
   const tabCounts = useMemo(() => {
     return {
       ALL: categorizedBookings.ALL.length,
@@ -146,17 +126,57 @@ const ProviderBookingsPage: React.FC = () => {
     };
   }, [categorizedBookings]);
 
-  // Main filtered bookings display
   const currentBookings: ProviderEnhancedBooking[] = useMemo(() => {
     let filteredBookings = categorizedBookings[activeTab] || [];
 
-    // Apply service type filter if not "All Types"
-    if (filterType !== "All Types") {
-      filteredBookings = filteredBookings.filter(
-        (booking) =>
-          booking.serviceName &&
-          booking.serviceName.toLowerCase() === filterType.toLowerCase(),
-      );
+    // --- MODIFICATION HERE ---
+    // If 'startTime' does not exist, we need to use an alternative property
+    // that represents the booking's date/time for filtering.
+    // Let's assume there's a 'bookingDate' or 'scheduledDate' property,
+    // or if not, we might need to introduce one in your ProviderEnhancedBooking type
+    // or infer it from another property.
+
+    // For this example, I'll assume a property named `scheduledDateTime`
+    // which contains a string that can be parsed by `new Date()`.
+    // If you have a different property, replace `booking.scheduledDateTime`
+    // with the correct property name.
+    if (timingFilter !== "All") {
+      filteredBookings = filteredBookings.filter((booking) => {
+        // IMPORTANT: Replace 'booking.scheduledDateTime' with the actual property
+        // that holds the date/time information for your bookings.
+        // If no such property exists, this timing filter cannot work as intended.
+        const dateString =
+          (booking as any).scheduledDateTime || (booking as any).createdAt; // Placeholder for actual date property
+        // Using 'any' as a temporary workaround if the type doesn't include it.
+        // The ideal fix is to update `ProviderEnhancedBooking` type definition.
+
+        if (!dateString) {
+          console.warn(
+            `Booking ${booking.id} is missing a valid date property (e.g., scheduledDateTime), skipping timing filter.`,
+          );
+          return false;
+        }
+
+        const bookingDate = new Date(dateString);
+
+        // Check if bookingDate is valid before proceeding
+        if (isNaN(bookingDate.getTime())) {
+          console.warn(
+            `Booking ${booking.id} has an invalid date string: ${dateString}`,
+          );
+          return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today's date to start of day
+
+        const isSameDay =
+          bookingDate.getDate() === today.getDate() &&
+          bookingDate.getMonth() === today.getMonth() &&
+          bookingDate.getFullYear() === today.getFullYear();
+
+        return timingFilter === "Same Day" ? isSameDay : !isSameDay;
+      });
     }
 
     // Apply search term filter
@@ -175,9 +195,8 @@ const ProviderBookingsPage: React.FC = () => {
     }
 
     return filteredBookings;
-  }, [activeTab, categorizedBookings, searchTerm, filterType]);
+  }, [activeTab, categorizedBookings, searchTerm, timingFilter]);
 
-  // Handle retry functionality
   const handleRetry = async () => {
     clearError();
     try {
@@ -187,7 +206,6 @@ const ProviderBookingsPage: React.FC = () => {
     }
   };
 
-  // Show authentication error if not authenticated as provider
   if (!isProviderAuthenticated() && !loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -207,7 +225,6 @@ const ProviderBookingsPage: React.FC = () => {
     );
   }
 
-  // Show loading state
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -219,7 +236,6 @@ const ProviderBookingsPage: React.FC = () => {
     );
   }
 
-  // Show error state
   if (error && bookings.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -250,22 +266,17 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
-        {/* Header */}
         <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
           <div className="flex items-center justify-center">
-            {/* The h1 will be hidden on small screens and block on medium and larger screens */}
             <h1 className="hidden text-lg font-semibold text-gray-800 md:block">
               My Bookings
             </h1>
-            {/* Placeholder for your logo. You'd typically replace this with an <img> tag. */}
             <div className="md:hidden">
-              {/* This is where your logo would go for small screens */}
               <span className="text-lg font-bold text-blue-600">SRV</span>
             </div>
           </div>
         </header>
 
-        {/* Tab Navigation and Filters */}
         <div className="sticky top-[64px] z-10 bg-white px-4 pt-4 pb-2">
           <div className="mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
@@ -293,15 +304,15 @@ const ProviderBookingsPage: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* Filter Dropdown */}
-            <div className="relative" ref={dropdownRef}>
+            {/* Timing Filter Dropdown */}
+            <div className="relative" ref={timingDropdownRef}>
               <button
                 className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="mr-1 h-5 w-5" // Removed mr-1 for small screens to center icon
+                  className="mr-1 h-5 w-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -310,13 +321,12 @@ const ProviderBookingsPage: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01.293.707L19 13v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6l-2.293-2.293A1 1 0 0110 6.586V4a1 1 0 011-1h16a1 1 0 011 1z"
+                    d="M8 7V3m8 4V3m-9 8h.01M12 11h.01M15 11h.01M7 16h.01M12 16h.01M15 16h.01M7 21h.01M12 21h.01M15 21h.01M3 9h18c.552 0 1-.448 1-1V5c0-.552-.448-1-1-1H3c-.552 0-1 .448-1 1v3c0 .552.448 1 1 1zM2 13h20c.552 0 1-.448 1-1V9c0-.552-.448-1-1-1H2c-.552 0-1 .448-1 1v3c0 .552.448 1 1 1z"
                   />
                 </svg>
-                {/* Text for the filter button - hidden on small, block on medium+ */}
-                <span className="hidden md:inline">{filterType}</span>
+                <span className="hidden md:inline">{timingFilter}</span>
                 <svg
-                  className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform ${isDropdownOpen ? "rotate-180" : "rotate-0"} md:ml-2`}
+                  className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform ${isTimingDropdownOpen ? "rotate-180" : "rotate-0"} md:ml-2`}
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -329,7 +339,7 @@ const ProviderBookingsPage: React.FC = () => {
                   />
                 </svg>
               </button>
-              {isDropdownOpen && (
+              {isTimingDropdownOpen && (
                 <div className="ring-opacity-5 absolute right-0 z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black focus:outline-none">
                   <div
                     className="py-1"
@@ -337,21 +347,21 @@ const ProviderBookingsPage: React.FC = () => {
                     aria-orientation="vertical"
                     aria-labelledby="options-menu"
                   >
-                    {FILTER_TYPES.map((type) => (
+                    {TIMING_FILTERS.map((filter) => (
                       <button
-                        key={type}
+                        key={filter}
                         onClick={() => {
-                          setFilterType(type);
-                          setIsDropdownOpen(false);
+                          setTimingFilter(filter);
+                          setIsTimingDropdownOpen(false);
                         }}
                         className={`${
-                          filterType === type
+                          timingFilter === filter
                             ? "bg-blue-100 text-blue-900"
                             : "text-gray-700"
                         } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
                         role="menuitem"
                       >
-                        {type}
+                        {filter}
                       </button>
                     ))}
                   </div>
@@ -359,7 +369,6 @@ const ProviderBookingsPage: React.FC = () => {
               )}
             </div>
           </div>
-          {/* Centering the tabs */}
           <div className="flex justify-center overflow-x-auto">
             <nav className="flex space-x-2 pb-2 text-sm">
               {TAB_ITEMS.map((tab) => (
@@ -395,7 +404,11 @@ const ProviderBookingsPage: React.FC = () => {
                       navigate(`/provider/active-service/${booking.id}`);
                     }
                   }}
-                  className={`w-full ${activeTab === "IN PROGRESS" ? "cursor-pointer transition-shadow hover:shadow-lg" : ""}`}
+                  className={`w-full ${
+                    activeTab === "IN PROGRESS"
+                      ? "cursor-pointer transition-shadow hover:shadow-lg"
+                      : ""
+                  }`}
                 >
                   <ProviderBookingItemCard booking={booking} />
                 </div>

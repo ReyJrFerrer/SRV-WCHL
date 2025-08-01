@@ -340,15 +340,17 @@ const ServiceDetailPage: React.FC = () => {
     );
   }
 
-  const {
-    rating,
-    providerName,
-    providerAvatar,
-    isVerified,
-    name,
-    category,
-    location,
-  } = service;
+  const { rating, providerName, providerAvatar, name, category, location } =
+    service;
+  // Debug: log service and isVerified
+  console.log("[DEBUG] service object:", service);
+  console.log(
+    "[DEBUG] service.isVerified:",
+    service.isVerified,
+    typeof service.isVerified,
+  );
+  // Use isVerified from service object only
+  const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
   const reviewCount = rating?.count ?? 0;
 
@@ -381,20 +383,29 @@ const ServiceDetailPage: React.FC = () => {
           <div className="w-full lg:w-[400px]">
             <div className="h-full rounded-xl bg-white p-6 shadow-lg">
               <div className="mb-4 flex items-center">
-                <div className="relative mr-6 h-24 w-24 overflow-hidden rounded-full border-2 border-white">
+                <div
+                  className="relative mr-6 overflow-hidden rounded-full border-2 border-white"
+                  style={{
+                    width: "112px", // default (h-28 w-28)
+                    height: "112px",
+                    minWidth: "112px",
+                    minHeight: "112px",
+                    maxWidth: "128px",
+                    maxHeight: "128px",
+                    aspectRatio: "1/1",
+                  }}
+                >
                   <img
                     src={providerAvatar || "/../default-provider.svg"}
                     alt={providerName}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full rounded-full object-cover"
+                    style={{ borderRadius: "50%" }}
                   />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800">
+                  <h2 className="text-2xl font-bold text-gray-800">
                     {providerName}
                   </h2>
-                  <p className="text-sm text-gray-500">
-                    {category?.name ?? "General"}
-                  </p>
                   {/* Availability Badge */}
                   {service &&
                     service.availability &&
@@ -411,7 +422,7 @@ const ServiceDetailPage: React.FC = () => {
                   {/* Reputation Score (below availability, above verification note) */}
                   <ReputationScore score={50} />
                   {/* Verification Note (below reputation score) */}
-                  {isVerified && (
+                  {isVerified === true && (
                     <span className="mt-2 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
                       <CheckBadgeIcon className="mr-2 h-5 w-5" />
                       <span>This service provider is verified.</span>
@@ -427,6 +438,9 @@ const ServiceDetailPage: React.FC = () => {
           <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
             <div className="h-full rounded-xl bg-white p-6 shadow-lg">
               <h1 className="mb-2 text-2xl font-bold text-gray-900">{name}</h1>
+              <p className="mb-2 text-base font-semibold text-gray-600">
+                {category?.name ?? "General"}
+              </p>
               <div className="mb-4 flex items-center text-sm text-gray-600">
                 <MapPinIcon className="mr-1 h-5 w-5 text-gray-400" />
                 <span>{location?.address || "Baguio City"}</span>
@@ -458,11 +472,19 @@ const ServiceDetailPage: React.FC = () => {
           ) : packages.length > 0 ? (
             <div className="space-y-3">
               {packages.map((pkg) => (
-                <div key={pkg.id} className="rounded-lg border bg-gray-50 p-4">
+                <div
+                  key={pkg.id}
+                  className="rounded-lg border border-yellow-500 bg-gray-50 p-4 transition-all duration-200 hover:scale-95 hover:shadow-md"
+                  style={{ willChange: "transform" }}
+                >
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-gray-800">{pkg.title}</h4>
                     <p className="text-lg font-bold text-blue-600">
-                      ₱{Number(pkg.price).toFixed(2)}
+                      ₱
+                      {Number(pkg.price).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
                   <p className="mt-1 text-sm text-gray-600">
@@ -487,9 +509,27 @@ const ServiceDetailPage: React.FC = () => {
       {/* Sticky Footer for Actions */}
       <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3">
         <div className="mx-auto flex max-w-3xl items-center space-x-3">
+          {/* Vouch button (Lefts) */}
+          <button
+            className="flex w-1/4 items-center justify-center rounded-lg bg-yellow-200 py-3 font-bold text-yellow-800 hover:bg-yellow-300"
+            type="button"
+            // TODO: Add vouching logic here
+          >
+            Vouch
+          </button>
+
+          {/* Book Now button (center, bigger) */}
+          <button
+            onClick={handleBookNow}
+            disabled={packages.length === 0}
+            className="w-2/4 rounded-lg bg-blue-600 py-3 font-bold text-white shadow-md transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+          >
+            Book Now
+          </button>
+          {/* Chat button (Right) */}
           <button
             onClick={handleChatProviderClick}
-            className="flex w-1/3 items-center justify-center rounded-lg bg-gray-200 py-3 font-bold text-gray-800 hover:bg-gray-300"
+            className="flex w-1/4 items-center justify-center rounded-lg bg-gray-200 py-3 font-bold text-gray-800 hover:bg-gray-300"
           >
             {chatLoading ? (
               <>
@@ -500,13 +540,6 @@ const ServiceDetailPage: React.FC = () => {
               <></>
             )}
             Chat
-          </button>
-          <button
-            onClick={handleBookNow}
-            disabled={packages.length === 0}
-            className="w-2/3 rounded-lg bg-blue-600 py-3 font-bold text-white shadow-md transition-colors hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            Book Now
           </button>
         </div>
       </div>

@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import {
-  PrinterIcon,
-  ArrowUturnLeftIcon,
-  ShareIcon,
-} from "@heroicons/react/24/solid";
+import { useParams, Link, useLocation } from "react-router-dom";
+import { ArrowUturnLeftIcon, ShareIcon } from "@heroicons/react/24/solid";
 import {
   useBookingManagement,
   EnhancedBooking,
@@ -12,8 +8,11 @@ import {
 
 const ReceiptPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL
+  const location = useLocation();
   const [booking, setBooking] = useState<EnhancedBooking | null>(null);
 
+  // Get review info from navigation state if present
+  const userRating = location.state?.userRating;
   const { bookings, loading: bookingLoading } = useBookingManagement();
 
   // Set the document title
@@ -134,6 +133,27 @@ const ReceiptPage: React.FC = () => {
               {booking.providerProfile?.name || "N/A"}
             </span>
           </div>
+          {userRating && (
+            <div className="mb-3 flex items-center justify-between">
+              <span className="font-bold text-gray-600">Your Rating:</span>
+              <span className="flex items-center">
+                {[...Array(userRating)].map((_, i) => (
+                  <svg
+                    key={i}
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    className="h-5 w-5 text-yellow-400"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.175 0l-3.38 2.455c-.784.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.174 9.393c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.966z" />
+                  </svg>
+                ))}
+                <span className="ml-2 text-sm text-gray-700">
+                  ({userRating} star{userRating > 1 ? "s" : ""})
+                </span>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Payment Summary */}
@@ -169,25 +189,47 @@ const ReceiptPage: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-6 flex w-full max-w-md flex-col gap-3 sm:flex-row-reverse">
-        <Link
-          to="/client/booking"
-          className="flex w-full flex-1 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
-        >
-          <ArrowUturnLeftIcon className="mr-2 h-5 w-5" /> Done
-        </Link>
-        <button
-          onClick={handleShare}
-          className="flex w-full flex-1 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
-        >
-          <ShareIcon className="mr-2 h-5 w-5" /> Share
-        </button>
-        <button
-          onClick={() => window.print()}
-          className="flex w-full flex-1 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
-        >
-          <PrinterIcon className="mr-2 h-5 w-5" /> Print
-        </button>
+      <div className="mt-6 w-full max-w-md">
+        {userRating && userRating >= 4 ? (
+          <>
+            <div className="mb-3 flex gap-3">
+              <button
+                className="flex w-1/2 items-center justify-center rounded-lg bg-yellow-200 px-6 py-3 font-semibold text-yellow-800 transition-colors hover:bg-yellow-300"
+                type="button"
+                // TODO: Add vouching logic here
+              >
+                Vouch
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex w-1/2 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
+              >
+                <ShareIcon className="mr-2 h-5 w-5" /> Share
+              </button>
+            </div>
+            <Link
+              to="/client/booking"
+              className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              <ArrowUturnLeftIcon className="mr-2 h-5 w-5" /> Done
+            </Link>
+          </>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              onClick={handleShare}
+              className="flex w-1/2 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
+            >
+              <ShareIcon className="mr-2 h-5 w-5" /> Share
+            </button>
+            <Link
+              to="/client/booking"
+              className="flex w-1/2 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              <ArrowUturnLeftIcon className="mr-2 h-5 w-5" /> Done
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
