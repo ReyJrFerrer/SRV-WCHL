@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { ServiceCategory } from "../../services/serviceCanisterService";
 
@@ -34,6 +34,8 @@ interface ServiceDetailsProps {
     categoryId?: string;
     servicePackages?: string;
   };
+  // New prop for handling category requests
+  onRequestCategory: (categoryName: string) => void;
 }
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
@@ -45,12 +47,36 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   addPackage,
   removePackage,
   validationErrors = {},
+  onRequestCategory, // Destructure the new prop
 }) => {
+  // State for the new category request input field
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
+  const [categoryRequestError, setCategoryRequestError] = useState<string>("");
+
+  const handleCategoryRequestChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setNewCategoryName(e.target.value);
+    if (e.target.value) {
+      setCategoryRequestError(""); // Clear error when user starts typing
+    }
+  };
+
+  const handleRequestCategoryClick = () => {
+    if (newCategoryName.trim()) {
+      onRequestCategory(newCategoryName);
+      setNewCategoryName(""); // Clear the input after requesting
+      setCategoryRequestError(""); // Clear any previous error
+    } else {
+      setCategoryRequestError("Please enter a category name to request.");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
+        <section className="rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm flex flex-col justify-between">
           <div className="space-y-8">
             <section className="rounded-xl border border-gray-100 bg-transparent p-0 shadow-none">
               <h2 className="mb-4 text-lg font-bold text-blue-700">
@@ -118,6 +144,42 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 )}
               </div>
             </section>
+          </div>
+
+          {/* Category Request Section */}
+          <div className="mt-auto pt-6">
+            <label
+              htmlFor="requestCategory"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Can't find your category? Request it here!
+            </label>
+            <div className="flex flex-col space-y-2 xs:flex-row xs:space-x-2 xs:space-y-0">
+              <input
+                type="text"
+                id="requestCategory"
+                value={newCategoryName}
+                onChange={handleCategoryRequestChange}
+                className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-blue-500 sm:text-sm ${
+                  categoryRequestError
+                    ? "border-red-300 bg-red-50 focus:border-red-500"
+                    : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                }`}
+                placeholder="e.g., Pet Grooming"
+              />
+              <button
+                type="button"
+                onClick={handleRequestCategoryClick}
+                className="rounded-lg bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Request category
+              </button>
+            </div>
+            {categoryRequestError && (
+              <p className="mt-1 text-sm text-red-600">
+                {categoryRequestError}
+              </p>
+            )}
           </div>
         </section>
 
