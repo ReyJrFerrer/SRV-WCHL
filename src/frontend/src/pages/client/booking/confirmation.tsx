@@ -108,7 +108,14 @@ const BookingConfirmationPage: React.FC = () => {
                     {bookingDetails.location && (
                       <li>
                         <span className="font-semibold">Location:</span>{" "}
-                        {bookingDetails.location}
+                        {bookingDetails.location
+                          .split(",")
+                          .map((part) =>
+                            part
+                              .trim()
+                              .replace(/\b\w/g, (c) => c.toUpperCase()),
+                          )
+                          .join(", ")}
                         {bookingDetails.landmark &&
                         bookingDetails.landmark !== "None"
                           ? ` (${bookingDetails.landmark})`
