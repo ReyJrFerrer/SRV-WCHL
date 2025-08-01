@@ -28,7 +28,6 @@ export default function CreateProfilePage() {
   });
   const [reauthRequired, setReauthRequired] = useState(false);
 
-  // Setting document title
   // Set document title using React 19 approach
   useEffect(() => {
     document.title = "Create Profile | SRV";
