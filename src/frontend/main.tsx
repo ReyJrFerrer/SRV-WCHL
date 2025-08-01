@@ -40,6 +40,7 @@ import ClientProfilePage from "./src/pages/client/profile";
 import SettingsPageC from "./src/pages/client/settings";
 import TermsAndConditionsPage from "./src/pages/client/terms";
 import ReportIssuePage from "./src/pages/client/report";
+import HelpSupportPage from "./src/pages/client/help";
 
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
@@ -90,6 +91,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="search-results" element={<SearchResults />} />
             <Route path="terms" element={<TermsAndConditionsPage />} />
             <Route path="report" element={<ReportIssuePage />} />
+            <Route path="help" element={<HelpSupportPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
 
             {/* Service Routes */}
