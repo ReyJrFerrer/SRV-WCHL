@@ -15,7 +15,7 @@ const TermsAndConditionsPage: React.FC = () => {
           <span className="font-medium">Back</span>
         </button>
         <div className="mb-8 flex flex-col items-center">
-          <img src="/logo.svg" alt="SRV Logo" className="mb-4 h-24 w-24" />
+          <img src="/logo.svg" alt="SRV Logo" className="mb-2 h-16 w-16" />
           <h1 className="text-center text-3xl font-extrabold tracking-tight text-blue-900">
             Terms and Conditions
           </h1>
