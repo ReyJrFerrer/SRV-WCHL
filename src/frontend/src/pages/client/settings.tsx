@@ -2,12 +2,11 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; // Adjust path as needed
 import {
-  BellIcon,
-  ShieldCheckIcon,
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
   ArrowPathRoundedSquareIcon, // Icon for the new switch button
+  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
@@ -26,8 +25,16 @@ const SettingsPage: React.FC = () => {
 
   // Menu items, with "Profile" removed as it now has its own section
   const menuItems = [
-    { name: "Notifications", icon: BellIcon, href: "/client/notifications" },
-    { name: "Security", icon: ShieldCheckIcon, href: "/client/security" },
+    {
+      name: "Terms & Conditions",
+      icon: ArrowRightOnRectangleIcon,
+      href: "/client/terms",
+    },
+    {
+      name: "Report",
+      icon: ExclamationCircleIcon,
+      href: "/client/report",
+    },
     {
       name: "Help & Support",
       icon: QuestionMarkCircleIcon,

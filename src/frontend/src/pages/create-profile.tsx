@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authCanisterService } from "../services/authCanisterService";
-import TermsAndConditionsModal from "../components/client/TermsAndConditionsModal";
+import TermsAndConditionsModal from "../components/common/TermsAndConditionsModal";
 import {
   UserIcon,
   WrenchScrewdriverIcon,

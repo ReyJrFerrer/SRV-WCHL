@@ -38,6 +38,7 @@ import ClientCategory from "./src/pages/client/categories/[slug]";
 import ClientReview from "./src/pages/client/review/[id]";
 import ClientProfilePage from "./src/pages/client/profile";
 import SettingsPageC from "./src/pages/client/settings";
+import TermsAndConditionsPage from "./src/pages/client/terms";
 
 // Provider Pages
 import ProviderHome from "./src/pages/provider/home";
@@ -86,6 +87,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <Route path="settings" element={<SettingsPageC />} />
             <Route path="profile" element={<ClientProfilePage />} />
             <Route path="search-results" element={<SearchResults />} />
+            <Route path="terms" element={<TermsAndConditionsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
 
             {/* Service Routes */}
