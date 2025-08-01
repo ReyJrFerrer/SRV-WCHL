@@ -112,7 +112,8 @@ const ClientChatPage: React.FC = () => {
                       const diffDays = diffHours / 24;
 
                       if (diffHours < 1) return "Just now";
-                      if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
+                      if (diffHours < 24)
+                        return `${Math.floor(diffHours)}h ago`;
                       if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
                       return date.toLocaleDateString();
                     };
