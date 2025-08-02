@@ -219,6 +219,27 @@ export const authCanisterService = {
   },
 
   /**
+   * Switch user role between Client and ServiceProvider (requires authentication)
+   * Toggles the current user's role while preserving all their data
+   */
+  async switchUserRole(): Promise<FrontendProfile | null> {
+    try {
+      const actor = getAuthActor(true); // Requires authentication
+      const result = await actor.switchUserRole();
+
+      if ("ok" in result) {
+        return adaptBackendProfile(result.ok);
+      } else {
+        console.error("Error switching user role:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error switching user role:", error);
+      throw new Error(`Failed to switch user role: ${error}`);
+    }
+  },
+
+  /**
    * Set canister references for auth canister (ADMIN FUNCTION)
    * @param reputationCanisterId Optional reputation canister ID to set
    */

@@ -13,7 +13,7 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
-import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
+import { useProviderProfile } from "../../hooks/useProviderProfile"; // Adjust path as needed
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
@@ -306,7 +306,8 @@ const ClientStats: React.FC = () => {
 
 const SPProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, loading, error, updateProfile } = useClientProfile();
+  const { profile, loading, error, updateProfile, switchRole } =
+    useProviderProfile();
   const {
     loading: reputationLoading,
     error: reputationError,
@@ -321,6 +322,7 @@ const SPProfilePage: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showAboutInfo, setShowAboutInfo] = useState(false);
+  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
   // Get reputation score with fallback for display
   const reputationDisplay = getReputationDisplay();
@@ -371,10 +373,20 @@ const SPProfilePage: React.FC = () => {
     }
   };
 
-  const handleSwitchToClient = () => {
-    // Placeholder function for future implementation
-    console.log("Attempting to switch to Client mode...");
-    alert("Feature coming soon!");
+  const handleSwitchToClient = async () => {
+    setIsSwitchingRole(true);
+    try {
+      const success = await switchRole();
+      if (success) {
+        // Navigate to client dashboard after successful role switch
+        navigate("/client");
+      }
+    } catch (error) {
+      console.error("Failed to switch role:", error);
+      // Error is already handled in the hook and displayed in the UI
+    } finally {
+      setIsSwitchingRole(false);
+    }
   };
 
   if (loading && !profile) {
@@ -507,19 +519,34 @@ const SPProfilePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* --- Switch to SRVice Provider Button --- */}
+            {/* --- Switch to Client Mode Button --- */}
             <div className="rounded-lg bg-blue-600 text-white shadow-sm">
               <button
                 onClick={handleSwitchToClient}
-                className="group flex w-full items-center justify-between rounded-lg p-4 text-left text-black transition-colors hover:bg-yellow-300"
+                disabled={isSwitchingRole}
+                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left text-black transition-colors ${
+                  isSwitchingRole
+                    ? "cursor-not-allowed opacity-50"
+                    : "hover:bg-yellow-300"
+                }`}
               >
                 <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-white group-hover:text-black" />
+                  <ArrowPathRoundedSquareIcon
+                    className={`mr-4 h-6 w-6 ${
+                      isSwitchingRole
+                        ? "animate-spin text-yellow-300"
+                        : "text-white group-hover:text-black"
+                    }`}
+                  />
                   <span className="text-md font-medium text-white group-hover:text-black">
-                    Switch into Client Mode
+                    {isSwitchingRole
+                      ? "Switching Role..."
+                      : "Switch into Client Mode"}
                   </span>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
+                {!isSwitchingRole && (
+                  <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
+                )}
               </button>
             </div>
           </div>

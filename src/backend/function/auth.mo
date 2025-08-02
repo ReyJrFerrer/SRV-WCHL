@@ -320,6 +320,43 @@ actor AuthCanister {
         };
     };
     
+    // Switch user role between Client and ServiceProvider
+    public shared(msg) func switchUserRole() : async Result<Profile> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        switch (profiles.get(caller)) {
+            case (?existingProfile) {
+                // Toggle between Client and ServiceProvider roles
+                let newRole : UserRole = switch (existingProfile.role) {
+                    case (#Client) #ServiceProvider;
+                    case (#ServiceProvider) #Client;
+                };
+                
+                let updatedProfile : Profile = {
+                    id = existingProfile.id;
+                    name = existingProfile.name;
+                    phone = existingProfile.phone;
+                    role = newRole;
+                    createdAt = existingProfile.createdAt;
+                    updatedAt = Time.now();
+                    isVerified = existingProfile.isVerified;
+                    profilePicture = existingProfile.profilePicture;
+                    biography = existingProfile.biography;
+                };
+                
+                profiles.put(caller, updatedProfile);
+                return #ok(updatedProfile);
+            };
+            case (null) {
+                return #err("Profile not found");
+            };
+        };
+    };
+    
     // Get all service providers (for discovery)
     public query func getAllServiceProviders() : async [Profile] {
         let providersBuffer = Array.filter<Profile>(
