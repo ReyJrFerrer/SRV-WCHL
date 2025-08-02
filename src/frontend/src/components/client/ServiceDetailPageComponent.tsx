@@ -354,9 +354,6 @@ const ServiceDetailPage: React.FC = () => {
 
   const { rating, providerName, providerAvatar, name, category, location } =
     service;
-  // Debug: log service and availability (not isVerified)
-  console.log("[DEBUG] service object:", service);
-  console.log("[DEBUG] service.availability:", service.availability);
   // Use isVerified from service object only
   const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
@@ -375,43 +372,53 @@ const ServiceDetailPage: React.FC = () => {
     availability?: Availability;
   }
 
+  // New: Visualize each day with its corresponding time slot(s)
   const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
     availability,
   }) => {
-    // Display all time slots as a comma-separated list if available
-    const availableTimeRanges: string[] | undefined =
-      availability?.availableTimeRanges;
+    const days = availability?.availableDays || [];
+    const timeRanges = availability?.availableTimeRanges || [];
+    // Pair each day with its corresponding time slot (by index)
+    // If there are more days than time slots, show 'Not specified' for missing times
+    // If there are more time slots than days, ignore extra slots
+    const pairs =
+      days.length > 0
+        ? days.map((day, idx) => ({
+            day,
+            time:
+              timeRanges[idx] ||
+              (availability?.availableTimeStart &&
+              availability?.availableTimeEnd
+                ? `${availability.availableTimeStart} - ${availability.availableTimeEnd}`
+                : undefined),
+          }))
+        : [];
+    const hasPairs = pairs.length > 0;
     return (
       <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
           Availability
         </h3>
         <div className="flex flex-col gap-2">
-          <div>
-            <span className="font-semibold text-gray-700">Days:</span>
-            <span className="ml-2 text-gray-600">
-              {availability?.availableDays &&
-              availability.availableDays.length > 0
-                ? availability.availableDays.join(", ")
-                : "Not specified"}
-            </span>
-          </div>
-          <div>
-            <span className="font-semibold text-gray-700">Time(s):</span>
-            <span className="ml-2 text-gray-600">
-              {availableTimeRanges && availableTimeRanges.length > 0 ? (
-                <span className="flex flex-col">
-                  {availableTimeRanges.map((range, idx) => (
-                    <span key={idx}>{range}</span>
-                  ))}
-                </span>
-              ) : (
-                (availability?.availableTimeStart || "Not specified") +
-                " - " +
-                (availability?.availableTimeEnd || "Not specified")
-              )}
-            </span>
-          </div>
+          {hasPairs ? (
+            <ul className="divide-y divide-gray-100">
+              {pairs.map((pair, idx) => (
+                <li
+                  key={pair.day + idx}
+                  className="flex items-center justify-between py-2"
+                >
+                  <span className="inline-block min-w-[90px] rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-center text-xs font-medium text-blue-700 shadow-sm">
+                    {pair.day}
+                  </span>
+                  <span className="inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-center text-xs font-medium text-yellow-800 shadow-sm">
+                    {pair.time || "Not specified"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-400">No availability specified</div>
+          )}
         </div>
       </div>
     );
@@ -421,7 +428,6 @@ const ServiceDetailPage: React.FC = () => {
   let mappedAvailability: Availability | undefined = undefined;
   if (service.availability) {
     const { schedule, timeSlots, isAvailableNow } = service.availability;
-    console.log("[DEBUG] service.availability.timeSlots:", timeSlots);
     // Extract days (assume array of strings or objects with 'day' property)
     let availableDays: string[] | undefined = undefined;
     if (Array.isArray(schedule) && schedule.length > 0) {
