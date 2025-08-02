@@ -374,72 +374,172 @@ const ServiceDetailPage: React.FC = () => {
     availableTimeStart?: string; // e.g. "09:00"
     availableTimeEnd?: string; // e.g. "17:00"
     availableTimeRanges?: string[]; // e.g. ["09:00 - 12:00", "13:00 - 17:00"]
+    timeSlotsByDay?: Record<string, string[]>; // Added to support grouped time slots by day
   };
 
   interface AvailabilitySectionProps {
     availability?: Availability;
   }
 
-  // New: Visualize each day with its corresponding time slot(s)
+  // Visualize each day with all its corresponding time slots
   const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
     availability,
   }) => {
-    const days = availability?.availableDays || [];
-    const timeRanges = availability?.availableTimeRanges || [];
-    // Pair each day with its corresponding time slot (by index)
-    // If there are more days than time slots, show 'Not specified' for missing times
-    // If there are more time slots than days, ignore extra slots
-    const pairs =
-      days.length > 0
-        ? days.map((day, idx) => ({
-            day,
-            time:
-              timeRanges[idx] ||
-              (availability?.availableTimeStart &&
-              availability?.availableTimeEnd
-                ? `${availability.availableTimeStart} - ${availability.availableTimeEnd}`
-                : undefined),
-          }))
-        : [];
-    const hasPairs = pairs.length > 0;
+    const slotsByDay = availability?.timeSlotsByDay || {};
+    const days = Object.keys(slotsByDay);
+    const hasDays = days.length > 0;
+    // Find the max number of slots for any day (for grid rows)
+    const maxSlots = days.reduce((max, day) => {
+      const slots = Array.isArray(slotsByDay[day]) ? slotsByDay[day] : [];
+      return Math.max(max, slots.length);
+    }, 0);
     return (
       <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
         <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
           Availability
         </h3>
-        <div className="flex flex-col gap-2">
-          {hasPairs ? (
-            <ul className="divide-y divide-gray-100">
-              {pairs.map((pair, idx) => (
-                <li
-                  key={pair.day + idx}
-                  className="flex items-center justify-between py-2"
-                >
-                  <span className="inline-block min-w-[90px] rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-center text-xs font-medium text-blue-700 shadow-sm">
-                    {pair.day}
-                  </span>
-                  <span className="inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-center text-xs font-medium text-yellow-800 shadow-sm">
-                    {pair.time || "Not specified"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-gray-400">No availability specified</div>
-          )}
-        </div>
+        {hasDays ? (
+          <div>
+            {/* Mobile: stacked list, Desktop: grid */}
+            <div className="block lg:hidden">
+              {/* Mobile dropdown/accordion for days */}
+              {(() => {
+                const [openDay, setOpenDay] = React.useState<string | null>(
+                  null,
+                );
+                return (
+                  <ul className="divide-y divide-gray-100">
+                    {days.map((day) => {
+                      let slots = slotsByDay[day];
+                      if (typeof slots === "string") slots = [slots];
+                      if (!Array.isArray(slots)) slots = [];
+                      const isOpen = openDay === day;
+                      return (
+                        <li key={day}>
+                          <button
+                            type="button"
+                            className={`flex w-full items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-left text-sm font-medium text-blue-700 transition focus:ring-2 focus:ring-blue-400 focus:outline-none`}
+                            onClick={() => setOpenDay(isOpen ? null : day)}
+                            aria-expanded={isOpen}
+                            aria-controls={`availability-panel-${day}`}
+                          >
+                            <span>{day}</span>
+                            <svg
+                              className={`ml-2 h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          </button>
+                          {isOpen && (
+                            <div
+                              id={`availability-panel-${day}`}
+                              className="mt-2 mb-4 flex flex-wrap items-center gap-2 px-3"
+                            >
+                              {slots.length > 0 ? (
+                                slots.map((slot, idx) => (
+                                  <span
+                                    key={slot + idx}
+                                    className="inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-center text-xs font-medium text-yellow-800 shadow-sm"
+                                  >
+                                    {slot}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-gray-400">
+                                  Not specified
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                );
+              })()}
+            </div>
+            {/* Desktop: landscape grid */}
+            <div className="hidden lg:block">
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-separate border-spacing-y-2">
+                  <thead>
+                    <tr>
+                      {days.map((day) => (
+                        <th
+                          key={day}
+                          className="rounded-t-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-xs font-bold text-blue-700"
+                        >
+                          {day}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(maxSlots > 0 ? maxSlots : 1)].map(
+                      (_, rowIdx) => (
+                        <tr key={rowIdx}>
+                          {days.map((day) => {
+                            let slots = slotsByDay[day];
+                            if (typeof slots === "string") slots = [slots];
+                            if (!Array.isArray(slots)) slots = [];
+                            const slot = slots[rowIdx];
+                            return (
+                              <td
+                                key={day + rowIdx}
+                                className="px-3 py-2 text-center align-top"
+                              >
+                                {slot ? (
+                                  <span className="inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 shadow-sm">
+                                    {slot}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">
+                                    {rowIdx === 0 ? "Not specified" : ""}
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-gray-400">No availability specified</div>
+        )}
       </div>
     );
   };
 
-  // Map backend availability to frontend expected fields
-  let mappedAvailability: Availability | undefined = undefined;
+  // Map backend availability to frontend expected fields, supporting multiple time slots per day
+  let mappedAvailability:
+    | (Availability & { timeSlotsByDay?: Record<string, string[]> })
+    | undefined = undefined;
+  // Define a type for time slot objects
+  type TimeSlotObject = {
+    day?: string;
+    start?: string;
+    end?: string;
+  };
+
   if (service.availability) {
     const { schedule, timeSlots, isAvailableNow } = service.availability;
-    // Extract days (assume array of strings or objects with 'day' property)
-    let availableDays: string[] | undefined = undefined;
+    // Accept both string and object with day property
+    let availableDays: string[] = [];
     if (Array.isArray(schedule) && schedule.length > 0) {
-      // Accept both string and object with day property
       availableDays = schedule
         .map((s: any) => {
           if (typeof s === "string") return s;
@@ -448,65 +548,111 @@ const ServiceDetailPage: React.FC = () => {
         })
         .filter((d): d is string => typeof d === "string");
     }
-    // Extract time ranges (assume array of objects with 'start' and 'end')
-    let availableTimeStart: string | undefined = undefined;
-    let availableTimeEnd: string | undefined = undefined;
-    let availableTimeRanges: string[] | undefined = undefined;
+    // Always initialize all days in timeSlotsByDay, even if no slots
+    let timeSlotsByDay: Record<string, string[]> = {};
+    availableDays.forEach((day) => {
+      timeSlotsByDay[day] = [];
+    });
     if (Array.isArray(timeSlots) && timeSlots.length > 0) {
-      availableTimeRanges = timeSlots
-        .map((slot: any) => {
+      // Case 1: timeSlots is 1:1 with availableDays (e.g. 7 days, 7 slots)
+      if (
+        Array.isArray(availableDays) &&
+        availableDays.length === timeSlots.length
+      ) {
+        availableDays.forEach((day, idx) => {
+          const slot = timeSlots[idx] as string | TimeSlotObject;
           if (typeof slot === "string") {
-            // If string is in the format 'HH:mm-HH:mm', split and format both
             const match = slot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
             if (match) {
               const [, start, end] = match;
-              return `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`;
+              timeSlotsByDay[day] = [
+                `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`,
+              ];
+            } else {
+              timeSlotsByDay[day] = [formatTime12Hour(slot)];
             }
-            // Otherwise, just format as a single time
-            return formatTime12Hour(slot);
           } else if (
             slot &&
             typeof slot === "object" &&
+            "start" in slot &&
+            "end" in slot &&
             slot.start &&
             slot.end
           ) {
-            return `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
+            timeSlotsByDay[day] = [
+              `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`,
+            ];
           }
-          return undefined;
-        })
-        .filter((r): r is string => typeof r === "string");
-      if (availableTimeRanges.length > 0) {
-        const firstSlot = timeSlots[0];
-        if (
-          typeof firstSlot === "string" &&
-          firstSlot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/)
-        ) {
-          const match = firstSlot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
-          if (match) {
-            availableTimeStart = formatTime12Hour(match[1]);
-            availableTimeEnd = formatTime12Hour(match[2]);
+        });
+      } else if (availableDays.length === 1) {
+        // All slots go to the only day
+        timeSlotsByDay[availableDays[0]] = timeSlots
+          .map((slot: string | TimeSlotObject) => {
+            if (typeof slot === "string") {
+              const match = slot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+              if (match) {
+                const [, start, end] = match;
+                return `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`;
+              }
+              return formatTime12Hour(slot);
+            } else if (
+              slot &&
+              typeof slot === "object" &&
+              "start" in slot &&
+              "end" in slot &&
+              slot.start &&
+              slot.end
+            ) {
+              return `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
+            }
+            return undefined;
+          })
+          .filter((r): r is string => typeof r === "string");
+      } else {
+        // If timeSlots is an array of objects with day property, group by day
+        let hasObjectSlots = false;
+        timeSlots.forEach((slot: string | TimeSlotObject) => {
+          if (
+            slot &&
+            typeof slot === "object" &&
+            "day" in slot &&
+            "start" in slot &&
+            "end" in slot &&
+            slot.day &&
+            slot.start &&
+            slot.end
+          ) {
+            hasObjectSlots = true;
+            const day = slot.day;
+            const range = `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
+            if (!timeSlotsByDay[day]) timeSlotsByDay[day] = [];
+            timeSlotsByDay[day].push(range);
           }
-        } else if (
-          firstSlot &&
-          typeof firstSlot === "object" &&
-          "start" in firstSlot &&
-          "end" in firstSlot
-        ) {
-          const slotObj = firstSlot as { start: string; end: string };
-          availableTimeStart = formatTime12Hour(slotObj.start);
-          availableTimeEnd = formatTime12Hour(slotObj.end);
-        } else if (typeof firstSlot === "string") {
-          availableTimeStart = formatTime12Hour(firstSlot);
-          availableTimeEnd = formatTime12Hour(firstSlot);
+        });
+        // If no object slots, treat all as string slots and assign to all days
+        if (!hasObjectSlots) {
+          availableDays.forEach((day) => {
+            timeSlotsByDay[day] = timeSlots
+              .map((slot: string | TimeSlotObject) => {
+                if (typeof slot === "string") {
+                  const match = slot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+                  if (match) {
+                    const [, start, end] = match;
+                    return `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`;
+                  }
+                  return formatTime12Hour(slot);
+                }
+                return undefined;
+              })
+              .filter((r): r is string => typeof r === "string");
+          });
         }
       }
     }
     mappedAvailability = {
       isAvailableNow,
       availableDays,
-      availableTimeStart,
-      availableTimeEnd,
-      availableTimeRanges,
+      timeSlotsByDay,
     };
   }
 
