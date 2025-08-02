@@ -1,3 +1,15 @@
+// Helper to format 24-hour time to 12-hour format with AM/PM
+function formatTime12Hour(time: string): string {
+  if (!time) return "";
+  const [hourStr, minuteStr] = time.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+  if (isNaN(hour) || isNaN(minute)) return time;
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+}
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -342,17 +354,147 @@ const ServiceDetailPage: React.FC = () => {
 
   const { rating, providerName, providerAvatar, name, category, location } =
     service;
-  // Debug: log service and isVerified
+  // Debug: log service and availability (not isVerified)
   console.log("[DEBUG] service object:", service);
-  console.log(
-    "[DEBUG] service.isVerified:",
-    service.isVerified,
-    typeof service.isVerified,
-  );
+  console.log("[DEBUG] service.availability:", service.availability);
   // Use isVerified from service object only
   const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
   const reviewCount = rating?.count ?? 0;
+
+  // --- Types and Component for the Availability Section ---
+  type Availability = {
+    isAvailableNow?: boolean;
+    availableDays?: string[]; // e.g. ["Monday", "Tuesday"]
+    availableTimeStart?: string; // e.g. "09:00"
+    availableTimeEnd?: string; // e.g. "17:00"
+    availableTimeRanges?: string[]; // e.g. ["09:00 - 12:00", "13:00 - 17:00"]
+  };
+
+  interface AvailabilitySectionProps {
+    availability?: Availability;
+  }
+
+  const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
+    availability,
+  }) => {
+    // Display all time slots as a comma-separated list if available
+    const availableTimeRanges: string[] | undefined =
+      availability?.availableTimeRanges;
+    return (
+      <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
+        <h3 className="mb-4 text-lg font-semibold text-gray-800">
+          Availability
+        </h3>
+        <div className="flex flex-col gap-2">
+          <div>
+            <span className="font-semibold text-gray-700">Days:</span>
+            <span className="ml-2 text-gray-600">
+              {availability?.availableDays &&
+              availability.availableDays.length > 0
+                ? availability.availableDays.join(", ")
+                : "Not specified"}
+            </span>
+          </div>
+          <div>
+            <span className="font-semibold text-gray-700">Time(s):</span>
+            <span className="ml-2 text-gray-600">
+              {availableTimeRanges && availableTimeRanges.length > 0 ? (
+                <span className="flex flex-col">
+                  {availableTimeRanges.map((range, idx) => (
+                    <span key={idx}>{range}</span>
+                  ))}
+                </span>
+              ) : (
+                (availability?.availableTimeStart || "Not specified") +
+                " - " +
+                (availability?.availableTimeEnd || "Not specified")
+              )}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Map backend availability to frontend expected fields
+  let mappedAvailability: Availability | undefined = undefined;
+  if (service.availability) {
+    const { schedule, timeSlots, isAvailableNow } = service.availability;
+    console.log("[DEBUG] service.availability.timeSlots:", timeSlots);
+    // Extract days (assume array of strings or objects with 'day' property)
+    let availableDays: string[] | undefined = undefined;
+    if (Array.isArray(schedule) && schedule.length > 0) {
+      // Accept both string and object with day property
+      availableDays = schedule
+        .map((s: any) => {
+          if (typeof s === "string") return s;
+          if (typeof s === "object" && s.day) return s.day;
+          return undefined;
+        })
+        .filter((d): d is string => typeof d === "string");
+    }
+    // Extract time ranges (assume array of objects with 'start' and 'end')
+    let availableTimeStart: string | undefined = undefined;
+    let availableTimeEnd: string | undefined = undefined;
+    let availableTimeRanges: string[] | undefined = undefined;
+    if (Array.isArray(timeSlots) && timeSlots.length > 0) {
+      availableTimeRanges = timeSlots
+        .map((slot: any) => {
+          if (typeof slot === "string") {
+            // If string is in the format 'HH:mm-HH:mm', split and format both
+            const match = slot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+            if (match) {
+              const [, start, end] = match;
+              return `${formatTime12Hour(start)} - ${formatTime12Hour(end)}`;
+            }
+            // Otherwise, just format as a single time
+            return formatTime12Hour(slot);
+          } else if (
+            slot &&
+            typeof slot === "object" &&
+            slot.start &&
+            slot.end
+          ) {
+            return `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
+          }
+          return undefined;
+        })
+        .filter((r): r is string => typeof r === "string");
+      if (availableTimeRanges.length > 0) {
+        const firstSlot = timeSlots[0];
+        if (
+          typeof firstSlot === "string" &&
+          firstSlot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/)
+        ) {
+          const match = firstSlot.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+          if (match) {
+            availableTimeStart = formatTime12Hour(match[1]);
+            availableTimeEnd = formatTime12Hour(match[2]);
+          }
+        } else if (
+          firstSlot &&
+          typeof firstSlot === "object" &&
+          "start" in firstSlot &&
+          "end" in firstSlot
+        ) {
+          const slotObj = firstSlot as { start: string; end: string };
+          availableTimeStart = formatTime12Hour(slotObj.start);
+          availableTimeEnd = formatTime12Hour(slotObj.end);
+        } else if (typeof firstSlot === "string") {
+          availableTimeStart = formatTime12Hour(firstSlot);
+          availableTimeEnd = formatTime12Hour(firstSlot);
+        }
+      }
+    }
+    mappedAvailability = {
+      isAvailableNow,
+      availableDays,
+      availableTimeStart,
+      availableTimeEnd,
+      availableTimeRanges,
+    };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-40">
@@ -377,7 +519,6 @@ const ServiceDetailPage: React.FC = () => {
             </button>
           </div>
         )}
-
         <div className="flex flex-col lg:flex-row lg:justify-center lg:gap-8">
           {/* Left Column: Provider Info */}
           <div className="w-full lg:w-[400px]">
@@ -459,7 +600,6 @@ const ServiceDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
-
         {/* Packages Section */}
         <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
           <h3 className="mb-4 text-lg font-semibold text-gray-800">
@@ -499,8 +639,9 @@ const ServiceDetailPage: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Availability, Location, Gallery, Credentials, Reviews */}
+        {/* Availability Section */}
+        <AvailabilitySection availability={mappedAvailability} />
+        {/* Gallery, Credentials, Reviews */}
         <ServiceGallerySection />
         <CredentialsSection isVerified={isVerified} />
         <ReviewsSection serviceId={service.id} />
