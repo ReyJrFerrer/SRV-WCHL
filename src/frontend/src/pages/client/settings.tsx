@@ -42,16 +42,18 @@ const SettingsPage: React.FC = () => {
     },
   ];
 
+  const [switching, setSwitching] = React.useState(false);
   const handleSwitchToProvider = async () => {
+    setSwitching(true);
     try {
       const success = await switchRole();
       if (success) {
-        // Navigate to provider dashboard after successful role switch
         navigate("/provider");
       }
     } catch (error) {
       console.error("Failed to switch role:", error);
-      // Error is already handled in the hook and displayed in the UI
+    } finally {
+      setSwitching(false);
     }
   };
 
@@ -103,14 +105,21 @@ const SettingsPage: React.FC = () => {
               <button
                 onClick={handleSwitchToProvider}
                 className="group flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-600"
+                disabled={switching}
               >
                 <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon className="mr-4 h-7 w-7 text-black group-hover:text-white" />
-                  <span className="text-lg font-semibold text-gray-800 group-hover:text-white">
-                    Switch into SRVice Provider
+                  <ArrowPathRoundedSquareIcon
+                    className={`mr-4 h-7 w-7 text-black transition-transform duration-300 group-hover:text-white ${switching ? "animate-spin" : ""}`}
+                  />
+                  <span
+                    className={`text-lg font-semibold text-gray-800 group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                  >
+                    {switching ? "Switching..." : "Switch into SRVice Provider"}
                   </span>
                 </div>
-                <ChevronRightIcon className="h-6 w-6 text-black group-hover:text-white" />
+                <ChevronRightIcon
+                  className={`h-6 w-6 text-black group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                />
               </button>
             </div>
 

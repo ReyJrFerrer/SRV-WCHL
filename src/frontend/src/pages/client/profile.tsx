@@ -14,6 +14,7 @@ import {
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
+import { useLogout } from "../../hooks/logout";
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 
@@ -263,6 +264,7 @@ const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { profile, loading, error, updateProfile, switchRole } =
     useClientProfile();
+  const { logout } = useLogout();
   const {
     loading: reputationLoading,
     error: reputationError,
@@ -353,7 +355,7 @@ const ClientProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-24">
+    <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
           <button
@@ -366,10 +368,10 @@ const ClientProfilePage: React.FC = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl p-4">
+      <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          {/* Left Column: Profile Info & Switch Button */}
-          <div className="space-y-4 lg:col-span-1">
+          {/* Left Column: Profile Info, Switch Button, Logout */}
+          <div className="flex flex-col space-y-4 lg:col-span-1">
             <div className="rounded-xl bg-white p-6 shadow-md">
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
@@ -504,6 +506,15 @@ const ClientProfilePage: React.FC = () => {
                 )}
               </button>
             </div>
+            {/* Logout button for desktop (left column) */}
+            <div className="hidden lg:block">
+              <button
+                onClick={logout}
+                className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+              >
+                Log Out
+              </button>
+            </div>
           </div>
 
           {/* Right Column: Reputation and Stats */}
@@ -601,6 +612,15 @@ const ClientProfilePage: React.FC = () => {
           </p>
         )}
       </main>
+      {/* Logout button for mobile (bottom, not sticky) */}
+      <div className="mt-8 block w-full px-4 lg:hidden">
+        <button
+          onClick={logout}
+          className="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+        >
+          Log Out
+        </button>
+      </div>
       <BottomNavigation />
     </div>
   );
