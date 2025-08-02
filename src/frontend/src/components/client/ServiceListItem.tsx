@@ -73,13 +73,38 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       );
     };
 
+    // Category icon mapping
+    const categoryIconMap: Record<string, string> = {
+      "gadget-technicians": "gadget repair.svg",
+      "beauty-services": "Beauty Services.svg",
+      "home-services": "repairs.svg",
+      "beauty-wellness": "wellnes.svg",
+      "automobile-repairs": "auto.svg",
+      "cleaning-services": "cleaning.svg",
+      "delivery-errands": "delivery.svg",
+      photographer: "photography.svg",
+      tutoring: "tutor.svg",
+      others: "others.svg",
+    };
+
+    // Normalize slug for mapping
+    const getCategoryIcon = (slug: string | undefined): string => {
+      if (!slug) return "/images/categories/others.svg";
+      // Handle special cases for mapping
+      if (categoryIconMap[slug]) {
+        return `/images/categories/${categoryIconMap[slug]}`;
+      }
+      // Fallback: try replacing hyphens with spaces and capitalize
+      const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
+      return fallback;
+    };
+
     return (
       <Link
         to={`/client/service/${service.id}`}
         className={`service-card block ${itemWidthClass} group flex flex-col overflow-hidden`}
       >
         <div className="relative">
-          {" "}
           {/* Image container */}
           <div className="aspect-video w-full">
             <img
@@ -88,11 +113,27 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-          {/* Availability badge */}
-          <div
-            className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
-          >
-            {availabilityText}
+          {/* Category icon and availability badge row */}
+          <div className="pointer-events-none absolute top-2 right-2 left-2 flex items-center justify-between">
+            {/* Category icon (if available) */}
+            {service.category?.slug && (
+              <img
+                src={getCategoryIcon(service.category.slug)}
+                alt={service.category.name || "Category"}
+                className="h-8 w-8 rounded-full border border-gray-200 bg-white shadow"
+                title={service.category.name}
+                onError={(e) => {
+                  e.currentTarget.src = "/images/categories/others.svg";
+                }}
+              />
+            )}
+            {/* Availability badge */}
+            <div
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
+              style={{ marginLeft: "auto" }}
+            >
+              {availabilityText}
+            </div>
           </div>
         </div>
 
