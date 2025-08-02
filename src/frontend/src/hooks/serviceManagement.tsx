@@ -127,9 +127,14 @@ interface ServiceManagementHook {
   updateService: (
     serviceId: string,
     categoryId: string,
-    title: string,
-    description: string,
-    price: number,
+    title?: string,
+    description?: string,
+    price?: number,
+    location?: Location,
+    weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+    instantBookingEnabled?: boolean,
+    bookingNoticeHours?: number,
+    maxBookingsPerDay?: number,
   ) => Promise<EnhancedService>;
   deleteService: (serviceId: string) => Promise<void>;
   getService: (serviceId: string) => Promise<EnhancedService | null>;
@@ -444,14 +449,18 @@ export const useServiceManagement = (): ServiceManagementHook => {
     [setOperationLoading, handleError, enrichServiceWithProviderData],
   );
 
-  // Fixed: updateService now uses only 4 parameters (serviceId, title, description, price)
   const updateService = useCallback(
     async (
       serviceId: string,
       categoryId: string,
-      title: string,
-      description: string,
-      price: number,
+      title?: string,
+      description?: string,
+      price?: number,
+      location?: Location,
+      weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+      instantBookingEnabled?: boolean,
+      bookingNoticeHours?: number,
+      maxBookingsPerDay?: number,
     ): Promise<EnhancedService> => {
       try {
         setOperationLoading("updateService", true);
@@ -461,6 +470,11 @@ export const useServiceManagement = (): ServiceManagementHook => {
           title,
           description,
           price,
+          location,
+          weeklySchedule,
+          instantBookingEnabled,
+          bookingNoticeHours,
+          maxBookingsPerDay,
         );
 
         if (!updatedService) {

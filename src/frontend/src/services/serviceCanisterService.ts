@@ -909,6 +909,11 @@ export const serviceCanisterService = {
     title?: string,
     description?: string,
     price?: number,
+    location?: Location,
+    weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
+    instantBookingEnabled?: boolean,
+    bookingNoticeHours?: number,
+    maxBookingsPerDay?: number,
   ): Promise<Service | null> {
     try {
       const actor = await getServiceActor(true);
@@ -918,6 +923,18 @@ export const serviceCanisterService = {
         title ? [title] : [],
         description ? [description] : [],
         price ? [BigInt(price)] : [],
+        location ? [convertToCanisterLocation(location)] : [],
+        weeklySchedule
+          ? [
+              weeklySchedule.map(({ day, availability }) => [
+                convertToCanisterDayOfWeek(day),
+                convertToCanisterDayAvailability(availability),
+              ]),
+            ]
+          : [],
+        instantBookingEnabled ? [instantBookingEnabled] : [],
+        bookingNoticeHours ? [BigInt(bookingNoticeHours)] : [],
+        maxBookingsPerDay ? [BigInt(maxBookingsPerDay)] : [],
       );
 
       if ("ok" in result) {
