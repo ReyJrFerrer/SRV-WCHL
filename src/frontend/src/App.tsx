@@ -21,8 +21,8 @@ const LandingPage = () => {
         try {
           const profile = await authCanisterService.getMyProfile();
           if (profile) {
-            if (profile.role === "Client") navigate("/client/home");
-            else if (profile.role === "ServiceProvider")
+            if (profile.activeRole === "Client") navigate("/client/home");
+            else if (profile.activeRole === "ServiceProvider")
               navigate("/provider/home");
             else navigate("/create-profile");
           } else {

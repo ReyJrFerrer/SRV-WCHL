@@ -13,9 +13,9 @@ import { Identity } from "@dfinity/agent";
 export interface FrontendProfile {
   id: string;
   name: string;
-  // email: string;
   phone: string;
-  role: "Client" | "ServiceProvider";
+  role: "Client" | "ServiceProvider"; // Original role (everyone is ServiceProvider for discoverability)
+  activeRole: "Client" | "ServiceProvider"; // Current UI preference/mode
   isVerified: boolean;
   profilePicture?: {
     imageUrl: string | null; // Asset URL or null
@@ -142,17 +142,16 @@ export const authCanisterService = {
    * Create a new profile (requires authentication)
    * @param name User's name
    * @param phone User's phone number
-   * @param role User's role (Client or ServiceProvider)
+   * @param activeRole User's preferred role/mode (Client or ServiceProvider)
    */
   async createProfile(
     name: string,
-    // email: string,
     phone: string,
-    role: "Client" | "ServiceProvider",
+    activeRole: "Client" | "ServiceProvider",
   ): Promise<FrontendProfile | null> {
     try {
       const actor = getAuthActor(true); // Requires authentication
-      const userRole: UserRole = { [role]: null } as UserRole;
+      const userRole: UserRole = { [activeRole]: null } as UserRole;
       const result = await actor.createProfile(name, phone, userRole);
 
       if ("ok" in result) {
@@ -215,6 +214,27 @@ export const authCanisterService = {
     } catch (error) {
       console.error("Error verifying user:", error);
       throw new Error(`Failed to verify user: ${error}`);
+    }
+  },
+
+  /**
+   * Switch user active role between Client and ServiceProvider (requires authentication)
+   * Toggles the user's active role preference while keeping them discoverable as a service provider
+   */
+  async switchUserRole(): Promise<FrontendProfile | null> {
+    try {
+      const actor = getAuthActor(true); // Requires authentication
+      const result = await actor.switchUserRole();
+
+      if ("ok" in result) {
+        return adaptBackendProfile(result.ok);
+      } else {
+        console.error("Error switching user role:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error switching user role:", error);
+      throw new Error(`Failed to switch user role: ${error}`);
     }
   },
 

@@ -53,9 +53,9 @@ export function adaptBackendProfile(backendProfile: any): any {
   const adapted: any = {
     id: backendProfile.id.toString(),
     name: backendProfile.name,
-    email: backendProfile.email,
     phone: backendProfile.phone,
     role: extractRole(backendProfile.role),
+    activeRole: extractRole(backendProfile.activeRole),
     isVerified: backendProfile.isVerified,
     biography: backendProfile.biography?.[0] || undefined, // Optional fields come as arrays
     createdAt: convertTime(backendProfile.createdAt),

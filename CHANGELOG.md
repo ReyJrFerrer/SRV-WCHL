@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add multi-role state system with activeRole field while preserving original user roles
+## [Unreleased]
+
+### Added
+
+- Add self-booking prevention validation on service detail page with tooltip feedback
+- Add user role switching functionality allowing users to toggle between Client and ServiceProvider roles while preserving all data
 - Add separate provider notifications hook with dedicated notification types and localStorage storage
 - Add provider-specific notification types including booking requests, payment completion, and service reminders
 - Update frontend updateService function to support location, weeklySchedule, instantBookingEnabled, and maxBookingsPerDay parameters

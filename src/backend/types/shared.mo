@@ -23,7 +23,8 @@ module {
         id: Principal;
         name: Text;
         phone: Text;
-        role: UserRole;
+        role: UserRole; // Original role when user first signed up
+        activeRole: UserRole; // Current active role for UI and permissions
         createdAt: Time.Time;
         updatedAt: Time.Time;
         isVerified: Bool;

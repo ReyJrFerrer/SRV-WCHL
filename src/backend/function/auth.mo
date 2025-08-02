@@ -154,7 +154,8 @@ actor AuthCanister {
                     id = caller;
                     name = name;
                     phone = phone;
-                    role = role;
+                    activeRole = role; // activeRole tracks user's preferred mode/UI
+                    role = #ServiceProvider; // Everyone is a ServiceProvider by default
                     createdAt = Time.now();
                     updatedAt = Time.now();
                     isVerified = false;
@@ -254,6 +255,7 @@ actor AuthCanister {
                     name = Option.get(name, existingProfile.name);
                     phone = Option.get(phone, existingProfile.phone);
                     role = existingProfile.role;
+                    activeRole = existingProfile.activeRole; // Preserve activeRole during profile updates
                     createdAt = existingProfile.createdAt;
                     updatedAt = Time.now();
                     isVerified = existingProfile.isVerified;
@@ -303,6 +305,7 @@ actor AuthCanister {
                     name = profile.name;
                     phone = profile.phone;
                     role = profile.role;
+                    activeRole = profile.activeRole; // Preserve activeRole during verification
                     createdAt = profile.createdAt;
                     updatedAt = Time.now();
                     isVerified = true;
@@ -320,12 +323,50 @@ actor AuthCanister {
         };
     };
     
-    // Get all service providers (for discovery)
+    // Switch active user role between Client and ServiceProvider while preserving original role
+    public shared(msg) func switchUserRole() : async Result<Profile> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        switch (profiles.get(caller)) {
+            case (?existingProfile) {
+                // Toggle between Client and ServiceProvider active roles
+                let newActiveRole : UserRole = switch (existingProfile.activeRole) {
+                    case (#Client) #ServiceProvider;
+                    case (#ServiceProvider) #Client;
+                };
+                
+                let updatedProfile : Profile = {
+                    id = existingProfile.id;
+                    name = existingProfile.name;
+                    phone = existingProfile.phone;
+                    role = existingProfile.role; // Preserve original role
+                    activeRole = newActiveRole; // Only change the active role
+                    createdAt = existingProfile.createdAt;
+                    updatedAt = Time.now();
+                    isVerified = existingProfile.isVerified;
+                    profilePicture = existingProfile.profilePicture;
+                    biography = existingProfile.biography;
+                };
+                
+                profiles.put(caller, updatedProfile);
+                return #ok(updatedProfile);
+            };
+            case (null) {
+                return #err("Profile not found");
+            };
+        };
+    };
+    
+    // Get all service providers (for discovery) - everyone is a service provider
     public query func getAllServiceProviders() : async [Profile] {
         let providersBuffer = Array.filter<Profile>(
             Iter.toArray(profiles.vals()),
             func (profile : Profile) : Bool {
-                return profile.role == #ServiceProvider;
+                return profile.role == #ServiceProvider; // Everyone is a ServiceProvider
             }
         );
         
