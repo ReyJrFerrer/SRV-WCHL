@@ -16,7 +16,7 @@ const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { logout } = useLogout();
   const navigate = useNavigate();
-  const { profile, loading: profileLoading } = useClientProfile();
+  const { profile, loading: profileLoading, switchRole } = useClientProfile();
 
   // Set the document title when the component mounts
   useEffect(() => {
@@ -42,10 +42,17 @@ const SettingsPage: React.FC = () => {
     },
   ];
 
-  const handleSwitchToProvider = () => {
-    // Placeholder function for future implementation
-    console.log("Attempting to switch to Service Provider mode...");
-    alert("Feature coming soon!");
+  const handleSwitchToProvider = async () => {
+    try {
+      const success = await switchRole();
+      if (success) {
+        // Navigate to provider dashboard after successful role switch
+        navigate("/provider");
+      }
+    } catch (error) {
+      console.error("Failed to switch role:", error);
+      // Error is already handled in the hook and displayed in the UI
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import authCanisterService from "./services/authCanisterService";
 import MainPage from "./components/MainPage";
@@ -7,18 +7,6 @@ import AboutUs from "./components/About-Us";
 
 type CurrentView = "main" | "about";
 
-// --- Import Page Components for Routing ---
-import ClientHomePage from "./pages/client/home";
-import ClientChatPage from "./pages/client/chat";
-import ConversationPage from "./pages/client/chat/[providerId]";
-import CreateProfilePage from "./pages/create-profile";
-import ProviderHomePage from "./pages/provider/home";
-
-/**
- * This component renders the main landing page for unauthenticated users.
- * It also contains the logic to check for an existing session and redirect
- * authenticated users to their respective dashboards.
- */
 const LandingPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, identity, login, isLoading } = useAuth();
@@ -33,8 +21,8 @@ const LandingPage = () => {
         try {
           const profile = await authCanisterService.getMyProfile();
           if (profile) {
-            if (profile.role === "Client") navigate("/client/home");
-            else if (profile.role === "ServiceProvider")
+            if (profile.activeRole === "Client") navigate("/client/home");
+            else if (profile.activeRole === "ServiceProvider")
               navigate("/provider/home");
             else navigate("/create-profile");
           } else {
@@ -119,22 +107,5 @@ const LandingPage = () => {
  * It defines all the available routes and the components they render.
  */
 export default function App() {
-  return (
-    <Routes>
-      {/* The landing page is the default route for the root path */}
-      <Route path="/" element={<LandingPage />} />
-
-      {/* --- Client-side Routes --- */}
-      <Route path="/client/home" element={<ClientHomePage />} />
-      <Route path="/client/chat" element={<ClientChatPage />} />
-      {/* This is the dynamic route for individual chat conversations */}
-      <Route path="/client/chat/:providerId" element={<ConversationPage />} />
-
-      {/* --- Provider-side Routes --- */}
-      <Route path="/provider/home" element={<ProviderHomePage />} />
-
-      {/* --- Common Routes --- */}
-      <Route path="/create-profile" element={<CreateProfilePage />} />
-    </Routes>
-  );
+  return <LandingPage />;
 }

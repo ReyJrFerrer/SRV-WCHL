@@ -26,7 +26,12 @@ import {
   DayAvailability,
 } from "../../../hooks/serviceManagement";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
-import { ServicePackage } from "../../../services/serviceCanisterService";
+import {
+  ServicePackage,
+  Location,
+  ServiceCategory,
+  serviceCanisterService,
+} from "../../../services/serviceCanisterService";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
 
@@ -265,13 +270,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     [],
   ); // Assuming certification URLs or names
 
-  // Mock categories (replace with actual data fetching if needed)
-  const mockCategories = [
-    { id: "category1_id", name: "Home Cleaning" },
-    { id: "category2_id", name: "Plumbing" },
-    { id: "category3_id", name: "Electrician" },
-    { id: "category4_id", name: "Gardening" },
-  ];
+  // Categories state
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   // Set document title and initialize edit states
   useEffect(() => {
@@ -301,6 +302,26 @@ const ProviderServiceDetailPage: React.FC = () => {
       document.title = "Service Details | SRV Provider";
     }
   }, [service]);
+
+  // Fetch categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        const fetchedCategories =
+          await serviceCanisterService.getAllCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+        // Set empty array as fallback
+        setCategories([]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   const [retryCount, setRetryCount] = useState(0);
 
@@ -441,7 +462,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     }
 
     try {
-      const selectedCategory = mockCategories.find(
+      const selectedCategory = categories.find(
         (cat) => cat.id === editedCategory,
       );
 
@@ -542,33 +563,33 @@ const ProviderServiceDetailPage: React.FC = () => {
     }
 
     try {
-      // For now, we'll just update basic service info since location/availability updates
-      // would require extending the backend updateService function
-      await updateService(
+      // Create updated location object
+      const updatedLocation: Location = {
+        latitude: service.location.latitude, // Keep existing coordinates
+        longitude: service.location.longitude,
+        address: editedAddress,
+        city: editedCity,
+        state: editedState,
+        postalCode: editedPostalCode,
+        country: editedCountry,
+      };
+
+      // Update service with location and availability data
+      const updatedService = await updateService(
         service.id,
         service.category.id,
         service.title,
         service.description,
         service.price,
+        updatedLocation,
+        editedWeeklySchedule,
+        service.instantBookingEnabled,
+        service.bookingNoticeHours,
+        service.maxBookingsPerDay,
       );
 
-      // Update local state optimistically
-      setService((prev) =>
-        prev
-          ? {
-              ...prev,
-              location: {
-                ...prev.location,
-                address: editedAddress,
-                city: editedCity,
-                state: editedState,
-                postalCode: editedPostalCode,
-                country: editedCountry,
-              },
-              weeklySchedule: editedWeeklySchedule,
-            }
-          : prev,
-      );
+      // Update local state with the returned service data
+      setService(updatedService);
       setEditLocationAvailability(false);
     } catch (err) {
       console.error("Failed to update location/availability:", err);
@@ -937,9 +958,14 @@ const ProviderServiceDetailPage: React.FC = () => {
                       value={editedCategory}
                       onChange={(e) => setEditedCategory(e.target.value)}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                      disabled={categoriesLoading}
                     >
-                      <option value="">Select Category</option>
-                      {mockCategories.map((cat) => (
+                      <option value="">
+                        {categoriesLoading
+                          ? "Loading categories..."
+                          : "Select Category"}
+                      </option>
+                      {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>
                           {cat.name}
                         </option>

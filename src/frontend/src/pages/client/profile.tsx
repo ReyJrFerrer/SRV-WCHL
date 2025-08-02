@@ -101,7 +101,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
       >
         <span className="mr-2">{config.icon}</span>
-        {trustLevel} Trust
+        {trustLevel} User
       </div>
       <div className="mt-3 flex w-full max-w-md flex-col items-center">
         {trustLevel === "New" ? (
@@ -261,7 +261,8 @@ const ClientStats: React.FC = () => {
 
 const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, loading, error, updateProfile } = useClientProfile();
+  const { profile, loading, error, updateProfile, switchRole } =
+    useClientProfile();
   const {
     loading: reputationLoading,
     error: reputationError,
@@ -275,6 +276,7 @@ const ClientProfilePage: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
   // Get reputation score with fallback for display
   const [showAboutInfo, setShowAboutInfo] = useState(false);
@@ -326,10 +328,20 @@ const ClientProfilePage: React.FC = () => {
     }
   };
 
-  const handleSwitchToProvider = () => {
-    // Placeholder function for future implementation
-    console.log("Attempting to switch to Service Provider mode...");
-    alert("Feature coming soon!");
+  const handleSwitchToProvider = async () => {
+    setIsSwitchingRole(true);
+    try {
+      const success = await switchRole();
+      if (success) {
+        // Navigate to provider dashboard after successful role switch
+        navigate("/provider");
+      }
+    } catch (error) {
+      console.error("Failed to switch role:", error);
+      // Error is already handled in the hook and displayed in the UI
+    } finally {
+      setIsSwitchingRole(false);
+    }
   };
 
   if (loading && !profile) {
@@ -466,15 +478,30 @@ const ClientProfilePage: React.FC = () => {
             <div className="rounded-lg bg-yellow-300 shadow-sm">
               <button
                 onClick={handleSwitchToProvider}
-                className="group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors hover:bg-blue-600"
+                disabled={isSwitchingRole}
+                className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
+                  isSwitchingRole
+                    ? "cursor-not-allowed opacity-50"
+                    : "hover:bg-blue-600"
+                }`}
               >
                 <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-black group-hover:text-white" />
+                  <ArrowPathRoundedSquareIcon
+                    className={`mr-4 h-6 w-6 ${
+                      isSwitchingRole
+                        ? "animate-spin text-blue-600"
+                        : "text-black group-hover:text-white"
+                    }`}
+                  />
                   <span className="text-md font-medium text-gray-800 group-hover:text-white">
-                    Switch into SRVice Provider
+                    {isSwitchingRole
+                      ? "Switching Role..."
+                      : "Switch into SRVice Provider"}
                   </span>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+                {!isSwitchingRole && (
+                  <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+                )}
               </button>
             </div>
           </div>

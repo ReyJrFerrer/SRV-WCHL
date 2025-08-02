@@ -108,11 +108,45 @@ export const useClientProfile = () => {
     }
   };
 
+  /**
+   * Switches the user's role between Client and ServiceProvider while preserving all data.
+   * @returns A boolean indicating whether the role switch was successful.
+   */
+  const switchRole = async () => {
+    if (!isAuthenticated) {
+      setError("You must be logged in to switch roles.");
+      return false;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await authCanisterService.switchUserRole();
+
+      if (result) {
+        setProfile(result); // Update profile with new role immediately
+        await fetchProfile(); // Refetch to ensure consistency
+        return true;
+      } else {
+        throw new Error("An unknown error occurred during role switch.");
+      }
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      console.error("Error switching role:", errorMessage);
+      setError(errorMessage);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     profile,
     loading,
     error,
     updateProfile,
+    switchRole,
     refetchProfile: fetchProfile,
   };
 };

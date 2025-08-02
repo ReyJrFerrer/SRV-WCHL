@@ -174,15 +174,16 @@ module {
         postalCode = "2600";
     };
 
-    // Static User Profiles with image references
+    // Static User Profiles - Everyone is a ServiceProvider by default for discoverability
+    // activeRole tracks their preferred UI/interaction mode
     public func getStaticProfiles() : [(Principal, Profile)] {
         return [
             (Principal.fromText("2vxsx-fae"), {
                 id = Principal.fromText("2vxsx-fae");
                 name = "Mary Gold";
-                email = "mary.gold@example.com";
                 phone = "+1234567890";
-                role = #ServiceProvider;
+                role = #ServiceProvider; // Everyone is ServiceProvider for discoverability
+                activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000; // 2022-01-01
                 updatedAt = 1640995200000000000;
                 isVerified = true;
@@ -195,9 +196,9 @@ module {
             (Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"), {
                 id = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
                 name = "Silverston Eliot";
-                email = "silverston.eliot@example.com";
                 phone = "+1987654321";
-                role = #ServiceProvider;
+                role = #ServiceProvider; // Everyone is ServiceProvider for discoverability
+                activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
                 isVerified = true;
@@ -210,9 +211,9 @@ module {
             (Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"), {
                 id = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
                 name = "Juan Del JoJo";
-                email = "juan.deljojo@example.com";
                 phone = "+1122334455";
-                role = #ServiceProvider;
+                role = #ServiceProvider; // Everyone is ServiceProvider for discoverability
+                activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
                 isVerified = true;
@@ -225,9 +226,9 @@ module {
             (Principal.fromText("r7inp-6aaaa-aaaaa-aaabq-cai"), {
                 id = Principal.fromText("r7inp-6aaaa-aaaaa-aaabq-cai");
                 name = "Sophie Chen";
-                email = "sophie.chen@example.com";
                 phone = "+1555666777";
-                role = #ServiceProvider;
+                role = #ServiceProvider; // Everyone is ServiceProvider for discoverability
+                activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
                 isVerified = true;
@@ -241,9 +242,9 @@ module {
             (Principal.fromText("uxrrr-q7777-77774-qaaaq-cai"), {
                 id = Principal.fromText("uxrrr-q7777-77774-qaaaq-cai");
                 name = "John Client";
-                email = "john.client@example.com";
                 phone = "+1999888777";
                 role = #Client;
+                activeRole = #Client; // Initially same as role
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
                 isVerified = true;
