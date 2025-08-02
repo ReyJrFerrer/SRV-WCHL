@@ -509,14 +509,19 @@ actor ServiceCanister {
             };
         };
     };
-    
-    // Update service details (comprehensive update function)
+
+
     public shared(msg) func updateService(
         serviceId : Text,
         categoryId : Text,
         title : ?Text,
         description : ?Text,
-        price : ?Nat
+        price : ?Nat,
+        location : ?Location, 
+        weeklySchedule : ?[(DayOfWeek, DayAvailability)],
+        instantBookingEnabled : ?Bool,
+        bookingNoticeHours : ?Nat,
+        maxBookingsPerDay : ?Nat
     ) : async Result<Service> {
         let caller = msg.caller;
         
@@ -553,11 +558,9 @@ actor ServiceCanister {
                  // Validate category exists
                 let updatedCategory = switch (categories.get(categoryId)) {
                     case (?cat) cat;
-                    case (null) {
-                        return #err("Category not found");
-                    };
+                    case (null) existingService.category;
                 };
-        
+     
                 
                 let updatedPrice = switch (price) {
                     case (?p) {
@@ -568,6 +571,48 @@ actor ServiceCanister {
                     };
                     case (null) existingService.price;
                 };
+
+                // Update location with validation
+                let updatedLocation = switch (location) {
+                    case (?loc) {
+                        if (not validateLocation(loc)) {
+                            return #err("Invalid location data");
+                        };
+                        loc;
+                    };
+                    case (null) existingService.location;
+                };
+
+                // Update availability with validation and defaults
+                let updatedWeeklySchedule = switch (weeklySchedule) {
+                    case (?schedule) ?schedule;
+                    case (null) existingService.weeklySchedule;
+                };
+
+                let updatedInstantBookingEnabled = switch (instantBookingEnabled) {
+                    case (?enabled) ?enabled;
+                    case (null) existingService.instantBookingEnabled;
+                };
+
+                let updatedBookingNoticeHours = switch (bookingNoticeHours) {
+                    case (?hours) {
+                        if (hours > 720) { // Maximum 30 days
+                            return #err("Booking notice hours cannot exceed 720 (30 days)");
+                        };
+                        ?hours;
+                    };
+                    case (null) existingService.bookingNoticeHours;
+                };
+
+                let updatedMaxBookingsPerDay = switch (maxBookingsPerDay) {
+                    case (?maxBookings) {
+                        if (maxBookings == 0 or maxBookings > 50) {
+                            return #err("Max bookings per day must be between 1 and 50");
+                        };
+                        ?maxBookings;
+                    };
+                    case (null) existingService.maxBookingsPerDay;
+                };
                 
                 let updatedService : Service = {
                     id = existingService.id;
@@ -576,20 +621,81 @@ actor ServiceCanister {
                     description = updatedDescription;
                     category = updatedCategory;
                     price = updatedPrice;
-                    location = existingService.location;
+                    location = updatedLocation;
                     status = existingService.status;
                     createdAt = existingService.createdAt;
                     updatedAt = Time.now();
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
-                    // Preserve availability information
-                    weeklySchedule = existingService.weeklySchedule;
-                    instantBookingEnabled = existingService.instantBookingEnabled;
-                    bookingNoticeHours = existingService.bookingNoticeHours;
-                    maxBookingsPerDay = existingService.maxBookingsPerDay;
+                    // Update availability information
+                    weeklySchedule = updatedWeeklySchedule;
+                    instantBookingEnabled = updatedInstantBookingEnabled;
+                    bookingNoticeHours = updatedBookingNoticeHours;
+                    maxBookingsPerDay = updatedMaxBookingsPerDay;
                 };
                 
                 services.put(serviceId, updatedService);
+
+                // Update serviceAvailabilities HashMap if ANY availability data is provided
+                switch (weeklySchedule, instantBookingEnabled, bookingNoticeHours, maxBookingsPerDay) {
+                    case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                        let availability : ProviderAvailability = {
+                            providerId = caller;
+                            weeklySchedule = schedule;
+                            instantBookingEnabled = instantBooking;
+                            bookingNoticeHours = noticeHours;
+                            maxBookingsPerDay = maxBookings;
+                            isActive = true;
+                            createdAt = switch (serviceAvailabilities.get(serviceId)) {
+                                case (?existing) existing.createdAt;
+                                case (null) Time.now();
+                            };
+                            updatedAt = Time.now();
+                        };
+                        serviceAvailabilities.put(serviceId, availability);
+                    };
+                    // Handle partial availability data with defaults (similar to createService)
+                    case (?schedule, ?instantBooking, _, _) {
+                        let availability : ProviderAvailability = {
+                            providerId = caller;
+                            weeklySchedule = schedule;
+                            instantBookingEnabled = instantBooking;
+                            bookingNoticeHours = switch (updatedBookingNoticeHours) { case (?hours) hours; case (null) 24 }; // Default 24 hours
+                            maxBookingsPerDay = switch (updatedMaxBookingsPerDay) { case (?max) max; case (null) 5 }; // Default 5 bookings
+                            isActive = true;
+                            createdAt = switch (serviceAvailabilities.get(serviceId)) {
+                                case (?existing) existing.createdAt;
+                                case (null) Time.now();
+                            };
+                            updatedAt = Time.now();
+                        };
+                        serviceAvailabilities.put(serviceId, availability);
+                    };
+                    case (_, _, _, _) {
+                        // No availability updates provided - preserve existing or keep service record in sync
+                        switch (updatedWeeklySchedule, updatedInstantBookingEnabled, updatedBookingNoticeHours, updatedMaxBookingsPerDay) {
+                            case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                                let availability : ProviderAvailability = {
+                                    providerId = caller;
+                                    weeklySchedule = schedule;
+                                    instantBookingEnabled = instantBooking;
+                                    bookingNoticeHours = noticeHours;
+                                    maxBookingsPerDay = maxBookings;
+                                    isActive = true;
+                                    createdAt = switch (serviceAvailabilities.get(serviceId)) {
+                                        case (?existing) existing.createdAt;
+                                        case (null) Time.now();
+                                    };
+                                    updatedAt = Time.now();
+                                };
+                                serviceAvailabilities.put(serviceId, availability);
+                            };
+                            case (_, _, _, _) {
+                                // No availability data to sync
+                            };
+                        };
+                    };
+                };
                 return #ok(updatedService);
             };
             case (null) {

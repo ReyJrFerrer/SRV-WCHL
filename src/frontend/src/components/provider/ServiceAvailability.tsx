@@ -150,6 +150,47 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
     });
   };
 
+  const handlePresetChange = (presetDays: DayOfWeek[], isChecked: boolean) => {
+    setFormData((prev: { availabilitySchedule: DayOfWeek[] }) => {
+      let newSchedule = [...prev.availabilitySchedule];
+
+      if (isChecked) {
+        // Add days from preset if checked, avoiding duplicates
+        presetDays.forEach((day) => {
+          if (!newSchedule.includes(day)) {
+            newSchedule.push(day);
+          }
+        });
+      } else {
+        // Remove days from preset if unchecked
+        newSchedule = newSchedule.filter((day) => !presetDays.includes(day));
+      }
+      return { ...prev, availabilitySchedule: newSchedule };
+    });
+  };
+
+  const handleClearAll = () => {
+    setFormData((prev: any) => ({
+      ...prev,
+      availabilitySchedule: [],
+    }));
+  };
+
+  const isWeekendChecked =
+    formData.availabilitySchedule.includes("Saturday") &&
+    formData.availabilitySchedule.includes("Sunday");
+
+  const isWeekdayChecked =
+    formData.availabilitySchedule.includes("Monday") &&
+    formData.availabilitySchedule.includes("Tuesday") &&
+    formData.availabilitySchedule.includes("Wednesday") &&
+    formData.availabilitySchedule.includes("Thursday") &&
+    formData.availabilitySchedule.includes("Friday");
+
+  const isEverydayChecked = allDays.every((day) =>
+    formData.availabilitySchedule.includes(day),
+  );
+
   const handleTimeSlotChange = (
     day: DayOfWeek | "common",
     id: string,
@@ -248,7 +289,57 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
         <p className="mb-4 text-sm text-gray-500">
           Select the days you are available to provide services.
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+
+        {/* Preset Checkboxes and Clear All Button */}
+        <div className="mb-4 flex flex-wrap items-center gap-4">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1 shadow-sm transition hover:bg-blue-100">
+            <input
+              type="checkbox"
+              checked={isWeekendChecked}
+              onChange={(e) =>
+                handlePresetChange(["Saturday", "Sunday"], e.target.checked)
+              }
+              className="rounded text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-gray-700">Weekends</span>
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1 shadow-sm transition hover:bg-blue-100">
+            <input
+              type="checkbox"
+              checked={isWeekdayChecked}
+              onChange={(e) =>
+                handlePresetChange(
+                  ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                  e.target.checked,
+                )
+              }
+              className="rounded text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-gray-700">Weekdays</span>
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1 shadow-sm transition hover:bg-blue-100">
+            <input
+              type="checkbox"
+              checked={isEverydayChecked}
+              onChange={(e) => handlePresetChange(allDays, e.target.checked)}
+              className="rounded text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-gray-700">Everyday</span>
+          </label>
+
+          <button
+            type="button"
+            onClick={handleClearAll}
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100"
+          >
+            Clear All
+          </button>
+        </div>
+
+        {/* This is the div that needs adjustment for small screens */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
           {allDays.map((day) => (
             <label
               key={day}

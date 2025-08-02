@@ -101,7 +101,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
       >
         <span className="mr-2">{config.icon}</span>
-        {trustLevel} Trust
+        {trustLevel} User
       </div>
       <div className="mt-3 flex w-full max-w-md flex-col items-center">
         {trustLevel === "New" ? (
