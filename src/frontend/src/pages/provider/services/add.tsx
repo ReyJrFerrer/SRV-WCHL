@@ -670,7 +670,7 @@ const AddServicePage: React.FC = () => {
                       Service Title
                     </h3>
                   </div>
-                  <p className="text-gray-600 break-words">
+                  <p className="break-words text-gray-600">
                     {formData.serviceOfferingTitle}
                   </p>
                 </div>
@@ -689,7 +689,7 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Category</h3>
                   </div>
-                  <p className="text-gray-600 break-words">
+                  <p className="break-words text-gray-600">
                     {categories.find((cat) => cat.id === formData.categoryId)
                       ?.name || "Unknown"}
                   </p>
@@ -723,8 +723,10 @@ const AddServicePage: React.FC = () => {
                           className="items-center justify-between rounded border bg-gray-50 p-3 break-words"
                         >
                           <div>
-                            <p className="font-medium break-words">{pkg.name}</p>
-                            <p className="text-sm text-gray-600 break-words">
+                            <p className="font-medium break-words">
+                              {pkg.name}
+                            </p>
+                            <p className="text-sm break-words text-gray-600">
                               {pkg.description}
                             </p>
                           </div>
@@ -778,7 +780,7 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Location</h3>
                   </div>
-                  <div className="text-gray-600 break-words">
+                  <div className="break-words text-gray-600">
                     {formData.locationAddress &&
                     formData.locationAddress.trim() ? (
                       <div>
