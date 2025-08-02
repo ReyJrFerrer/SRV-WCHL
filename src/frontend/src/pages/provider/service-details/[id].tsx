@@ -1164,25 +1164,8 @@ const ProviderServiceDetailPage: React.FC = () => {
                     Full Address
                   </dt>
                   <dd className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800">
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="h-4 w-4 text-blue-400"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.5 10.5c0 2.485-2.015 4.5-4.5 4.5s-4.5-2.015-4.5-4.5S9.015 6 11.5 6s4.5 2.015 4.5 4.5z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 14.5v4"
-                        />
-                      </svg>
+                    <span className="items-center gap-2 break-words">
+
                       <span>
                         {service.location.address && (
                           <span>{service.location.address}, </span>
