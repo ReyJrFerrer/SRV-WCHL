@@ -470,50 +470,72 @@ const ServiceDetailPage: React.FC = () => {
             {/* Desktop: landscape grid */}
             <div className="hidden lg:block">
               <div className="overflow-x-auto">
-                <table className="min-w-full border-separate border-spacing-y-2">
-                  <thead>
-                    <tr>
-                      {days.map((day) => (
-                        <th
-                          key={day}
-                          className="rounded-t-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-xs font-bold text-blue-700"
-                        >
-                          {day}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...Array(maxSlots > 0 ? maxSlots : 1)].map(
-                      (_, rowIdx) => (
-                        <tr key={rowIdx}>
-                          {days.map((day) => {
-                            let slots = slotsByDay[day];
-                            if (typeof slots === "string") slots = [slots];
-                            if (!Array.isArray(slots)) slots = [];
-                            const slot = slots[rowIdx];
-                            return (
-                              <td
-                                key={day + rowIdx}
-                                className="px-3 py-2 text-center align-top"
-                              >
-                                {slot ? (
-                                  <span className="inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 shadow-sm">
-                                    {slot}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400">
-                                    {rowIdx === 0 ? "Not specified" : ""}
-                                  </span>
-                                )}
-                              </td>
-                            );
-                          })}
+                {/* Only shrink hovered day and its slots */}
+                {(() => {
+                  const [hoveredDay, setHoveredDay] = React.useState<
+                    string | null
+                  >(null);
+                  return (
+                    <table className="min-w-full border-separate border-spacing-y-2">
+                      <thead>
+                        <tr>
+                          {days.map((day) => (
+                            <th
+                              key={day}
+                              className={`rounded-t-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-xs font-bold text-blue-700 transition-transform duration-150 ${hoveredDay === day ? "scale-95" : ""}`}
+                              onMouseEnter={() => setHoveredDay(day)}
+                              onMouseLeave={() => setHoveredDay(null)}
+                            >
+                              {day}
+                            </th>
+                          ))}
                         </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {[...Array(maxSlots > 0 ? maxSlots : 1)].map(
+                          (_, rowIdx) => (
+                            <tr key={rowIdx}>
+                              {days.map((day) => {
+                                let slots = slotsByDay[day];
+                                if (typeof slots === "string") slots = [slots];
+                                if (!Array.isArray(slots)) slots = [];
+                                const slot = slots[rowIdx];
+                                return (
+                                  <td
+                                    key={day + rowIdx}
+                                    className="px-3 py-2 text-center align-top"
+                                  >
+                                    {slot ? (
+                                      <span
+                                        className={`inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 shadow-sm transition-transform duration-150 ${hoveredDay === day ? "scale-95" : ""}`}
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.classList.add(
+                                            "scale-95",
+                                          );
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.classList.remove(
+                                            "scale-95",
+                                          );
+                                        }}
+                                      >
+                                        {slot}
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        {rowIdx === 0 ? "Not specified" : ""}
+                                      </span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ),
+                        )}
+                      </tbody>
+                    </table>
+                  );
+                })()}
               </div>
             </div>
           </div>
