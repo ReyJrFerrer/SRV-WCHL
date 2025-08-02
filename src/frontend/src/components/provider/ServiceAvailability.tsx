@@ -150,10 +150,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
     });
   };
 
-  const handlePresetChange = (
-    presetDays: DayOfWeek[],
-    isChecked: boolean,
-  ) => {
+  const handlePresetChange = (presetDays: DayOfWeek[], isChecked: boolean) => {
     setFormData((prev: { availabilitySchedule: DayOfWeek[] }) => {
       let newSchedule = [...prev.availabilitySchedule];
 
@@ -335,7 +332,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
           <button
             type="button"
             onClick={handleClearAll}
-            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100 "
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100"
           >
             Clear All
           </button>

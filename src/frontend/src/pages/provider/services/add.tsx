@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
@@ -196,20 +196,8 @@ const AddServicePage: React.FC = () => {
     }
   }, [categories, formData.categoryId]);
 
-  const handleNext = () => {
-    const errors = validateCurrentStep();
-    if (Object.keys(errors).length === 0) {
-      setCurrentStep((prev) => prev + 1);
-      setValidationErrors({});
-    } else {
-      setValidationErrors(errors);
-    }
-  };
-
-  const handleBack = () => setCurrentStep((prev) => prev - 1);
-
   // Validation function for current step
-  const validateCurrentStep = (): ValidationErrors => {
+  const validateCurrentStep = useCallback((): ValidationErrors => {
     const errors: ValidationErrors = {};
 
     switch (currentStep) {
@@ -363,7 +351,19 @@ const AddServicePage: React.FC = () => {
     }
 
     return errors;
+  }, [currentStep, formData]);
+
+  const handleNext = () => {
+    const errors = validateCurrentStep();
+    if (Object.keys(errors).length === 0) {
+      setCurrentStep((prev) => prev + 1);
+      setValidationErrors({});
+    } else {
+      setValidationErrors(errors);
+    }
   };
+
+  const handleBack = () => setCurrentStep((prev) => prev - 1);
 
   // Convert time slot format for backend
   const convertTimeSlot = (slot: TimeSlotUIData) => {
@@ -372,7 +372,7 @@ const AddServicePage: React.FC = () => {
       minute: string,
       period: "AM" | "PM",
     ) => {
-      let hour24 = parseInt(hour);
+      let hour24 = parseInt(hour, 10);
       if (period === "PM" && hour24 !== 12) {
         hour24 += 12;
       } else if (period === "AM" && hour24 === 12) {
@@ -562,6 +562,13 @@ const AddServicePage: React.FC = () => {
     }));
   };
 
+  // Placeholder function for onRequestCategory to resolve the prop error
+  const onRequestCategory = useCallback((categoryName: string) => {
+    // This function can be implemented later to handle new category requests
+    console.log("Category requested:", categoryName);
+    // You could call an API here to submit the new category request
+  }, []);
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -575,6 +582,7 @@ const AddServicePage: React.FC = () => {
             addPackage={addPackage}
             removePackage={removePackage}
             validationErrors={validationErrors}
+            onRequestCategory={onRequestCategory}
           />
         );
       case 2:
