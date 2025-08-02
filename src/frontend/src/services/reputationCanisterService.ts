@@ -109,6 +109,29 @@ class ReputationCanisterService {
     }
   }
 
+  /***
+   * Get a user's reputation score
+   * @returns Promise<ReputationScore> The user's reputation data
+   * @throws Error if user is not authenticated or reputation cannot be fetched
+   */
+  async getReputationScore(userId: string): Promise<any> {
+    try {
+      const actor = getReputationActor(true);
+
+      const userPrincipal = Principal.fromText(userId);
+      const result = await actor.getReputationScore(userPrincipal);
+      if ("ok" in result) {
+        return result.ok;
+      } else {
+        console.error("❌ Failed to fetch reputation score:", result.err);
+        throw new Error(`Failed to fetch reputation: ${result.err}`);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching reputation score:", error);
+      throw new Error("Network error: Could not fetch reputation score");
+    }
+  }
+
   /**
    * Initialize reputation for a new user
    * @returns Promise<ReputationScore> The initialized reputation data
