@@ -76,7 +76,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm flex flex-col justify-between">
+        <section className="flex flex-col justify-between rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
           <div className="space-y-8">
             <section className="rounded-xl border border-gray-100 bg-transparent p-0 shadow-none">
               <h2 className="mb-4 text-lg font-bold text-blue-700">
@@ -150,11 +150,11 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
           <div className="mt-auto pt-6">
             <label
               htmlFor="requestCategory"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="mb-2 block text-sm font-medium text-gray-700"
             >
               Can't find your category? Request it here!
             </label>
-            <div className="flex flex-col space-y-2 xs:flex-row xs:space-x-2 xs:space-y-0">
+            <div className="xs:flex-row xs:space-x-2 xs:space-y-0 flex flex-col space-y-2">
               <input
                 type="text"
                 id="requestCategory"
@@ -170,7 +170,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
               <button
                 type="button"
                 onClick={handleRequestCategoryClick}
-                className="rounded-lg bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-lg bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
               >
                 Request category
               </button>

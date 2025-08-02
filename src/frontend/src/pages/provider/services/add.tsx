@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
@@ -196,20 +196,8 @@ const AddServicePage: React.FC = () => {
     }
   }, [categories, formData.categoryId]);
 
-  const handleNext = () => {
-    const errors = validateCurrentStep();
-    if (Object.keys(errors).length === 0) {
-      setCurrentStep((prev) => prev + 1);
-      setValidationErrors({});
-    } else {
-      setValidationErrors(errors);
-    }
-  };
-
-  const handleBack = () => setCurrentStep((prev) => prev - 1);
-
   // Validation function for current step
-  const validateCurrentStep = (): ValidationErrors => {
+  const validateCurrentStep = useCallback((): ValidationErrors => {
     const errors: ValidationErrors = {};
 
     switch (currentStep) {
@@ -363,7 +351,19 @@ const AddServicePage: React.FC = () => {
     }
 
     return errors;
+  }, [currentStep, formData]);
+
+  const handleNext = () => {
+    const errors = validateCurrentStep();
+    if (Object.keys(errors).length === 0) {
+      setCurrentStep((prev) => prev + 1);
+      setValidationErrors({});
+    } else {
+      setValidationErrors(errors);
+    }
   };
+
+  const handleBack = () => setCurrentStep((prev) => prev - 1);
 
   // Convert time slot format for backend
   const convertTimeSlot = (slot: TimeSlotUIData) => {
@@ -372,7 +372,7 @@ const AddServicePage: React.FC = () => {
       minute: string,
       period: "AM" | "PM",
     ) => {
-      let hour24 = parseInt(hour);
+      let hour24 = parseInt(hour, 10);
       if (period === "PM" && hour24 !== 12) {
         hour24 += 12;
       } else if (period === "AM" && hour24 === 12) {
@@ -562,6 +562,13 @@ const AddServicePage: React.FC = () => {
     }));
   };
 
+  // Placeholder function for onRequestCategory to resolve the prop error
+  const onRequestCategory = useCallback((categoryName: string) => {
+    // This function can be implemented later to handle new category requests
+    console.log("Category requested:", categoryName);
+    // You could call an API here to submit the new category request
+  }, []);
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -575,6 +582,7 @@ const AddServicePage: React.FC = () => {
             addPackage={addPackage}
             removePackage={removePackage}
             validationErrors={validationErrors}
+            onRequestCategory={onRequestCategory}
           />
         );
       case 2:
@@ -662,7 +670,7 @@ const AddServicePage: React.FC = () => {
                       Service Title
                     </h3>
                   </div>
-                  <p className="text-gray-600">
+                  <p className="break-words text-gray-600">
                     {formData.serviceOfferingTitle}
                   </p>
                 </div>
@@ -681,7 +689,7 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Category</h3>
                   </div>
-                  <p className="text-gray-600">
+                  <p className="break-words text-gray-600">
                     {categories.find((cat) => cat.id === formData.categoryId)
                       ?.name || "Unknown"}
                   </p>
@@ -712,11 +720,13 @@ const AddServicePage: React.FC = () => {
                       .map((pkg) => (
                         <div
                           key={pkg.id}
-                          className="flex items-center justify-between rounded border bg-gray-50 p-3"
+                          className="items-center justify-between rounded border bg-gray-50 p-3 break-words"
                         >
                           <div>
-                            <p className="font-medium">{pkg.name}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="font-medium break-words">
+                              {pkg.name}
+                            </p>
+                            <p className="text-sm break-words text-gray-600">
                               {pkg.description}
                             </p>
                           </div>
@@ -770,7 +780,7 @@ const AddServicePage: React.FC = () => {
                     </svg>
                     <h3 className="font-semibold text-gray-800">Location</h3>
                   </div>
-                  <div className="text-gray-600">
+                  <div className="break-words text-gray-600">
                     {formData.locationAddress &&
                     formData.locationAddress.trim() ? (
                       <div>

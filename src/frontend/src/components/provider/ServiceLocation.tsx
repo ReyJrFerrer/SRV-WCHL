@@ -223,13 +223,13 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
         <div className="mb-4 rounded-lg border border-gray-300 bg-gray-50 p-3">
           <div className="flex items-center">
             <MapPinIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-600" />
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-gray-500">
                 {addressMode === "context"
                   ? "Using Your Current Location"
                   : "Using Manual Address"}
               </p>
-              <p className="text-sm font-semibold text-gray-800 break-words"> 
+              <p className="text-sm font-semibold break-words text-gray-800">
                 {addressMode === "context" ? displayAddress : "See form below"}
               </p>
             </div>
@@ -256,7 +256,9 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
               Please enter your service address manually:
             </p>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"> {/* Added grid for responsiveness */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {" "}
+              {/* Added grid for responsiveness */}
               <select
                 name="locationProvince"
                 value={selectedProvince}
@@ -275,7 +277,6 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                   </option>
                 ))}
               </select>
-
               <select
                 name="locationMunicipalityCity"
                 value={selectedMunicipality}
