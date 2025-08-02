@@ -1280,34 +1280,58 @@ export const useProviderBookingManagement =
     }, [providerBookings, calculateAnalytics, setLoadingState]);
 
     // New chart data functions
-    const getMonthlyRevenue = useCallback((): { name: string; value: number }[] => {
+    const getMonthlyRevenue = useCallback((): {
+      name: string;
+      value: number;
+    }[] => {
       const monthlyRevenueMap = new Map<string, number>();
       const now = new Date();
 
       // Initialize map for the last 12 months with 0 revenue
       for (let i = 11; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthName = d.toLocaleString('default', { month: 'short' });
+        const monthName = d.toLocaleString("default", { month: "short" });
         monthlyRevenueMap.set(monthName, 0);
       }
 
-      providerBookings.forEach(booking => {
+      providerBookings.forEach((booking) => {
         if (booking.isCompleted && booking.completedDate) {
           const completedDate = new Date(booking.completedDate);
-          const monthName = completedDate.toLocaleString('default', { month: 'short' });
+          const monthName = completedDate.toLocaleString("default", {
+            month: "short",
+          });
           const currentRevenue = monthlyRevenueMap.get(monthName) || 0;
-          monthlyRevenueMap.set(monthName, currentRevenue + (booking.actualRevenue || 0));
+          monthlyRevenueMap.set(
+            monthName,
+            currentRevenue + (booking.actualRevenue || 0),
+          );
         }
       });
 
-      return Array.from(monthlyRevenueMap, ([name, value]) => ({ name, value }));
+      return Array.from(monthlyRevenueMap, ([name, value]) => ({
+        name,
+        value,
+      }));
     }, [providerBookings]);
 
-    const getBookingCountByDay = useCallback((): { name: string; value: number }[] => {
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const bookingCounts = new Map<string, number>(days.map(day => [day, 0]));
+    const getBookingCountByDay = useCallback((): {
+      name: string;
+      value: number;
+    }[] => {
+      const days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const bookingCounts = new Map<string, number>(
+        days.map((day) => [day, 0]),
+      );
 
-      providerBookings.forEach(booking => {
+      providerBookings.forEach((booking) => {
         const createdDate = new Date(booking.createdAt);
         const dayName = days[createdDate.getDay()];
         bookingCounts.set(dayName, (bookingCounts.get(dayName) || 0) + 1);

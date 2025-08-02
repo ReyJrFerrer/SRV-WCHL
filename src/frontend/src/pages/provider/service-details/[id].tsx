@@ -1179,7 +1179,6 @@ const ProviderServiceDetailPage: React.FC = () => {
                   </dt>
                   <dd className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800">
                     <span className="items-center gap-2 break-words">
-
                       <span>
                         {service.location.address && (
                           <span>{service.location.address}, </span>

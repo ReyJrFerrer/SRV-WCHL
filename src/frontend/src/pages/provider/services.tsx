@@ -79,7 +79,7 @@ const MyServicesPage: React.FC = () => {
 
   const renderIcon = (service: EnhancedService) => {
     const iconKey = getCategoryIcon(
-      service.category?.name || service.title || ""
+      service.category?.name || service.title || "",
     );
     const IconComponent = iconMap[iconKey] || iconMap.default;
     return <IconComponent className="h-8 w-8 text-blue-600" />;
@@ -161,7 +161,7 @@ const MyServicesPage: React.FC = () => {
           </div>
         </header>
 
-        <main className="container mx-auto flex-grow p-10 sm:p-6 pb-10">
+        <main className="container mx-auto flex-grow p-10 pb-10 sm:p-6">
           {loading && (
             <div className="py-16 text-center">
               <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -199,7 +199,7 @@ const MyServicesPage: React.FC = () => {
           )}
 
           {!loading && !error && userServices.length > 0 && (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-24">
+            <div className="grid grid-cols-1 gap-6 pb-24 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {userServices.map((service) => {
                 const statusDisplay = getStatusDisplay(service.status);
 
@@ -217,7 +217,7 @@ const MyServicesPage: React.FC = () => {
                       {/* Service Details */}
                       <div className="flex-grow">
                         <div className="flex flex-col justify-between md:flex-row md:items-start">
-                          <div className="flex-grow min-w-0">
+                          <div className="min-w-0 flex-grow">
                             <h4 className="text-lg font-semibold text-black md:text-xl">
                               {truncateString(service.title, 20)}
                             </h4>

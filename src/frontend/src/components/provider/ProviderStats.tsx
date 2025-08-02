@@ -3,10 +3,10 @@ import { useProviderBookingManagement } from "../../hooks/useProviderBookingMana
 import { useProviderReviews } from "../../hooks/reviewManagement";
 
 // Import your new chart components
-import BookingStatusPieChart from './BookingStatusPieChart';
-import MonthlyRevenueLineChart from './MonthlyRevenueLineChart';
-import DailyBookingsBarChart from './DailyBookingsBarChart';
-import CustomerRatingStars from './CustomerRatingStars';
+import BookingStatusPieChart from "./BookingStatusPieChart";
+import MonthlyRevenueLineChart from "./MonthlyRevenueLineChart";
+import DailyBookingsBarChart from "./DailyBookingsBarChart";
+import CustomerRatingStars from "./CustomerRatingStars";
 
 interface ProviderStatsProps {
   className?: string;
@@ -17,15 +17,9 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
   loading: externalLoading = false,
 }) => {
-  const {
-    loading: bookingLoading,
-    error,
-  } = useProviderBookingManagement();
+  const { loading: bookingLoading, error } = useProviderBookingManagement();
 
-  const {
-    loading: reviewsLoading,
-    error: reviewsError,
-  } = useProviderReviews();
+  const { loading: reviewsLoading, error: reviewsError } = useProviderReviews();
 
   const isLoading = externalLoading || bookingLoading || reviewsLoading;
   const hasError = error || reviewsError;
@@ -44,10 +38,12 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="mb-6 pt-6 text-2xl sm:text-3xl md:text-4xl font-extrabold text-black">
+      <h1 className="mb-6 pt-6 text-2xl font-extrabold text-black sm:text-3xl md:text-4xl">
         Dashboard
       </h1>
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 ${className}`}>
+      <div
+        className={`grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-2 lg:gap-8 xl:grid-cols-2 ${className}`}
+      >
         {isLoading ? (
           // Skeleton loaders for charts
           <>
@@ -59,16 +55,16 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         ) : (
           // Render the charts with a fixed height and padding
           <>
-            <div className="bg-white p-6 rounded-lg shadow-md h-90">
+            <div className="h-90 rounded-lg bg-white p-6 shadow-md">
               <BookingStatusPieChart />
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md h-90">
+            <div className="h-90 rounded-lg bg-white p-6 shadow-md">
               <MonthlyRevenueLineChart />
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md h-90">
+            <div className="h-90 rounded-lg bg-white p-6 shadow-md">
               <DailyBookingsBarChart />
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md h-90 flex items-center justify-center">
+            <div className="flex h-90 items-center justify-center rounded-lg bg-white p-6 shadow-md">
               <CustomerRatingStars />
             </div>
           </>

@@ -153,8 +153,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
       >
         {" "}
         {displayedServices.length > 0 ? (
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"> {/* This is the grid for the services in dashboard */}
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {" "}
+            {/* This is the grid for the services in dashboard */}{" "}
             {displayedServices.map((service) => {
               const statusDisplay = getStatusDisplay(service.status);
 

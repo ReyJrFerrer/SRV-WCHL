@@ -160,7 +160,7 @@ const ActiveServicePage: React.FC = () => {
 
       <main className="container mx-auto flex-grow space-y-6 p-4 pb-20 sm:p-6">
         {/* Timer Section - Prominent at the top */}
-        <section className="rounded-xl bg-white p-6 text-center shadow-lg mt-5">
+        <section className="mt-5 rounded-xl bg-white p-6 text-center shadow-lg">
           <ClockIcon className="mx-auto mb-2 h-12 w-12 text-blue-500 sm:h-16" />
           <p className="text-sm text-gray-500">Elapsed Time</p>
           <p className="text-3xl font-bold text-gray-800 tabular-nums sm:text-4xl">
