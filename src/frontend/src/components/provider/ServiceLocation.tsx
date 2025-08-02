@@ -223,13 +223,13 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
         <div className="mb-4 rounded-lg border border-gray-300 bg-gray-50 p-3">
           <div className="flex items-center">
             <MapPinIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-600" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-500">
                 {addressMode === "context"
                   ? "Using Your Current Location"
                   : "Using Manual Address"}
               </p>
-              <p className="text-sm font-semibold text-gray-800">
+              <p className="text-sm font-semibold text-gray-800 break-words"> 
                 {addressMode === "context" ? displayAddress : "See form below"}
               </p>
             </div>
@@ -256,44 +256,46 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
               Please enter your service address manually:
             </p>
 
-            <select
-              name="locationProvince"
-              value={selectedProvince}
-              onChange={(e) => {
-                setSelectedProvince(e.target.value);
-                setSelectedMunicipality("");
-                setSelectedBarangay("");
-                handleLocationFieldChange(e);
-              }}
-              className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm"
-            >
-              <option value="">Select Province</option>
-              {Object.keys(addressData).map((prov) => (
-                <option key={prov} value={prov}>
-                  {prov}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="locationMunicipalityCity"
-              value={selectedMunicipality}
-              onChange={(e) => {
-                setSelectedMunicipality(e.target.value);
-                setSelectedBarangay("");
-                handleLocationFieldChange(e);
-              }}
-              disabled={!selectedProvince}
-              className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm disabled:bg-gray-100"
-            >
-              <option value="">Select Municipality/City</option>
-              {selectedProvince &&
-                Object.keys(addressData[selectedProvince]).map((mun) => (
-                  <option key={mun} value={mun}>
-                    {mun}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"> {/* Added grid for responsiveness */}
+              <select
+                name="locationProvince"
+                value={selectedProvince}
+                onChange={(e) => {
+                  setSelectedProvince(e.target.value);
+                  setSelectedMunicipality("");
+                  setSelectedBarangay("");
+                  handleLocationFieldChange(e);
+                }}
+                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm"
+              >
+                <option value="">Select Province</option>
+                {Object.keys(addressData).map((prov) => (
+                  <option key={prov} value={prov}>
+                    {prov}
                   </option>
                 ))}
-            </select>
+              </select>
+
+              <select
+                name="locationMunicipalityCity"
+                value={selectedMunicipality}
+                onChange={(e) => {
+                  setSelectedMunicipality(e.target.value);
+                  setSelectedBarangay("");
+                  handleLocationFieldChange(e);
+                }}
+                disabled={!selectedProvince}
+                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm disabled:bg-gray-100"
+              >
+                <option value="">Select Municipality/City</option>
+                {selectedProvince &&
+                  Object.keys(addressData[selectedProvince]).map((mun) => (
+                    <option key={mun} value={mun}>
+                      {mun}
+                    </option>
+                  ))}
+              </select>
+            </div>
 
             <select
               name="locationBarangay"
