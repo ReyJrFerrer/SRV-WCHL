@@ -33,10 +33,12 @@ export default function ProtectedRoute({
             return;
           }
 
-          if (profile.role !== requiredRole) {
+          if (profile.activeRole !== requiredRole) {
             // Redirect to correct role's home page
             const redirectPath =
-              profile.role === "Client" ? "/client/home" : "/provider/home";
+              profile.activeRole === "Client"
+                ? "/client/home"
+                : "/provider/home";
             navigate(redirectPath);
             return;
           }

@@ -231,6 +231,7 @@ const ServiceDetailPage: React.FC = () => {
       document.title = `SRV | ${service.name}`;
     }
   }, [service]);
+  console.log(service);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -254,6 +255,13 @@ const ServiceDetailPage: React.FC = () => {
     if (!service) return;
     navigate(`/client/book/${service.id}`);
   };
+
+  // Check if current user is the service provider (to prevent self-booking)
+  const isOwnService = Boolean(
+    identity &&
+      service &&
+      identity.getPrincipal().toString() === service.providerId,
+  );
 
   const handleChatProviderClick = async () => {
     if (!service?.providerId) {
@@ -513,28 +521,39 @@ const ServiceDetailPage: React.FC = () => {
           <button
             className="flex w-1/4 items-center justify-center rounded-lg bg-yellow-200 py-3 font-bold text-yellow-800 hover:bg-yellow-300"
             type="button"
+            disabled={isOwnService}
             // TODO: Add vouching logic here
           >
             Vouch
           </button>
 
           {/* Book Now button (center, bigger) */}
-          <button
-            onClick={handleBookNow}
-            disabled={packages.length === 0}
-            className="w-2/4 rounded-lg bg-blue-600 py-3 font-bold text-white shadow-md transition-colors hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            Book Now
-          </button>
+          <div className="group relative w-2/4">
+            <button
+              onClick={handleBookNow}
+              disabled={packages.length === 0 || isOwnService}
+              className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white shadow-md transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            >
+              Book Now
+            </button>
+            {isOwnService && (
+              <div className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
+                You can't book your own service
+                <div className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 transform border-t-4 border-r-4 border-l-4 border-transparent border-t-gray-800"></div>
+              </div>
+            )}
+          </div>
           {/* Chat button (Right) */}
+
           <button
             onClick={handleChatProviderClick}
+            disabled={isOwnService}
             className="flex w-1/4 items-center justify-center rounded-lg bg-gray-200 py-3 font-bold text-gray-800 hover:bg-gray-300"
           >
             {chatLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                Creating Chat...
+                Creating
               </>
             ) : (
               <></>
