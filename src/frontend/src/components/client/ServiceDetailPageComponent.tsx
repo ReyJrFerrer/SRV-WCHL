@@ -282,7 +282,7 @@ const ServiceDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (service) {
-      document.title = `SRV | ${service.name}`;
+      document.title = `${service.name} | SRV`;
     }
   }, [service]);
   console.log(service);

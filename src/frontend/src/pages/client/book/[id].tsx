@@ -9,7 +9,7 @@ const BookingPage: React.FC = () => {
 
   // Set document title
   useEffect(() => {
-    document.title = "Book Service - SRV Client";
+    document.title = "Book Service | SRV";
   }, []);
 
   // Show loading state while there's no serviceSlug

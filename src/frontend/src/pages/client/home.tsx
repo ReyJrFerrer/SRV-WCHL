@@ -9,8 +9,14 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 // Hooks
 import { useServiceManagement } from "../../hooks/serviceManagement";
 
+import { useEffect } from "react";
+
 const ClientHomePage: React.FC = () => {
   const { error } = useServiceManagement();
+
+  useEffect(() => {
+    document.title = "Home | SRV";
+  }, []);
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-20">
