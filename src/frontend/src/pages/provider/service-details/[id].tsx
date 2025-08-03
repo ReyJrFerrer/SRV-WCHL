@@ -398,21 +398,15 @@ const ProviderServiceDetailPage: React.FC = () => {
   const handleDeleteService = async () => {
     if (!service) return;
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${service.title}"? This action cannot be undone.`,
-    );
-
-    if (confirmed) {
+    try {
       setIsDeleting(true);
-      try {
-        await deleteService(service.id);
-        navigate("/provider/services");
-      } catch (error) {
-        console.error("Failed to delete service:", error);
-        alert("Failed to delete service. Please try again.");
-      } finally {
-        setIsDeleting(false);
-      }
+      await deleteService(service.id);
+      navigate("/provider/services");
+    } catch (error) {
+      console.error("Failed to delete service:", error);
+      alert("Failed to delete service. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -509,8 +503,8 @@ const ProviderServiceDetailPage: React.FC = () => {
       setEditedState(service.location.state || "");
       setEditedPostalCode(service.location.postalCode || "");
       setEditedCountry(service.location.country || "");
-      // Ensure editedWeeklySchedule is correctly structured with slots
-      const currentSchedule =
+      // Revert to original service's weekly schedule, ensuring slots exist
+      const originalSchedule =
         service.weeklySchedule?.map((day) => ({
           ...day,
           availability: {
@@ -518,7 +512,7 @@ const ProviderServiceDetailPage: React.FC = () => {
             slots: day.availability.slots || [],
           },
         })) || [];
-      setEditedWeeklySchedule(currentSchedule);
+      setEditedWeeklySchedule(originalSchedule);
     }
   }, [service]);
 
@@ -790,21 +784,15 @@ const ProviderServiceDetailPage: React.FC = () => {
   const handleDeletePackage = async (packageId: string) => {
     if (!service) return;
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this package? This action cannot be undone.",
-    );
-
-    if (confirmed) {
+    try {
       setLoading(true); // Indicate deleting
-      try {
-        await deletePackage(packageId);
-        setPackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
-      } catch (err) {
-        console.error("Failed to delete package:", err);
-        alert("Failed to delete package. Please try again.");
-      } finally {
-        setLoading(false);
-      }
+      await deletePackage(packageId);
+      setPackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
+    } catch (err) {
+      console.error("Failed to delete package:", err);
+      alert("Failed to delete package. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1190,25 +1178,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                     Full Address
                   </dt>
                   <dd className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800">
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="h-4 w-4 text-blue-400"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.5 10.5c0 2.485-2.015 4.5-4.5 4.5s-4.5-2.015-4.5-4.5S9.015 6 11.5 6s4.5 2.015 4.5 4.5z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 14.5v4"
-                        />
-                      </svg>
+                    <span className="items-center gap-2 break-words">
                       <span>
                         {service.location.address && (
                           <span>{service.location.address}, </span>

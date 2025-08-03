@@ -155,6 +155,10 @@ interface ProviderBookingManagementHook {
   getRevenueByPeriod: (period: "week" | "month" | "year") => number;
   getBookingCountByPeriod: (period: "week" | "month" | "year") => number;
 
+  // New chart data functions
+  getMonthlyRevenue: () => { name: string; value: number }[];
+  getBookingCountByDay: () => { name: string; value: number }[];
+
   // Utility functions
   formatBookingDate: (dateString: string) => string;
   formatBookingTime: (dateString: string) => string;
@@ -1026,7 +1030,7 @@ export const useProviderBookingManagement =
       const acceptanceRate =
         totalRequests > 0 ? (acceptedBookings / totalRequests) * 100 : 0;
       const completionRate =
-        acceptedBookings > 0 ? (completedBookings / acceptedBookings) * 100 : 0;
+        totalBookings > 0 ? (completedBookings / totalBookings) * 100 : 0;
 
       // Time-based analytics
       const now = new Date();
@@ -1275,6 +1279,67 @@ export const useProviderBookingManagement =
       }
     }, [providerBookings, calculateAnalytics, setLoadingState]);
 
+    // New chart data functions
+    const getMonthlyRevenue = useCallback((): {
+      name: string;
+      value: number;
+    }[] => {
+      const monthlyRevenueMap = new Map<string, number>();
+      const now = new Date();
+
+      // Initialize map for the last 12 months with 0 revenue
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthName = d.toLocaleString("default", { month: "short" });
+        monthlyRevenueMap.set(monthName, 0);
+      }
+
+      providerBookings.forEach((booking) => {
+        if (booking.isCompleted && booking.completedDate) {
+          const completedDate = new Date(booking.completedDate);
+          const monthName = completedDate.toLocaleString("default", {
+            month: "short",
+          });
+          const currentRevenue = monthlyRevenueMap.get(monthName) || 0;
+          monthlyRevenueMap.set(
+            monthName,
+            currentRevenue + (booking.actualRevenue || 0),
+          );
+        }
+      });
+
+      return Array.from(monthlyRevenueMap, ([name, value]) => ({
+        name,
+        value,
+      }));
+    }, [providerBookings]);
+
+    const getBookingCountByDay = useCallback((): {
+      name: string;
+      value: number;
+    }[] => {
+      const days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const bookingCounts = new Map<string, number>(
+        days.map((day) => [day, 0]),
+      );
+
+      providerBookings.forEach((booking) => {
+        const createdDate = new Date(booking.createdAt);
+        const dayName = days[createdDate.getDay()];
+        bookingCounts.set(dayName, (bookingCounts.get(dayName) || 0) + 1);
+      });
+
+      return Array.from(bookingCounts, ([name, value]) => ({ name, value }));
+    }, [providerBookings]);
+
     // Return hook interface with enhanced data
     return {
       // Data states
@@ -1371,6 +1436,8 @@ export const useProviderBookingManagement =
       calculateAnalytics,
       getRevenueByPeriod,
       getBookingCountByPeriod,
+      getMonthlyRevenue,
+      getBookingCountByDay,
 
       // Utility functions
       formatBookingDate,

@@ -88,58 +88,39 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // Action handlers
   const handleAcceptBooking = async () => {
     if (!specificBooking) return;
-
-    const clientName = specificBooking.clientName || "this client";
-    if (
-      window.confirm(
-        `Are you sure you want to accept the booking from "${clientName}"?`,
-      )
-    ) {
-      const success = await acceptBookingById(specificBooking.id);
-      if (success) {
-        alert(`Booking from "${clientName}" has been accepted successfully.`);
-        await refreshBookings();
-        // Update local state
-        const updatedBooking = bookings.find(
-          (booking) => booking.id === specificBooking.id,
-        );
-        if (updatedBooking) {
-          setSpecificBooking(updatedBooking);
-        }
+    const success = await acceptBookingById(specificBooking.id);
+    if (success) {
+      await refreshBookings();
+      // Update local state
+      const updatedBooking = bookings.find(
+        (booking) => booking.id === specificBooking.id,
+      );
+      if (updatedBooking) {
+        setSpecificBooking(updatedBooking);
       }
     }
   };
 
   const handleDeclineBooking = async () => {
     if (!specificBooking) return;
-
-    const clientName = specificBooking.clientName || "this client";
-    if (
-      window.confirm(
-        `Are you sure you want to decline the booking from "${clientName}"?`,
-      )
-    ) {
-      const success = await declineBookingById(
-        specificBooking.id,
-        "Declined by provider",
+    const success = await declineBookingById(
+      specificBooking.id,
+      "Declined by provider",
+    );
+    if (success) {
+      await refreshBookings();
+      // Update local state
+      const updatedBooking = bookings.find(
+        (booking) => booking.id === specificBooking.id,
       );
-      if (success) {
-        alert(`Booking from "${clientName}" has been declined.`);
-        await refreshBookings();
-        // Update local state
-        const updatedBooking = bookings.find(
-          (booking) => booking.id === specificBooking.id,
-        );
-        if (updatedBooking) {
-          setSpecificBooking(updatedBooking);
-        }
+      if (updatedBooking) {
+        setSpecificBooking(updatedBooking);
       }
     }
   };
 
   const handleStartService = async () => {
     if (!specificBooking) return;
-
     const success = await startBookingById(specificBooking.id);
     if (success) {
       const actualStartTime = new Date().toISOString();
@@ -151,19 +132,15 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   const handleCompleteService = async () => {
     if (!specificBooking) return;
-
-    if (window.confirm("Mark this booking as completed?")) {
-      const success = await completeBookingById(specificBooking.id);
-      if (success) {
-        alert("Service has been marked as completed successfully.");
-        await refreshBookings();
-        // Update local state
-        const updatedBooking = bookings.find(
-          (booking) => booking.id === specificBooking.id,
-        );
-        if (updatedBooking) {
-          setSpecificBooking(updatedBooking);
-        }
+    const success = await completeBookingById(specificBooking.id);
+    if (success) {
+      await refreshBookings();
+      // Update local state
+      const updatedBooking = bookings.find(
+        (booking) => booking.id === specificBooking.id,
+      );
+      if (updatedBooking) {
+        setSpecificBooking(updatedBooking);
       }
     }
   };

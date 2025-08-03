@@ -25,6 +25,17 @@ import {
 } from "../../hooks/serviceManagement";
 import { getCategoryIcon } from "../../utils/serviceHelpers";
 
+// Helper function to truncate strings to a specific length
+const truncateString = (str: string, num: number) => {
+  if (!str) {
+    return "";
+  }
+  if (str.length > num) {
+    return str.slice(0, num) + "...";
+  }
+  return str;
+};
+
 const iconMap: { [key: string]: React.ElementType } = {
   home: HomeIcon,
   broom: PaintBrushIcon,
@@ -150,7 +161,7 @@ const MyServicesPage: React.FC = () => {
           </div>
         </header>
 
-        <main className="container mx-auto flex-grow p-10 sm:p-6">
+        <main className="container mx-auto flex-grow p-10 pb-10 sm:p-6">
           {loading && (
             <div className="py-16 text-center">
               <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
@@ -188,7 +199,7 @@ const MyServicesPage: React.FC = () => {
           )}
 
           {!loading && !error && userServices.length > 0 && (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 pb-24 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {userServices.map((service) => {
                 const statusDisplay = getStatusDisplay(service.status);
 
@@ -206,9 +217,9 @@ const MyServicesPage: React.FC = () => {
                       {/* Service Details */}
                       <div className="flex-grow">
                         <div className="flex flex-col justify-between md:flex-row md:items-start">
-                          <div className="flex-grow">
+                          <div className="min-w-0 flex-grow">
                             <h4 className="text-lg font-semibold text-black md:text-xl">
-                              {service.title}
+                              {truncateString(service.title, 20)}
                             </h4>
                             <p className="text-sm text-gray-500 md:text-base">
                               {service.category?.name || "Service"}
@@ -254,22 +265,6 @@ const MyServicesPage: React.FC = () => {
                             <ArrowRightIcon className="mr-1 h-4 w-4" />
                             View Details
                           </Link>
-                          {/* <button
-                            onClick={() => handleToggleActive(service.id, service.status === 'Available')}
-                            className={`px-4 py-2 rounded-lg transition-colors text-sm ${
-                              service.status === 'Available'
-                                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                : 'bg-green-100 text-green-800 hover:bg-green-200'
-                            }`}
-                          >
-                            {service.status === 'Available' ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteService(service.id)}
-                            className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors text-sm"
-                          >
-                            Delete
-                          </button> */}
                         </div>
                       </div>
                     </div>
