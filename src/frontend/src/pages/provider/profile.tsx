@@ -306,8 +306,16 @@ const ClientStats: React.FC = () => {
 
 const SPProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, loading, error, updateProfile, switchRole } =
-    useProviderProfile();
+  const {
+    profile,
+    loading,
+    error,
+    updateProfile,
+    switchRole,
+    profileImageUrl,
+    isImageLoading,
+    refetchImage,
+  } = useProviderProfile();
   const {
     loading: reputationLoading,
     error: reputationError,
@@ -336,9 +344,7 @@ const SPProfilePage: React.FC = () => {
     if (profile) {
       setName(profile.name);
       setPhone(profile.phone || "");
-      setPreviewImage(
-        profile.profilePicture?.imageUrl || "/default-provider.svg",
-      );
+      // Don't set previewImage here anymore - use profileImageUrl from hook
     }
   }, [profile]);
   console.log(profile);
@@ -360,6 +366,8 @@ const SPProfilePage: React.FC = () => {
     if (success) {
       setIsEditing(false);
       setImageFile(null); // Clear the file after saving
+      setPreviewImage(null); // Clear preview, let hook handle the display
+      refetchImage(); // Refetch the image through the hook
       console.log("Successful image upload");
     }
   };
@@ -367,11 +375,11 @@ const SPProfilePage: React.FC = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setImageFile(null);
+    setPreviewImage(null); // Clear preview to show original image
     // Reset fields to original profile data
     if (profile) {
       setName(profile.name);
       setPhone(profile.phone || "");
-      setPreviewImage(profile.profilePicture?.imageUrl || "/don.jpg");
     }
   };
 
@@ -420,15 +428,21 @@ const SPProfilePage: React.FC = () => {
             <div className="rounded-xl bg-white p-6 shadow-md">
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
-                  <img
-                    src={previewImage || "/default-client.svg"}
-                    alt="Profile Picture"
-                    className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        "/default-client.svg";
-                    }}
-                  />
+                  {isImageLoading && !previewImage ? (
+                    <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                    </div>
+                  ) : (
+                    <img
+                      src={previewImage || profileImageUrl}
+                      alt="Profile Picture"
+                      className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "/default-provider.svg";
+                      }}
+                    />
+                  )}
                   {isEditing && (
                     <>
                       <input

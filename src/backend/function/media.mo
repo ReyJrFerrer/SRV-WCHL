@@ -11,7 +11,7 @@ import Buffer "mo:base/Buffer";
 import Option "mo:base/Option";
 import Types "../types/shared";
 
-actor MediaCanister {
+persistent actor MediaCanister {
     // Type definitions
     type MediaItem = Types.MediaItem;
     type MediaType = Types.MediaType;
@@ -24,7 +24,7 @@ actor MediaCanister {
     // State variables
     private stable var mediaEntries : [(Text, MediaItem)] = [];
     private stable var fileDataEntries : [(Text, Blob)] = [];
-    private stable var mediaItems = HashMap.HashMap<Text, MediaItem>(10, Text.equal, Text.hash);
+    private var mediaItems = HashMap.HashMap<Text, MediaItem>(10, Text.equal, Text.hash);
     private transient var fileDataStore = HashMap.HashMap<Text, Blob>(10, Text.equal, Text.hash);
     private transient var userMediaIndex = HashMap.HashMap<Principal, [Text]>(10, Principal.equal, Principal.hash);
 
