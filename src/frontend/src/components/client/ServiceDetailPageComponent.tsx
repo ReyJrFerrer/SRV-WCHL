@@ -124,6 +124,8 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
 };
 
 // --- Sub-component for the Reviews Section ---
+import { Link } from "react-router-dom";
+
 const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
   const { reviews, loading, error, getAverageRating, getRatingDistribution } =
     useServiceReviews(serviceId);
@@ -146,9 +148,17 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
 
   return (
     <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
-      <h3 className="mb-4 text-lg font-semibold text-gray-800">
-        Reviews ({totalReviews})
-      </h3>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-800">
+          Reviews ({totalReviews})
+        </h3>
+        <Link
+          to={`/client/service/reviews/${serviceId}`}
+          className="rounded-lg bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-200 hover:text-yellow-800"
+        >
+          View All
+        </Link>
+      </div>
       {totalReviews > 0 ? (
         <div>
           <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-8">
