@@ -14,7 +14,7 @@ import Debug "mo:base/Debug";
 import Types "../types/shared";
 import StaticData "../utils/staticData";
 
-actor ReviewCanister {
+persistent actor ReviewCanister {
     // Type definitions
     type Review = Types.Review;
     type ReviewStatus = Types.ReviewStatus;
@@ -22,20 +22,20 @@ actor ReviewCanister {
 
     // State variables
     private stable var reviewEntries : [(Text, Review)] = [];
-    private var reviews = HashMap.HashMap<Text, Review>(10, Text.equal, Text.hash);
+    private transient var reviews = HashMap.HashMap<Text, Review>(10, Text.equal, Text.hash);
     
     // Canister references
-    private var bookingCanisterId : ?Principal = null;
-    private var serviceCanisterId : ?Principal = null;
-    private var reputationCanisterId : ?Principal = null;
-    private var authCanisterId : ?Principal = null;
+    private transient var bookingCanisterId : ?Principal = null;
+    private transient var serviceCanisterId : ?Principal = null;
+    private transient var reputationCanisterId : ?Principal = null;
+    private transient var authCanisterId : ?Principal = null;
 
     // Constants
-    private let REVIEW_WINDOW_DAYS : Nat = 30;
-    private let MIN_COMMENT_LENGTH : Nat = 5;
-    private let MAX_COMMENT_LENGTH : Nat = 500;
-    private let MIN_RATING : Nat = 1;
-    private let MAX_RATING : Nat = 5;
+    private transient let REVIEW_WINDOW_DAYS : Nat = 30;
+    private transient let MIN_COMMENT_LENGTH : Nat = 5;
+    private transient let MAX_COMMENT_LENGTH : Nat = 500;
+    private transient let MIN_RATING : Nat = 1;
+    private transient let MAX_RATING : Nat = 5;
 
     // Helper functions
     private func generateId() : Text {

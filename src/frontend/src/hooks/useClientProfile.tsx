@@ -4,6 +4,7 @@ import authCanisterService, {
   FrontendProfile,
 } from "../services/authCanisterService"; // Adjust path as needed
 import { mediaService } from "../services/mediaService";
+import { useProfileImage } from "./useImageLoader";
 
 /**
  * Custom hook to manage the client's profile data, including fetching and updating.
@@ -14,6 +15,14 @@ export const useClientProfile = () => {
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use the profile image hook for optimal loading
+  const {
+    profileImageUrl,
+    isLoading: isImageLoading,
+    isUsingDefaultAvatar,
+    refetch: refetchImage,
+  } = useProfileImage(profile?.profilePicture?.imageUrl);
 
   const fetchProfile = useCallback(async () => {
     if (isAuthenticated && identity) {
@@ -186,5 +195,10 @@ export const useClientProfile = () => {
     removeProfilePicture,
     switchRole,
     refetchProfile: fetchProfile,
+    // Image loading functionality
+    profileImageUrl,
+    isImageLoading,
+    isUsingDefaultAvatar,
+    refetchImage,
   };
 };

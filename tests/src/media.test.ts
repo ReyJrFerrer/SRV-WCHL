@@ -14,6 +14,7 @@ interface MediaService {
     fileData: Uint8Array,
   ) => Promise<any>;
   getMediaItem: (mediaId: string) => Promise<any>;
+  getFileData: (mediaId: string) => Promise<any>;
   getMediaByOwner: (ownerId: Principal) => Promise<any[]>;
   getMediaByTypeAndOwner: (
     ownerId: Principal,
@@ -22,6 +23,7 @@ interface MediaService {
   deleteMedia: (mediaId: string) => Promise<any>;
   updateMediaMetadata: (mediaId: string, fileName?: string) => Promise<any>;
   getStorageStats: () => Promise<any>;
+  http_request: (request: any) => Promise<any>;
 }
 
 describe("Media Canister", () => {
@@ -69,6 +71,19 @@ describe("Media Canister", () => {
         const Result = IDL.Variant({ ok: MediaItem, err: IDL.Text });
         const Result_1 = IDL.Variant({ ok: IDL.Text, err: IDL.Text });
         const Result_2 = IDL.Variant({ ok: MediaItem, err: IDL.Text });
+        const Result_3 = IDL.Variant({ ok: IDL.Vec(IDL.Nat8), err: IDL.Text });
+        const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
+        const HttpRequest = IDL.Record({
+          method: IDL.Text,
+          url: IDL.Text,
+          headers: IDL.Vec(HeaderField),
+          body: IDL.Vec(IDL.Nat8),
+        });
+        const HttpResponse = IDL.Record({
+          status_code: IDL.Nat16,
+          headers: IDL.Vec(HeaderField),
+          body: IDL.Vec(IDL.Nat8),
+        });
         const Stats = IDL.Record({
           totalItems: IDL.Nat,
           totalSize: IDL.Nat,
@@ -77,6 +92,7 @@ describe("Media Canister", () => {
         });
         return IDL.Service({
           deleteMedia: IDL.Func([IDL.Text], [Result_1], []),
+          getFileData: IDL.Func([IDL.Text], [Result_3], ["query"]),
           getMediaByOwner: IDL.Func(
             [IDL.Principal],
             [IDL.Vec(MediaItem)],
@@ -89,6 +105,7 @@ describe("Media Canister", () => {
           ),
           getMediaItem: IDL.Func([IDL.Text], [Result_2], ["query"]),
           getStorageStats: IDL.Func([], [Stats], ["query"]),
+          http_request: IDL.Func([HttpRequest], [HttpResponse], ["query"]),
           updateMediaMetadata: IDL.Func(
             [IDL.Text, IDL.Opt(IDL.Text)],
             [Result],
@@ -419,6 +436,149 @@ describe("Media Canister", () => {
         expect.arrayContaining([
           [{ UserProfile: null }, 1],
           [{ ServiceImage: null }, 1],
+        ]),
+      );
+    });
+  });
+
+  describe("HTTP Interface", () => {
+    it("should serve image file via HTTP request", async () => {
+      // Setup - upload a file first
+      const fileName = "test-http.jpg";
+      const contentType = "image/jpeg";
+      const mediaType = { UserProfile: null };
+      const fileData = new Uint8Array([255, 216, 255, 224, 0, 16]); // JPEG header + some data
+
+      const uploadResult = await actor.uploadMedia(
+        fileName,
+        contentType,
+        mediaType,
+        fileData,
+      );
+      expect(uploadResult).toHaveProperty("ok");
+
+      if ("err" in uploadResult) {
+        throw new Error("Upload failed");
+      }
+
+      const mediaId = uploadResult.ok.id;
+
+      // Execute
+      const httpRequest = {
+        method: "GET",
+        url: `/media/${mediaId}`,
+        headers: [],
+        body: new Uint8Array(),
+      };
+
+      const result = await actor.http_request(httpRequest);
+
+      // Assert
+      expect(result.status_code).toBe(200);
+      expect(result.headers).toEqual(
+        expect.arrayContaining([
+          ["Content-Type", contentType],
+          ["Cache-Control", "public, max-age=31536000"], // 1 year cache
+        ]),
+      );
+      expect(new Uint8Array(result.body)).toEqual(fileData);
+    });
+
+    it("should return 404 for non-existent media ID", async () => {
+      // Setup
+      const httpRequest = {
+        method: "GET",
+        url: "/media/non-existent-id",
+        headers: [],
+        body: new Uint8Array(),
+      };
+
+      // Execute
+      const result = await actor.http_request(httpRequest);
+
+      // Assert
+      expect(result.status_code).toBe(404);
+      expect(result.headers).toEqual(
+        expect.arrayContaining([["Content-Type", "text/plain"]]),
+      );
+    });
+
+    it("should return 405 for unsupported HTTP methods", async () => {
+      // Setup
+      const httpRequest = {
+        method: "POST",
+        url: "/media/some-id",
+        headers: [],
+        body: new Uint8Array(),
+      };
+
+      // Execute
+      const result = await actor.http_request(httpRequest);
+
+      // Assert
+      expect(result.status_code).toBe(405);
+      expect(result.headers).toEqual(
+        expect.arrayContaining([["Content-Type", "text/plain"]]),
+      );
+    });
+
+    it("should return 400 for invalid URL format", async () => {
+      // Setup
+      const httpRequest = {
+        method: "GET",
+        url: "/invalid-path",
+        headers: [],
+        body: new Uint8Array(),
+      };
+
+      // Execute
+      const result = await actor.http_request(httpRequest);
+
+      // Assert
+      expect(result.status_code).toBe(400);
+      expect(result.headers).toEqual(
+        expect.arrayContaining([["Content-Type", "text/plain"]]),
+      );
+    });
+
+    it("should include proper CORS headers", async () => {
+      // Setup - upload a file first
+      const fileName = "cors-test.png";
+      const contentType = "image/png";
+      const mediaType = { UserProfile: null };
+      const fileData = new Uint8Array([137, 80, 78, 71]);
+
+      const uploadResult = await actor.uploadMedia(
+        fileName,
+        contentType,
+        mediaType,
+        fileData,
+      );
+      expect(uploadResult).toHaveProperty("ok");
+
+      if ("err" in uploadResult) {
+        throw new Error("Upload failed");
+      }
+
+      const mediaId = uploadResult.ok.id;
+
+      // Execute
+      const httpRequest = {
+        method: "GET",
+        url: `/media/${mediaId}`,
+        headers: [["Origin", "https://example.com"]],
+        body: new Uint8Array(),
+      };
+
+      const result = await actor.http_request(httpRequest);
+
+      // Assert
+      expect(result.status_code).toBe(200);
+      expect(result.headers).toEqual(
+        expect.arrayContaining([
+          ["Access-Control-Allow-Origin", "*"],
+          ["Access-Control-Allow-Methods", "GET, HEAD, OPTIONS"],
+          ["Access-Control-Allow-Headers", "Content-Type"],
         ]),
       );
     });

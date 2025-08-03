@@ -9,7 +9,7 @@ import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
 import Types "../types/shared";
 
-actor ChatCanister {
+persistent actor ChatCanister {
     // Type definitions
     type Message = Types.Message;
     type Conversation = Types.Conversation;
@@ -24,16 +24,16 @@ actor ChatCanister {
     // State variables
     private stable var conversationEntries : [(Text, Conversation)] = [];
     private stable var messageEntries : [(Text, Message)] = [];
-    private var conversations = HashMap.HashMap<Text, Conversation>(10, Text.equal, Text.hash);
-    private var messages = HashMap.HashMap<Text, Message>(100, Text.equal, Text.hash);
+    private transient var conversations = HashMap.HashMap<Text, Conversation>(10, Text.equal, Text.hash);
+    private transient var messages = HashMap.HashMap<Text, Message>(100, Text.equal, Text.hash);
     
     // Index for efficient querying
-    private var userConversations = HashMap.HashMap<Principal, [Text]>(10, Principal.equal, Principal.hash);
-    private var conversationMessages = HashMap.HashMap<Text, [Text]>(10, Text.equal, Text.hash);
+    private transient var userConversations = HashMap.HashMap<Principal, [Text]>(10, Principal.equal, Principal.hash);
+    private transient var conversationMessages = HashMap.HashMap<Text, [Text]>(10, Text.equal, Text.hash);
 
     // Canister references
-    private var authCanisterId : ?Principal = null;
-    private var bookingCanisterId : ?Principal = null;
+    private transient var authCanisterId : ?Principal = null;
+    private transient var bookingCanisterId : ?Principal = null;
 
     // Initialize
     system func preupgrade() {

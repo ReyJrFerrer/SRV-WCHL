@@ -8,6 +8,7 @@ import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
+import Option "mo:base/Option";
 import Types "../types/shared";
 
 actor MediaCanister {
@@ -16,17 +17,20 @@ actor MediaCanister {
     type MediaType = Types.MediaType;
     type MediaUploadRequest = Types.MediaUploadRequest;
     type Result<T> = Types.Result<T>;
+    type HttpRequest = Types.HttpRequest;
+    type HttpResponse = Types.HttpResponse;
+    type HeaderField = Types.HeaderField;
 
     // State variables
     private stable var mediaEntries : [(Text, MediaItem)] = [];
     private stable var fileDataEntries : [(Text, Blob)] = [];
-    private var mediaItems = HashMap.HashMap<Text, MediaItem>(10, Text.equal, Text.hash);
-    private var fileDataStore = HashMap.HashMap<Text, Blob>(10, Text.equal, Text.hash);
-    private var userMediaIndex = HashMap.HashMap<Principal, [Text]>(10, Principal.equal, Principal.hash);
+    private stable var mediaItems = HashMap.HashMap<Text, MediaItem>(10, Text.equal, Text.hash);
+    private transient var fileDataStore = HashMap.HashMap<Text, Blob>(10, Text.equal, Text.hash);
+    private transient var userMediaIndex = HashMap.HashMap<Principal, [Text]>(10, Principal.equal, Principal.hash);
 
     // Constants
-    private let MAX_FILE_SIZE : Nat = 450_000; // 450KB in bytes
-    private let SUPPORTED_CONTENT_TYPES : [Text] = [
+    private transient let MAX_FILE_SIZE : Nat = 450_000; // 450KB in bytes
+    private transient let SUPPORTED_CONTENT_TYPES : [Text] = [
         "image/jpeg",
         "image/jpg", 
         "image/png",
@@ -62,10 +66,9 @@ actor MediaCanister {
         mediaTypeText # "/" # ownerText # "/" # fileName
     };
 
-    private func generateUrl(filePath : Text) : Text {
-        // Return the media ID which can be used to fetch the file data
-        // Frontend will convert this to a data URL
-        "media://" # filePath
+    private func generateUrl(mediaId : Text) : Text {
+        // Generate HTTP URL that can be served by the canister
+        "/media/" # mediaId
     };
 
     private func addToUserIndex(userId : Principal, mediaId : Text) {
@@ -147,7 +150,7 @@ actor MediaCanister {
 
         let mediaId = generateId();
         let filePath = generateFilePath(caller, mediaType, fileName);
-        let url = generateUrl(filePath);
+        let url = "/media/" # mediaId; // Use media ID for HTTP URL
         
         let newMediaItem : MediaItem = {
             id = mediaId;
@@ -349,5 +352,86 @@ actor MediaCanister {
                 (#ServiceImage, serviceImageCount)
             ];
         }
+    };
+
+    // HTTP interface for serving images
+    public query func http_request(request : HttpRequest) : async HttpResponse {
+        let { method; url; headers; body } = request;
+
+        // Add CORS headers for all responses
+        let corsHeaders : [HeaderField] = [
+            ("Access-Control-Allow-Origin", "*"),
+            ("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS"),
+            ("Access-Control-Allow-Headers", "Content-Type"),
+        ];
+
+        // Handle OPTIONS request for CORS preflight
+        if (method == "OPTIONS") {
+            return {
+                status_code = 200;
+                headers = corsHeaders;
+                body = Text.encodeUtf8("");
+            };
+        };
+
+        // Only allow GET and HEAD methods
+        if (method != "GET" and method != "HEAD") {
+            return {
+                status_code = 405;
+                headers = Array.append(corsHeaders, [("Content-Type", "text/plain")]);
+                body = Text.encodeUtf8("Method not allowed");
+            };
+        };
+
+        // Parse URL to extract media ID
+        // Expected format: /media/{mediaId}
+        let urlParts = Text.split(url, #char '/');
+        let partsArray = Iter.toArray(urlParts);
+        
+        if (partsArray.size() != 3 or partsArray[0] != "" or partsArray[1] != "media") {
+            return {
+                status_code = 400;
+                headers = Array.append(corsHeaders, [("Content-Type", "text/plain")]);
+                body = Text.encodeUtf8("Invalid URL format. Expected: /media/{mediaId}");
+            };
+        };
+
+        let mediaId = partsArray[2];
+
+        // Get media item and file data
+        switch (mediaItems.get(mediaId), fileDataStore.get(mediaId)) {
+            case (?mediaItem, ?fileData) {
+                let cacheHeaders = [
+                    ("Content-Type", mediaItem.contentType),
+                    ("Cache-Control", "public, max-age=31536000"), // 1 year cache
+                    ("Content-Length", Nat.toText(mediaItem.fileSize)),
+                ];
+                
+                let responseHeaders = Array.append(corsHeaders, cacheHeaders);
+
+                if (method == "HEAD") {
+                    // For HEAD requests, return headers only
+                    return {
+                        status_code = 200;
+                        headers = responseHeaders;
+                        body = Text.encodeUtf8("");
+                    };
+                } else {
+                    // For GET requests, return the file data
+                    return {
+                        status_code = 200;
+                        headers = responseHeaders;
+                        body = fileData;
+                    };
+                };
+            };
+            case (_, _) {
+                return {
+                    status_code = 404;
+                    headers = Array.append(corsHeaders, [("Content-Type", "text/plain")]);
+                    body = Text.encodeUtf8("Media not found");
+                };
+            };
+        };
     };
 }

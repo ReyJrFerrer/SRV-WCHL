@@ -11,7 +11,7 @@ import Int "mo:base/Int";
 import Types "../types/shared";
 import StaticData "../utils/staticData";
 
-actor ServiceCanister {
+persistent actor ServiceCanister {
     // Type definitions
     type Service = Types.Service;
     type ServiceCategory = Types.ServiceCategory;
@@ -27,32 +27,32 @@ actor ServiceCanister {
 
     // State variables
     private stable var serviceEntries : [(Text, Service)] = [];
-    private var services = HashMap.HashMap<Text, Service>(10, Text.equal, Text.hash);
+    private transient var services = HashMap.HashMap<Text, Service>(10, Text.equal, Text.hash);
     
     private stable var categoryEntries : [(Text, ServiceCategory)] = [];
-    private var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
+    private transient var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
 
     // Availability state variables
     private stable var availabilityEntries : [(Text, ProviderAvailability)] = [];
-    private var serviceAvailabilities = HashMap.HashMap<Text, ProviderAvailability>(10, Text.equal, Text.hash);
+    private transient var serviceAvailabilities = HashMap.HashMap<Text, ProviderAvailability>(10, Text.equal, Text.hash);
     
     // Service package state variables
     private stable var packageEntries : [(Text, ServicePackage)] = [];
-    private var servicePackages = HashMap.HashMap<Text, ServicePackage>(10, Text.equal, Text.hash);
+    private transient var servicePackages = HashMap.HashMap<Text, ServicePackage>(10, Text.equal, Text.hash);
 
     // Canister references
-    private var authCanisterId : ?Principal = null;
-    private var bookingCanisterId : ?Principal = null;
-    private var reviewCanisterId : ?Principal = null;
-    private var reputationCanisterId : ?Principal = null;
+    private transient var authCanisterId : ?Principal = null;
+    private transient var bookingCanisterId : ?Principal = null;
+    private transient var reviewCanisterId : ?Principal = null;
+    private transient var reputationCanisterId : ?Principal = null;
 
     // Constants
-    private let MIN_TITLE_LENGTH : Nat = 1;
-    private let MAX_TITLE_LENGTH : Nat = 100;
-    private let MIN_DESCRIPTION_LENGTH : Nat = 1;
-    private let MAX_DESCRIPTION_LENGTH : Nat = 1000;
-    private let MIN_PRICE : Nat = 1;
-    private let MAX_PRICE : Nat = 1_000_000;
+    private transient let MIN_TITLE_LENGTH : Nat = 1;
+    private transient let MAX_TITLE_LENGTH : Nat = 100;
+    private transient let MIN_DESCRIPTION_LENGTH : Nat = 1;
+    private transient let MAX_DESCRIPTION_LENGTH : Nat = 1000;
+    private transient let MIN_PRICE : Nat = 1;
+    private transient let MAX_PRICE : Nat = 1_000_000;
 
     // Set canister references
     public shared(_msg) func setCanisterReferences(

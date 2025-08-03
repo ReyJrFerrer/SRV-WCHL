@@ -13,7 +13,7 @@ import Float "mo:base/Float";
 import Types "../types/shared";
 import StaticData "../utils/staticData";
 
-actor BookingCanister {
+persistent actor BookingCanister {
     // Type definitions
     type Booking = Types.Booking;
     type BookingStatus = Types.BookingStatus;
@@ -24,22 +24,22 @@ actor BookingCanister {
 
     // State variables
     private stable var bookingEntries : [(Text, Booking)] = [];
-    private var bookings = HashMap.HashMap<Text, Booking>(10, Text.equal, Text.hash);
+    private transient var bookings = HashMap.HashMap<Text, Booking>(10, Text.equal, Text.hash);
     
     private stable var evidenceEntries : [(Text, Evidence)] = [];
-    private var evidences = HashMap.HashMap<Text, Evidence>(10, Text.equal, Text.hash);
+    private transient var evidences = HashMap.HashMap<Text, Evidence>(10, Text.equal, Text.hash);
 
     // Canister references
-    private var authCanisterId : ?Principal = null;
-    private var serviceCanisterId : ?Principal = null;
-    private var reviewCanisterId : ?Principal = null;
-    private var reputationCanisterId : ?Principal = null;
+    private transient var authCanisterId : ?Principal = null;
+    private transient var serviceCanisterId : ?Principal = null;
+    private transient var reviewCanisterId : ?Principal = null;
+    private transient var reputationCanisterId : ?Principal = null;
 
     // Constants
-    private let MIN_PRICE : Nat = 5;
-    private let MAX_PRICE : Nat = 1_000_000;
-    private let MIN_SCHEDULE_AHEAD : Int = 3600_000_000_000; // 1 hour in nanoseconds
-    private let MAX_SCHEDULE_AHEAD : Int = 30 * 24 * 3600_000_000_000; // 30 days in nanoseconds
+    private transient let MIN_PRICE : Nat = 5;
+    private transient let MAX_PRICE : Nat = 1_000_000;
+    private transient let MIN_SCHEDULE_AHEAD : Int = 3600_000_000_000; // 1 hour in nanoseconds
+    private transient let MAX_SCHEDULE_AHEAD : Int = 30 * 24 * 3600_000_000_000; // 30 days in nanoseconds
 
     // Helper functions
     private func generateId() : Text {

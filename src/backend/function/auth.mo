@@ -11,7 +11,7 @@ import Types "../types/shared";
 import StaticData "../utils/staticData";
 
 
-actor AuthCanister {
+persistent actor AuthCanister {
     // Type definitions
     type Profile = Types.Profile;
     type UserRole = Types.UserRole;
@@ -21,21 +21,21 @@ actor AuthCanister {
 
     // State variables
     private stable var profileEntries : [(Principal, Profile)] = [];
-    private var profiles = HashMap.HashMap<Principal, Profile>(10, Principal.equal, Principal.hash);
-    private var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
-    private var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
+    private transient var profiles = HashMap.HashMap<Principal, Profile>(10, Principal.equal, Principal.hash);
+    private transient var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
+    private transient var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
 
     // Canister references
-    private var reputationCanisterId : ?Principal = null;
-    private var mediaCanisterId : ?Principal = null;
+    private transient var reputationCanisterId : ?Principal = null;
+    private transient var mediaCanisterId : ?Principal = null;
 
     // Initial data loading 
 
     // Constants
-    private let MIN_NAME_LENGTH : Nat = 2;
-    private let MAX_NAME_LENGTH : Nat = 50;
-    private let MIN_PHONE_LENGTH : Nat = 10;
-    private let MAX_PHONE_LENGTH : Nat = 15;
+    private transient let MIN_NAME_LENGTH : Nat = 2;
+    private transient let MAX_NAME_LENGTH : Nat = 50;
+    private transient let MIN_PHONE_LENGTH : Nat = 10;
+    private transient let MAX_PHONE_LENGTH : Nat = 15;
 
     private func validatePhone(phone : Text) : Bool {
         if (phone.size() < MIN_PHONE_LENGTH or phone.size() > MAX_PHONE_LENGTH) {

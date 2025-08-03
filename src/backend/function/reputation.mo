@@ -14,7 +14,7 @@ import LLM "mo:llm";
 
 import Types "../types/shared";
 
-actor ReputationCanister {
+persistent actor ReputationCanister {
     // Type definitions
     type ReputationScore = Types.ReputationScore;
     type TrustLevel = Types.TrustLevel;
@@ -26,23 +26,23 @@ actor ReputationCanister {
 
     // State variables
     private stable var reputationEntries : [(Principal, ReputationScore)] = [];
-    private var reputations = HashMap.HashMap<Principal, ReputationScore>(10, Principal.equal, Principal.hash);
+    private transient var reputations = HashMap.HashMap<Principal, ReputationScore>(10, Principal.equal, Principal.hash);
     
     // Canister references
-    private var authCanisterId : ?Principal = null;
-    private var bookingCanisterId : ?Principal = null;
-    private var reviewCanisterId : ?Principal = null;
-    private var serviceCanisterId : ?Principal = null;
-    private var llmCanisterId : ?Principal = null;
+    private transient var authCanisterId : ?Principal = null;
+    private transient var bookingCanisterId : ?Principal = null;
+    private transient var reviewCanisterId : ?Principal = null;
+    private transient var serviceCanisterId : ?Principal = null;
+    private transient var llmCanisterId : ?Principal = null;
 
     // Constants for reputation calculation
-    private let BASE_SCORE : Float = 50.0;
-    private let MAX_BOOKING_POINTS : Float = 20.0;
+    private transient let BASE_SCORE : Float = 50.0;
+    private transient let MAX_BOOKING_POINTS : Float = 20.0;
     // private let MAX_RATING_POINTS : Float = 20.0;
-    private let MAX_AGE_POINTS : Float = 10.0;
-    private let MIN_TRUST_SCORE : Float = 0.0;
-    private let MAX_TRUST_SCORE : Float = 100.0;
-    private let TRUST_LEVEL_THRESHOLDS : [(TrustLevel, Float)] = [
+    private transient let MAX_AGE_POINTS : Float = 10.0;
+    private transient let MIN_TRUST_SCORE : Float = 0.0;
+    private transient let MAX_TRUST_SCORE : Float = 100.0;
+    private transient let TRUST_LEVEL_THRESHOLDS : [(TrustLevel, Float)] = [
         (#Low, 20.0),
         (#Medium, 50.0),
         (#High, 80.0),
