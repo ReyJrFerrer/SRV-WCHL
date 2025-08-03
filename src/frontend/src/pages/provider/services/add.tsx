@@ -946,21 +946,21 @@ const AddServicePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100">
-      <header className="sticky top-0 z-20 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center px-4 py-3">
+      <header className="p-2 sticky top-0 z-20 bg-white shadow-sm">
+        <div className="container mx-auto flex items-center">
           <button
             onClick={() => (currentStep === 1 ? navigate(-1) : handleBack())}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-xl font-semibold text-gray-800">
+          <h1 className="text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
             Add New Service (Step {currentStep}/5)
           </h1>
         </div>
       </header>
       <main className="container mx-auto flex-grow p-4 sm:p-6">
-        <div className="mt-8 rounded-xl bg-white p-6 shadow-lg sm:p-8">
+        <div className="mt-6 rounded-xl bg-white p-6 shadow-lg sm:p-8">
           {renderStep()}
         </div>
         <div className="mt-6 mb-8 flex justify-between">

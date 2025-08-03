@@ -15,7 +15,7 @@ const BookingRequests: React.FC<BookingRequestsProps> = ({
 }) => {
   return (
     <div className={className}>
-      <h2 className="mb-6 pt-4 text-4xl font-extrabold text-black">Bookings</h2>
+      <h2 className="mb-6 pt-6 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">Bookings</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Pending Requests Card */}
         <div className="flex flex-col rounded-xl border-t-[16px] border-[#FFD32C] bg-white p-6 pt-4 shadow-md transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">

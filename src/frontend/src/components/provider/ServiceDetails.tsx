@@ -79,7 +79,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
         <section className="flex flex-col justify-between rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
           <div className="space-y-8">
             <section className="rounded-xl border border-gray-100 bg-transparent p-0 shadow-none">
-              <h2 className="mb-4 text-lg font-bold text-blue-700">
+              <h2 className="mb-6 pt-6 text-xl font-extrabold sm:text-2xl md:text-3xl text-blue-700">
                 Service Details <span className="text-red-500">*</span>
               </h2>
               <div className="space-y-2">
