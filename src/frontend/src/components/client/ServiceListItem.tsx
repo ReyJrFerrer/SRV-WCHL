@@ -112,7 +112,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 service.providerAvatar ||
                 (service.category?.slug
                   ? `/images/ai-sp/${service.category.slug}.svg`
-                  : "/default-provider.svg")
+                  : "/images/ai-sp/default-provider.svg")
               }
               alt={service.title}
               className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
