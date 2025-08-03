@@ -17,6 +17,8 @@ import {
   MapPinIcon,
   UserCircleIcon,
   CheckBadgeIcon,
+  Squares2X2Icon,
+  TagIcon,
 } from "@heroicons/react/24/solid";
 import { CameraIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
 
@@ -132,11 +134,13 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
 
   if (loading)
     return (
-      <div className="p-4 text-center text-gray-500">Loading reviews...</div>
+      <div className="mt-8 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 text-center text-gray-500 shadow-2xl">
+        Loading reviews...
+      </div>
     );
   if (error)
     return (
-      <div className="p-4 text-center text-red-500">
+      <div className="mt-8 rounded-3xl border border-red-200 bg-gradient-to-br from-red-50 via-white to-yellow-50 p-6 text-center text-red-500 shadow-2xl">
         Could not load reviews.
       </div>
     );
@@ -146,15 +150,39 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
   const ratingDistribution = getRatingDistribution(visibleReviews);
   const totalReviews = visibleReviews.length;
 
+  // Icon for reviews header
+  const ChatBubbleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      {...props}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      className={"h-7 w-7 text-yellow-400 " + (props.className || "")}
+    >
+      <path
+        d="M21 12c0 3.866-3.582 7-8 7-1.07 0-2.09-.154-3-.438V21l-4.197-2.799C3.32 16.97 3 16.495 3 16V7c0-.552.448-1 1-1h16c.552 0 1 .448 1 1v5z"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
   return (
-    <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
+    <div className="mt-8 rounded-3xl border border-yellow-200 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Reviews ({totalReviews})
-        </h3>
+        <div className="flex items-center gap-2">
+          <ChatBubbleIcon />
+          <h3 className="text-lg font-extrabold tracking-tight text-yellow-700 drop-shadow-sm">
+            Reviews{" "}
+            <span className="ml-1 text-base font-semibold text-gray-500">
+              ({totalReviews})
+            </span>
+          </h3>
+        </div>
         <Link
           to={`/client/service/reviews/${serviceId}`}
-          className="rounded-lg bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-200 hover:text-yellow-800"
+          className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-yellow-200 hover:text-yellow-800"
         >
           View All
         </Link>
@@ -162,35 +190,35 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
       {totalReviews > 0 ? (
         <div>
           <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-8">
-            <div className="mb-6 text-center lg:mb-0">
-              <p className="text-4xl font-bold text-gray-800">
+            <div className="mb-6 flex flex-col items-center text-center lg:mb-0">
+              <span className="inline-block rounded-2xl border-2 border-yellow-300 bg-yellow-100 px-6 py-2 text-4xl font-extrabold text-yellow-700 shadow-md">
                 {averageRating.toFixed(1)}
-              </p>
-              <div className="flex justify-center">
+              </span>
+              <div className="mt-2 flex justify-center">
                 <StarRatingDisplay rating={averageRating} />
               </div>
               <p className="mt-1 text-sm text-gray-500">
-                based on {totalReviews} reviews
+                based on {totalReviews} review{totalReviews > 1 ? "s" : ""}
               </p>
             </div>
             <div className="flex-1">
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {[5, 4, 3, 2, 1].map((star) => {
                   const count = ratingDistribution[star] || 0;
                   const percentage =
                     totalReviews > 0 ? (count / totalReviews) * 100 : 0;
                   return (
                     <div key={star} className="flex items-center text-sm">
-                      <span className="w-12 text-gray-600">
+                      <span className="w-12 font-medium text-gray-600">
                         {star} star{star > 1 ? "s" : ""}
                       </span>
-                      <div className="mx-3 h-2 w-full rounded-full bg-gray-200">
+                      <div className="mx-3 h-3 w-full overflow-hidden rounded-full bg-gray-200">
                         <div
-                          className="h-2 rounded-full bg-yellow-400"
+                          className="h-3 rounded-full bg-yellow-400 transition-all duration-300"
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
-                      <span className="w-8 text-right text-gray-600">
+                      <span className="w-8 text-right font-semibold text-gray-700">
                         {count}
                       </span>
                     </div>
@@ -199,31 +227,39 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
               </div>
             </div>
           </div>
-          <div className="mt-8 space-y-6">
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
             {visibleReviews.slice(0, 3).map((review) => (
-              <div key={review.id} className="border-t border-gray-100 pt-6">
-                <div className="mb-2 flex items-center">
-                  <div className="relative mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100">
-                    <UserCircleIcon className="h-10 w-10 text-gray-300" />
+              <div
+                key={review.id}
+                className="rounded-2xl border border-blue-100 bg-white/80 p-5 shadow-md transition-all hover:shadow-lg"
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-yellow-50 shadow">
+                    <UserCircleIcon className="h-10 w-10 text-yellow-400" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800">A Client</p>
+                    <p className="font-bold text-gray-800">A Client</p>
                     <div className="flex items-center">
                       <StarRatingDisplay rating={review.rating} />
                     </div>
                   </div>
                 </div>
-                <p className="text-sm break-words text-gray-600">
-                  {review.comment}
-                </p>
+                <div className="w-full">
+                  <p className="w-full text-base break-words text-gray-700">
+                    {review.comment}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <p className="text-center text-gray-500">
-          No reviews yet for this service.
-        </p>
+        <div className="flex flex-col items-center justify-center py-12">
+          <ChatBubbleIcon className="mb-4 h-12 w-12 text-gray-300" />
+          <p className="text-lg font-semibold text-gray-400">
+            No reviews yet for this service.
+          </p>
+        </div>
       )}
     </div>
   );
@@ -445,11 +481,43 @@ const ServiceDetailPage: React.FC = () => {
       const slots = Array.isArray(slotsByDay[day]) ? slotsByDay[day] : [];
       return Math.max(max, slots.length);
     }, 0);
+
+    // Icon for section header
+    const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
+      <svg
+        {...props}
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        className={"h-7 w-7 text-blue-400 " + (props.className || "")}
+      >
+        <rect
+          x="3"
+          y="7"
+          width="18"
+          height="13"
+          rx="3"
+          strokeWidth="2"
+          stroke="currentColor"
+        />
+        <path d="M16 3v4M8 3v4" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+
     return (
-      <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
-        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
-          Availability
-        </h3>
+      <div className="mt-8 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-2xl backdrop-blur-md">
+        <div className="mb-4 flex items-center gap-2">
+          <CalendarIcon />
+          <h3 className="text-lg font-extrabold tracking-tight text-blue-700 drop-shadow-sm">
+            Availability
+          </h3>
+          {availability?.isAvailableNow && (
+            <span className="ml-2 flex animate-pulse items-center gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
+              Available Now
+            </span>
+          )}
+        </div>
         {hasDays ? (
           <div>
             {/* Mobile: stacked list, Desktop: grid */}
@@ -460,22 +528,25 @@ const ServiceDetailPage: React.FC = () => {
                   null,
                 );
                 return (
-                  <ul className="divide-y divide-gray-100">
+                  <ul className="divide-y divide-blue-100">
                     {days.map((day) => {
                       let slots = slotsByDay[day];
                       if (typeof slots === "string") slots = [slots];
                       if (!Array.isArray(slots)) slots = [];
                       const isOpen = openDay === day;
                       return (
-                        <li key={day}>
+                        <li key={day} className="py-1">
                           <button
                             type="button"
-                            className={`flex w-full items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-left text-sm font-medium text-blue-700 transition focus:ring-2 focus:ring-blue-400 focus:outline-none`}
+                            className={`flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-left text-base font-semibold text-blue-700 shadow-sm transition hover:bg-yellow-50 focus:ring-2 focus:ring-blue-400 focus:outline-none`}
                             onClick={() => setOpenDay(isOpen ? null : day)}
                             aria-expanded={isOpen}
                             aria-controls={`availability-panel-${day}`}
                           >
-                            <span>{day}</span>
+                            <span className="flex items-center gap-2">
+                              <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
+                              {day}
+                            </span>
                             <svg
                               className={`ml-2 h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
                               fill="none"
@@ -500,7 +571,7 @@ const ServiceDetailPage: React.FC = () => {
                                 slots.map((slot, idx) => (
                                   <span
                                     key={slot + idx}
-                                    className="inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-center text-xs font-medium text-yellow-800 shadow-sm"
+                                    className="inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-center text-sm font-semibold text-yellow-800 shadow-md transition hover:bg-yellow-200"
                                   >
                                     {slot}
                                   </span>
@@ -522,7 +593,6 @@ const ServiceDetailPage: React.FC = () => {
             {/* Desktop: landscape grid */}
             <div className="hidden lg:block">
               <div className="overflow-x-auto">
-                {/* Only shrink hovered day and its slots */}
                 {(() => {
                   const [hoveredDay, setHoveredDay] = React.useState<
                     string | null
@@ -534,11 +604,14 @@ const ServiceDetailPage: React.FC = () => {
                           {days.map((day) => (
                             <th
                               key={day}
-                              className={`rounded-t-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-xs font-bold text-blue-700 transition-transform duration-150 ${hoveredDay === day ? "scale-95" : ""}`}
+                              className={`rounded-t-xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-base font-bold text-blue-700 shadow-sm transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-50" : "hover:bg-yellow-50"}`}
                               onMouseEnter={() => setHoveredDay(day)}
                               onMouseLeave={() => setHoveredDay(null)}
                             >
-                              {day}
+                              <span className="flex items-center justify-center gap-2">
+                                <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
+                                {day}
+                              </span>
                             </th>
                           ))}
                         </tr>
@@ -555,21 +628,11 @@ const ServiceDetailPage: React.FC = () => {
                                 return (
                                   <td
                                     key={day + rowIdx}
-                                    className="px-3 py-2 text-center align-top"
+                                    className="px-4 py-3 text-center align-top"
                                   >
                                     {slot ? (
                                       <span
-                                        className={`inline-block min-w-[120px] rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 shadow-sm transition-transform duration-150 ${hoveredDay === day ? "scale-95" : ""}`}
-                                        onMouseEnter={(e) => {
-                                          e.currentTarget.classList.add(
-                                            "scale-95",
-                                          );
-                                        }}
-                                        onMouseLeave={(e) => {
-                                          e.currentTarget.classList.remove(
-                                            "scale-95",
-                                          );
-                                        }}
+                                        className={`inline-block min-w-[120px] rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-base font-semibold text-yellow-800 shadow-md transition-transform duration-150 ${hoveredDay === day ? "scale-95 bg-yellow-200" : "hover:bg-yellow-200"}`}
                                       >
                                         {slot}
                                       </span>
@@ -754,116 +817,122 @@ const ServiceDetailPage: React.FC = () => {
           </div>
         )}
         <div className="flex flex-col lg:flex-row lg:justify-center lg:gap-8">
-          {/* Left Column: Provider Info */}
-          <div className="w-full lg:w-[400px]">
-            <div className="h-full rounded-xl bg-white p-6 shadow-lg">
-              <div className="mb-4 flex items-center">
-                <div
-                  className="relative mr-6 overflow-hidden rounded-full border-2 border-white"
-                  style={{
-                    width: "112px", // default (h-28 w-28)
-                    height: "112px",
-                    minWidth: "112px",
-                    minHeight: "112px",
-                    maxWidth: "128px",
-                    maxHeight: "128px",
-                    aspectRatio: "1/1",
-                  }}
-                >
-                  <img
-                    src={providerAvatar || "/../default-provider.svg"}
-                    alt={providerName}
-                    className="h-full w-full rounded-full object-cover"
-                    style={{ borderRadius: "50%" }}
-                  />
+          {/* Left Column: Provider Info (Match Service Info Rectangle) */}
+          <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
+            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border border-blue-100 bg-white/70 p-8 shadow-2xl backdrop-blur-md">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center">
+                  <div
+                    className="overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-blue-200 via-white to-blue-100 shadow-xl"
+                    style={{
+                      width: "96px",
+                      height: "96px",
+                      minWidth: "96px",
+                      minHeight: "96px",
+                      maxWidth: "104px",
+                      maxHeight: "104px",
+                    }}
+                  >
+                    <img
+                      src={providerAvatar || "/../default-provider.svg"}
+                      alt={providerName}
+                      className="h-full w-full rounded-full object-cover"
+                      style={{ borderRadius: "50%" }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center">
+                    <h2 className="m-0 p-0 text-2xl leading-tight font-extrabold text-gray-900 drop-shadow-sm">
+                      {providerName}
+                    </h2>
+                    {service &&
+                      service.availability &&
+                      typeof service.availability.isAvailableNow ===
+                        "boolean" &&
+                      service.availability.isAvailableNow && (
+                        <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
+                      )}
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    {providerName}
-                  </h2>
-                  {/* Availability Badge */}
-                  {service &&
-                    service.availability &&
-                    typeof service.availability.isAvailableNow ===
-                      "boolean" && (
-                      <span
-                        className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${service.availability.isAvailableNow ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}
-                      >
-                        {service.availability.isAvailableNow
-                          ? "Available"
-                          : "Not Available"}
-                      </span>
-                    )}
-                  {/* Reputation Score (below availability, above verification note) */}
+                <div className="mt-1 flex w-full flex-col items-center gap-0">
                   <ReputationScore providerId={service.providerId} />
-                  {/* Verification Note (below reputation score) */}
                   {isVerified === true && (
-                    <span className="mt-2 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
+                    <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
                       <CheckBadgeIcon className="mr-2 h-5 w-5" />
                       <span>This service provider is verified.</span>
                     </span>
                   )}
                 </div>
               </div>
-              {/* Compact provider info: only provider, category, availability */}
             </div>
           </div>
 
           {/* Right Column */}
           <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
-            <div className="h-full rounded-xl bg-white p-6 shadow-lg">
-              <h1 className="mb-2 text-2xl font-bold text-gray-900">{name}</h1>
-              <p className="mb-2 text-base font-semibold text-gray-600">
+            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border border-yellow-200 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-8 shadow-2xl">
+              <h1 className="mb-2 text-3xl font-extrabold text-gray-900 drop-shadow-sm">
+                {name}
+              </h1>
+              <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
+                <TagIcon className="h-6 w-6 text-yellow-400" />
                 {category?.name ?? "General"}
               </p>
-              <div className="mb-4 flex items-center text-sm text-gray-600">
-                <MapPinIcon className="mr-1 h-5 w-5 text-gray-400" />
+              <div className="mb-4 flex items-center text-base text-gray-600">
+                <MapPinIcon className="mr-2 h-6 w-6 text-blue-400" />
                 <span>{location?.address || "Baguio City"}</span>
               </div>
-              {/* Review count and verification note side by side */}
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-base text-gray-600">
                 <span className="flex items-center">
-                  <StarIcon className="mr-1 h-5 w-5 text-yellow-400" />
-                  <span className="font-semibold">
+                  <StarIcon className="mr-1 h-6 w-6 text-yellow-400" />
+                  <span className="text-lg font-bold">
                     {averageRating.toFixed(1)}
                   </span>
                   <span className="ml-1">({reviewCount} reviews)</span>
                 </span>
-                {/* Verification note removed from service info section as requested */}
               </div>
             </div>
           </div>
         </div>
         {/* Packages Section */}
         <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
-          <h3 className="mb-4 text-lg font-semibold text-gray-800">
-            Packages Offered
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
+            <Squares2X2Icon className="h-6 w-6 text-yellow-400" /> Packages
+            Offered
           </h3>
           {loadingPackages ? (
             <div className="p-4 text-center text-gray-500">
               Loading packages...
             </div>
           ) : packages.length > 0 ? (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-4">
               {packages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="rounded-lg border border-yellow-500 bg-gray-50 p-4 transition-all duration-200 hover:scale-95 hover:shadow-md"
+                  className="group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md transition-all duration-200 hover:scale-[0.98] hover:shadow-xl md:flex-row"
                   style={{ willChange: "transform" }}
                 >
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-gray-800">{pkg.title}</h4>
-                    <p className="text-lg font-bold text-blue-600">
+                  <div className="flex flex-1 items-center gap-4">
+                    <div className="mr-2 flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-100 text-yellow-600">
+                      <Squares2X2Icon className="h-7 w-7" />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <h4 className="truncate text-lg font-bold text-gray-900">
+                        {pkg.title}
+                      </h4>
+                      <p className="mt-1 line-clamp-2 text-sm break-words text-gray-600">
+                        {pkg.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 ml-0 flex min-w-[120px] flex-col items-end justify-between md:mt-0 md:ml-6">
+                    <span className="rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
                       ₱
                       {Number(pkg.price).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
-                    </p>
+                    </span>
                   </div>
-                  <p className="mt-1 text-sm text-gray-600">
-                    {pkg.description}
-                  </p>
+                  <span className="absolute top-0 right-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
                 </div>
               ))}
             </div>
@@ -883,50 +952,43 @@ const ServiceDetailPage: React.FC = () => {
 
       {/* Sticky Footer for Actions */}
       <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3">
-        <div className="mx-auto flex max-w-3xl items-center space-x-3">
-          {/* Vouch button (Lefts) */}
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
+          {/* Chat button (Left, less wide) */}
           <button
-            className="flex w-1/4 items-center justify-center rounded-lg bg-yellow-200 py-3 font-bold text-yellow-800 hover:bg-yellow-300"
-            type="button"
+            onClick={handleChatProviderClick}
             disabled={isOwnService}
-            // TODO: Add vouching logic here
+            className="flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
+            style={{ minWidth: 0, flexBasis: "32%" }}
           >
-            Vouch
+            {chatLoading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
+                Creating
+              </>
+            ) : null}
+            <span className="text-base font-semibold">Chat</span>
           </button>
 
-          {/* Book Now button (center, bigger) */}
-          <div className="group relative w-2/4">
+          {/* Book Now button (Right, wider and more prominent) */}
+          <div
+            className="group relative flex flex-grow justify-end"
+            style={{ flexBasis: "68%" }}
+          >
             <button
               onClick={handleBookNow}
               disabled={packages.length === 0 || isOwnService}
-              className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white shadow-md transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400"
+              style={{ fontSize: "1.15rem", letterSpacing: "0.01em" }}
             >
               Book Now
             </button>
             {isOwnService && (
-              <div className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
+              <div className="absolute right-0 bottom-full mb-2 hidden rounded bg-gray-800 px-3 py-2 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
                 You can't book your own service
-                <div className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 transform border-t-4 border-r-4 border-l-4 border-transparent border-t-gray-800"></div>
+                <div className="absolute top-full right-4 h-0 w-0 border-t-4 border-r-4 border-l-4 border-transparent border-t-gray-800"></div>
               </div>
             )}
           </div>
-          {/* Chat button (Right) */}
-
-          <button
-            onClick={handleChatProviderClick}
-            disabled={isOwnService}
-            className="flex w-1/4 items-center justify-center rounded-lg bg-gray-200 py-3 font-bold text-gray-800 hover:bg-gray-300"
-          >
-            {chatLoading ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                Creating
-              </>
-            ) : (
-              <></>
-            )}
-            Chat
-          </button>
         </div>
       </div>
 

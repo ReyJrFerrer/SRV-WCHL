@@ -179,6 +179,41 @@ const ClientBookingPageComponent: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  // --- Determine if Same Day is within service hours ---
+  const isSameDayWithinServiceHours = React.useMemo(() => {
+    if (!service || !service.weeklySchedule) return false;
+    const now = new Date();
+    const dayIndexToName = (dayIndex: number): string => {
+      const days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      return days[dayIndex] || "";
+    };
+    const todayName = dayIndexToName(now.getDay()) as DayOfWeek;
+    const todaySchedule = service.weeklySchedule.find(
+      (s) => s.day === todayName && s.availability.isAvailable,
+    );
+    if (
+      !todaySchedule ||
+      !todaySchedule.availability.slots ||
+      todaySchedule.availability.slots.length === 0
+    )
+      return false;
+    // Check if any slot for today is still available (endTime > now)
+    return todaySchedule.availability.slots.some((slot) => {
+      const [endH, endM] = slot.endTime.split(":").map(Number);
+      const end = new Date(now);
+      end.setHours(endH, endM, 0, 0);
+      return now < end;
+    });
+  }, [service]);
   const [displayAddress, setDisplayAddress] = useState<string>(
     "Detecting location...",
   );
@@ -572,330 +607,450 @@ const ClientBookingPageComponent: React.FC = () => {
   // Remove isLocationValid, not used for button state
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
       <style>
         {`
-                .booking-calendar-wrapper .react-datepicker { width: 100%; border: 1; }
-                .booking-calendar-wrapper .react-datepicker__month-container { width: 100%; }
-                .booking-calendar-wrapper .react-datepicker__header { background-color: #f3f4f6; }
-                .booking-calendar-wrapper .react-datepicker__day-names, .booking-calendar-wrapper .react-datepicker__week { display: flex; justify-content: space-around; }
-                .booking-calendar-wrapper .react-datepicker__day { margin: 0.25rem; }
-                `}
+        .booking-calendar-wrapper .react-datepicker { width: 100%; border: none; box-shadow: none; }
+        .booking-calendar-wrapper .react-datepicker__month-container { width: 100%; }
+        .booking-calendar-wrapper .react-datepicker__header { background-color: #f3f4f6; border-bottom: none; border-radius: 0.75rem 0.75rem 0 0; }
+        .booking-calendar-wrapper .react-datepicker__day-names, .booking-calendar-wrapper .react-datepicker__week { display: flex; justify-content: space-around; }
+        .booking-calendar-wrapper .react-datepicker__day { margin: 0.25rem; border-radius: 0.5rem; transition: background 0.2s, color 0.2s; }
+        .booking-calendar-wrapper .react-datepicker__day--selected, .booking-calendar-wrapper .react-datepicker__day--keyboard-selected {
+          background-color: #2563eb !important;
+          color: #fff !important;
+          font-weight: bold;
+        }
+        .booking-calendar-wrapper .react-datepicker__day--disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+        .booking-calendar-wrapper .react-datepicker__day:hover:not(.react-datepicker__day--disabled) {
+          background-color: #dbeafe;
+          color: #1e40af;
+        }
+        .booking-calendar-wrapper .react-datepicker__current-month {
+          font-weight: 600;
+          color: #1e293b;
+        }
+      `}
       </style>
-      <div className="flex-grow pb-28 md:pb-24">
-        <div className="md:flex md:flex-row md:gap-x-8 md:p-6">
-          <div className="md:w-1/2">
-            <div className="bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Select Package(s) *
-              </h3>
-              {packages.map((pkg) => (
-                <label
-                  key={pkg.id}
-                  className="mb-3 flex cursor-pointer items-start space-x-3 rounded-md p-2 hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={pkg.checked}
-                    onChange={() => handlePackageChange(pkg.id)}
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{pkg.title}</div>
-                    <div className="text-sm text-gray-600">
-                      {pkg.description}
-                    </div>
-                    <div className="text-sm font-medium text-blue-600">
-                      ₱
-                      {pkg.price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-            <div className="hidden md:block">
-              <PaymentSection
-                {...{
-                  paymentMethod,
-                  setPaymentMethod,
-                  packages,
-                  amountPaid,
-                  handleAmountChange,
-                  paymentError,
-                  totalPrice,
-                }}
-              />
-            </div>
-          </div>
-          <div className="mt-4 md:mt-0 md:w-1/2">
-            <div className="bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Booking Schedule *
-              </h3>
-              <div className="mb-4 flex gap-3">
-                <button
-                  className={`flex-1 rounded-lg border p-3 text-center transition-colors ${bookingOption === "sameday" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"} ${!isSameDayAvailable ? "cursor-not-allowed opacity-50" : ""}`}
-                  onClick={() => handleBookingOptionChange("sameday")}
-                  disabled={!isSameDayAvailable}
-                >
-                  <div className="text-sm font-medium">Same Day</div>
-                </button>
-                <button
-                  className={`flex-1 rounded-lg border p-3 text-center transition-colors ${bookingOption === "scheduled" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"}`}
-                  onClick={() => handleBookingOptionChange("scheduled")}
-                >
-                  <div className="text-sm font-medium">Scheduled</div>
-                </button>
-              </div>
-              {bookingOption === "scheduled" && (
-                <div className="space-y-4">
-                  <div className="booking-calendar-wrapper">
-                    <DatePicker
-                      selected={selectedDate}
-                      onChange={handleDateChange}
-                      minDate={
-                        new Date(new Date().setDate(new Date().getDate() + 1))
-                      }
-                      filterDate={(date) => {
-                        const dayName = dayIndexToName(date.getDay());
-                        return service.weeklySchedule
-                          ? service.weeklySchedule.some(
-                              (s) =>
-                                s.day === (dayName as DayOfWeek) &&
-                                s.availability.isAvailable,
-                            )
-                          : false;
-                      }}
-                      inline
+      <div className="flex-grow pb-36 md:pb-28">
+        <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
+          <div className="md:flex md:gap-x-8">
+            <div className="space-y-6 md:w-1/2">
+              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Select Package(s) <span className="text-red-500">*</span>
+                </h3>
+                {packages.map((pkg) => (
+                  <label
+                    key={pkg.id}
+                    className="mb-3 flex cursor-pointer items-start space-x-3 rounded-xl p-3 transition hover:bg-blue-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={pkg.checked}
+                      onChange={() => handlePackageChange(pkg.id)}
+                      className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
                     />
-                  </div>
-                  {selectedDate && (
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Select a time:
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {availableSlots.length > 0 ? (
-                          availableSlots
-                            .filter((slot) => slot.isAvailable)
-                            .map((slot, index) => {
-                              const to12Hour = (t: string) => {
-                                const [h, m] = t.split(":").map(Number);
-                                const hour = h % 12 || 12;
-                                const ampm = h < 12 ? "AM" : "PM";
-                                return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
-                              };
-                              const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
-                              const [start, end] = time.split("-");
-                              const formatted = `${to12Hour(start)} - ${to12Hour(end)}`;
-                              return (
-                                <button
-                                  key={index}
-                                  onClick={() => setSelectedTime(time)}
-                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${selectedTime === time ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
-                                >
-                                  {formatted}
-                                </button>
-                              );
-                            })
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            No available slots for this day.
-                          </p>
+                    <div className="flex-1">
+                      <div className="text-lg font-semibold text-gray-900">
+                        {pkg.title}
+                      </div>
+                      <div className="mb-1 text-sm text-gray-600">
+                        {pkg.description}
+                      </div>
+                      <div className="text-base font-bold text-blue-600">
+                        ₱
+                        {pkg.price.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <div className="hidden md:block">
+                <PaymentSection
+                  {...{
+                    paymentMethod,
+                    setPaymentMethod,
+                    packages,
+                    amountPaid,
+                    handleAmountChange,
+                    paymentError,
+                    totalPrice,
+                  }}
+                />
+              </div>
+            </div>
+            <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
+              <div className="glass-card rounded-2xl border border-yellow-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-yellow-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-yellow-400"></span>
+                  Booking Schedule <span className="text-red-500">*</span>
+                </h3>
+                <div className="mb-4 flex gap-3">
+                  <button
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
+                      bookingOption === "sameday"
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                    } ${!isSameDayAvailable || !isSameDayWithinServiceHours ? "cursor-not-allowed opacity-50" : ""}`}
+                    onClick={() => handleBookingOptionChange("sameday")}
+                    disabled={
+                      !isSameDayAvailable || !isSameDayWithinServiceHours
+                    }
+                  >
+                    <div className="text-base font-semibold">Same Day</div>
+                  </button>
+                  <button
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
+                      bookingOption === "scheduled"
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                    }`}
+                    onClick={() => handleBookingOptionChange("scheduled")}
+                  >
+                    <div className="text-base font-semibold">Scheduled</div>
+                  </button>
+                </div>
+                {bookingOption === "scheduled" && (
+                  <div className="space-y-4">
+                    <div className="booking-calendar-wrapper">
+                      <DatePicker
+                        selected={selectedDate}
+                        onChange={handleDateChange}
+                        minDate={
+                          new Date(new Date().setDate(new Date().getDate() + 1))
+                        }
+                        filterDate={(date) => {
+                          const dayName = dayIndexToName(date.getDay());
+                          return service.weeklySchedule
+                            ? service.weeklySchedule.some(
+                                (s) =>
+                                  s.day === (dayName as DayOfWeek) &&
+                                  s.availability.isAvailable,
+                              )
+                            : false;
+                        }}
+                        inline
+                        renderCustomHeader={({
+                          date,
+                          decreaseMonth,
+                          increaseMonth,
+                          prevMonthButtonDisabled,
+                          nextMonthButtonDisabled,
+                        }) => (
+                          <div className="flex items-center justify-between rounded-t-lg bg-gray-100 px-2 py-2">
+                            <button
+                              onClick={decreaseMonth}
+                              disabled={prevMonthButtonDisabled}
+                              className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                              type="button"
+                              aria-label="Previous Month"
+                            >
+                              <svg
+                                className="h-5 w-5 text-gray-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 19l-7-7 7-7"
+                                />
+                              </svg>
+                            </button>
+                            <span className="text-base font-semibold text-gray-800">
+                              {date.toLocaleString("default", {
+                                month: "long",
+                              })}{" "}
+                              {date.getFullYear()}
+                            </span>
+                            <button
+                              onClick={increaseMonth}
+                              disabled={nextMonthButtonDisabled}
+                              className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                              type="button"
+                              aria-label="Next Month"
+                            >
+                              <svg
+                                className="h-5 w-5 text-gray-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </button>
+                          </div>
                         )}
+                        dayClassName={(date) => {
+                          const isSelected =
+                            selectedDate &&
+                            date.toDateString() === selectedDate.toDateString();
+                          const dayName = dayIndexToName(date.getDay());
+                          const isAvailable = service.weeklySchedule
+                            ? service.weeklySchedule.some(
+                                (s) =>
+                                  s.day === (dayName as DayOfWeek) &&
+                                  s.availability.isAvailable,
+                              )
+                            : false;
+                          return [
+                            "transition-colors duration-150",
+                            isSelected
+                              ? "!bg-blue-600 !text-white !font-bold"
+                              : "",
+                            isAvailable
+                              ? "hover:bg-blue-100 cursor-pointer"
+                              : "opacity-40 cursor-not-allowed",
+                          ].join(" ");
+                        }}
+                        calendarClassName="rounded-lg shadow-lg border border-gray-200 bg-white"
+                        wrapperClassName="w-full"
+                      />
+                    </div>
+                    {selectedDate && (
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Select a time:
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {availableSlots.length > 0 ? (
+                            availableSlots
+                              .filter((slot) => slot.isAvailable)
+                              .map((slot, index) => {
+                                const to12Hour = (t: string) => {
+                                  const [h, m] = t.split(":").map(Number);
+                                  const hour = h % 12 || 12;
+                                  const ampm = h < 12 ? "AM" : "PM";
+                                  return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
+                                };
+                                const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
+                                const [start, end] = time.split("-");
+                                const formatted = `${to12Hour(start)} - ${to12Hour(end)}`;
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={() => setSelectedTime(time)}
+                                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
+                                      selectedTime === time
+                                        ? "border-blue-600 bg-blue-600 text-white"
+                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    {formatted}
+                                  </button>
+                                );
+                              })
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No available slots for this day.
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* --- REFACTORED LOCATION SECTION --- */}
-            <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Service Location *
-              </h3>
-              <div className="mb-3 rounded-lg border border-gray-300 bg-gray-50 p-3">
-                <div className="flex items-center">
-                  <MapPinIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-gray-500">
-                      {addressMode === "context"
-                        ? "Using Your Current Location"
-                        : "Using Manual Address"}
-                    </p>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {addressMode === "context"
-                        ? displayAddress
-                        : "See form below"}
-                    </p>
+                    )}
                   </div>
-                </div>
-                {/* --- OpenStreetMap Visual with Draggable Marker --- */}
-                {addressMode === "context" &&
-                  locationStatus === "allowed" &&
-                  markerPosition && (
-                    <div
-                      className="mt-3 overflow-hidden rounded-lg"
-                      style={{ height: 220, marginBottom: 24, zIndex: 0 }}
-                    >
-                      <MapContainer
-                        center={mapCenter}
-                        zoom={16}
-                        scrollWheelZoom={false}
-                        style={{ height: "100%", width: "100%", zIndex: 0 }}
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <Marker
-                          position={markerPosition}
-                          draggable={true}
-                          eventHandlers={{
-                            dragend: handleMarkerDragEnd,
-                          }}
-                        >
-                          <Popup>Drag me to adjust your location!</Popup>
-                        </Marker>
-                      </MapContainer>
-                    </div>
-                  )}
-                {/* --- End OpenStreetMap Visual --- */}
+                )}
               </div>
-              <button
-                onClick={() =>
-                  setAddressMode(
-                    addressMode === "manual" ? "context" : "manual",
-                  )
-                }
-                className="w-full rounded-lg bg-gray-200 p-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-300"
-              >
-                {addressMode === "manual"
-                  ? "Use Current Location"
-                  : "Enter Address Manually"}
-              </button>
-              {addressMode === "manual" && (
-                <div className="mt-2 space-y-3">
-                  <p className="text-xs text-gray-600">
-                    Please enter your address manually:
-                  </p>
-                  <div className="mb-2 w-full rounded-lg border border-gray-300 bg-gray-100 p-3 text-sm">
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <label className="mb-1 block text-xs text-gray-500">
-                          Municipality/City
-                        </label>
-                        <input
-                          type="text"
-                          value={detectedMunicipality}
-                          readOnly
-                          className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="mb-1 block text-xs text-gray-500">
-                          Province
-                        </label>
-                        <input
-                          type="text"
-                          value={detectedProvince}
-                          readOnly
-                          className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
-                        />
-                      </div>
+              <div className="glass-card rounded-2xl border border-gray-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
+                  Service Location <span className="text-red-500">*</span>
+                </h3>
+                <div className="mb-3 rounded-xl border border-gray-200 bg-gray-50/80 p-3 shadow-sm">
+                  <div className="flex items-center">
+                    <MapPinIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-600" />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-gray-500">
+                        {addressMode === "context"
+                          ? "Using Your Current Location"
+                          : "Using Manual Address"}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {addressMode === "context"
+                          ? displayAddress
+                          : "See form below"}
+                      </p>
                     </div>
                   </div>
-                  {nearbyBarangays.length > 0 ? (
-                    <select
-                      value={selectedBarangay}
-                      onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm capitalize"
-                    >
-                      <option value="">Select Barangay</option>
-                      {nearbyBarangays.map((brgy) => (
-                        <option key={brgy} value={brgy}>
-                          {brgy}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder="Enter Barangay *"
-                      value={selectedBarangay}
-                      onChange={(e) => setSelectedBarangay(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm capitalize"
-                    />
-                  )}
-                  <input
-                    type="text"
-                    placeholder="Street Name *"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm capitalize"
-                  />
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="House/Unit No. *"
-                      value={houseNumber}
-                      onChange={(e) => setHouseNumber(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm capitalize"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Landmark (optional)"
-                      value={landmark}
-                      onChange={(e) => setLandmark(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm capitalize"
-                    />
-                  </div>
+                  {/* --- OpenStreetMap Visual with Draggable Marker --- */}
+                  {addressMode === "context" &&
+                    locationStatus === "allowed" &&
+                    markerPosition && (
+                      <div
+                        className="mt-3 overflow-hidden rounded-lg"
+                        style={{ height: 220, marginBottom: 24, zIndex: 0 }}
+                      >
+                        <MapContainer
+                          center={mapCenter}
+                          zoom={16}
+                          scrollWheelZoom={false}
+                          style={{ height: "100%", width: "100%", zIndex: 0 }}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <Marker
+                            position={markerPosition}
+                            draggable={true}
+                            eventHandlers={{
+                              dragend: handleMarkerDragEnd,
+                            }}
+                          >
+                            <Popup>Drag me to adjust your location!</Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                    )}
+                  {/* --- End OpenStreetMap Visual --- */}
                 </div>
-              )}
-            </div>
-            {/* --- Restore Notes Section --- */}
-            <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
-                Notes for Provider (Optional)
-              </h3>
-              <textarea
-                placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
-                value={notes}
-                onChange={handleNotesChange}
-                rows={4}
-                maxLength={NOTES_CHAR_LIMIT}
-                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            {/* ---  PaymentSection for mobile below notes --- */}
-            <div className="mt-4 md:hidden">
-              <PaymentSection
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                packages={packages}
-                amountPaid={amountPaid}
-                handleAmountChange={handleAmountChange}
-                paymentError={paymentError}
-                totalPrice={totalPrice}
-              />
+                <button
+                  onClick={() =>
+                    setAddressMode(
+                      addressMode === "manual" ? "context" : "manual",
+                    )
+                  }
+                  className="w-full rounded-xl bg-gray-200 p-3 text-base font-medium text-gray-800 shadow-sm transition-colors hover:bg-gray-300"
+                >
+                  {addressMode === "manual"
+                    ? "Use Current Location"
+                    : "Enter Address Manually"}
+                </button>
+                {addressMode === "manual" && (
+                  <div className="mt-2 space-y-3">
+                    <p className="text-xs text-gray-600">
+                      Please enter your address manually:
+                    </p>
+                    <div className="mb-2 w-full rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-gray-500">
+                            Municipality/City
+                          </label>
+                          <input
+                            type="text"
+                            value={detectedMunicipality}
+                            readOnly
+                            className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs text-gray-500">
+                            Province
+                          </label>
+                          <input
+                            type="text"
+                            value={detectedProvince}
+                            readOnly
+                            className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {nearbyBarangays.length > 0 ? (
+                      <select
+                        value={selectedBarangay}
+                        onChange={(e) => setSelectedBarangay(e.target.value)}
+                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                      >
+                        <option value="">Select Barangay</option>
+                        {nearbyBarangays.map((brgy) => (
+                          <option key={brgy} value={brgy}>
+                            {brgy}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="Enter Barangay *"
+                        value={selectedBarangay}
+                        onChange={(e) => setSelectedBarangay(e.target.value)}
+                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                      />
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Street Name *"
+                      value={street}
+                      onChange={(e) => setStreet(e.target.value)}
+                      className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="House/Unit No. *"
+                        value={houseNumber}
+                        onChange={(e) => setHouseNumber(e.target.value)}
+                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Landmark (optional)"
+                        value={landmark}
+                        onChange={(e) => setLandmark(e.target.value)}
+                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Notes for Provider{" "}
+                  <span className="text-base font-normal text-gray-400">
+                    (Optional)
+                  </span>
+                </h3>
+                <textarea
+                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
+                  value={notes}
+                  onChange={handleNotesChange}
+                  rows={4}
+                  maxLength={NOTES_CHAR_LIMIT}
+                  className="w-full rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mt-4 md:hidden">
+                <PaymentSection
+                  paymentMethod={paymentMethod}
+                  setPaymentMethod={setPaymentMethod}
+                  packages={packages}
+                  amountPaid={amountPaid}
+                  handleAmountChange={handleAmountChange}
+                  paymentError={paymentError}
+                  totalPrice={totalPrice}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 z-10 border-t bg-white p-4">
+      <div className="sticky bottom-0 z-20 border-t bg-white/80 p-4 shadow-xl backdrop-blur-md">
         <div className="mx-auto max-w-md">
           {formError && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-center text-base text-red-700 shadow-sm">
               {formError}
             </div>
           )}
           <button
             onClick={handleConfirmBooking}
-            className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-yellow-500 disabled:bg-gray-300"
+            className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-yellow-400 px-8 py-4 text-lg font-bold text-white shadow-lg transition-colors hover:from-yellow-400 hover:to-blue-600 disabled:bg-gray-300 disabled:text-gray-400"
           >
             {isSubmitting && (
               <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
