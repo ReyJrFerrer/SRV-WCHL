@@ -254,9 +254,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   {clientName}
                 </h3>
 
-                <p className="mt-1 text-xs text-gray-500">
-                  Service: {serviceTitle}
-                </p>
+                <p className="mt-1 text-xs text-gray-500">{serviceTitle}</p>
 
                 {packageTitle && (
                   <p className="mt-1 text-xs text-gray-500">
