@@ -95,6 +95,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const price = booking.price;
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
+  const notes = booking.notes;
 
   // Format date function
   const formatDate = (date: Date | string | number) => {
@@ -253,9 +254,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   {clientName}
                 </h3>
 
-                <p className="mt-1 text-xs text-gray-500">
-                  Service: {serviceTitle}
-                </p>
+                <p className="mt-1 text-xs text-gray-500">{serviceTitle}</p>
 
                 {packageTitle && (
                   <p className="mt-1 text-xs text-gray-500">
@@ -288,7 +287,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                     </p>
                   )}
                 </div>
-
+                {/* Add notes section if notes exist */}
+                {notes && (
+                  <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                    <strong>Booking Notes:</strong> {notes}
+                  </div>
+                )}
                 {/* Expandable details section - HIDDEN ON SMALL SCREENS */}
                 <div
                   className={`hidden overflow-hidden transition-all duration-300 sm:block`}

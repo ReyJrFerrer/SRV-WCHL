@@ -183,6 +183,7 @@ export interface Booking {
   price: number;
   location: Location;
   evidence?: Evidence;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
   // Additional UI fields
@@ -373,6 +374,7 @@ const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
   evidence: booking.evidence[0]
     ? convertCanisterEvidence(booking.evidence[0])
     : undefined,
+  notes: booking.notes[0],
   createdAt: new Date(Number(booking.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(booking.updatedAt) / 1000000).toISOString(),
 });
@@ -389,6 +391,7 @@ export const bookingCanisterService = {
     location: Location,
     requestedDate: Date,
     servicePackageId?: string,
+    notes?: string,
   ): Promise<Booking | null> {
     try {
       const actor = getBookingActor(true); // Requires authentication
@@ -402,6 +405,7 @@ export const bookingCanisterService = {
         canisterLocation,
         requestedTimestamp,
         servicePackageId ? [servicePackageId] : [],
+        notes ? [notes] : [],
       );
 
       if ("ok" in result) {

@@ -25,10 +25,39 @@ import { useServiceReviews } from "../../hooks/reviewManagement"; // Adjust path
 import { useServiceManagement } from "../../hooks/serviceManagement"; // Using the service management hook
 import { useChat } from "../../hooks/useChat"; // Import the chat hook
 import { useAuth } from "../../context/AuthContext"; // Import auth context
+import { useReputation } from "../../hooks/useReputation"; // Import reputation hook
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { ServicePackage } from "../../services/serviceCanisterService";
 
-const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
+const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
+  const { fetchUserReputation } = useReputation();
+  const [reputationScore, setReputationScore] = useState<number>(50); // Default score
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const loadReputation = async () => {
+      try {
+        setLoading(true);
+        const reputation = await fetchUserReputation(providerId);
+        if (reputation) {
+          setReputationScore(Math.round(reputation.trustScore));
+        } else {
+          setReputationScore(50); // Fallback to default
+        }
+      } catch (error) {
+        console.error("Failed to fetch provider reputation:", error);
+        setReputationScore(50); // Fallback to default on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (providerId) {
+      loadReputation();
+    }
+  }, [providerId, fetchUserReputation]);
+
+  const score = reputationScore;
   let iconColor = "text-blue-600";
   let bgColor = "bg-blue-50";
   let textColor = "text-blue-700";
@@ -49,6 +78,19 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
     bgColor = "bg-yellow-100";
     textColor = "text-yellow-700";
   }
+
+  if (loading) {
+    return (
+      <span
+        className="mt-2 mb-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
+        style={{ minWidth: 0 }}
+      >
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
+        <span className="mr-2">Loading reputation...</span>
+      </span>
+    );
+  }
+
   return (
     <span
       className={`mt-2 mb-2 flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${bgColor} ${textColor}`}
@@ -743,7 +785,7 @@ const ServiceDetailPage: React.FC = () => {
                       </span>
                     )}
                   {/* Reputation Score (below availability, above verification note) */}
-                  <ReputationScore score={50} />
+                  <ReputationScore providerId={service.providerId} />
                   {/* Verification Note (below reputation score) */}
                   {isVerified === true && (
                     <span className="mt-2 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">

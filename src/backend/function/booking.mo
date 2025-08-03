@@ -110,6 +110,7 @@ actor BookingCanister {
             price = existingBooking.price;
             location = existingBooking.location;
             evidence = existingBooking.evidence;
+            notes = existingBooking.notes;
             createdAt = existingBooking.createdAt;
             updatedAt = Time.now();
         };
@@ -248,7 +249,8 @@ actor BookingCanister {
         price : Nat,
         location : Location,
         requestedDate : Time.Time,
-        servicePackageId : ?Text
+        servicePackageId : ?Text,
+        notes : ?Text
     ) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -369,6 +371,7 @@ actor BookingCanister {
             price = finalPrice;
             location = location;
             evidence = null;
+            notes = notes;
             createdAt = Time.now();
             updatedAt = Time.now();
         };
@@ -441,6 +444,7 @@ actor BookingCanister {
                             price = updatedBooking.price;
                             location = updatedBooking.location;
                             evidence = updatedBooking.evidence;
+                            notes = updatedBooking.notes;
                             createdAt = updatedBooking.createdAt;
                             updatedAt = updatedBooking.updatedAt;
                         };
@@ -610,6 +614,7 @@ actor BookingCanister {
                     price = existingBooking.price;
                     location = existingBooking.location;
                     evidence = ?newEvidence;
+                    notes = existingBooking.notes;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };
@@ -646,6 +651,7 @@ actor BookingCanister {
                     price = existingBooking.price;
                     location = existingBooking.location;
                     evidence = existingBooking.evidence;
+                    notes = existingBooking.notes;
                     createdAt = existingBooking.createdAt;
                     updatedAt = Time.now();
                 };

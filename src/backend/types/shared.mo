@@ -163,6 +163,7 @@ module {
         price: Nat;
         location: Location;
         evidence: ?Evidence;
+        notes: ?Text;  // Optional notes from client during booking creation
         createdAt: Time.Time;
         updatedAt: Time.Time;
     };

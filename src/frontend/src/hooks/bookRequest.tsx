@@ -30,6 +30,7 @@ export interface BookingRequest {
   scheduledTime?: string;
   location: string | Location;
   concerns?: string;
+  notes?: string; // Optional notes for the booking
 }
 
 export interface UseBookRequestReturn {
@@ -306,6 +307,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           location,
           requestedDate,
           firstPackageId,
+          bookingData.notes, // Pass the notes to the booking
         );
 
         return booking;
