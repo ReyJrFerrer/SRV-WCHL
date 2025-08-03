@@ -341,6 +341,7 @@ const SPProfilePage: React.FC = () => {
       );
     }
   }, [profile]);
+  console.log(profile);
 
   const handleImageUploadClick = () => {
     fileInputRef.current?.click();
@@ -359,6 +360,7 @@ const SPProfilePage: React.FC = () => {
     if (success) {
       setIsEditing(false);
       setImageFile(null); // Clear the file after saving
+      console.log("Successful image upload");
     }
   };
 
@@ -449,10 +451,10 @@ const SPProfilePage: React.FC = () => {
                 {!isEditing ? (
                   <>
                     <h2 className="text-2xl font-bold text-gray-800">
-                      {name || "Client Name"}
+                      {profile?.name || "Service Provider"}
                     </h2>
                     <p className="text-md text-gray-500">
-                      {phone || "No phone number"}
+                      {profile?.phone || "No phone number"}
                     </p>
                   </>
                 ) : (

@@ -3,11 +3,16 @@
 
 /**
  * Resolves backend image paths to frontend asset URLs
- * @param imagePath - Path from backend (e.g., "/images/Maid1.jpg")
+ * @param imagePath - Path from backend (e.g., "/images/Maid1.jpg" or "https://media.srv.com/...")
  * @returns Resolved asset URL for frontend use
  */
 export function resolveAssetPath(imagePath: string): string | null {
   if (!imagePath) return null;
+
+  // If it's already a full URL (http/https), return as-is
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
 
   // Remove leading slash if present
   const cleanPath = imagePath.startsWith("/")

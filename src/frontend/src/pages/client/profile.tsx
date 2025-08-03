@@ -406,10 +406,10 @@ const ClientProfilePage: React.FC = () => {
                 {!isEditing ? (
                   <>
                     <h2 className="text-2xl font-bold text-gray-800">
-                      {name || "Client Name"}
+                      {profile?.name || "Client Name"}
                     </h2>
                     <p className="text-md text-gray-500">
-                      {phone || "No phone number"}
+                      {profile?.phone || "No phone number"}
                     </p>
                   </>
                 ) : (

@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import authCanisterService, {
   FrontendProfile,
 } from "../services/authCanisterService"; // Adjust path as needed
+import { mediaService } from "../services/mediaService";
 
 /**
  * Custom hook to manage the client's profile data, including fetching and updating.
@@ -32,15 +33,17 @@ export const useClientProfile = () => {
     }
   }, [isAuthenticated, identity]);
 
-  const uploadImageToServer = (imageFile: File): Promise<string> => {
-    return new Promise((resolve) => {
-      // Simulate a delay for the upload process
-      setTimeout(() => {
-        // In a real app, you'd get a URL from your storage service.
-        // For now, we'll use a placeholder or the local blob URL for demonstration.
-        resolve(URL.createObjectURL(imageFile));
-      }, 1500);
-    });
+  const uploadImageToServer = async (
+    imageFile: File,
+  ): Promise<FrontendProfile | null> => {
+    try {
+      // Use the media service to upload the profile picture
+      const updatedProfile = await mediaService.uploadProfilePicture(imageFile);
+      return updatedProfile;
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      throw error;
+    }
   };
 
   // This effect triggers the profile fetch when the component mounts
@@ -68,36 +71,38 @@ export const useClientProfile = () => {
     setError(null);
 
     try {
-      // Handle avatar image only in frontend state
-      let avatarUrl = profile?.profilePicture?.imageUrl || "";
+      // Handle image upload first if provided
       if (updatedData.imageFile) {
-        avatarUrl = await uploadImageToServer(updatedData.imageFile);
-        // Update the profile state with the new avatar URL
-        setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                profilePicture: {
-                  imageUrl: avatarUrl,
-                  thumbnailUrl: avatarUrl,
-                },
-              }
-            : prev,
+        const updatedProfileWithImage = await uploadImageToServer(
+          updatedData.imageFile,
         );
+        if (updatedProfileWithImage) {
+          setProfile(updatedProfileWithImage);
+        }
       }
 
-      // Only update name and phone in backend
-      const result = await authCanisterService.updateProfile(
-        updatedData.name,
-        updatedData.phone,
-      );
+      // Update name and phone in backend if they're different from current profile
+      const needsUpdate =
+        profile &&
+        (updatedData.name !== profile.name ||
+          updatedData.phone !== profile.phone);
 
-      if (result) {
-        await fetchProfile(); // Refetch profile to get the latest data
-        return true;
-      } else {
-        throw new Error("An unknown error occurred during the update.");
+      if (needsUpdate) {
+        const result = await authCanisterService.updateProfile(
+          updatedData.name,
+          updatedData.phone,
+        );
+
+        if (result) {
+          setProfile(result);
+        } else {
+          throw new Error("An unknown error occurred during the update.");
+        }
       }
+
+      // Always refetch to ensure consistency
+      await fetchProfile();
+      return true;
     } catch (err) {
       const errorMessage = (err as Error).message;
       console.error("Error updating profile:", errorMessage);
@@ -141,11 +146,44 @@ export const useClientProfile = () => {
     }
   };
 
+  /**
+   * Removes the user's profile picture.
+   * @returns A boolean indicating whether the removal was successful.
+   */
+  const removeProfilePicture = async () => {
+    if (!isAuthenticated) {
+      setError("You must be logged in to remove your profile picture.");
+      return false;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await mediaService.removeProfilePicture();
+      if (result) {
+        setProfile(result);
+        await fetchProfile(); // Refetch to ensure consistency
+        return true;
+      } else {
+        throw new Error("Failed to remove profile picture.");
+      }
+    } catch (err) {
+      const errorMessage = (err as Error).message;
+      console.error("Error removing profile picture:", errorMessage);
+      setError(errorMessage);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     profile,
     loading,
     error,
     updateProfile,
+    removeProfilePicture,
     switchRole,
     refetchProfile: fetchProfile,
   };

@@ -16,6 +16,8 @@ actor AuthCanister {
     type Profile = Types.Profile;
     type UserRole = Types.UserRole;
     type Result<T> = Types.Result<T>;
+    type MediaItem = Types.MediaItem;
+    type MediaType = Types.MediaType;
 
     // State variables
     private stable var profileEntries : [(Principal, Profile)] = [];
@@ -25,6 +27,7 @@ actor AuthCanister {
 
     // Canister references
     private var reputationCanisterId : ?Principal = null;
+    private var mediaCanisterId : ?Principal = null;
 
     // Initial data loading 
 
@@ -110,10 +113,12 @@ actor AuthCanister {
 
     // Set canister references
     public shared(_msg) func setCanisterReferences(
-        reputation : ?Principal
+        reputation : ?Principal,
+        media : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         reputationCanisterId := reputation;
+        mediaCanisterId := media;
         return #ok("Canister references set successfully");
     };
 
@@ -371,5 +376,109 @@ actor AuthCanister {
         );
         
         return providersBuffer;
+    };
+
+    // Upload profile picture
+    public shared(msg) func uploadProfilePicture(
+        fileName : Text,
+        contentType : Text,
+        fileData : Blob
+    ) : async Result<Profile> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // Check if user has a profile
+        switch (profiles.get(caller)) {
+            case (?existingProfile) {
+                // Check if media canister is set
+                switch (mediaCanisterId) {
+                    case (?mediaId) {
+                        // Create media canister actor
+                        let mediaCanister = actor(Principal.toText(mediaId)) : actor {
+                            uploadMedia : (Text, Text, MediaType, Blob) -> async Result<MediaItem>;
+                        };
+                        
+                        // Upload to media canister
+                        let uploadResult = await mediaCanister.uploadMedia(
+                            fileName,
+                            contentType,
+                            #UserProfile,
+                            fileData
+                        );
+                        
+                        switch (uploadResult) {
+                            case (#ok(mediaItem)) {
+                                // Update profile with new profile picture
+                                let updatedProfile : Profile = {
+                                    id = existingProfile.id;
+                                    name = existingProfile.name;
+                                    phone = existingProfile.phone;
+                                    role = existingProfile.role;
+                                    activeRole = existingProfile.activeRole;
+                                    createdAt = existingProfile.createdAt;
+                                    updatedAt = Time.now();
+                                    isVerified = existingProfile.isVerified;
+                                    profilePicture = ?{
+                                        imageUrl = mediaItem.url;
+                                        thumbnailUrl = switch (mediaItem.thumbnailUrl) {
+                                            case (?thumb) thumb;
+                                            case (null) mediaItem.url; // Use main image as thumbnail for now
+                                        };
+                                    };
+                                    biography = existingProfile.biography;
+                                };
+                                
+                                profiles.put(caller, updatedProfile);
+                                return #ok(updatedProfile);
+                            };
+                            case (#err(error)) {
+                                return #err("Failed to upload profile picture: " # error);
+                            };
+                        };
+                    };
+                    case (null) {
+                        return #err("Media canister not configured");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Profile not found. Please create a profile first");
+            };
+        };
+    };
+
+    // Remove profile picture
+    public shared(msg) func removeProfilePicture() : async Result<Profile> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        switch (profiles.get(caller)) {
+            case (?existingProfile) {
+                let updatedProfile : Profile = {
+                    id = existingProfile.id;
+                    name = existingProfile.name;
+                    phone = existingProfile.phone;
+                    role = existingProfile.role;
+                    activeRole = existingProfile.activeRole;
+                    createdAt = existingProfile.createdAt;
+                    updatedAt = Time.now();
+                    isVerified = existingProfile.isVerified;
+                    profilePicture = null;
+                    biography = existingProfile.biography;
+                };
+                
+                profiles.put(caller, updatedProfile);
+                return #ok(updatedProfile);
+            };
+            case (null) {
+                return #err("Profile not found");
+            };
+        };
     };
 }

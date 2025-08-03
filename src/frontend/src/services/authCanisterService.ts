@@ -2,6 +2,7 @@
 import { Principal } from "@dfinity/principal";
 import { canisterId, createActor } from "../../../declarations/auth";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
+import { canisterId as mediaCanisterId } from "../../../declarations/media";
 import type {
   _SERVICE as AuthService,
   UserRole,
@@ -241,12 +242,20 @@ export const authCanisterService = {
   /**
    * Set canister references for auth canister (ADMIN FUNCTION)
    * @param reputationCanisterId Optional reputation canister ID to set
+   * @param providedMediaCanisterId Optional media canister ID to set (defaults to built-in mediaCanisterId)
    */
-  async setCanisterReferences(): Promise<string | null> {
+  async setCanisterReferences(
+    providedMediaCanisterId?: string,
+  ): Promise<string | null> {
     try {
       const actor = getAuthActor(true);
       const result = await actor.setCanisterReferences(
         reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : [],
+        providedMediaCanisterId
+          ? [Principal.fromText(providedMediaCanisterId)]
+          : mediaCanisterId
+            ? [Principal.fromText(mediaCanisterId)]
+            : [],
       );
 
       if ("ok" in result) {
@@ -258,6 +267,57 @@ export const authCanisterService = {
     } catch (error) {
       // console.error("Error setting canister references:", error);
       throw new Error(`Failed to set canister references: ${error}`);
+    }
+  },
+
+  /**
+   * Upload a profile picture (requires authentication)
+   * @param fileName The name of the file being uploaded
+   * @param contentType The MIME type of the file (e.g., 'image/jpeg')
+   * @param fileData The binary data of the image file
+   */
+  async uploadProfilePicture(
+    fileName: string,
+    contentType: string,
+    fileData: Uint8Array,
+  ): Promise<FrontendProfile | null> {
+    try {
+      const actor = getAuthActor(true); // Requires authentication
+      const result = await actor.uploadProfilePicture(
+        fileName,
+        contentType,
+        fileData,
+      );
+
+      if ("ok" in result) {
+        return adaptBackendProfile(result.ok);
+      } else {
+        console.error("Error uploading profile picture:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      throw new Error(`Failed to upload profile picture: ${error}`);
+    }
+  },
+
+  /**
+   * Remove the current profile picture (requires authentication)
+   */
+  async removeProfilePicture(): Promise<FrontendProfile | null> {
+    try {
+      const actor = getAuthActor(true); // Requires authentication
+      const result = await actor.removeProfilePicture();
+
+      if ("ok" in result) {
+        return adaptBackendProfile(result.ok);
+      } else {
+        console.error("Error removing profile picture:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error removing profile picture:", error);
+      throw new Error(`Failed to remove profile picture: ${error}`);
     }
   },
 };

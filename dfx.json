@@ -29,6 +29,10 @@
       "type": "motoko",
       "main": "src/backend/function/chat.mo"
     },
+    "media": {
+      "type": "motoko",
+      "main": "src/backend/function/media.mo"
+    },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "type": "custom",
@@ -48,7 +52,8 @@
         "reputation",
         "review",
         "service",
-        "chat"
+        "chat",
+        "media"
       ],
       "type": "motoko",
       "main": "src/backend/main.mo"
@@ -61,7 +66,8 @@
         "reputation",
         "review",
         "service",
-        "chat"
+        "chat",
+        "media"
       ],
       "type": "assets",
       "source": ["src/frontend/dist/"]

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add media storage canister for handling user profile image uploads with 450KB size limit
 - Add provider reputation score display in service detail pages with real-time fetching
 - Add multi-role state system with activeRole field while preserving original user roles
 - Add optional notes field to booking creation for client-provider communication

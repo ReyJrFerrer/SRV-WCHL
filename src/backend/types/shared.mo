@@ -18,6 +18,33 @@ module {
         imageUrl: Text;
         thumbnailUrl: Text;
     };
+
+    // Media storage types
+    public type MediaType = {
+        #UserProfile;
+        #ServiceImage;
+    };
+
+    public type MediaItem = {
+        id: Text;
+        ownerId: Principal;
+        fileName: Text;
+        fileSize: Nat;
+        contentType: Text;
+        mediaType: MediaType;
+        filePath: Text;
+        url: Text;
+        thumbnailUrl: ?Text;
+        createdAt: Time.Time;
+        updatedAt: Time.Time;
+    };
+
+    public type MediaUploadRequest = {
+        fileName: Text;
+        contentType: Text;
+        mediaType: MediaType;
+        fileData: Blob;
+    };
     // Removed Profile
     public type Profile = {
         id: Principal;
