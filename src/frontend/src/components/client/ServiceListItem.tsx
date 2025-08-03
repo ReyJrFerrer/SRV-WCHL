@@ -108,9 +108,32 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           {/* Image container */}
           <div className="aspect-video w-full">
             <img
-              src={service.providerAvatar || "/default-provider.svg"}
+              src={
+                service.providerAvatar ||
+                (service.category?.slug
+                  ? `/images/ai-sp/${service.category.slug}.png`
+                  : "/default-provider.svg")
+              }
               alt={service.title}
               className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                // If .png fails, try .webp, then fallback to svg
+                const slug = service.category?.slug;
+                const triedWebp = e.currentTarget.dataset.triedWebp === "true";
+                if (
+                  slug &&
+                  !triedWebp &&
+                  e.currentTarget.src.includes(`${slug}.png`)
+                ) {
+                  e.currentTarget.src = `/images/ai-sp/${slug}.webp`;
+                  e.currentTarget.dataset.triedWebp = "true";
+                } else if (
+                  e.currentTarget.src !==
+                  window.location.origin + "/default-provider.svg"
+                ) {
+                  e.currentTarget.src = "/default-provider.svg";
+                }
+              }}
             />
           </div>
           {/* Category icon and availability badge row */}
