@@ -137,7 +137,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
       {/* New flex container for the heading and button */}{" "}
       <div className="flex items-center justify-between pt-5">
         {/* Heading on the left */}{" "}
-        <h2 className="mb-6 pt-6 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">My Services</h2>
+        <h2 className="mb-6 pt-6 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
+          My Services
+        </h2>
         {/* Responsive 'Add new service' button */}{" "}
         <Link
           to="/provider/services/add"

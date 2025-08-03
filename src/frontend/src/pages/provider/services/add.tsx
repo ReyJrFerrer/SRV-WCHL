@@ -946,7 +946,7 @@ const AddServicePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100">
-      <header className="p-2 sticky top-0 z-20 bg-white shadow-sm">
+      <header className="sticky top-0 z-20 bg-white p-2 shadow-sm">
         <div className="container mx-auto flex items-center">
           <button
             onClick={() => (currentStep === 1 ? navigate(-1) : handleBack())}

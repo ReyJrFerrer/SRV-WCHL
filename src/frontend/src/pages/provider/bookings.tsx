@@ -9,7 +9,6 @@ import {
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 
-
 type BookingStatusTab =
   | "ALL"
   | "PENDING"
