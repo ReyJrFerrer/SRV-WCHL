@@ -58,7 +58,7 @@ persistent actor ReputationCanister {
 
     // State variables for reputation history
     // private stable var reputationHistoryEntries : [(Principal, [(Time.Time, Float)])] = [];
-    private var reputationHistory = HashMap.HashMap<Principal, [(Time.Time, Float)]>(10, Principal.equal, Principal.hash);
+    private transient var reputationHistory = HashMap.HashMap<Principal, [(Time.Time, Float)]>(10, Principal.equal, Principal.hash);
 
     // Initialization
     system func preupgrade() {

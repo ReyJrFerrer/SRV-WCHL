@@ -22,9 +22,9 @@ persistent actor MediaCanister {
     type HeaderField = Types.HeaderField;
 
     // State variables
-    private stable var mediaEntries : [(Text, MediaItem)] = [];
-    private stable var fileDataEntries : [(Text, Blob)] = [];
-    private var mediaItems = HashMap.HashMap<Text, MediaItem>(10, Text.equal, Text.hash);
+    private var mediaEntries : [(Text, MediaItem)] = [];
+    private var fileDataEntries : [(Text, Blob)] = [];
+    private transient var mediaItems = HashMap.HashMap<Text, MediaItem>(10, Text.equal, Text.hash);
     private transient var fileDataStore = HashMap.HashMap<Text, Blob>(10, Text.equal, Text.hash);
     private transient var userMediaIndex = HashMap.HashMap<Principal, [Text]>(10, Principal.equal, Principal.hash);
 
