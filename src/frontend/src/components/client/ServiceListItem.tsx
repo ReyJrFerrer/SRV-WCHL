@@ -111,7 +111,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               src={
                 service.providerAvatar ||
                 (service.category?.slug
-                  ? `/images/ai-sp/${service.category.slug}.png`
+                  ? `/images/ai-sp/${service.category.slug}.svg`
                   : "/default-provider.svg")
               }
               alt={service.title}
@@ -125,7 +125,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   !triedWebp &&
                   e.currentTarget.src.includes(`${slug}.png`)
                 ) {
-                  e.currentTarget.src = `/images/ai-sp/${slug}.webp`;
+                  e.currentTarget.src = `/images/ai-sp/${slug}.png`;
                   e.currentTarget.dataset.triedWebp = "true";
                 } else if (
                   e.currentTarget.src !==
