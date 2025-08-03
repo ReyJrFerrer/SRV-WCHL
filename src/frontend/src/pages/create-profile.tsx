@@ -158,38 +158,41 @@ export default function CreateProfilePage() {
 
   return (
     <>
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-        <div className="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl md:flex">
-          <div className="hidden flex-col items-center justify-center bg-blue-600 p-10 text-center text-white md:flex md:w-1/2">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-yellow-50 to-blue-100 p-4">
+        <div className="w-full max-w-4xl overflow-hidden rounded-3xl bg-white/70 shadow-2xl ring-1 ring-blue-100 backdrop-blur-md md:flex">
+          <div className="hidden flex-col items-center justify-center bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500/90 p-12 text-center text-white md:flex md:w-1/2">
             <img
               src="/logo.svg"
               alt="SRV Logo"
               width={180}
               height={Math.round(180 * (760 / 1000))}
             />
-            <h1 className="mt-4 text-3xl font-bold text-yellow-300">
+            <h1 className="mt-6 text-4xl font-extrabold text-yellow-300 drop-shadow-lg">
               Welcome to SRV!
             </h1>
-            <p className="mt-2 max-w-xs text-blue-100">
+            <p className="mt-3 max-w-xs text-lg text-blue-100">
               Just a few more details to get you started on your journey.
             </p>
           </div>
 
-          <div className="w-full p-8 md:w-1/2 lg:p-12">
+          <div className="w-full p-8 md:w-1/2 lg:p-14">
             {success ? (
-              <div className="flex h-full flex-col items-center justify-center text-center">
-                <div className="mb-4 rounded-full bg-green-100 p-4">
-                  <UserPlusIcon className="h-12 w-12 text-green-600" />
+              <div className="animate-fade-in flex h-full flex-col items-center justify-center text-center">
+                <div className="mb-4 rounded-full bg-green-100 p-5 shadow-lg">
+                  <UserPlusIcon className="h-14 w-14 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-green-700">
+                <h2 className="text-3xl font-extrabold text-green-700 drop-shadow">
                   Profile Created!
                 </h2>
-                <p className="mt-2 text-slate-600">
+                <p className="mt-3 text-lg text-slate-600">
                   Redirecting you to your dashboard...
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleProfileSubmit} className="space-y-6">
+              <form
+                onSubmit={handleProfileSubmit}
+                className="animate-fade-in space-y-8"
+              >
                 <div className="mb-6 text-center md:hidden">
                   <h1 className="text-3xl font-bold text-blue-600">
                     Create Profile
@@ -200,7 +203,7 @@ export default function CreateProfilePage() {
                 </div>
 
                 {error && (
-                  <div className="rounded-r-lg border-l-4 border-red-400 bg-red-50 p-4">
+                  <div className="rounded-lg border-l-4 border-red-400 bg-red-50 p-4 shadow">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
                         <ExclamationTriangleIcon
@@ -223,10 +226,10 @@ export default function CreateProfilePage() {
                       Please re-authenticate to continue.
                     </p>
                     <button
-                      type="button" // Important to prevent form submission
+                      type="button"
                       onClick={handleReAuth}
                       disabled={isLoading}
-                      className={`mx-auto mt-2 flex w-full max-w-xs transform items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700 hover:shadow-xl ${isLoading ? "cursor-not-allowed opacity-70" : ""}`}
+                      className={`mx-auto mt-2 flex w-full max-w-xs transform items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-blue-600 hover:shadow-xl ${isLoading ? "cursor-not-allowed opacity-70" : ""}`}
                     >
                       {isLoading ? (
                         <>
@@ -245,20 +248,20 @@ export default function CreateProfilePage() {
                   <>
                     {/* Role Selection */}
                     <div>
-                      <h3 className="mb-3 text-lg font-medium text-slate-800">
+                      <h3 className="mb-3 text-xl font-semibold text-slate-800">
                         First, choose your role:
                       </h3>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <button
                           type="button"
                           onClick={() => setSelectedRole("Client")}
-                          className={`flex cursor-pointer flex-col items-center rounded-lg border-2 p-4 transition-all duration-200 ${selectedRole === "Client" ? "border-blue-600 bg-blue-50 shadow-md" : "border-gray-200 hover:border-blue-400"}`}
+                          className={`flex cursor-pointer flex-col items-center rounded-2xl border-2 bg-white/80 p-6 shadow-sm transition-all duration-200 hover:bg-blue-50/80 ${selectedRole === "Client" ? "scale-105 border-blue-600 bg-blue-50/90 shadow-lg" : "border-gray-200 hover:border-blue-400"}`}
                         >
                           <UserIcon
-                            className={`mb-2 h-8 w-8 ${selectedRole === "Client" ? "text-blue-600" : "text-gray-400"}`}
+                            className={`mb-2 h-10 w-10 ${selectedRole === "Client" ? "text-blue-600" : "text-gray-400"}`}
                           />
                           <span
-                            className={`font-semibold ${selectedRole === "Client" ? "text-blue-700" : "text-slate-700"}`}
+                            className={`text-lg font-semibold ${selectedRole === "Client" ? "text-blue-700" : "text-slate-700"}`}
                           >
                             Client
                           </span>
@@ -269,13 +272,13 @@ export default function CreateProfilePage() {
                         <button
                           type="button"
                           onClick={() => setSelectedRole("ServiceProvider")}
-                          className={`flex cursor-pointer flex-col items-center rounded-lg border-2 p-4 transition-all duration-200 ${selectedRole === "ServiceProvider" ? "border-yellow-400 bg-yellow-50 shadow-md" : "border-gray-200 hover:border-yellow-300"}`}
+                          className={`flex cursor-pointer flex-col items-center rounded-2xl border-2 bg-white/80 p-6 shadow-sm transition-all duration-200 hover:bg-yellow-50/80 ${selectedRole === "ServiceProvider" ? "scale-105 border-yellow-400 bg-yellow-50/90 shadow-lg" : "border-gray-200 hover:border-yellow-300"}`}
                         >
                           <WrenchScrewdriverIcon
-                            className={`mb-2 h-8 w-8 ${selectedRole === "ServiceProvider" ? "text-yellow-600" : "text-gray-400"}`}
+                            className={`mb-2 h-10 w-10 ${selectedRole === "ServiceProvider" ? "text-yellow-600" : "text-gray-400"}`}
                           />
                           <span
-                            className={`font-semibold ${selectedRole === "ServiceProvider" ? "text-yellow-700" : "text-slate-700"}`}
+                            className={`text-lg font-semibold ${selectedRole === "ServiceProvider" ? "text-yellow-700" : "text-slate-700"}`}
                           >
                             Service Provider
                           </span>
@@ -288,10 +291,10 @@ export default function CreateProfilePage() {
 
                     {/* Form Inputs */}
                     {selectedRole && (
-                      <div className="space-y-4 border-t pt-6">
+                      <div className="space-y-5 border-t pt-7">
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <UserIcon className="h-5 w-5 text-gray-400" />
+                            <UserIcon className="h-6 w-6 text-blue-400" />
                           </div>
                           <input
                             type="text"
@@ -300,13 +303,13 @@ export default function CreateProfilePage() {
                             value={formData.name}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-10 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="w-full rounded-xl border border-blue-200 bg-white/80 py-3 pr-3 pl-12 text-lg shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                           />
                         </div>
 
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <PhoneIcon className="h-5 w-5 text-gray-400" />
+                            <PhoneIcon className="h-6 w-6 text-yellow-400" />
                           </div>
                           <input
                             type="tel"
@@ -315,7 +318,7 @@ export default function CreateProfilePage() {
                             value={formData.phone}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-10 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="w-full rounded-xl border border-yellow-200 bg-white/80 py-3 pr-3 pl-12 text-lg shadow-sm focus:ring-2 focus:ring-yellow-400 focus:outline-none"
                           />
                         </div>
                       </div>
@@ -326,7 +329,7 @@ export default function CreateProfilePage() {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex w-full transform items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
+                        className="flex w-full transform items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-yellow-400 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-yellow-500 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:scale-100"
                       >
                         {isLoading && !reauthRequired ? (
                           <>
