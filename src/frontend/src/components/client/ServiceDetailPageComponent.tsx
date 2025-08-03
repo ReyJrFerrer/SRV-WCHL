@@ -169,11 +169,11 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
   );
 
   return (
-    <div className="mt-8 rounded-3xl border border-yellow-200 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-2xl">
+    <div className="mt-8 rounded-3xl bg-white p-6 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ChatBubbleIcon />
-          <h3 className="text-lg font-extrabold tracking-tight text-yellow-700 drop-shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800">
             Reviews{" "}
             <span className="ml-1 text-base font-semibold text-gray-500">
               ({totalReviews})
@@ -505,12 +505,10 @@ const ServiceDetailPage: React.FC = () => {
     );
 
     return (
-      <div className="mt-8 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-2xl backdrop-blur-md">
+      <div className="mt-8 rounded-3xl bg-white p-6 shadow-2xl backdrop-blur-md">
         <div className="mb-4 flex items-center gap-2">
           <CalendarIcon />
-          <h3 className="text-lg font-extrabold tracking-tight text-blue-700 drop-shadow-sm">
-            Availability
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
           {availability?.isAvailableNow && (
             <span className="ml-2 flex animate-pulse items-center gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
@@ -868,7 +866,7 @@ const ServiceDetailPage: React.FC = () => {
 
           {/* Right Column */}
           <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
-            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border border-yellow-200 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-8 shadow-2xl">
+            <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border-white bg-white p-8 shadow-2xl">
               <h1 className="mb-2 text-3xl font-extrabold text-gray-900 drop-shadow-sm">
                 {name}
               </h1>

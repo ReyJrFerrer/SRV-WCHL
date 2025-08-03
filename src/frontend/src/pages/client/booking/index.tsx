@@ -263,7 +263,7 @@ const MyBookingsPage: React.FC = () => {
           </div>
         </div>
 
-        <main className="container mx-auto flex-grow p-3 pb-24 sm:p-4 md:pb-4">
+        <main className="container mx-auto flex-grow p-3 pb-[120px] sm:p-4 md:pb-[120px]">
           {bookingManagement.loading ? (
             <div className="py-16 text-center">
               <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
@@ -293,12 +293,21 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
-                    {sameDayBookings.map((booking) => (
-                      <ClientBookingItemCard
+                    {sameDayBookings.map((booking, idx) => (
+                      <div
                         key={booking.id}
-                        booking={booking}
-                        onCancelBooking={handleCancelBookingOnListPage}
-                      />
+                        className={
+                          idx === sameDayBookings.length - 1 &&
+                          scheduledBookings.length === 0
+                            ? "pb-36 md:pb-40"
+                            : ""
+                        }
+                      >
+                        <ClientBookingItemCard
+                          booking={booking}
+                          onCancelBooking={handleCancelBookingOnListPage}
+                        />
+                      </div>
                     ))}
                   </div>
                 </section>
@@ -312,12 +321,20 @@ const MyBookingsPage: React.FC = () => {
                     </h2>
                   </div>
                   <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
-                    {scheduledBookings.map((booking) => (
-                      <ClientBookingItemCard
+                    {scheduledBookings.map((booking, idx) => (
+                      <div
                         key={booking.id}
-                        booking={booking}
-                        onCancelBooking={handleCancelBookingOnListPage}
-                      />
+                        className={
+                          idx === scheduledBookings.length - 1
+                            ? "pb-36 md:pb-40"
+                            : ""
+                        }
+                      >
+                        <ClientBookingItemCard
+                          booking={booking}
+                          onCancelBooking={handleCancelBookingOnListPage}
+                        />
+                      </div>
                     ))}
                   </div>
                 </section>
