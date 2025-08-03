@@ -10,9 +10,7 @@ import {
 const feedbackOptions = [
   "Very Professional",
   "Arrived On Time",
-  "Friendly Staff",
   "Highly Recommended",
-  "Great Experience",
 ];
 
 export const BookingReviewPage: React.FC = () => {
@@ -25,7 +23,7 @@ export const BookingReviewPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [booking, setBooking] = useState<EnhancedBooking | null>(null);
-  const [existingReview, setExistingReview] = useState<any>(null);
+  const [, setExistingReview] = useState<any>(null);
   const [providerNameState, setProviderName] = useState("Service Provider");
 
   const {
@@ -38,7 +36,6 @@ export const BookingReviewPage: React.FC = () => {
 
   const {
     submitReview,
-    updateReview,
     getBookingReviews,
     loading: reviewLoading,
     error: reviewError,
@@ -115,9 +112,7 @@ export const BookingReviewPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const formData = { rating, comment: trimmedFeedback };
-      const result = existingReview
-        ? await updateReview(existingReview.id, formData)
-        : await submitReview(bookingId as string, formData);
+      const result = await submitReview(bookingId as string, formData);
 
       if (result) {
         // Navigate to receipt page with review info in state
@@ -141,8 +136,6 @@ export const BookingReviewPage: React.FC = () => {
     rating,
     feedback,
     bookingId,
-    existingReview,
-    updateReview,
     submitReview,
     clearError,
     navigate,
@@ -208,9 +201,15 @@ export const BookingReviewPage: React.FC = () => {
 
   return (
     <div className="mx-auto mt-6 max-w-2xl rounded-lg bg-white p-6 shadow">
-      <div className="mb-6 rounded-lg border bg-gray-50 p-4">
-        <h3 className="mb-3 font-bold text-gray-900">Booking Details</h3>
-        <div className="grid grid-cols-1 gap-3 text-sm text-gray-600 md:grid-cols-2">
+      {/* Booking Details Card */}
+      <div className="mx-auto mb-8 w-full rounded-2xl border border-yellow-200 bg-white p-6 shadow-lg">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
+          <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400 font-bold text-white">
+            i
+          </span>
+          Booking Details
+        </h3>
+        <div className="grid grid-cols-1 gap-4 text-base text-gray-700 md:grid-cols-2">
           <div>
             <span className="font-bold">Provider:</span> {providerNameState}
           </div>
@@ -227,59 +226,76 @@ export const BookingReviewPage: React.FC = () => {
             {formatLocationString(booking.location)}
           </div>
           <div>
-            <span className="font-bold">Price:</span> ${booking.price || "TBD"}
+            <span className="font-bold">Price:</span> ₱{booking.price || "TBD"}
           </div>
         </div>
       </div>
 
-      <h2 className="mb-4 text-center text-xl font-bold">
-        How satisfied were you with the service?
-      </h2>
-      <div className="mb-2 flex justify-center space-x-2">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <StarIcon
-            key={star}
-            className={`h-10 w-10 cursor-pointer transition-colors ${(hovered ?? rating) >= star ? "text-yellow-400" : "text-gray-300"}`}
-            onClick={() => !isSubmitting && handleRating(star)}
-            onMouseEnter={() => !isSubmitting && setHovered(star)}
-            onMouseLeave={() => !isSubmitting && setHovered(null)}
-            fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
-          />
-        ))}
-      </div>
-      <div className="mb-6 text-center text-lg font-semibold text-gray-600">
-        <span>{ratingLabel}</span>
+      {/* Star Rating Section */}
+      <div className="mb-8 flex flex-col items-center px-8 py-6">
+        <h2 className="mb-3 text-center text-lg font-bold tracking-tight text-yellow-800">
+          How satisfied were you with the service?
+        </h2>
+        <div className="mb-3 flex justify-center space-x-3">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+              className={`transition-transform focus:outline-none ${
+                !isSubmitting ? "hover:scale-110 focus:scale-110" : ""
+              }`}
+              onClick={() => !isSubmitting && handleRating(star)}
+              onMouseEnter={() => !isSubmitting && setHovered(star)}
+              onMouseLeave={() => !isSubmitting && setHovered(null)}
+              disabled={isSubmitting}
+            >
+              <StarIcon
+                className={`h-12 w-12 drop-shadow transition-colors ${
+                  (hovered ?? rating) >= star
+                    ? "text-yellow-400"
+                    : "text-gray-200"
+                }`}
+                fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
+              />
+            </button>
+          ))}
+        </div>
+        <div className="text-center text-lg font-semibold text-yellow-700">
+          <span>{ratingLabel}</span>
+        </div>
       </div>
 
-      <div className="mb-4">
-        <p className="mb-2 text-center text-sm font-medium text-gray-700">
+      {/* Feedback Section */}
+      <div className="mb-8 px-2 py-4 sm:px-8 sm:py-6">
+        <h2 className="mb-3 text-center text-lg font-bold tracking-tight text-yellow-800">
           Add a quick comment:
-        </p>
-        <div className="flex flex-wrap justify-center gap-2">
+        </h2>
+        <div className="mb-4 flex flex-wrap justify-center gap-2 sm:gap-3">
           {feedbackOptions.map((option) => (
             <button
               key={option}
               onClick={() => handleFeedbackButtonClick(option)}
               disabled={isSubmitting}
-              className="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-800 transition-colors hover:border-blue-300 hover:bg-blue-100 disabled:opacity-50"
+              className="w-full rounded-full border border-yellow-300 bg-white px-4 py-2 text-sm font-medium text-yellow-800 shadow transition-colors hover:border-yellow-400 hover:bg-yellow-100 disabled:opacity-50 sm:w-auto"
+              style={{ maxWidth: "100%" }}
             >
               {option}
             </button>
           ))}
         </div>
-      </div>
-
-      <textarea
-        placeholder="Write your feedback... (5-500 characters)"
-        className="w-full resize-none rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100"
-        rows={4}
-        value={feedback}
-        onChange={(e) => setFeedback(e.target.value)}
-        disabled={isSubmitting}
-        maxLength={500}
-      />
-      <div className="mt-1 text-right text-xs text-gray-500">
-        {feedback.length}/500 characters
+        <textarea
+          placeholder="Write your feedback... (5-500 characters)"
+          className="min-h-[96px] w-full resize-none rounded-xl border border-gray-300 p-3 text-base shadow focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:bg-gray-100 sm:min-h-[80px]"
+          rows={4}
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          disabled={isSubmitting}
+          maxLength={500}
+        />
+        <div className="mt-1 text-right text-xs text-gray-500">
+          {feedback.length}/500 characters
+        </div>
       </div>
 
       {(formError || reviewError) && (
@@ -300,16 +316,12 @@ export const BookingReviewPage: React.FC = () => {
         <button
           onClick={handleSubmit}
           disabled={!isFormValid || isSubmitting}
-          className="flex items-center rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+          className="flex items-center rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           {isSubmitting && (
             <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
           )}
-          {isSubmitting
-            ? "Submitting..."
-            : existingReview
-              ? "Update Review"
-              : "Submit Rating"}
+          {isSubmitting ? "Submitting..." : "Submit Rating"}
         </button>
       </div>
     </div>

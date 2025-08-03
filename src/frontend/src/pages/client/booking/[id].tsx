@@ -43,6 +43,7 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
     "Completed",
   ];
   const currentIndex = statuses.findIndex((status) => status === currentStatus);
+  const isAllCompleted = currentStatus === "Completed";
 
   if (currentIndex === -1) {
     return (
@@ -55,45 +56,73 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-start justify-between">
-        {statuses.map((status, index) => {
-          const isActive = index <= currentIndex;
-          return (
-            <React.Fragment key={status}>
-              <div
-                className="flex flex-col items-center text-center"
-                style={{ width: "65px" }}
-              >
+    <div className="flex w-full flex-col items-center">
+      <div className="w-full">
+        <div className="flex w-full items-center justify-between gap-1 px-0 sm:gap-4 sm:px-2">
+          {statuses.map((status, index) => {
+            const isActive = index === currentIndex;
+            const isCompleted =
+              index < currentIndex || (isAllCompleted && index === 3);
+            const isLast = index === statuses.length - 1;
+            return (
+              <React.Fragment key={status}>
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                    isActive
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 bg-gray-200 text-gray-500"
-                  }`}
+                  className="flex flex-col items-center text-center"
+                  style={{ width: "56px" }}
                 >
-                  {index < currentIndex ? (
-                    <CheckCircleIcon className="h-5 w-5" />
-                  ) : (
-                    <strong>{index + 1}</strong>
-                  )}
-                </div>
-                <p
-                  className={`mt-2 text-xs font-medium ${isActive ? "text-blue-700" : "text-gray-500"}`}
-                >
-                  {status === "InProgress" ? "In Progress" : status}
-                </p>
-              </div>
-              {index < statuses.length - 1 && (
-                <div className="mt-3.5 flex-1">
                   <div
-                    className={`h-1 transition-colors duration-300 ${isActive && index < currentIndex ? "bg-blue-600" : "bg-gray-300"}`}
-                  ></div>
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-4 shadow-lg transition-all duration-300 sm:h-12 sm:w-12 ${
+                      isAllCompleted
+                        ? "border-yellow-400 bg-yellow-400 text-white"
+                        : isCompleted
+                          ? "border-yellow-400 bg-yellow-400 text-white"
+                          : isActive
+                            ? "border-blue-600 bg-blue-600 text-white"
+                            : "border-gray-300 bg-gray-100 text-gray-400"
+                    } `}
+                  >
+                    {(isAllCompleted && isLast) ||
+                    (isCompleted && index !== 3) ? (
+                      <CheckCircleIcon className="h-5 w-5 text-white sm:h-7 sm:w-7" />
+                    ) : (
+                      <span className="text-base font-bold sm:text-lg">
+                        {index + 1}
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className={`mt-2 text-xs font-semibold sm:mt-3 sm:text-sm ${
+                      isAllCompleted
+                        ? "text-yellow-600"
+                        : isCompleted
+                          ? "text-yellow-600"
+                          : isActive
+                            ? "text-blue-700"
+                            : "text-gray-400"
+                    } `}
+                  >
+                    {status === "InProgress" ? "Current" : status}
+                  </p>
                 </div>
-              )}
-            </React.Fragment>
-          );
-        })}
+                {index < statuses.length - 1 && (
+                  <div className="flex min-w-[16px] flex-1 items-center sm:min-w-[40px]">
+                    <div
+                      className={`h-1 w-full rounded-full transition-colors duration-300 sm:h-2 ${
+                        isAllCompleted
+                          ? "bg-yellow-400"
+                          : index < currentIndex - 1
+                            ? "bg-yellow-400"
+                            : index === currentIndex - 1
+                              ? "bg-blue-600"
+                              : "bg-gray-200"
+                      } `}
+                    ></div>
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -113,7 +142,7 @@ const BookingDetailsPage: React.FC = () => {
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const { identity } = useAuth();
-  const { conversations, loading: chatLoading } = useChat(); // Add the useChat hook
+  const { conversations, loading: chatLoading, createConversation } = useChat(); // Add the useChat hook
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
 
   const {
@@ -127,7 +156,7 @@ const BookingDetailsPage: React.FC = () => {
 
   // Set document title
   useEffect(() => {
-    document.title = `Booking: ${specificBooking?.serviceName || "Details"} | SRV Client`;
+    document.title = `Booking: ${specificBooking?.serviceName || "Details"} | SRV`;
   }, [specificBooking?.serviceName]);
 
   // Find the specific booking from the list once bookings are loaded
@@ -257,7 +286,23 @@ const BookingDetailsPage: React.FC = () => {
             otherUserName: existingConversation.otherUserName,
           },
         });
+        return;
       }
+
+      // If no existing conversation, create a new one
+      const newConv = await createConversation(currentUserId, providerIdString);
+      if (newConv && newConv.id) {
+        navigate(`/client/chat/${newConv.id}`, {
+          state: {
+            conversationId: newConv.id,
+            otherUserName: specificBooking.providerProfile?.name || "Provider",
+          },
+        });
+        return;
+      }
+      setChatErrorMessage(
+        "Could not start a new conversation. Please try again later.",
+      );
     } catch (error) {
       console.error("Failed to handle chat:", error);
       setChatErrorMessage(
@@ -368,7 +413,6 @@ const BookingDetailsPage: React.FC = () => {
   }
 
   const {
-    serviceName,
     providerProfile,
     packageName,
     requestedDate,
@@ -383,7 +427,7 @@ const BookingDetailsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center px-4 py-3">
+        <div className="container mx-auto flex items-center px-4 py-6">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
@@ -397,13 +441,13 @@ const BookingDetailsPage: React.FC = () => {
       </header>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-5">
           {/* Section 1: Provider Details */}
-          <div className="h-fit rounded-xl bg-white p-5 shadow-lg lg:col-span-2">
-            <h3 className="mb-4 text-lg font-bold text-slate-800">
-              Provider Details
+          <div className="h-fit rounded-3xl border border-blue-100 bg-white p-7 shadow-2xl backdrop-blur-md lg:col-span-2">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+              <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
             </h3>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-5">
               <div className="flex-shrink-0">
                 <img
                   src={
@@ -411,18 +455,18 @@ const BookingDetailsPage: React.FC = () => {
                     "/default-provider.svg"
                   }
                   alt={providerProfile?.name || "Provider"}
-                  className="h-16 w-16 rounded-full object-cover"
+                  className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
                 />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-gray-800">
+                <p className="text-lg font-bold text-gray-900">
                   {providerProfile?.name || "N/A"}
                 </p>
-                <p className="flex items-center text-sm text-gray-500">
+                <p className="mt-1 flex items-center text-sm text-gray-500">
                   <PhoneIcon className="mr-1.5 h-4 w-4" />
                   {providerProfile?.phone || "No contact number"}
                 </p>
-                <div className="mt-2 flex items-center space-x-2">
+                <div className="mt-2 flex items-center gap-2">
                   {loadingStats ? (
                     <p className="text-sm text-gray-400">Loading reviews...</p>
                   ) : averageRating != null && reviewCount != null ? (
@@ -445,24 +489,19 @@ const BookingDetailsPage: React.FC = () => {
           </div>
 
           {/* Section 2: Service Details */}
-          <div className="h-fit rounded-xl bg-white p-5 shadow-lg lg:col-span-3">
+          <div className="h-fit rounded-3xl border border-yellow-200 bg-white p-7 shadow-2xl lg:col-span-3">
             <div className="flex items-start justify-between">
-              <h3 className="mb-4 text-lg font-bold text-slate-800">
-                Service Details
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-yellow-700">
+                <BriefcaseIcon className="h-5 w-5 text-yellow-400" /> Service
+                Details
               </h3>
               <span
-                className={`rounded-full px-3 py-1 text-sm font-semibold ${getStatusPillStyle(status || "")}`}
+                className={`rounded-full px-4 py-2 text-base font-bold shadow-lg ${getStatusPillStyle(status || "")}`}
               >
                 {status?.replace("_", " ") || "Unknown"}
               </span>
             </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start">
-                <BriefcaseIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
-                <span>
-                  <strong>Service:</strong> {serviceName}
-                </span>
-              </div>
+            <div className="space-y-3 text-base">
               <div className="flex items-start">
                 <ArchiveBoxIcon className="mt-0.5 mr-2 h-5 w-5 text-blue-600" />
                 <span>
@@ -503,11 +542,14 @@ const BookingDetailsPage: React.FC = () => {
         </div>
 
         {/* Section 3: Progress Tracker */}
-        <div className="rounded-xl bg-white p-5 shadow-lg">
-          <h3 className="mb-5 text-lg font-bold text-slate-800">
-            Booking Progress
+        <div className="rounded-3xl border border-blue-100 bg-white/90 p-8 shadow-2xl backdrop-blur-md">
+          <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+            <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
+            Progress
           </h3>
-          <BookingProgressTracker currentStatus={status as BookingStatus} />
+          <div className="px-2 sm:px-8">
+            <BookingProgressTracker currentStatus={status as BookingStatus} />
+          </div>
         </div>
 
         {/* Chat Error Message */}

@@ -333,7 +333,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 onClick={handleCancelClick}
                 className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 sm:w-auto"
               >
-                <XCircleIcon className="mr-1.5 h-4 w-4" /> Ikansela ang booking
+                <XCircleIcon className="mr-1.5 h-4 w-4" /> Cancel Booking
               </button>
             )}
 
