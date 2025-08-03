@@ -102,11 +102,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     return (
       <Link
         to={`/client/service/${service.id}`}
-        className={`service-card block ${itemWidthClass} group flex flex-col overflow-hidden`}
+        className={`service-card block ${itemWidthClass} group flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-white/90 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl`}
       >
         <div className="relative">
           {/* Image container */}
-          <div className="aspect-video w-full">
+          <div className="aspect-video w-full bg-blue-50">
             <img
               src={
                 service.providerAvatar ||
@@ -115,7 +115,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   : "/images/ai-sp/default-provider.svg")
               }
               alt={service.title}
-              className="service-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300 group-hover:scale-102"
               onError={(e) => {
                 // If .png fails, try .webp, then fallback to svg
                 const slug = service.category?.slug;
@@ -160,18 +160,18 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           </div>
         </div>
 
-        <div className="service-content flex flex-grow flex-col p-3">
+        <div className="service-content flex flex-grow flex-col p-4">
           <div className="flex-grow">
             {/* Service title at the top */}
-            <p className="text-md mb-1 truncate leading-tight font-bold text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
+            <p className="mb-1 truncate text-lg leading-tight font-bold text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
               {service.title}
             </p>
             {/* Provider name below service title, with blue check if verified */}
-            <p className="mb-2 flex items-center gap-1 truncate text-sm text-blue-700">
+            <p className="mb-2 flex items-center gap-1 truncate text-base text-blue-700">
               {service.providerName}
               {isVerified && (
                 <CheckBadgeIcon
-                  className="ml-1 h-4 w-4 text-blue-500"
+                  className="ml-1 h-5 w-5 text-blue-500"
                   title="Verified provider"
                 />
               )}
@@ -180,8 +180,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             {/* Location info - city/address if available */}
             {service.location &&
               (service.location.city || service.location.address) && (
-                <div className="mb-2 flex items-center text-xs text-blue-700">
-                  <MapPinIcon className="mr-0.5 h-3 w-3 flex-shrink-0" />
+                <div className="mb-2 flex items-center text-sm text-blue-700">
+                  <MapPinIcon className="mr-1 h-4 w-4 flex-shrink-0" />
                   <span className="truncate">
                     {service.location.city || service.location.address}
                     {service.location.state
@@ -203,17 +203,17 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className={priceLocationContainerClass}>
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p
-                className={`text-lg font-bold text-blue-800 ${priceMarginClass} flex items-center gap-2`}
+                className={`text-xl font-bold text-blue-800 ${priceMarginClass} flex items-center gap-2`}
               >
                 {`₱${service.price.amount.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}`}
               </p>
-              <div className="flex items-center text-xs text-blue-800">
+              <div className="flex items-center text-sm text-blue-800">
                 {serviceRating.count > 0 ? (
                   <>
-                    {renderRatingStars(serviceRating.average, "h-4 w-4")}
+                    {renderRatingStars(serviceRating.average, "h-5 w-5")}
                     <span className="ml-1 font-semibold">
                       {serviceRating.average.toFixed(1)}
                     </span>
@@ -223,7 +223,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   </>
                 ) : (
                   <div className="flex items-center text-gray-400">
-                    {renderRatingStars(0, "h-4 w-4")}
+                    {renderRatingStars(0, "h-5 w-5")}
                     <span className="ml-1">No reviews</span>
                   </div>
                 )}

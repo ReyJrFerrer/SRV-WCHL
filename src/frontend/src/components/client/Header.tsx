@@ -219,29 +219,34 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
 
   return (
     <header
-      className={`w-full max-w-full space-y-4 rounded-lg bg-white p-4 shadow-sm ${className}`}
+      className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
     >
       {/* --- Desktop Header --- */}
       <div className="hidden items-center justify-between md:flex">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-6">
           <Link to="/client/home">
             <img
               src="/logo.svg"
               alt="SRV Logo"
-              className="h-20 w-auto transition-all duration-300 hover:scale-110"
+              className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
             />
           </Link>
-          <div className="h-8 border-l border-gray-300"></div>
-          <div className="text-2xl text-gray-700">
-            <span className="font-bold">Welcome Back,</span> {displayName}
+          <div className="h-10 border-l-2 border-blue-100"></div>
+          <div className="flex flex-col">
+            <span className="text-2xl font-semibold tracking-wide text-blue-700">
+              Welcome Back,{" "}
+              <span className="text-2xl font-bold text-gray-800">
+                {displayName}
+              </span>
+            </span>
           </div>
         </div>
         {isAuthenticated && (
           <button
             onClick={handleProfileClick}
-            className="group relative rounded-full bg-gray-100 p-3 hover:bg-yellow-100"
+            className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
           >
-            <UserCircleIcon className="h-8 w-8 text-blue-700 transition-colors group-hover:text-yellow-500" />
+            <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
           </button>
         )}
       </div>
@@ -253,69 +258,75 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             <img
               src="/logo.svg"
               alt="SRV Logo"
-              className="h-16 w-auto transition-all duration-300 hover:scale-110"
+              className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
             />
           </Link>
           {isAuthenticated && (
             <button
               onClick={handleProfileClick}
-              className="group relative rounded-full bg-gray-100 p-3 hover:bg-yellow-100"
+              className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
             >
               <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
             </button>
           )}
         </div>
-        <hr className="my-4 border-gray-200" />
-        <div className="text-2xl text-gray-700">
-          <span className="font-bold">Welcome Back,</span> {displayName}
+        <hr className="my-4 border-blue-100" />
+        <div className="flex flex-col">
+          <span className="text-lg font-semibold tracking-wide text-blue-700">
+            Welcome Back,
+          </span>
+          <span className="text-2xl font-bold text-gray-800">
+            {displayName}
+          </span>
         </div>
       </div>
 
-      {/* --- Location Section --- */}
-      <div className="rounded-lg bg-yellow-200 p-4">
-        <p className="text-sm font-bold text-gray-800">My Location</p>
-        <div className="flex min-h-[2.5rem] flex-col">
-          <div className="mb-1 flex items-center">
-            <MapPinIcon className="mr-2 h-5 w-5 flex-shrink-0 text-gray-700" />
-            {locationLoading || isAuthLoading ? (
-              <span className="animate-pulse text-gray-500">
-                Detecting location...
-              </span>
-            ) : (
-              // Make location text look normal but clickable
-              <span
-                role="button"
-                tabIndex={0}
-                className="cursor-pointer text-gray-800 select-text focus:outline-none"
-                style={{ textDecoration: "none" }}
-                onClick={() => setShowMap(true)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setShowMap(true);
-                }}
-                aria-label="Show my location on map"
-              >
-                {userAddress}, {userProvince}
-              </span>
-            )}
+      {/* --- Location & Search Section --- */}
+      <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <MapPinIcon className="h-6 w-6 text-blue-600" />
+            <span className="text-base font-bold text-gray-800">
+              My Location
+            </span>
           </div>
+          {!locationLoading &&
+            (locationStatus === "denied" ||
+              locationStatus === "not_set" ||
+              locationStatus === "unsupported") && (
+              <button
+                onClick={handleRequestLocation}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-300 to-yellow-400 px-6 py-2 text-base font-bold text-blue-800 shadow-md transition-all hover:scale-105 hover:from-yellow-400 hover:to-yellow-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+              >
+                <MapPinIcon className="h-5 w-5 text-blue-600" />
+                <span>Share Location</span>
+              </button>
+            )}
         </div>
-
-        {!locationLoading &&
-          (locationStatus === "denied" ||
-            locationStatus === "not_set" ||
-            locationStatus === "unsupported") && (
-            <button
-              onClick={handleRequestLocation}
-              className="mt-2 mb-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-300 to-yellow-400 px-6 py-2 text-base font-bold text-blue-800 shadow-md transition-all hover:scale-105 hover:from-yellow-400 hover:to-yellow-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+        <div className="mt-2 flex items-center gap-2">
+          {locationLoading || isAuthLoading ? (
+            <span className="animate-pulse text-gray-500">
+              Detecting location...
+            </span>
+          ) : (
+            <span
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer font-medium text-blue-900 transition-all duration-200 select-text hover:text-lg hover:underline focus:outline-none"
+              style={{ textDecoration: "none" }}
+              onClick={() => setShowMap(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setShowMap(true);
+              }}
+              aria-label="Show my location on map"
             >
-              <MapPinIcon className="h-5 w-5 text-blue-600" />
-              <span>Share Location</span>
-            </button>
+              {userAddress}, {userProvince}
+            </span>
           )}
-
+        </div>
         {/* Search Bar */}
         <form
-          className="mb-2 w-full"
+          className="mt-4 w-full"
           onSubmit={(e) => {
             e.preventDefault();
             if (searchQuery.trim()) {
@@ -325,10 +336,10 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             }
           }}
         >
-          <div className="flex w-full items-center rounded-md bg-white p-3 shadow-sm">
+          <div className="flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md focus-within:ring-2 focus-within:ring-yellow-300">
             <input
               type="text"
-              className="flex-1 border-none bg-transparent p-0 text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
+              className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
               placeholder={placeholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
