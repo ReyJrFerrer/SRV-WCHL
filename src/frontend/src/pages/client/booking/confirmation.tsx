@@ -10,7 +10,7 @@ interface BookingDetails {
   date: string;
   time: string;
   location?: string;
-  concerns: string;
+  notes: string;
   amountToPay: string;
   packagePrice: string;
   landmark: string;
@@ -197,12 +197,12 @@ const BookingConfirmationPage: React.FC = () => {
                   </ul>
                 </div>
                 {/* Notes for Provider */}
-                {bookingDetails.concerns && (
+                {bookingDetails.notes && (
                   <p>
                     <span className="font-bold text-gray-700">
                       Notes for Provider:
                     </span>{" "}
-                    {bookingDetails.concerns}
+                    {bookingDetails.notes}
                   </p>
                 )}
               </div>

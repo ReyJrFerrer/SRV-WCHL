@@ -191,15 +191,15 @@ const ClientBookingPageComponent: React.FC = () => {
   const [street, setStreet] = useState("");
   const [houseNumber, setHouseNumber] = useState("");
   const [landmark, setLandmark] = useState("");
-  const [concerns, setConcerns] = useState("");
+  const [notes, setNotes] = useState("");
   // Track notes word limit
   const NOTES_CHAR_LIMIT = 50;
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     if (value.length <= NOTES_CHAR_LIMIT) {
-      setConcerns(value);
+      setNotes(value);
     } else {
-      setConcerns(value.slice(0, NOTES_CHAR_LIMIT));
+      setNotes(value.slice(0, NOTES_CHAR_LIMIT));
     }
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -505,7 +505,7 @@ const ClientBookingPageComponent: React.FC = () => {
         scheduledDate: finalScheduledDate,
         scheduledTime: bookingOption === "scheduled" ? selectedTime : undefined,
         location: finalAddress,
-        concerns: concerns,
+        notes: notes,
       };
       const booking = await createBookingRequest(bookingData);
       if (booking) {
@@ -864,7 +864,7 @@ const ClientBookingPageComponent: React.FC = () => {
               </h3>
               <textarea
                 placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
-                value={concerns}
+                value={notes}
                 onChange={handleNotesChange}
                 rows={4}
                 maxLength={NOTES_CHAR_LIMIT}
