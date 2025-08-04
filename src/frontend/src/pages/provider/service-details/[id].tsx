@@ -83,17 +83,16 @@ const addHoursToTime = (time: string, hoursToAdd: number): string => {
   const [hourStr, minuteStr] = time.split(":");
   let hour = parseInt(hourStr, 10);
   const minute = parseInt(minuteStr, 10) || 0;
-  
+
   hour = hour + hoursToAdd;
-  
+
   // Handle hour overflow
   if (hour >= 24) {
     hour = hour % 24;
   }
-  
-  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-};
 
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+};
 
 // Availability Editor component
 interface AvailabilityEditorProps {
@@ -126,7 +125,7 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
   const handleAddTimeSlot = (dayIndex: number) => {
     const newSchedule = [...weeklySchedule];
     const slots = newSchedule[dayIndex].availability.slots;
-    
+
     let newSlot: TimeSlot;
     if (slots.length > 0) {
       // Get the end time of the last slot
@@ -144,7 +143,7 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
     newSchedule[dayIndex].availability.slots.push(newSlot);
     setWeeklySchedule(newSchedule);
   };
-  
+
   const handleRemoveTimeSlot = (dayIndex: number, slotIndex: number) => {
     const newSchedule = [...weeklySchedule];
     newSchedule[dayIndex].availability.slots.splice(slotIndex, 1);
