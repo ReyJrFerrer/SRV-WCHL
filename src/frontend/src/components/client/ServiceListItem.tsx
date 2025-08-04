@@ -91,15 +91,15 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     // Category icon mapping
     const categoryIconMap: Record<string, string> = {
-      "gadget-technicians": "gadget repair.svg",
-      "beauty-services": "Beauty Services.svg",
-      "home-services": "repairs.svg",
-      "beauty-wellness": "wellnes.svg",
-      "automobile-repairs": "auto.svg",
-      "cleaning-services": "cleaning.svg",
-      "delivery-errands": "delivery.svg",
-      photographer: "photography.svg",
-      tutoring: "tutor.svg",
+      "gadget-technicians": "gadget-technicians.svg",
+      "beauty-services": "beauty-services.svg",
+      "home-services": "home-services.svg",
+      "beauty-wellness": "beauty-wellness.svg",
+      "automobile-repairs": "automobile-repairs.svg",
+      "cleaning-services": "cleaning-services.svg",
+      "delivery-errands": "delivery-errands.svg",
+      photographer: "photographer.svg",
+      tutoring: "tutoring.svg",
       others: "others.svg",
     };
 
