@@ -217,7 +217,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           </div>
 
           <div className={priceLocationContainerClass}>
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-1 flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p
                 className={`text-xl font-bold text-blue-800 ${priceMarginClass} flex items-center gap-2`}
               >
@@ -247,8 +247,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             </div>
           </div>
         </div>
-        {/* 'Check service' banner on hover, now below the card content */}
-        <div className="hidden h-10 w-full items-center justify-center rounded-b-2xl border-t border-yellow-300 bg-yellow-200 group-hover:flex">
+        {/* 'Check service' banner: overlaps the bottom of the card on hover, no extra space when not hovered */}
+        <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-10 flex h-10 w-full items-center justify-center rounded-b-2xl border-t border-yellow-300 bg-yellow-200 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <span className="text-base font-bold tracking-wide text-blue-800">
             Check service
           </span>
