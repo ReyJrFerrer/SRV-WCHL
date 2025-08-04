@@ -889,7 +889,7 @@ const ServiceDetailPage: React.FC = () => {
                     onError={(e) => {
                       // fallback to a default icon if not found
                       (e.currentTarget as HTMLImageElement).src =
-                        "/images/categories/default.svg";
+                        "/images/categories/others.svg";
                     }}
                   />
                 ) : null}
