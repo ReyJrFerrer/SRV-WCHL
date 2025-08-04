@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add frontend service image management hooks and utilities with support for galleries
+
+### Added
+
+- Add frontend service image management hooks and utilities with support for galleries
 - Add service image upload and management with support for up to 5 images per service
 - Add HTTP interface for serving images with proper URLs in media canister
 - Add media storage canister for handling user profile image uploads with 450KB size limit
