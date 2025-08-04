@@ -1,5 +1,6 @@
 // Media Service for handling file uploads and conversions
 import { authCanisterService } from "./authCanisterService";
+import { serviceCanisterService } from "./serviceCanisterService";
 import { media } from "../../../declarations/media";
 
 export interface ImageUploadOptions {
@@ -325,14 +326,134 @@ export const uploadProfilePicture = async (
   }
 };
 
+/**
+ * Service image upload workflow with multiple files support
+ */
+export const uploadServiceImages = async (
+  serviceId: string,
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<any> => {
+  try {
+    if (files.length === 0) {
+      throw new Error("No files provided for upload");
+    }
+
+    if (files.length > 5) {
+      throw new Error("Maximum 5 images allowed per service");
+    }
+
+    // Validate and process each file
+    const processedFiles: {
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }[] = [];
+
+    for (const file of files) {
+      // Validate file
+      const validationError = validateImageFile(file, options);
+      if (validationError) {
+        throw new Error(`File ${file.name}: ${validationError}`);
+      }
+
+      // Resize if needed
+      const opts = { ...DEFAULT_OPTIONS, ...options };
+      let processedFile = file;
+
+      if (opts.maxWidth || opts.maxHeight) {
+        processedFile = await resizeImage(file, opts.maxWidth, opts.maxHeight);
+      }
+
+      // Convert to Uint8Array
+      const fileData = await fileToUint8Array(processedFile);
+
+      processedFiles.push({
+        fileName: processedFile.name,
+        contentType: processedFile.type,
+        fileData,
+      });
+    }
+
+    // Upload via service canister
+    const result = await serviceCanisterService.uploadServiceImages(
+      serviceId,
+      processedFiles,
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error uploading service images:", error);
+    throw error;
+  }
+};
+
+/**
+ * Batch process multiple files for service upload
+ */
+export const processServiceImageFiles = async (
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<
+  { fileName: string; contentType: string; fileData: Uint8Array }[]
+> => {
+  try {
+    if (files.length === 0) {
+      return [];
+    }
+
+    if (files.length > 5) {
+      throw new Error("Maximum 5 images allowed per service");
+    }
+
+    const processedFiles: {
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }[] = [];
+
+    for (const file of files) {
+      // Validate file
+      const validationError = validateImageFile(file, options);
+      if (validationError) {
+        throw new Error(`File ${file.name}: ${validationError}`);
+      }
+
+      // Resize if needed
+      const opts = { ...DEFAULT_OPTIONS, ...options };
+      let processedFile = file;
+
+      if (opts.maxWidth || opts.maxHeight) {
+        processedFile = await resizeImage(file, opts.maxWidth, opts.maxHeight);
+      }
+
+      // Convert to Uint8Array
+      const fileData = await fileToUint8Array(processedFile);
+
+      processedFiles.push({
+        fileName: processedFile.name,
+        contentType: processedFile.type,
+        fileData,
+      });
+    }
+
+    return processedFiles;
+  } catch (error) {
+    console.error("Error processing service image files:", error);
+    throw error;
+  }
+};
+
 export const mediaService = {
   // File validation and processing
   validateImageFile,
   fileToUint8Array,
   resizeImage,
+  processServiceImageFiles,
 
   // Upload functionality
   uploadProfilePicture,
+  uploadServiceImages,
 
   // Image retrieval functionality
   getImageDataUrl,
@@ -352,6 +473,42 @@ export const mediaService = {
       return await authCanisterService.removeProfilePicture();
     } catch (error) {
       console.error("Error removing profile picture:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete service images
+   */
+  async deleteServiceImages(serviceId: string, imageUrls: string[]) {
+    try {
+      // Note: removeServiceImage removes one image at a time
+      const results = [];
+      for (const imageUrl of imageUrls) {
+        const result = await serviceCanisterService.removeServiceImage(
+          serviceId,
+          imageUrl,
+        );
+        results.push(result);
+      }
+      return results;
+    } catch (error) {
+      console.error("Error deleting service images:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update service image order
+   */
+  async updateServiceImageOrder(serviceId: string, orderedImageUrls: string[]) {
+    try {
+      return await serviceCanisterService.reorderServiceImages(
+        serviceId,
+        orderedImageUrls,
+      );
+    } catch (error) {
+      console.error("Error updating service image order:", error);
       throw error;
     }
   },

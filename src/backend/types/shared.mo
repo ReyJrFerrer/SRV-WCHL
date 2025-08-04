@@ -148,6 +148,7 @@ module {
         updatedAt: Time.Time;
         rating: ?Float;
         reviewCount: Nat;
+        imageUrls: [Text]; // Array of media URLs for service images (max 5)
         // Availability information
         weeklySchedule: ?[(DayOfWeek, DayAvailability)];
         instantBookingEnabled: ?Bool;
