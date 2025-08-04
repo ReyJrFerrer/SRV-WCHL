@@ -271,13 +271,11 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           )}
         </div>
         <hr className="my-4 border-blue-100" />
-        <div className="flex flex-col">
-          <span className="text-lg font-semibold tracking-wide text-blue-700">
+        <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+          <span className="text-xl font-semibold tracking-wide text-blue-700">
             Welcome Back,
           </span>
-          <span className="text-2xl font-bold text-gray-800">
-            {displayName}
-          </span>
+          <span className="text-xl font-bold text-gray-800">{displayName}</span>
         </div>
       </div>
 
