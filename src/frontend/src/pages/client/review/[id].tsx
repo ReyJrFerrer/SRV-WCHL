@@ -44,7 +44,7 @@ export const BookingReviewPage: React.FC = () => {
 
   // Set document title
   useEffect(() => {
-    document.title = `Review Booking - SRV`;
+    document.title = `Review Booking | SRV`;
   }, []);
 
   // Load booking and existing review data

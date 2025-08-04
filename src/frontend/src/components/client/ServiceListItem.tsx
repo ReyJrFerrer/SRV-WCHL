@@ -6,6 +6,7 @@ import {
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
 import useServiceById from "../../hooks/serviceDetail";
+import { useServiceReviews } from "../../hooks/reviewManagement";
 import { EnrichedService } from "../../hooks/serviceInformation";
 
 interface ServiceListItemProps {
@@ -20,10 +21,24 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     // Fetch the latest service data to get isVerified
     const { service: fetchedService } = useServiceById(service.id);
     const isVerified = fetchedService?.isVerified === true;
-    // Use service rating data directly from props instead of loading it individually
+    // Use the same logic as ServiceDetailPageComponent for review count
+    const { reviews = [], getAverageRating } = useServiceReviews(service.id);
+    const visibleReviews = Array.isArray(reviews)
+      ? reviews.filter((r) => r.status === "Visible")
+      : [];
+    const totalReviews =
+      visibleReviews.length > 0
+        ? visibleReviews.length
+        : typeof service.rating?.count === "number"
+          ? service.rating.count
+          : 0;
+    const averageRating =
+      visibleReviews.length > 0
+        ? getAverageRating(visibleReviews)
+        : service.rating?.average || 0;
     const serviceRating = {
-      average: service.rating?.average || 0,
-      count: service.rating?.count || 0,
+      average: averageRating,
+      count: totalReviews,
       loading: false,
     };
 
