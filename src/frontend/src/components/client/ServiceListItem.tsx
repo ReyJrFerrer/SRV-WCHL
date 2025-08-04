@@ -49,7 +49,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     // Determine availability status (simplified since we may not have full availability data)
     const isAvailable = service.availability?.isAvailable ?? false;
-    const availabilityText = isAvailable ? "Available" : "Not Available";
+    const availabilityText = isAvailable ? "Available Now" : "Not Available";
 
     const priceLocationContainerClass = retainMobileLayout
       ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100" // Price and Location on same line
