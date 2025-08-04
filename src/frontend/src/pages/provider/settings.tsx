@@ -2,12 +2,11 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; // Adjust path as needed
 import {
-  BellIcon,
-  ShieldCheckIcon,
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
   ArrowPathRoundedSquareIcon, // Icon for the new switch button
+  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
@@ -32,8 +31,16 @@ const SettingsPage: React.FC = () => {
 
   // Menu items, with "Profile" removed as it now has its own section
   const menuItems = [
-    { name: "Notifications", icon: BellIcon, href: "/provider/notifications" },
-    { name: "Security", icon: ShieldCheckIcon, href: "/provider/security" },
+    {
+      name: "Terms & Conditions",
+      icon: ArrowRightOnRectangleIcon,
+      href: "/provider/terms",
+    },
+    {
+      name: "Report",
+      icon: ExclamationCircleIcon,
+      href: "/provider/report",
+    },
     {
       name: "Help & Support",
       icon: QuestionMarkCircleIcon,
@@ -41,114 +48,125 @@ const SettingsPage: React.FC = () => {
     },
   ];
 
+  const [switching, setSwitching] = React.useState(false);
   const handleSwitchToClient = async () => {
+    setSwitching(true);
     try {
       const success = await switchRole();
       if (success) {
-        // Navigate to client dashboard after successful role switch
         navigate("/client");
       }
     } catch (error) {
       console.error("Failed to switch role:", error);
-      // Error is already handled in the hook and displayed in the UI
+    } finally {
+      setSwitching(false);
     }
   };
 
   refetchImage();
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-4xl px-4 py-3 text-center">
-          <h1 className="text-xl font-bold text-gray-900">Settings</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+            Settings
+          </h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl p-4">
+      <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (
-          <div className="space-y-4">
-            {/* --- NEW: Enhanced Profile Section --- */}
-            <div className="rounded-lg bg-white shadow-sm">
+          <div className="space-y-6">
+            {/* --- Enhanced Profile Section --- */}
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <button
                 onClick={() => navigate("/provider/profile")}
-                className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-gray-50"
+                className="flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-50"
               >
                 <div className="flex items-center">
                   {profileLoading ? (
-                    <div className="mr-4 h-12 w-12 animate-pulse rounded-full bg-gray-200"></div>
+                    <div className="mr-4 h-14 w-14 animate-pulse rounded-full bg-gray-200" />
                   ) : (
                     <img
-                      src={profileImageUrl || "/default-provider.svg"} // Fallback to a default avatar
+                      src={profileImageUrl || "/default-provider.svg"}
                       alt="Profile"
-                      className="mr-4 h-12 w-12 rounded-full object-cover"
+                      className="mr-4 h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow"
                     />
                   )}
                   <div>
-                    <p className="text-md font-semibold text-gray-800">
+                    <p className="text-lg font-semibold text-blue-900">
                       {profileLoading ? "Loading..." : profile?.name || "User"}
                     </p>
                     <p className="text-sm text-gray-500">View Profile</p>
                   </div>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                <ChevronRightIcon className="h-6 w-6 text-blue-400" />
               </button>
             </div>
 
-            {/* --- NEW: Switch to SRVice Provider Button --- */}
-            <div className="rounded-lg bg-blue-600 text-white shadow-sm">
+            {/* --- Switch to Service Provider Button --- */}
+            <div className="rounded-2xl border border-yellow-200 bg-gradient-to-r from-yellow-300 to-yellow-200 shadow-md">
               <button
                 onClick={handleSwitchToClient}
-                className="group flex w-full items-center justify-between rounded-lg p-4 text-left text-black transition-colors hover:bg-yellow-300"
+                className="group flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-600"
+                disabled={switching}
               >
                 <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon className="mr-4 h-6 w-6 text-white group-hover:text-black" />
-                  <span className="text-md font-medium text-white group-hover:text-black">
-                    Switch into Client Mode
+                  <ArrowPathRoundedSquareIcon
+                    className={`mr-4 h-7 w-7 text-black transition-transform duration-300 group-hover:text-white ${switching ? "animate-spin" : ""}`}
+                  />
+                  <span
+                    className={`text-lg font-semibold text-gray-800 group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                  >
+                    {switching ? "Switching..." : "Switch into SRVice Client"}
                   </span>
                 </div>
-                <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
+                <ChevronRightIcon
+                  className={`h-6 w-6 text-black group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                />
               </button>
             </div>
 
             {/* --- Other Menu Items --- */}
-            <div className="rounded-lg bg-white shadow-sm">
-              <ul className="divide-y divide-gray-200">
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+              <ul className="divide-y divide-gray-100">
                 {menuItems.map((item) => (
                   <li key={item.name}>
                     <button
                       onClick={() => navigate(item.href)}
-                      className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-gray-50"
+                      className="flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-50"
                     >
                       <div className="flex items-center">
-                        <item.icon className="mr-4 h-6 w-6 text-gray-500" />
-                        <span className="text-md font-medium text-gray-800">
+                        <item.icon className="mr-4 h-7 w-7 text-blue-400" />
+                        <span className="text-lg font-medium text-blue-900">
                           {item.name}
                         </span>
                       </div>
-                      <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                      <ChevronRightIcon className="h-6 w-6 text-blue-400" />
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="rounded-lg bg-white shadow-sm">
+            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <button
                 onClick={logout}
-                className="flex w-full items-center p-4 text-left text-red-600 transition-colors hover:bg-red-50"
+                className="flex w-full items-center rounded-2xl p-5 text-left text-red-600 transition-all hover:bg-red-50"
               >
-                <ArrowRightOnRectangleIcon className="mr-4 h-6 w-6" />
-                <span className="text-md font-medium">Log Out</span>
+                <ArrowRightOnRectangleIcon className="mr-4 h-7 w-7" />
+                <span className="text-lg font-semibold">Log Out</span>
               </button>
             </div>
           </div>
         ) : (
-          <div className="rounded-xl bg-white p-6 text-center shadow">
+          <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-md">
             <p className="mb-4 text-lg text-gray-700">
               Please log in to manage your settings.
             </p>
             <button
-              onClick={() => navigate("/login")} // Navigate to a login page
+              onClick={() => navigate("/login")}
               className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
             >
               Log In

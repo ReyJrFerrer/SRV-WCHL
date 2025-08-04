@@ -301,14 +301,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="truncate text-lg font-semibold text-slate-800">
+          <h1 className="m-2 p-2 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
             Booking Details
           </h1>
         </div>
       </header>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        <div className="rounded-xl bg-white p-6 shadow-lg">
+        <div className="mt-5 rounded-xl bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-start justify-between">
             <h2 className="text-2xl font-bold text-slate-800">{clientName}</h2>
             <span

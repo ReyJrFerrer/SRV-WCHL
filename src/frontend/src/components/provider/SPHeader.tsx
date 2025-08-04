@@ -131,7 +131,7 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-4">
           <Link to="/client/home">
-            <img src="/logo.svg" alt="SRV Logo" className="h-20 w-auto" />
+            <img src="/logo.svg" alt="SRV Logo" className="h-25 w-auto" />
           </Link>
           <div className="h-8 border-l border-gray-300"></div>
           <div className="text-2xl text-gray-700">
@@ -183,16 +183,23 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
 
       {/* --- Location Section --- */}
       <div className="rounded-lg bg-yellow-200 p-4">
-        <p className="text-sm font-bold text-gray-800">My Location</p>
-        <div className="flex min-h-[2.5rem] flex-col">
+        <div className="flex items-center">
+          {" "}
+          {/* New container for the icon and text */}
+          <MapPinIcon className="h-6 w-6 text-blue-600" />
+          <p className="ml-2 text-base font-bold text-gray-800">
+            My Location
+          </p>{" "}
+          {/* Added ml-2 for spacing */}
+        </div>
+        <div className="flex flex-col">
           <div className="mb-1 flex items-center">
-            <MapPinIcon className="mr-2 h-5 w-5 flex-shrink-0 text-gray-700" />
             {locationLoading || isAuthLoading ? (
               <span className="animate-pulse text-gray-500">
                 Detecting location...
               </span>
             ) : (
-              <span className="text-gray-800">
+              <span className="cursor-pointer font-medium text-blue-900 transition-all duration-200 select-text hover:text-lg hover:underline focus:outline-none">
                 {userAddress}, {userProvince}
               </span>
             )}
