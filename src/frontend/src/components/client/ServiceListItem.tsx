@@ -246,12 +246,12 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               </div>
             </div>
           </div>
-          {/* 'Check service' banner on hover */}
-          <div className="absolute right-0 bottom-0 left-0 z-10 hidden h-10 items-center justify-center border-t border-yellow-300 bg-yellow-200 group-hover:flex">
-            <span className="text-base font-bold tracking-wide text-blue-800">
-              Check service
-            </span>
-          </div>
+        </div>
+        {/* 'Check service' banner on hover, now below the card content */}
+        <div className="hidden h-10 w-full items-center justify-center rounded-b-2xl border-t border-yellow-300 bg-yellow-200 group-hover:flex">
+          <span className="text-base font-bold tracking-wide text-blue-800">
+            Check service
+          </span>
         </div>
       </Link>
     );
