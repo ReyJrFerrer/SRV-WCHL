@@ -18,12 +18,12 @@ import {
   MinusCircleIcon, // For removing time slots
   PlusIcon, // For adding packages
 } from "@heroicons/react/24/solid";
-
 import {
   useServiceManagement,
   EnhancedService,
   DayOfWeek,
   DayAvailability,
+  TimeSlot,
 } from "../../../hooks/serviceManagement";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
@@ -78,6 +78,23 @@ const formatTime = (time: string) => {
   return `${hour}:${minute.padStart(2, "0")} ${ampm}`;
 };
 
+// **Helper function to add hours to a time string**
+const addHoursToTime = (time: string, hoursToAdd: number): string => {
+  const [hourStr, minuteStr] = time.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10) || 0;
+  
+  hour = hour + hoursToAdd;
+  
+  // Handle hour overflow
+  if (hour >= 24) {
+    hour = hour % 24;
+  }
+  
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
+
 // Availability Editor component
 interface AvailabilityEditorProps {
   weeklySchedule: WeeklyScheduleEntry[];
@@ -88,6 +105,11 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
   weeklySchedule,
   setWeeklySchedule,
 }) => {
+  const [templateTimeSlot, setTemplateTimeSlot] = useState<TimeSlot>({
+    startTime: "09:00",
+    endTime: "17:00",
+  });
+
   const handleToggleDayAvailability = (index: number) => {
     const newSchedule = [...weeklySchedule];
     newSchedule[index] = {
@@ -100,15 +122,29 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
     setWeeklySchedule(newSchedule);
   };
 
+  // **UPDATED LOGIC HERE**
   const handleAddTimeSlot = (dayIndex: number) => {
     const newSchedule = [...weeklySchedule];
-    newSchedule[dayIndex].availability.slots.push({
-      startTime: "09:00",
-      endTime: "17:00",
-    }); // Default new slot
+    const slots = newSchedule[dayIndex].availability.slots;
+    
+    let newSlot: TimeSlot;
+    if (slots.length > 0) {
+      // Get the end time of the last slot
+      const lastSlotEndTime = slots[slots.length - 1].endTime;
+      // Start the new slot immediately after the last one
+      const newStartTime = lastSlotEndTime;
+      // End the new slot 2 hours after it starts
+      const newEndTime = addHoursToTime(newStartTime, 2);
+      newSlot = { startTime: newStartTime, endTime: newEndTime };
+    } else {
+      // If no slots exist yet, use the default 9-5
+      newSlot = { startTime: "09:00", endTime: "17:00" };
+    }
+
+    newSchedule[dayIndex].availability.slots.push(newSlot);
     setWeeklySchedule(newSchedule);
   };
-
+  
   const handleRemoveTimeSlot = (dayIndex: number, slotIndex: number) => {
     const newSchedule = [...weeklySchedule];
     newSchedule[dayIndex].availability.slots.splice(slotIndex, 1);
@@ -126,11 +162,123 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
     setWeeklySchedule(newSchedule);
   };
 
+  const applyTemplateToDays = (days: DayOfWeek[]) => {
+    const newSchedule = [...weeklySchedule];
+    newSchedule.forEach((dayEntry, index) => {
+      if (days.includes(dayEntry.day)) {
+        // Ensure availability is ON and replace slots with the new template slot
+        newSchedule[index] = {
+          ...dayEntry,
+          availability: {
+            isAvailable: true,
+            slots: [
+              {
+                startTime: templateTimeSlot.startTime,
+                endTime: templateTimeSlot.endTime,
+              },
+            ],
+          },
+        };
+      }
+    });
+    setWeeklySchedule(newSchedule);
+  };
+
+  const deselectAllDays = () => {
+    setWeeklySchedule(
+      weeklySchedule.map((day) => ({
+        ...day,
+        availability: {
+          ...day.availability,
+          isAvailable: false,
+          slots: [],
+        },
+      })),
+    );
+  };
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-3">
       <p className="mb-4 text-sm text-gray-600">
         Toggle availability for each day and specify time slots.
       </p>
+
+      {/* New Time Template Section */}
+      <div className="mb-4 rounded-md bg-blue-50 p-4">
+        <h4 className="mb-2 text-sm font-semibold text-blue-800">
+          Apply a Time Slot to Multiple Days
+        </h4>
+        <div className="mb-3 flex items-center gap-2 text-sm">
+          <input
+            type="time"
+            value={templateTimeSlot.startTime}
+            onChange={(e) =>
+              setTemplateTimeSlot({
+                ...templateTimeSlot,
+                startTime: e.target.value,
+              })
+            }
+            className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
+          />
+          <span>-</span>
+          <input
+            type="time"
+            value={templateTimeSlot.endTime}
+            onChange={(e) =>
+              setTemplateTimeSlot({
+                ...templateTimeSlot,
+                endTime: e.target.value,
+              })
+            }
+            className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-start gap-2">
+          <button
+            onClick={() =>
+              applyTemplateToDays([
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ])
+            }
+            className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
+          >
+            Apply to All
+          </button>
+          <button
+            onClick={() =>
+              applyTemplateToDays([
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+              ])
+            }
+            className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
+          >
+            Apply to Weekdays
+          </button>
+          <button
+            onClick={() => applyTemplateToDays(["Sunday", "Saturday"])}
+            className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
+          >
+            Apply to Weekends
+          </button>
+          <button
+            onClick={deselectAllDays}
+            className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-200"
+          >
+            Deselect All
+          </button>
+        </div>
+      </div>
+
       {weeklySchedule.map((dayEntry: WeeklyScheduleEntry, dayIndex: number) => (
         <div
           key={dayEntry.day}
