@@ -18,7 +18,6 @@ import {
   UserCircleIcon,
   CheckBadgeIcon,
   Squares2X2Icon,
-  TagIcon,
 } from "@heroicons/react/24/solid";
 import { CameraIcon, DocumentCheckIcon } from "@heroicons/react/24/outline";
 
@@ -882,16 +881,27 @@ const ServiceDetailPage: React.FC = () => {
                 {name}
               </h1>
               <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
-                <TagIcon className="h-6 w-6 text-yellow-400" />
+                {category?.slug ? (
+                  <img
+                    src={`/images/categories/${category.slug}.svg`}
+                    alt={category.name || "Category"}
+                    className="h-6 w-6 object-contain"
+                    onError={(e) => {
+                      // fallback to a default icon if not found
+                      (e.currentTarget as HTMLImageElement).src =
+                        "/images/categories/others.svg";
+                    }}
+                  />
+                ) : null}
                 {category?.name ?? "General"}
               </p>
               <div className="mb-4 flex items-center text-base text-gray-600">
-                <MapPinIcon className="mr-2 h-6 w-6 text-blue-400" />
+                <MapPinIcon className="mr-2 h-6 w-6 text-blue-700" />
                 <span>{location?.address || "Baguio City"}</span>
               </div>
               <div className="mb-2 flex flex-wrap items-center gap-2 text-base text-gray-600">
                 <span className="flex items-center">
-                  <StarIcon className="mr-1 h-6 w-6 text-yellow-400" />
+                  <StarIcon className="mr-1 h-6 w-6 text-yellow-300" />
                   <span className="text-lg font-bold">
                     {averageRating.toFixed(1)}
                   </span>

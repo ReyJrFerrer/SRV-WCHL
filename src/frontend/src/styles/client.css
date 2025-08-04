@@ -3,7 +3,7 @@
 
 @layer components {
   .service-card {
-    @apply relative overflow-hidden rounded-xl bg-white shadow-md transition-transform duration-200 hover:scale-105 hover:transform;
+    @apply relative overflow-hidden rounded-xl bg-white shadow-md transition-transform duration-200;
   }
 
   .service-image {

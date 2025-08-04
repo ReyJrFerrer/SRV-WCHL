@@ -13,10 +13,6 @@
   transition-duration: 200ms;
 }
 
-.service-card:hover {
-  transform: scale(1.05);
-}
-
 .service-image {
   width: 100%;
   height: 12rem;
