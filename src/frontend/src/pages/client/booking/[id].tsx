@@ -1,4 +1,77 @@
 import React, { useState, useEffect } from "react";
+import { useReputation } from "../../../hooks/useReputation";
+// Reputation Score Component (from ServiceDetailPageComponent.tsx)
+const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
+  const { fetchUserReputation } = useReputation();
+  const [reputationScore, setReputationScore] = useState<number>(50); // Default score
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const loadReputation = async () => {
+      try {
+        setLoading(true);
+        const reputation = await fetchUserReputation(providerId);
+        if (reputation) {
+          setReputationScore(Math.round(reputation.trustScore));
+        } else {
+          setReputationScore(50); // Fallback to default
+        }
+      } catch (error) {
+        setReputationScore(50); // Fallback to default on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (providerId) {
+      loadReputation();
+    }
+  }, [providerId, fetchUserReputation]);
+
+  const score = reputationScore;
+  // let iconColor = "text-blue-600";
+  // let bgColor = "bg-blue-50";
+  // let textColor = "text-blue-700";
+  // if (score >= 80) {
+  //   iconColor = "text-blue-600";
+  //   bgColor = "bg-blue-50";
+  //   textColor = "text-blue-700";
+  // } else if (score >= 60) {
+  //   iconColor = "text-blue-400";
+  //   bgColor = "bg-blue-100";
+  //   textColor = "text-blue-700";
+  // } else if (score >= 40) {
+  //   iconColor = "text-yellow-400";
+  //   bgColor = "bg-yellow-50";
+  //   textColor = "text-yellow-700";
+  // } else {
+  //   iconColor = "text-yellow-600";
+  //   bgColor = "bg-yellow-100";
+  //   textColor = "text-yellow-700";
+  // }
+
+  if (loading) {
+    return (
+      <span
+        className="mt-2 mb-2 flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-600"
+        style={{ minWidth: 0 }}
+      >
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
+        <span className="mr-2">Loading reputation...</span>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="text-md mt-2 mb-2 flex items-center gap-2 font-semibold text-gray-900"
+      style={{ minWidth: 0 }}
+    >
+      <span>Reputation Score:</span>
+      <span>{score}</span>
+    </span>
+  );
+};
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -462,27 +535,32 @@ const BookingDetailsPage: React.FC = () => {
                 <p className="text-lg font-bold text-gray-900">
                   {providerProfile?.name || "N/A"}
                 </p>
+                <ReputationScore providerId={providerProfile?.id || ""} />
                 <p className="mt-1 flex items-center text-sm text-gray-500">
                   <PhoneIcon className="mr-1.5 h-4 w-4" />
                   {providerProfile?.phone || "No contact number"}
                 </p>
-                <div className="mt-2 flex items-center gap-2">
-                  {loadingStats ? (
-                    <p className="text-sm text-gray-400">Loading reviews...</p>
-                  ) : averageRating != null && reviewCount != null ? (
-                    <>
-                      <div className="flex items-center text-sm font-bold text-yellow-500">
-                        <StarIcon className="mr-1 h-4 w-4" />
-                        <span>{averageRating.toFixed(1)}</span>
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        ({reviewCount}{" "}
-                        {reviewCount === 1 ? "review" : "reviews"})
-                      </span>
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-400">No reviews yet</p>
-                  )}
+                <div className="mt-2 flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-2">
+                    {loadingStats ? (
+                      <p className="text-sm text-gray-400">
+                        Loading reviews...
+                      </p>
+                    ) : averageRating != null && reviewCount != null ? (
+                      <>
+                        <div className="flex items-center text-sm font-bold text-yellow-500">
+                          <StarIcon className="mr-1 h-4 w-4" />
+                          <span>{averageRating.toFixed(1)}</span>
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          ({reviewCount}{" "}
+                          {reviewCount === 1 ? "review" : "reviews"})
+                        </span>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-400">No reviews yet</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

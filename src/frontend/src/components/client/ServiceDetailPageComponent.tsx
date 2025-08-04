@@ -30,6 +30,7 @@ import { useAuth } from "../../context/AuthContext"; // Import auth context
 import { useReputation } from "../../hooks/useReputation"; // Import reputation hook
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { ServicePackage } from "../../services/serviceCanisterService";
+import { useUserImage } from "../../hooks/useImageLoader";
 
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
@@ -319,8 +320,10 @@ const ServiceDetailPage: React.FC = () => {
     loading: serviceLoading,
     error: serviceError,
   } = useServiceById(serviceId as string);
+
   const { getServicePackages } = useServiceManagement(); // Use the hook for package fetching
   const { conversations, createConversation, loading: chatLoading } = useChat(); // Add the useChat hook
+  const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
 
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState<boolean>(true);
@@ -331,7 +334,12 @@ const ServiceDetailPage: React.FC = () => {
       document.title = `${service.name} | SRV`;
     }
   }, [service]);
-  console.log(service);
+
+  useEffect(() => {
+    if (userImageUrl) {
+      refetch();
+    }
+  }, [userImageUrl, refetch]);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -448,8 +456,7 @@ const ServiceDetailPage: React.FC = () => {
     );
   }
 
-  const { rating, providerName, providerAvatar, name, category, location } =
-    service;
+  const { rating, providerName, name, category, location } = service;
   // Use isVerified from service object only
   const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
@@ -832,7 +839,11 @@ const ServiceDetailPage: React.FC = () => {
                     }}
                   >
                     <img
-                      src={providerAvatar || "/../default-provider.svg"}
+                      src={
+                        userImageUrl == "/default-avatar.png"
+                          ? `/images/ai-sp/${service.category.slug}.svg`
+                          : userImageUrl
+                      }
                       alt={providerName}
                       className="h-full w-full rounded-full object-cover"
                       style={{ borderRadius: "50%" }}
@@ -909,14 +920,12 @@ const ServiceDetailPage: React.FC = () => {
                   style={{ willChange: "transform" }}
                 >
                   <div className="flex flex-1 items-center gap-4">
-                    <div className="mr-2 flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-100 text-yellow-600">
-                      <Squares2X2Icon className="h-7 w-7" />
-                    </div>
+                    {/* Removed package icon here */}
                     <div className="flex min-w-0 flex-1 flex-col">
                       <h4 className="truncate text-lg font-bold text-gray-900">
                         {pkg.title}
                       </h4>
-                      <p className="mt-1 line-clamp-2 text-sm break-words text-gray-600">
+                      <p className="mt-1 text-sm break-words text-gray-600 md:line-clamp-2">
                         {pkg.description}
                       </p>
                     </div>

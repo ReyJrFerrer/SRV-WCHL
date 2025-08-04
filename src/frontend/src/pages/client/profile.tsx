@@ -13,7 +13,7 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
-import { useClientProfile } from "../../hooks/useClientProfile"; // Adjust path as needed
+import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout";
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
@@ -271,7 +271,7 @@ const ClientProfilePage: React.FC = () => {
     profileImageUrl,
     isImageLoading,
     refetchImage,
-  } = useClientProfile();
+  } = useUserProfile();
   const { logout } = useLogout();
   const {
     loading: reputationLoading,

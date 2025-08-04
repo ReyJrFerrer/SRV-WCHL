@@ -6,7 +6,9 @@ import {
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
 import useServiceById from "../../hooks/serviceDetail";
+import { useServiceReviews } from "../../hooks/reviewManagement";
 import { EnrichedService } from "../../hooks/serviceInformation";
+import { useUserImage } from "../../hooks/useImageLoader";
 
 interface ServiceListItemProps {
   service: EnrichedService;
@@ -20,10 +22,24 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     // Fetch the latest service data to get isVerified
     const { service: fetchedService } = useServiceById(service.id);
     const isVerified = fetchedService?.isVerified === true;
-    // Use service rating data directly from props instead of loading it individually
+    // Use the same logic as ServiceDetailPageComponent for review count
+    const { reviews = [], getAverageRating } = useServiceReviews(service.id);
+    const visibleReviews = Array.isArray(reviews)
+      ? reviews.filter((r) => r.status === "Visible")
+      : [];
+    const totalReviews =
+      visibleReviews.length > 0
+        ? visibleReviews.length
+        : typeof service.rating?.count === "number"
+          ? service.rating.count
+          : 0;
+    const averageRating =
+      visibleReviews.length > 0
+        ? getAverageRating(visibleReviews)
+        : service.rating?.average || 0;
     const serviceRating = {
-      average: service.rating?.average || 0,
-      count: service.rating?.count || 0,
+      average: averageRating,
+      count: totalReviews,
       loading: false,
     };
 
@@ -34,7 +50,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     // Determine availability status (simplified since we may not have full availability data)
     const isAvailable = service.availability?.isAvailable ?? false;
-    const availabilityText = isAvailable ? "Available" : "Not Available";
+    const availabilityText = isAvailable ? "Available Now" : "Not Available";
 
     const priceLocationContainerClass = retainMobileLayout
       ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100" // Price and Location on same line
@@ -98,7 +114,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
       return fallback;
     };
-
+    const { userImageUrl, refetch } = useUserImage(service.providerAvatar);
+    refetch();
     return (
       <Link
         to={`/client/service/${service.id}`}
@@ -109,10 +126,9 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className="aspect-video w-full bg-blue-50">
             <img
               src={
-                service.providerAvatar ||
-                (service.category?.slug
+                userImageUrl == "/default-avatar.png"
                   ? `/images/ai-sp/${service.category.slug}.svg`
-                  : "/images/ai-sp/default-provider.svg")
+                  : userImageUrl
               }
               alt={service.title}
               className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300 group-hover:scale-102"
