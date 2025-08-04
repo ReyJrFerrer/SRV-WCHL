@@ -399,17 +399,6 @@ const ServiceReviewsPage: React.FC = () => {
                     </span>
                   </div>
                 )}
-                {review.canEdit && (
-                  <div className="flex items-center space-x-2 border-t border-blue-50 pt-2">
-                    <button className="text-xs text-blue-600 hover:underline">
-                      Edit Review
-                    </button>
-                    <span className="text-xs text-blue-300">•</span>
-                    <button className="text-xs text-red-600 hover:underline">
-                      Delete Review
-                    </button>
-                  </div>
-                )}
               </div>
             ))}
           </div>

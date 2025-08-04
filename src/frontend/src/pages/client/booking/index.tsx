@@ -230,7 +230,7 @@ const MyBookingsPage: React.FC = () => {
 
           <div className="container mx-auto px-4 pt-2 pb-3">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-grow">
+              <div className="relative w-full sm:flex-grow">
                 <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
@@ -240,12 +240,12 @@ const MyBookingsPage: React.FC = () => {
                   className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <FunnelIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full appearance-none truncate rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500 sm:w-auto"
+                  className="w-full appearance-none truncate rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="all">All Types</option>
                   <option value="sameDay">Same Day</option>
