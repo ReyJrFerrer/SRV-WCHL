@@ -7,6 +7,7 @@ import Iter "mo:base/Iter";
 import Float "mo:base/Float";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
+import Buffer "mo:base/Buffer";
 
 import Types "../types/shared";
 import StaticData "../utils/staticData";
@@ -45,6 +46,7 @@ persistent actor ServiceCanister {
     private transient var bookingCanisterId : ?Principal = null;
     private transient var reviewCanisterId : ?Principal = null;
     private transient var reputationCanisterId : ?Principal = null;
+    private transient var mediaCanisterId : ?Principal = null;
 
     // Constants
     private transient let MIN_TITLE_LENGTH : Nat = 1;
@@ -53,19 +55,22 @@ persistent actor ServiceCanister {
     private transient let MAX_DESCRIPTION_LENGTH : Nat = 1000;
     private transient let MIN_PRICE : Nat = 1;
     private transient let MAX_PRICE : Nat = 1_000_000;
+    private transient let MAX_SERVICE_IMAGES : Nat = 5;
 
     // Set canister references
     public shared(_msg) func setCanisterReferences(
         auth : ?Principal,
         booking : ?Principal,
         review : ?Principal,
-        reputation : ?Principal
+        reputation : ?Principal,
+        media : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
         bookingCanisterId := booking;
         reviewCanisterId := review;
         reputationCanisterId := reputation;
+        mediaCanisterId := media;
         return #ok("Canister references set successfully");
     };
 
@@ -213,7 +218,8 @@ persistent actor ServiceCanister {
         weeklySchedule : ?[(DayOfWeek, DayAvailability)],
         instantBookingEnabled : ?Bool,
         bookingNoticeHours : ?Nat,
-        maxBookingsPerDay : ?Nat
+        maxBookingsPerDay : ?Nat,
+        serviceImages : ?[(Text, Text, Blob)] // (fileName, contentType, fileData)
     ) : async Result<Service> {
         let caller = msg.caller;
         
@@ -253,6 +259,47 @@ persistent actor ServiceCanister {
                 return #err("Category not found");
             };
         };
+
+        // Upload service images if provided
+        var imageUrls : [Text] = [];
+        switch (serviceImages) {
+            case (?images) {
+                // Validate image count
+                if (images.size() > MAX_SERVICE_IMAGES) {
+                    return #err("Maximum " # Nat.toText(MAX_SERVICE_IMAGES) # " images allowed per service");
+                };
+
+                // Upload images to media canister
+                switch (mediaCanisterId) {
+                    case (?mediaCanister) {
+                        let mediaActor = actor(Principal.toText(mediaCanister)) : actor {
+                            uploadMedia : (Text, Text, Types.MediaType, Blob) -> async Types.Result<Types.MediaItem>;
+                        };
+
+                        let uploadResults = Buffer.Buffer<Text>(images.size());
+                        for ((fileName, contentType, fileData) in images.vals()) {
+                            switch (await mediaActor.uploadMedia(fileName, contentType, #ServiceImage, fileData)) {
+                                case (#ok(mediaItem)) {
+                                    uploadResults.add(mediaItem.url);
+                                };
+                                case (#err(error)) {
+                                    return #err("Failed to upload image: " # error);
+                                };
+                            };
+                        };
+                        imageUrls := Buffer.toArray(uploadResults);
+                    };
+                    case (null) {
+                        if (images.size() > 0) {
+                            return #err("Media canister not configured");
+                        };
+                    };
+                };
+            };
+            case (null) {
+                // No images provided, use empty array
+            };
+        };
         
         let serviceId = generateId();
         
@@ -269,6 +316,7 @@ persistent actor ServiceCanister {
             updatedAt = Time.now();
             rating = null;
             reviewCount = 0;
+            imageUrls = imageUrls;
             // Availability information
             weeklySchedule = weeklySchedule;
             instantBookingEnabled = instantBookingEnabled;
@@ -385,6 +433,7 @@ persistent actor ServiceCanister {
                     updatedAt = Time.now();
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
+                    imageUrls = existingService.imageUrls;
                     // Preserve availability information
                     weeklySchedule = existingService.weeklySchedule;
                     instantBookingEnabled = existingService.instantBookingEnabled;
@@ -494,6 +543,7 @@ persistent actor ServiceCanister {
                     updatedAt = Time.now();
                     rating = ?newRating;
                     reviewCount = newReviewCount;
+                    imageUrls = existingService.imageUrls;
                     // Preserve availability information
                     weeklySchedule = existingService.weeklySchedule;
                     instantBookingEnabled = existingService.instantBookingEnabled;
@@ -627,6 +677,7 @@ persistent actor ServiceCanister {
                     updatedAt = Time.now();
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
+                    imageUrls = existingService.imageUrls; // Preserve existing images
                     // Update availability information
                     weeklySchedule = updatedWeeklySchedule;
                     instantBookingEnabled = updatedInstantBookingEnabled;
@@ -739,6 +790,224 @@ persistent actor ServiceCanister {
             };
         };
     };
+
+    // SERVICE IMAGE MANAGEMENT FUNCTIONS
+
+    // Upload additional images to existing service
+    public shared(msg) func uploadServiceImages(
+        serviceId : Text,
+        serviceImages : [(Text, Text, Blob)] // (fileName, contentType, fileData)
+    ) : async Result<Service> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to update this service");
+                };
+
+                // Check total image count after upload
+                let currentImageCount = existingService.imageUrls.size();
+                let newImageCount = serviceImages.size();
+                
+                if (currentImageCount + newImageCount > MAX_SERVICE_IMAGES) {
+                    return #err("Cannot exceed maximum of " # Nat.toText(MAX_SERVICE_IMAGES) # " images per service. Current: " # Nat.toText(currentImageCount) # ", Adding: " # Nat.toText(newImageCount));
+                };
+
+                // Upload new images to media canister
+                switch (mediaCanisterId) {
+                    case (?mediaCanister) {
+                        let mediaActor = actor(Principal.toText(mediaCanister)) : actor {
+                            uploadMedia : (Text, Text, Types.MediaType, Blob) -> async Types.Result<Types.MediaItem>;
+                        };
+
+                        let uploadResults = Buffer.Buffer<Text>(newImageCount);
+                        for ((fileName, contentType, fileData) in serviceImages.vals()) {
+                            switch (await mediaActor.uploadMedia(fileName, contentType, #ServiceImage, fileData)) {
+                                case (#ok(mediaItem)) {
+                                    uploadResults.add(mediaItem.url);
+                                };
+                                case (#err(error)) {
+                                    return #err("Failed to upload image: " # error);
+                                };
+                            };
+                        };
+
+                        // Combine existing and new image URLs
+                        let existingUrls = Buffer.fromArray<Text>(existingService.imageUrls);
+                        let newUrls = Buffer.toArray(uploadResults);
+                        for (url in newUrls.vals()) {
+                            existingUrls.add(url);
+                        };
+
+                        let updatedService : Service = {
+                            id = existingService.id;
+                            providerId = existingService.providerId;
+                            title = existingService.title;
+                            description = existingService.description;
+                            category = existingService.category;
+                            price = existingService.price;
+                            location = existingService.location;
+                            status = existingService.status;
+                            createdAt = existingService.createdAt;
+                            updatedAt = Time.now();
+                            rating = existingService.rating;
+                            reviewCount = existingService.reviewCount;
+                            imageUrls = Buffer.toArray(existingUrls);
+                            weeklySchedule = existingService.weeklySchedule;
+                            instantBookingEnabled = existingService.instantBookingEnabled;
+                            bookingNoticeHours = existingService.bookingNoticeHours;
+                            maxBookingsPerDay = existingService.maxBookingsPerDay;
+                        };
+
+                        services.put(serviceId, updatedService);
+                        return #ok(updatedService);
+                    };
+                    case (null) {
+                        return #err("Media canister not configured");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+
+    // Remove specific image from service
+    public shared(msg) func removeServiceImage(
+        serviceId : Text,
+        imageUrl : Text
+    ) : async Result<Service> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to update this service");
+                };
+
+                // Check if image exists in service
+                let imageExists = Array.find<Text>(existingService.imageUrls, func(url : Text) : Bool {
+                    url == imageUrl
+                });
+
+                switch (imageExists) {
+                    case (?_) {
+                        // Remove image URL from service
+                        let filteredUrls = Array.filter<Text>(existingService.imageUrls, func(url : Text) : Bool {
+                            url != imageUrl
+                        });
+
+                        let updatedService : Service = {
+                            id = existingService.id;
+                            providerId = existingService.providerId;
+                            title = existingService.title;
+                            description = existingService.description;
+                            category = existingService.category;
+                            price = existingService.price;
+                            location = existingService.location;
+                            status = existingService.status;
+                            createdAt = existingService.createdAt;
+                            updatedAt = Time.now();
+                            rating = existingService.rating;
+                            reviewCount = existingService.reviewCount;
+                            imageUrls = filteredUrls;
+                            weeklySchedule = existingService.weeklySchedule;
+                            instantBookingEnabled = existingService.instantBookingEnabled;
+                            bookingNoticeHours = existingService.bookingNoticeHours;
+                            maxBookingsPerDay = existingService.maxBookingsPerDay;
+                        };
+
+                        services.put(serviceId, updatedService);
+
+                        // Optionally delete from media canister
+                        // Note: We would need to extract media ID from URL and call deleteMedia
+                        // For now, just removing the reference from service
+
+                        return #ok(updatedService);
+                    };
+                    case (null) {
+                        return #err("Image not found in service");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+
+    // Reorder service images
+    public shared(msg) func reorderServiceImages(
+        serviceId : Text,
+        orderedImageUrls : [Text]
+    ) : async Result<Service> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to update this service");
+                };
+
+                // Validate that all provided URLs exist in current service
+                if (orderedImageUrls.size() != existingService.imageUrls.size()) {
+                    return #err("Provided image list size doesn't match current service images");
+                };
+
+                for (url in orderedImageUrls.vals()) {
+                    let urlExists = Array.find<Text>(existingService.imageUrls, func(existingUrl : Text) : Bool {
+                        existingUrl == url
+                    });
+                    switch (urlExists) {
+                        case (null) {
+                            return #err("Image URL not found in service: " # url);
+                        };
+                        case (?_) {};
+                    };
+                };
+
+                let updatedService : Service = {
+                    id = existingService.id;
+                    providerId = existingService.providerId;
+                    title = existingService.title;
+                    description = existingService.description;
+                    category = existingService.category;
+                    price = existingService.price;
+                    location = existingService.location;
+                    status = existingService.status;
+                    createdAt = existingService.createdAt;
+                    updatedAt = Time.now();
+                    rating = existingService.rating;
+                    reviewCount = existingService.reviewCount;
+                    imageUrls = orderedImageUrls;
+                    weeklySchedule = existingService.weeklySchedule;
+                    instantBookingEnabled = existingService.instantBookingEnabled;
+                    bookingNoticeHours = existingService.bookingNoticeHours;
+                    maxBookingsPerDay = existingService.maxBookingsPerDay;
+                };
+
+                services.put(serviceId, updatedService);
+                return #ok(updatedService);
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
     
     // Add a new category
     public shared(msg) func addCategory(
@@ -829,6 +1098,7 @@ persistent actor ServiceCanister {
                     updatedAt = Time.now();
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
+                    imageUrls = existingService.imageUrls;
                     // UPDATE: Sync availability information with the service record
                     weeklySchedule = ?weeklySchedule;
                     instantBookingEnabled = ?instantBookingEnabled;
