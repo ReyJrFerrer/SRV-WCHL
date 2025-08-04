@@ -13,7 +13,7 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
-import { useProviderProfile } from "../../hooks/useProviderProfile"; // Adjust path as needed
+import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
@@ -315,7 +315,7 @@ const SPProfilePage: React.FC = () => {
     profileImageUrl,
     isImageLoading,
     refetchImage,
-  } = useProviderProfile();
+  } = useUserProfile();
   const {
     loading: reputationLoading,
     error: reputationError,

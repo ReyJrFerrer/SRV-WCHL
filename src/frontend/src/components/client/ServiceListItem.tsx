@@ -8,6 +8,7 @@ import {
 import useServiceById from "../../hooks/serviceDetail";
 import { useServiceReviews } from "../../hooks/reviewManagement";
 import { EnrichedService } from "../../hooks/serviceInformation";
+import { useUserImage } from "../../hooks/useImageLoader";
 
 interface ServiceListItemProps {
   service: EnrichedService;
@@ -113,7 +114,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
       return fallback;
     };
-
+    const { userImageUrl, refetch } = useUserImage(service.providerAvatar);
+    refetch();
     return (
       <Link
         to={`/client/service/${service.id}`}
@@ -124,10 +126,9 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className="aspect-video w-full bg-blue-50">
             <img
               src={
-                service.providerAvatar ||
-                (service.category?.slug
+                userImageUrl == "/default-avatar.png"
                   ? `/images/ai-sp/${service.category.slug}.svg`
-                  : "/images/ai-sp/default-provider.svg")
+                  : userImageUrl
               }
               alt={service.title}
               className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300 group-hover:scale-102"

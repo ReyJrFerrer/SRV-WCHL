@@ -11,13 +11,19 @@ import {
 } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/provider/BottomNavigation"; // Adjust path as needed
 import { useLogout } from "../../hooks/logout"; // Adjust path as needed
-import { useProviderProfile } from "../../hooks/useProviderProfile"; // Hook to get profile data
+import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
 
 const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { logout } = useLogout();
   const navigate = useNavigate();
-  const { profile, loading: profileLoading, switchRole } = useProviderProfile();
+  const {
+    profile,
+    loading: profileLoading,
+    switchRole,
+    profileImageUrl,
+    refetchImage,
+  } = useUserProfile();
 
   // Set the document title when the component mounts
   useEffect(() => {
@@ -48,6 +54,8 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  refetchImage();
+
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
@@ -70,10 +78,7 @@ const SettingsPage: React.FC = () => {
                     <div className="mr-4 h-12 w-12 animate-pulse rounded-full bg-gray-200"></div>
                   ) : (
                     <img
-                      src={
-                        profile?.profilePicture?.imageUrl ||
-                        "/default-provider.svg"
-                      } // Fallback to a default avatar
+                      src={profileImageUrl || "/default-provider.svg"} // Fallback to a default avatar
                       alt="Profile"
                       className="mr-4 h-12 w-12 rounded-full object-cover"
                     />

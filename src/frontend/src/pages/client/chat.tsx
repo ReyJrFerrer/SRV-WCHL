@@ -6,6 +6,7 @@ import { useChat } from "../../hooks/useChat";
 // Components
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
+import { useUserImage } from "../../hooks/useImageLoader";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();

@@ -9,7 +9,7 @@ import { useProfileImage } from "./useImageLoader";
 /**
  * Custom hook to manage the client's profile data, including fetching and updating.
  */
-export const useClientProfile = () => {
+export const useUserProfile = () => {
   const { isAuthenticated, identity } = useAuth();
 
   const [profile, setProfile] = useState<FrontendProfile | null>(null);

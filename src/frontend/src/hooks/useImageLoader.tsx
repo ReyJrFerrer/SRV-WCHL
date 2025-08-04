@@ -137,4 +137,35 @@ export const useProfileImage = (
   };
 };
 
+/***
+ * Hook for fetching service provider profile pictures
+ *
+ * Inclues fallback to default provider avatar
+ */
+export const useUserImage = (
+  profilePictureUrl: string | null | undefined,
+
+  options: UseImageLoaderOptions = {},
+) => {
+  const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
+    useImageLoader(profilePictureUrl, {
+      ...options,
+    });
+
+  return {
+    /** The profile image URL (with fallback to default avatar) */
+    userImageUrl: isSuccess && imageDataUrl ? imageDataUrl : undefined,
+    /** Whether the profile image is loading */
+    isLoading: isLoading && !!profilePictureUrl,
+    /** Whether to show the default avatar */
+    isUsingDefaultAvatar: !profilePictureUrl || (!isSuccess && !isLoading),
+    /** Any error that occurred */
+    error,
+    /** Whether an error occurred */
+    isError,
+    /** Function to manually refetch the image */
+    refetch,
+  };
+};
+
 export default useImageLoader;

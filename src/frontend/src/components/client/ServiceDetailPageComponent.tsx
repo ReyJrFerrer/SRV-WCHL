@@ -30,6 +30,7 @@ import { useAuth } from "../../context/AuthContext"; // Import auth context
 import { useReputation } from "../../hooks/useReputation"; // Import reputation hook
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { ServicePackage } from "../../services/serviceCanisterService";
+import { useUserImage } from "../../hooks/useImageLoader";
 
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
@@ -319,8 +320,10 @@ const ServiceDetailPage: React.FC = () => {
     loading: serviceLoading,
     error: serviceError,
   } = useServiceById(serviceId as string);
+
   const { getServicePackages } = useServiceManagement(); // Use the hook for package fetching
   const { conversations, createConversation, loading: chatLoading } = useChat(); // Add the useChat hook
+  const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
 
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState<boolean>(true);
@@ -331,7 +334,12 @@ const ServiceDetailPage: React.FC = () => {
       document.title = `${service.name} | SRV`;
     }
   }, [service]);
-  console.log(service);
+
+  useEffect(() => {
+    if (userImageUrl) {
+      refetch();
+    }
+  }, [userImageUrl, refetch]);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -448,8 +456,7 @@ const ServiceDetailPage: React.FC = () => {
     );
   }
 
-  const { rating, providerName, providerAvatar, name, category, location } =
-    service;
+  const { rating, providerName, name, category, location } = service;
   // Use isVerified from service object only
   const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
@@ -832,7 +839,11 @@ const ServiceDetailPage: React.FC = () => {
                     }}
                   >
                     <img
-                      src={providerAvatar || "/../default-provider.svg"}
+                      src={
+                        userImageUrl == "/default-avatar.png"
+                          ? `/images/ai-sp/${service.category.slug}.svg`
+                          : userImageUrl
+                      }
                       alt={providerName}
                       className="h-full w-full rounded-full object-cover"
                       style={{ borderRadius: "50%" }}
