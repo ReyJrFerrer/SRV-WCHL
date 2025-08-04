@@ -91,15 +91,15 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     // Category icon mapping
     const categoryIconMap: Record<string, string> = {
-      "gadget-technicians": "gadget repair.svg",
-      "beauty-services": "Beauty Services.svg",
-      "home-services": "repairs.svg",
-      "beauty-wellness": "wellnes.svg",
-      "automobile-repairs": "auto.svg",
-      "cleaning-services": "cleaning.svg",
-      "delivery-errands": "delivery.svg",
-      photographer: "photography.svg",
-      tutoring: "tutor.svg",
+      "gadget-technicians": "gadget-technicians.svg",
+      "beauty-services": "beauty-services.svg",
+      "home-services": "home-services.svg",
+      "beauty-wellness": "beauty-wellness.svg",
+      "automobile-repairs": "automobile-repairs.svg",
+      "cleaning-services": "cleaning-services.svg",
+      "delivery-errands": "delivery-errands.svg",
+      photographer: "photographer.svg",
+      tutoring: "tutoring.svg",
       others: "others.svg",
     };
 
@@ -119,7 +119,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     return (
       <Link
         to={`/client/service/${service.id}`}
-        className={`service-card block ${itemWidthClass} group flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-white/90 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl`}
+        className={`service-card block ${itemWidthClass} group flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-white/90 shadow-lg transition-all duration-200 hover:border-yellow-400`}
       >
         <div className="relative">
           {/* Image container */}
@@ -131,7 +131,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   : userImageUrl
               }
               alt={service.title}
-              className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300 group-hover:scale-102"
+              className="service-image h-full w-full rounded-t-2xl object-cover transition-transform duration-300"
               onError={(e) => {
                 // If .png fails, try .webp, then fallback to svg
                 const slug = service.category?.slug;
@@ -176,7 +176,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           </div>
         </div>
 
-        <div className="service-content flex flex-grow flex-col p-4">
+        <div className="service-content relative flex flex-grow flex-col p-4">
           <div className="flex-grow">
             {/* Service title at the top */}
             <p className="mb-1 truncate text-lg leading-tight font-bold text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
@@ -246,6 +246,12 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               </div>
             </div>
           </div>
+        </div>
+        {/* 'Check service' banner on hover, now below the card content */}
+        <div className="hidden h-10 w-full items-center justify-center rounded-b-2xl border-t border-yellow-300 bg-yellow-200 group-hover:flex">
+          <span className="text-base font-bold tracking-wide text-blue-800">
+            Check service
+          </span>
         </div>
       </Link>
     );

@@ -114,7 +114,7 @@ export const useProfileImage = (
   profilePictureUrl: string | null | undefined,
   options: UseImageLoaderOptions = {},
 ) => {
-  const defaultAvatar = "/default.svg"; // Assuming you have a default avatar
+  const defaultAvatar = "/default-client.svg"; // Assuming you have a default avatar
 
   const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
     useImageLoader(profilePictureUrl, {

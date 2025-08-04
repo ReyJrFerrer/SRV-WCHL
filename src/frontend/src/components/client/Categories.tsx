@@ -36,22 +36,24 @@ const getCategoryDisplayName = (name: string): string => {
 const getImageUrlForCategory = (name: string): string => {
   const lowerName = name.toLowerCase();
   if (lowerName.includes("home") || lowerName.includes("house"))
-    return "/images/categories/repairs.svg";
-  if (lowerName.includes("clean")) return "/images/categories/cleaning.svg";
+    return "/images/categories/home-services.svg";
+  if (lowerName.includes("clean"))
+    return "/images/categories/cleaning-services.svg";
   if (lowerName.includes("auto") || lowerName.includes("car"))
-    return "/images/categories/auto.svg";
+    return "/images/categories/automobile-repairs.svg";
   if (lowerName.includes("gadget") || lowerName.includes("tech"))
-    return "/images/categories/gadget repair.svg";
-  if (lowerName.includes("massage") || lowerName.includes("massage"))
-    return "/images/categories/wellnes.svg";
+    return "/images/categories/gadget-technicians.svg";
+  if (lowerName.includes("massage") || lowerName.includes("wellness"))
+    return "/images/categories/beauty-wellness.svg";
   if (lowerName.includes("beauty"))
-    return "/images/categories/Beauty Services.svg";
-  if (lowerName.includes("delivery")) return "/images/categories/delivery.svg";
+    return "/images/categories/beauty-services.svg";
+  if (lowerName.includes("delivery"))
+    return "/images/categories/delivery-errands.svg";
   if (lowerName.includes("electrician"))
     return "/images/categories/electrician.svg";
   if (lowerName.includes("plumbing")) return "/images/categories/plumber.svg";
-  if (lowerName.includes("photo")) return "/images/categories/photography.svg";
-  if (lowerName.includes("tutor")) return "/images/categories/tutor.svg";
+  if (lowerName.includes("photo")) return "/images/categories/photographer.svg";
+  if (lowerName.includes("tutor")) return "/images/categories/tutoring.svg";
   if (lowerName.includes("others")) return "/images/categories/others.svg";
 
   // Fallback image if no match is found
