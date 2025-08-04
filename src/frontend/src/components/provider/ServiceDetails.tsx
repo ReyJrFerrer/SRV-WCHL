@@ -2,6 +2,17 @@ import React, { useState } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { ServiceCategory } from "../../services/serviceCanisterService";
 
+// Validation errors interface
+interface ValidationErrors {
+  serviceOfferingTitle?: string;
+  categoryId?: string;
+  servicePackages?: string; // Now a single string
+  availabilitySchedule?: string;
+  timeSlots?: string;
+  locationMunicipalityCity?: string;
+  general?: string;
+}
+
 interface ServiceDetailsProps {
   formData: {
     serviceOfferingTitle: string;
@@ -29,12 +40,7 @@ interface ServiceDetailsProps {
   ) => void;
   addPackage: () => void;
   removePackage: (id: string) => void;
-  validationErrors?: {
-    serviceOfferingTitle?: string;
-    categoryId?: string;
-    servicePackages?: string;
-  };
-  // New prop for handling category requests
+  validationErrors?: ValidationErrors;
   onRequestCategory: (categoryName: string) => void;
 }
 
@@ -47,9 +53,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   addPackage,
   removePackage,
   validationErrors = {},
-  onRequestCategory, // Destructure the new prop
+  onRequestCategory,
 }) => {
-  // State for the new category request input field
   const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [categoryRequestError, setCategoryRequestError] = useState<string>("");
 
@@ -58,15 +63,15 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   ) => {
     setNewCategoryName(e.target.value);
     if (e.target.value) {
-      setCategoryRequestError(""); // Clear error when user starts typing
+      setCategoryRequestError("");
     }
   };
 
   const handleRequestCategoryClick = () => {
     if (newCategoryName.trim()) {
       onRequestCategory(newCategoryName);
-      setNewCategoryName(""); // Clear the input after requesting
-      setCategoryRequestError(""); // Clear any previous error
+      setNewCategoryName("");
+      setCategoryRequestError("");
     } else {
       setCategoryRequestError("Please enter a category name to request.");
     }
@@ -249,7 +254,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           }
                           rows={3}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          className={`mt-1 block w-full rounded-md px-3 py-2 shadow-sm sm:text-sm border-gray-300 bg-gray-50 focus:border-blue-500 focus:ring-blue-500`}
                           placeholder="Describe what's included in this package."
                         />
                       </div>
