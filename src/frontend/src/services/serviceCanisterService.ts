@@ -5,6 +5,7 @@ import { canisterId as authCanisterId } from "../../../declarations/auth";
 import { canisterId as bookingCanisterId } from "../../../declarations/booking";
 import { canisterId as reviewCanisterId } from "../../../declarations/review";
 import { canisterId as reputationCanisterId } from "../../../declarations/reputation";
+import { canisterId as mediaCanisterId } from "../../../declarations/media";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as ServiceService,
@@ -132,6 +133,7 @@ export interface Service {
   status: ServiceStatus;
   rating?: number;
   reviewCount: number;
+  imageUrls: string[]; // Array of media URLs for service images (max 5)
   weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>;
   instantBookingEnabled?: boolean;
   bookingNoticeHours?: number;
@@ -302,6 +304,7 @@ const convertCanisterService = (service: CanisterService): Service => ({
   status: convertCanisterServiceStatus(service.status),
   rating: service.rating[0],
   reviewCount: Number(service.reviewCount),
+  imageUrls: service.imageUrls || [], // Convert canister imageUrls or default to empty array
   weeklySchedule: service.weeklySchedule[0]?.map(([day, avail]) => ({
     day: convertCanisterDayOfWeek(day),
     availability: convertCanisterDayAvailability(avail),
@@ -344,9 +347,23 @@ export const serviceCanisterService = {
     instantBookingEnabled?: boolean,
     bookingNoticeHours?: number,
     maxBookingsPerDay?: number,
+    serviceImages?: Array<{
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }>,
   ): Promise<Service | null> {
     try {
       const actor = await getServiceActor(true);
+
+      // Convert service images to canister format
+      const canisterImages: [string, string, Uint8Array][] =
+        serviceImages?.map(({ fileName, contentType, fileData }) => [
+          fileName,
+          contentType,
+          fileData,
+        ]) || [];
+
       const result = await actor.createService(
         title,
         description,
@@ -364,6 +381,7 @@ export const serviceCanisterService = {
         instantBookingEnabled ? [instantBookingEnabled] : [],
         bookingNoticeHours ? [BigInt(bookingNoticeHours)] : [],
         maxBookingsPerDay ? [BigInt(maxBookingsPerDay)] : [],
+        canisterImages.length > 0 ? [canisterImages] : [],
       );
 
       if ("ok" in result) {
@@ -766,6 +784,7 @@ export const serviceCanisterService = {
         [Principal.fromText(bookingCanisterId)],
         [Principal.fromText(reviewCanisterId)],
         [Principal.fromText(reputationCanisterId)],
+        [Principal.fromText(mediaCanisterId)],
       );
 
       if ("ok" in result) {
@@ -966,6 +985,92 @@ export const serviceCanisterService = {
     } catch (error) {
       console.error("Error deleting service:", error);
       throw new Error(`Failed to delete service: ${error}`);
+    }
+  },
+
+  /**
+   * Upload additional images to existing service
+   */
+  async uploadServiceImages(
+    serviceId: string,
+    serviceImages: Array<{
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }>,
+  ): Promise<Service | null> {
+    try {
+      const actor = await getServiceActor(true);
+
+      // Convert service images to canister format
+      const canisterImages: [string, string, Uint8Array][] = serviceImages.map(
+        ({ fileName, contentType, fileData }) => [
+          fileName,
+          contentType,
+          fileData,
+        ],
+      );
+
+      const result = await actor.uploadServiceImages(serviceId, canisterImages);
+
+      if ("ok" in result) {
+        return convertCanisterService(result.ok);
+      } else {
+        console.error("Error uploading service images:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error uploading service images:", error);
+      throw new Error(`Failed to upload service images: ${error}`);
+    }
+  },
+
+  /**
+   * Remove specific image from service
+   */
+  async removeServiceImage(
+    serviceId: string,
+    imageUrl: string,
+  ): Promise<Service | null> {
+    try {
+      const actor = await getServiceActor(true);
+      const result = await actor.removeServiceImage(serviceId, imageUrl);
+
+      if ("ok" in result) {
+        return convertCanisterService(result.ok);
+      } else {
+        console.error("Error removing service image:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error removing service image:", error);
+      throw new Error(`Failed to remove service image: ${error}`);
+    }
+  },
+
+  /**
+   * Reorder service images
+   */
+  async reorderServiceImages(
+    serviceId: string,
+    orderedImageUrls: string[],
+  ): Promise<Service | null> {
+    try {
+      const actor = await getServiceActor(true);
+      const result = await actor.reorderServiceImages(
+        serviceId,
+        orderedImageUrls,
+      );
+
+      if ("ok" in result) {
+        return convertCanisterService(result.ok);
+      } else {
+        console.error("Error reordering service images:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error reordering service images:", error);
+      throw new Error(`Failed to reorder service images: ${error}`);
     }
   },
 };

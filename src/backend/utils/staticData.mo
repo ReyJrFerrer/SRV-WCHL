@@ -277,6 +277,7 @@ module {
                 updatedAt = 1640995200000000000;
                 rating = ?4.8;
                 reviewCount = 23;
+                imageUrls = []; // Empty for static data
                 // Availability information
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "17:00" }] }),
@@ -311,6 +312,7 @@ module {
                 updatedAt = 1640995200000000000;
                 rating = ?4.9;
                 reviewCount = 31;
+                imageUrls = []; // Empty for static data
                 // Availability information - 24/7 emergency service
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "00:00"; endTime = "23:59" }] }),
@@ -345,6 +347,7 @@ module {
                 updatedAt = 1640995200000000000;
                 rating = ?4.6;
                 reviewCount = 18;
+                imageUrls = []; // Empty for static data
                 // Availability information
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "18:00" }] }),
@@ -379,6 +382,7 @@ module {
                 updatedAt = 1640995200000000000;
                 rating = ?4.7;
                 reviewCount = 27;
+                imageUrls = [];
                 // Availability information - Beauty salon hours
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = false; slots = [] }), // Closed Mondays
@@ -413,6 +417,7 @@ module {
                 updatedAt = 1641081600000000000;
                 rating = ?4.7;
                 reviewCount = 19;
+                imageUrls = [];
                 // Availability information - Handyman service schedule
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "17:00" }] }),
