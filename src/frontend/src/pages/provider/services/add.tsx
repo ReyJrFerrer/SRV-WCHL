@@ -256,17 +256,13 @@ const AddServicePage: React.FC = () => {
                 errors.servicePackages = `Package ${
                   index + 1
                 }: Name is required`;
-              } else if (
-                pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH
-              ) {
+              } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
                 errors.servicePackages = `Package ${
                   index + 1
                 }: Name must be at least ${
                   VALIDATION_LIMITS.MIN_TITLE_LENGTH
                 } character`;
-              } else if (
-                pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH
-              ) {
+              } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
                 errors.servicePackages = `Package ${
                   index + 1
                 }: Name must be no more than ${
