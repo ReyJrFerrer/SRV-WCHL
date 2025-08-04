@@ -909,14 +909,12 @@ const ServiceDetailPage: React.FC = () => {
                   style={{ willChange: "transform" }}
                 >
                   <div className="flex flex-1 items-center gap-4">
-                    <div className="mr-2 flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-100 text-yellow-600">
-                      <Squares2X2Icon className="h-7 w-7" />
-                    </div>
+                    {/* Removed package icon here */}
                     <div className="flex min-w-0 flex-1 flex-col">
                       <h4 className="truncate text-lg font-bold text-gray-900">
                         {pkg.title}
                       </h4>
-                      <p className="mt-1 line-clamp-2 text-sm break-words text-gray-600">
+                      <p className="mt-1 text-sm break-words text-gray-600 md:line-clamp-2">
                         {pkg.description}
                       </p>
                     </div>
