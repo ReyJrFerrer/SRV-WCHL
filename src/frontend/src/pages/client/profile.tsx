@@ -260,6 +260,88 @@ const ClientStats: React.FC = () => {
   );
 };
 
+// ProfilePictureModal: Clickable, hoverable, pops out in modal using canonical backend image
+interface ProfilePictureModalProps {
+  src: string | null | undefined;
+  isLoading: boolean;
+}
+
+const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
+  src,
+  isLoading,
+}) => {
+  const [showModal, setShowModal] = React.useState(false);
+  // Profile picture modal and trigger (centered, top of left column)
+  return (
+    <>
+      <div
+        className="relative mb-4 flex cursor-pointer items-center justify-center"
+        onClick={() => setShowModal(true)}
+        tabIndex={0}
+        aria-label="View profile picture"
+        role="button"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setShowModal(true);
+        }}
+      >
+        {isLoading ? (
+          <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+          </div>
+        ) : (
+          <img
+            src={src || "/default-client.svg"}
+            alt="Profile Picture"
+            className="h-32 w-32 rounded-full border-4 border-yellow-200 object-cover shadow-lg transition-all duration-200 hover:border-blue-700 focus:border-blue-700"
+            tabIndex={-1}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/default-client.svg";
+            }}
+          />
+        )}
+      </div>
+      {/* Modal: Large profile picture preview (centered overlay) */}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setShowModal(false)}
+        >
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={src || "/default-client.svg"}
+              alt="Profile Picture Large"
+              className="max-h-[80vh] max-w-[90vw] rounded-2xl border-4 border-white bg-white shadow-2xl"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/default-client.svg";
+              }}
+            />
+            <button
+              className="absolute top-2 right-2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+              onClick={() => setShowModal(false)}
+              aria-label="Close"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -321,46 +403,31 @@ const ClientProfilePage: React.FC = () => {
     const success = await updateProfile({ name, phone, imageFile });
     if (success) {
       setIsEditing(false);
-      setImageFile(null); // Clear the file after saving
-      setPreviewImage(null); // Clear preview, let hook handle the display
-      refetchImage(); // Refetch the image through the hook
+      setImageFile(null);
+      setPreviewImage(null);
+      refetchImage();
     }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setName(profile?.name || "");
+    setPhone(profile?.phone || "");
     setImageFile(null);
-    setPreviewImage(null); // Clear preview to show original image
-    // Reset fields to original profile data
-    if (profile) {
-      setName(profile.name);
-      setPhone(profile.phone || "");
-    }
+    setPreviewImage(null);
   };
 
   const handleSwitchToProvider = async () => {
     setIsSwitchingRole(true);
     try {
-      const success = await switchRole();
-      if (success) {
-        // Navigate to provider dashboard after successful role switch
-        navigate("/provider");
-      }
-    } catch (error) {
-      console.error("Failed to switch role:", error);
-      // Error is already handled in the hook and displayed in the UI
+      await switchRole();
+      navigate("/provider/profile");
+    } catch (err) {
+      // handle error if needed
     } finally {
       setIsSwitchingRole(false);
     }
   };
-
-  if (loading && !profile) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading profile...
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
@@ -376,28 +443,19 @@ const ClientProfilePage: React.FC = () => {
         </div>
       </header>
 
+      {/* ===================== Main Profile Page Layout ===================== */}
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-          {/* Left Column: Profile Info, Switch Button, Logout */}
+          {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
           <div className="flex flex-col space-y-4 lg:col-span-1">
+            {/* Profile Info Card (top left) */}
             <div className="rounded-xl bg-white p-6 shadow-md">
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-4">
-                  {isImageLoading && !previewImage ? (
-                    <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
-                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                    </div>
-                  ) : (
-                    <img
-                      src={previewImage || profileImageUrl}
-                      alt="Profile Picture"
-                      className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "/default-client.svg";
-                      }}
-                    />
-                  )}
+                  <ProfilePictureModal
+                    src={previewImage || profileImageUrl}
+                    isLoading={isImageLoading}
+                  />
                   {isEditing && (
                     <>
                       <input
@@ -417,6 +475,7 @@ const ClientProfilePage: React.FC = () => {
                   )}
                 </div>
 
+                {/* Name and phone display or edit fields */}
                 {!isEditing ? (
                   <>
                     <h2 className="text-2xl font-bold text-gray-800">
@@ -461,6 +520,7 @@ const ClientProfilePage: React.FC = () => {
                   </div>
                 )}
 
+                {/* Edit/Save/Cancel Buttons */}
                 <div className="mt-6">
                   {!isEditing ? (
                     <button
@@ -490,7 +550,7 @@ const ClientProfilePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* --- Switch to SRVice Provider Button --- */}
+            {/* Switch to Provider Button (below profile info) */}
             <div className="rounded-lg bg-yellow-300 shadow-sm">
               <button
                 onClick={handleSwitchToProvider}
@@ -520,7 +580,7 @@ const ClientProfilePage: React.FC = () => {
                 )}
               </button>
             </div>
-            {/* Logout button for desktop (left column) */}
+            {/* Desktop Logout Button (bottom of left column) */}
             <div className="hidden lg:block">
               <button
                 onClick={logout}
@@ -531,13 +591,13 @@ const ClientProfilePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Reputation and Stats */}
+          {/* --- Right Column: Reputation and Stats --- */}
           <div className="mt-8 lg:col-span-2 lg:mt-0">
             <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
               <h3 className="mb-6 text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
                 Your Reputation Score
               </h3>
-              {/* Reputation Loading State */}
+              {/* Reputation Score, Trust Level, and About Info */}
               {reputationLoading ? (
                 <div className="flex justify-center">
                   <div className="flex h-48 w-48 items-center justify-center">
@@ -582,7 +642,7 @@ const ClientProfilePage: React.FC = () => {
                   <div className="mb-2 flex justify-center">
                     <ReputationScore score={reputationScore} />
                   </div>
-                  {/* Trust Level Badge */}
+                  {/* Trust Level Badge and About Info (right column) */}
                   {reputationDisplay && (
                     <>
                       <div className="flex w-full justify-center">
@@ -612,21 +672,22 @@ const ClientProfilePage: React.FC = () => {
                   )}
                 </div>
               )}
-              {/* AboutReputationInfo is now shown only for New trust level above */}
+              {/* Client statistics (bottom of right column) */}
               <div className="mt-8 border-t border-gray-200 pt-8">
                 <ClientStats />
               </div>
             </div>
           </div>
+          {/* Error messages (bottom of grid) */}
+          {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+          {reputationError && !error && (
+            <p className="mt-4 text-center text-red-500">
+              Reputation: {reputationError}
+            </p>
+          )}
         </div>
-        {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-        {reputationError && !error && (
-          <p className="mt-4 text-center text-red-500">
-            Reputation: {reputationError}
-          </p>
-        )}
       </main>
-      {/* Logout button for mobile (bottom, not sticky) */}
+      {/* Mobile Logout Button (bottom of page, only on mobile) */}
       <div className="mt-8 block w-full px-4 lg:hidden">
         <button
           onClick={logout}
@@ -635,6 +696,7 @@ const ClientProfilePage: React.FC = () => {
           Log Out
         </button>
       </div>
+      {/* Bottom navigation bar (always visible) */}
       <BottomNavigation />
     </div>
   );
