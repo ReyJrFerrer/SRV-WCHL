@@ -5,6 +5,7 @@ import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
+import { ProfileImage } from "../../../components/common/ProfileImage";
 
 const ConversationPage: React.FC = () => {
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
@@ -187,10 +188,14 @@ const ConversationPage: React.FC = () => {
         </button>
         <div className="ml-3 flex items-center">
           <div className="relative h-11 w-11">
-            <img
-              src={otherUserImage}
-              alt={otherUserName}
-              className="h-11 w-11 rounded-full border-2 border-blue-100 object-cover shadow"
+            <ProfileImage
+              profilePictureUrl={
+                otherUserImage !== DEFAULT_USER_IMAGE
+                  ? otherUserImage
+                  : undefined
+              }
+              userName={otherUserName}
+              size="h-11 w-11"
             />
           </div>
           <div className="ml-3">
@@ -226,10 +231,14 @@ const ConversationPage: React.FC = () => {
               >
                 {!fromCurrentUser && (
                   <div className="relative h-9 w-9 flex-shrink-0">
-                    <img
-                      src={otherUserImage}
-                      alt={otherUserName}
-                      className="h-9 w-9 rounded-full border-2 border-blue-100 object-cover shadow"
+                    <ProfileImage
+                      profilePictureUrl={
+                        otherUserImage !== DEFAULT_USER_IMAGE
+                          ? otherUserImage
+                          : undefined
+                      }
+                      userName={otherUserName}
+                      size="h-9 w-9"
                     />
                   </div>
                 )}

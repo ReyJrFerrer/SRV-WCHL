@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import {
-  ArrowLeftIcon,
-  PaperAirplaneIcon,
-  UserCircleIcon,
-} from "@heroicons/react/24/solid";
+import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../../components/client/BottomNavigation";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
+import { ProfileImage } from "../../../components/common/ProfileImage";
 
 const ConversationPage: React.FC = () => {
   const { clientId } = useParams<{ clientId: string }>();
@@ -29,6 +26,9 @@ const ConversationPage: React.FC = () => {
 
   const [messageText, setMessageText] = useState("");
   const [otherUserName, setOtherUserName] = useState<string>("");
+  const [otherUserImageUrl, setOtherUserImageUrl] = useState<
+    string | undefined
+  >(undefined);
 
   // Get conversation info from location state or use defaults
   useEffect(() => {
@@ -38,6 +38,10 @@ const ConversationPage: React.FC = () => {
       setOtherUserName("Chat");
     } else {
       setOtherUserName(clientId || "Client");
+    }
+
+    if (location.state?.otherUserImage) {
+      setOtherUserImageUrl(location.state.otherUserImage);
     }
   }, [location.state, clientId]);
 
@@ -160,7 +164,11 @@ const ConversationPage: React.FC = () => {
         </button>
         <div className="ml-3 flex items-center">
           <div className="relative h-10 w-10">
-            <UserCircleIcon className="h-10 w-10 text-gray-400" />
+            <ProfileImage
+              profilePictureUrl={otherUserImageUrl}
+              userName={otherUserName}
+              size="h-10 w-10"
+            />
           </div>
           <div className="ml-3">
             <h1 className="text-lg font-semibold text-gray-900">
@@ -197,7 +205,11 @@ const ConversationPage: React.FC = () => {
               >
                 {!fromCurrentUser && (
                   <div className="relative h-8 w-8 flex-shrink-0">
-                    <UserCircleIcon className="h-8 w-8 text-gray-300" />
+                    <ProfileImage
+                      profilePictureUrl={otherUserImageUrl}
+                      userName={otherUserName}
+                      size="h-8 w-8"
+                    />
                   </div>
                 )}
                 <div

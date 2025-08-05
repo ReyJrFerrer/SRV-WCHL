@@ -27,6 +27,7 @@ import { useServiceManagement } from "../../hooks/serviceManagement"; // Using t
 import { useChat } from "../../hooks/useChat"; // Import the chat hook
 import { useAuth } from "../../context/AuthContext"; // Import auth context
 import { useReputation } from "../../hooks/useReputation"; // Import reputation hook
+import { useServiceImages } from "../../hooks/useImageLoader"; // Import service images hook
 import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
 import { ServicePackage } from "../../services/serviceCanisterService";
 import { useUserImage } from "../../hooks/useImageLoader";
@@ -266,26 +267,90 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
 };
 
 // --- Other Sub-Components ---
-const ServiceGallerySection: React.FC = () => (
-  <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
-    <h3 className="mb-4 text-lg font-semibold text-gray-800">
-      Service Gallery
-    </h3>
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          key={index}
-          className="flex aspect-square items-center justify-center rounded-lg bg-gray-100"
-        >
-          <CameraIcon className="h-10 w-10 text-gray-300" />
+const ServiceGallerySection: React.FC<{
+  serviceId: string;
+  imageUrls: string[];
+}> = ({ serviceId, imageUrls }) => {
+  const { images, isLoading, errorCount } = useServiceImages(
+    serviceId,
+    imageUrls,
+  );
+
+  // Limit to maximum 5 images
+  const displayImages = images?.slice(0, 5) || [];
+
+  return (
+    <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
+      <h3 className="mb-4 text-lg font-semibold text-gray-800">
+        Service Gallery
+      </h3>
+
+      {isLoading ? (
+        // Loading skeletons
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: Math.min(imageUrls.length || 4, 5) }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="flex aspect-square animate-pulse items-center justify-center rounded-lg bg-gray-200"
+              >
+                <div className="h-8 w-8 rounded bg-gray-300"></div>
+              </div>
+            ),
+          )}
         </div>
-      ))}
+      ) : displayImages.length > 0 ? (
+        // Display actual images
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {displayImages.map((image, index) => (
+            <div
+              key={index}
+              className="aspect-square overflow-hidden rounded-lg bg-gray-100"
+            >
+              {image.error ? (
+                // Error fallback - show placeholder
+                <div className="flex h-full w-full items-center justify-center">
+                  <CameraIcon className="h-10 w-10 text-gray-300" />
+                </div>
+              ) : image.dataUrl ? (
+                // Successfully loaded image
+                <img
+                  src={image.dataUrl}
+                  alt={`Service gallery image ${index + 1}`}
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                  loading="lazy"
+                />
+              ) : (
+                // Loading individual image
+                <div className="flex h-full w-full animate-pulse items-center justify-center bg-gray-200">
+                  <div className="h-6 w-6 rounded bg-gray-300"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        // No images available
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex aspect-square items-center justify-center rounded-lg bg-gray-100"
+            >
+              <CameraIcon className="h-10 w-10 text-gray-300" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="mt-4 text-center text-xs text-gray-500">
+        {displayImages.length > 0
+          ? `Showing ${displayImages.length} of ${imageUrls.length} service images${errorCount > 0 ? ` (${errorCount} failed to load)` : ""}`
+          : "The service provider will add photos of their work soon."}
+      </p>
     </div>
-    <p className="mt-4 text-center text-xs text-gray-500">
-      The service provider will add photos of their work soon.
-    </p>
-  </div>
-);
+  );
+};
 
 const CredentialsSection: React.FC<{ isVerified: boolean }> = ({
   isVerified,
@@ -962,7 +1027,10 @@ const ServiceDetailPage: React.FC = () => {
         {/* Availability Section */}
         <AvailabilitySection availability={mappedAvailability} />
         {/* Gallery, Credentials, Reviews */}
-        <ServiceGallerySection />
+        <ServiceGallerySection
+          serviceId={service.id}
+          imageUrls={service.media || []}
+        />
         <CredentialsSection isVerified={isVerified} />
         <ReviewsSection serviceId={service.id} />
       </div>

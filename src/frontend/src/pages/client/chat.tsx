@@ -5,7 +5,7 @@ import { useChat } from "../../hooks/useChat";
 
 // Components
 import BottomNavigation from "../../components/client/BottomNavigation";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
+import { ProfileImage } from "../../components/common/ProfileImage";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -21,14 +21,14 @@ const ClientChatPage: React.FC = () => {
   const handleConversationClick = async (
     conversationId: string,
     otherUserName: string,
-    otherUserImage?: string,
+    otherUserImageUrl?: string,
   ) => {
     try {
       // Mark conversation as read when clicked
       await markAsRead(conversationId);
 
       // Use default image if none is provided
-      const imageToUse = otherUserImage || DEFAULT_USER_IMAGE;
+      const imageToUse = otherUserImageUrl || DEFAULT_USER_IMAGE;
 
       // Navigate to the specific chat page and pass conversation info in the state
       navigate(`/client/chat/${conversationId}`, {
@@ -93,9 +93,9 @@ const ClientChatPage: React.FC = () => {
                     const otherUserName =
                       conversationSummary.otherUserName ||
                       `User ${otherUserId.slice(0, 8)}...`;
-                    // Use otherUserImage (profile image) if available, fallback to default image
-                    const otherUserImage =
-                      conversationSummary.otherUserImage || DEFAULT_USER_IMAGE;
+                    // Use otherUserImageUrl (profile image) if available, fallback to default image
+                    const otherUserImageUrl =
+                      conversationSummary.otherUserImageUrl;
 
                     // Get unread count for current user
                     const unreadEntry = conversation.unreadCount.find(
@@ -125,21 +125,18 @@ const ClientChatPage: React.FC = () => {
                           handleConversationClick(
                             conversation.id,
                             otherUserName,
-                            otherUserImage,
+                            otherUserImageUrl,
                           )
                         }
                         className="group flex cursor-pointer items-center space-x-4 p-4 transition-all hover:bg-blue-50"
                       >
                         <div className="relative h-14 w-14 flex-shrink-0">
-                          {otherUserImage ? (
-                            <img
-                              src={otherUserImage}
-                              alt={otherUserName}
-                              className="h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow transition-all group-hover:border-yellow-400"
-                            />
-                          ) : (
-                            <UserCircleIcon className="h-14 w-14 text-gray-300" />
-                          )}
+                          <ProfileImage
+                            profilePictureUrl={otherUserImageUrl}
+                            userName={otherUserName}
+                            size="h-14 w-14"
+                            className=""
+                          />
                           {unreadCount > 0 && (
                             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
                               {unreadCount}

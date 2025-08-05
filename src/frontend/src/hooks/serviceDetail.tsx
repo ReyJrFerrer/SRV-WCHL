@@ -47,7 +47,7 @@ export interface FormattedServiceDetail {
     average: number;
     count: number;
   };
-  media: Array<{ url: string; type: string }>;
+  media: string[];
   requirements: string[];
   isVerified: boolean;
   slug: string;
@@ -132,7 +132,7 @@ const formatServiceForDetailPage = (
       average: service.rating || 0,
       count: service.reviewCount || 0,
     },
-    media: [], // Default empty media array
+    media: service.imageUrls, // Default empty media array
     requirements: [], // Default empty requirements
     isVerified: true, // Default value
     slug: service.id, // Using ID as slug
