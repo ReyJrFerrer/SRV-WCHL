@@ -25,6 +25,10 @@ import {
   DayAvailability,
   TimeSlot,
 } from "../../../hooks/serviceManagement";
+import {
+  useServiceImages,
+  useServiceImageUpload,
+} from "../../../hooks/useImageLoader";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
   ServicePackage,
@@ -32,6 +36,7 @@ import {
   ServiceCategory,
   serviceCanisterService,
 } from "../../../services/serviceCanisterService";
+import { mediaService } from "../../../services/mediaService";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
 
@@ -379,6 +384,17 @@ const ProviderServiceDetailPage: React.FC = () => {
   const { bookings: providerBookings } = useProviderBookingManagement();
 
   const [service, setService] = useState<EnhancedService | null>(null);
+
+  // Load service images using the useServiceImages hook
+  const {
+    images: serviceImages,
+    isLoading: isLoadingImages,
+    isError: isImageError,
+    refetch: refetchImages,
+  } = useServiceImages(service?.id, service?.imageUrls || []);
+
+  // Image upload hook
+  const { uploadImages, removeImage } = useServiceImageUpload(service?.id);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -391,6 +407,20 @@ const ProviderServiceDetailPage: React.FC = () => {
     useState(false);
   const [editImages, setEditImages] = useState(false); // New state for images
   const [editCertifications, setEditCertifications] = useState(false); // New state for certifications
+
+  // Image upload states
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [removingImageIndex, setRemovingImageIndex] = useState<number | null>(
+    null,
+  );
+
+  // Pending image operations (for batching)
+  const [pendingUploads, setPendingUploads] = useState<File[]>([]);
+  const [pendingRemovals, setPendingRemovals] = useState<number[]>([]);
+  const [pendingImagePreviews, setPendingImagePreviews] = useState<string[]>(
+    [],
+  );
 
   // --- State for Package Form (Inline) ---
   const [isAddingOrEditingPackage, setIsAddingOrEditingPackage] =
@@ -762,6 +792,11 @@ const ProviderServiceDetailPage: React.FC = () => {
   // --- Image Upload Handlers ---
   const handleEditImages = useCallback(() => {
     setEditImages(true);
+    setUploadError(null);
+    // Reset pending operations
+    setPendingUploads([]);
+    setPendingRemovals([]);
+    setPendingImagePreviews([]);
     if (service) {
       setEditedImages(service.images || []);
     }
@@ -772,33 +807,149 @@ const ProviderServiceDetailPage: React.FC = () => {
   ) => {
     if (!event.target.files || !service) return;
 
-    // For now, images are static - just show a message
-    alert("Image upload functionality will be implemented in a future update.");
+    const files = Array.from(event.target.files);
+    const currentImageCount =
+      (serviceImages?.length || 0) - pendingRemovals.length;
+    const totalNewImages =
+      currentImageCount + pendingUploads.length + files.length;
+
+    // Check if adding these files would exceed the 5 image limit
+    if (totalNewImages > 5) {
+      setUploadError(
+        `Cannot upload ${files.length} image(s). Maximum 5 images allowed. You would have ${totalNewImages} total images.`,
+      );
+      event.target.value = "";
+      return;
+    }
+
+    // Validate files using mediaService
+    try {
+      for (const file of files) {
+        const validationError = mediaService.validateImageFile(file);
+        if (validationError) {
+          setUploadError(`File ${file.name}: ${validationError}`);
+          event.target.value = "";
+          return;
+        }
+      }
+
+      // Create preview URLs for immediate display
+      const newPreviews: string[] = [];
+      for (const file of files) {
+        const previewUrl = URL.createObjectURL(file);
+        newPreviews.push(previewUrl);
+      }
+
+      // Add to pending uploads and previews
+      setPendingUploads((prev) => [...prev, ...files]);
+      setPendingImagePreviews((prev) => [...prev, ...newPreviews]);
+      setUploadError(null);
+    } catch (error) {
+      console.error("Failed to validate images:", error);
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Failed to validate images. Please try again.",
+      );
+    }
 
     // Reset the input
     event.target.value = "";
   };
 
-  const handleRemoveImage = async () => {
-    if (!service) return;
+  const handleRemoveImage = async (imageIndex: number) => {
+    if (!service || !serviceImages) return;
 
-    // For now, images are static - just show a message
-    alert(
-      "Image removal functionality will be implemented in a future update.",
-    );
+    // Check if this is a pending upload (preview) or existing image
+    const existingImageCount = serviceImages.length;
+
+    if (imageIndex >= existingImageCount) {
+      // This is a pending upload - remove from previews
+      const previewIndex = imageIndex - existingImageCount;
+      const newPreviews = [...pendingImagePreviews];
+      const newUploads = [...pendingUploads];
+
+      // Revoke the object URL to prevent memory leaks
+      if (newPreviews[previewIndex]) {
+        URL.revokeObjectURL(newPreviews[previewIndex]);
+      }
+
+      newPreviews.splice(previewIndex, 1);
+      newUploads.splice(previewIndex, 1);
+
+      setPendingImagePreviews(newPreviews);
+      setPendingUploads(newUploads);
+    } else {
+      // This is an existing image - add to pending removals
+      if (!pendingRemovals.includes(imageIndex)) {
+        setPendingRemovals((prev) => [...prev, imageIndex]);
+      }
+    }
+
+    setUploadError(null);
   };
 
   const handleSaveImages = async () => {
-    setEditImages(false);
-    // Images are static for now
+    if (!service) return;
+
+    setUploadingImages(true);
+    setUploadError(null);
+
+    try {
+      // Process removals first
+      if (pendingRemovals.length > 0) {
+        for (const imageIndex of pendingRemovals.sort((a, b) => b - a)) {
+          // Remove from end to start
+          if (serviceImages && serviceImages[imageIndex]?.url) {
+            await removeImage(serviceImages[imageIndex].url);
+          }
+        }
+      }
+
+      // Process uploads
+      if (pendingUploads.length > 0) {
+        await uploadImages(pendingUploads);
+      }
+
+      // Cleanup preview URLs
+      pendingImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+
+      // Reset pending operations
+      setPendingUploads([]);
+      setPendingRemovals([]);
+      setPendingImagePreviews([]);
+
+      // Refetch images to show updated state
+      refetchImages();
+      setEditImages(false);
+      setUploadError(null);
+    } catch (error) {
+      console.error("Failed to save image changes:", error);
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save image changes. Please try again.",
+      );
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const handleCancelImages = useCallback(() => {
+    // Cleanup preview URLs to prevent memory leaks
+    pendingImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+
+    // Reset all pending operations
+    setPendingUploads([]);
+    setPendingRemovals([]);
+    setPendingImagePreviews([]);
+
     setEditImages(false);
+    setUploadError(null);
     if (service) {
       setEditedImages(service.images || []);
     }
-  }, [service]);
+  }, [service, pendingImagePreviews]);
 
   // --- Certification Upload Handlers ---
   const handleEditCertifications = useCallback(() => {
@@ -1415,15 +1566,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <button
                   onClick={handleSaveImages}
                   className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:opacity-50"
-                  disabled={loading}
+                  disabled={uploadingImages}
                   aria-label="Save images"
                 >
-                  <CheckIcon className="h-4 w-4" />
+                  {uploadingImages ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                  ) : (
+                    <CheckIcon className="h-4 w-4" />
+                  )}
                 </button>
                 <button
                   onClick={handleCancelImages}
-                  className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300"
-                  disabled={loading}
+                  className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  disabled={uploadingImages}
                   aria-label="Cancel editing images"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -1452,68 +1607,271 @@ const ProviderServiceDetailPage: React.FC = () => {
 
           {editImages ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-                  Upload Images
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </label>
-                <span className="text-sm text-gray-600">
-                  (Select one or more images)
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                {editedImages.length > 0 ? (
-                  editedImages.map((imageUrl, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
-                    >
-                      <img
-                        src={imageUrl}
-                        alt={`Service image ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        onClick={() => handleRemoveImage()}
-                        className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-                        aria-label="Remove image"
-                      >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
+              {/* Upload Error Display */}
+              {uploadError && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <XMarkIcon className="h-5 w-5 text-red-400" />
                     </div>
-                  ))
-                ) : (
-                  <p className="col-span-full py-4 text-center text-gray-400">
-                    No images uploaded yet.
-                  </p>
-                )}
+                    <div className="ml-3">
+                      <p className="text-sm text-red-800">{uploadError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Controls */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <label
+                    className={`cursor-pointer rounded-lg px-4 py-2 text-white transition-colors ${
+                      uploadingImages ||
+                      (serviceImages?.length || 0) -
+                        pendingRemovals.length +
+                        pendingUploads.length >=
+                        5
+                        ? "cursor-not-allowed bg-gray-400"
+                        : "bg-blue-500 hover:bg-blue-600"
+                    }`}
+                  >
+                    {uploadingImages ? "Saving Changes..." : "Upload Images"}
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={
+                        uploadingImages ||
+                        (serviceImages?.length || 0) -
+                          pendingRemovals.length +
+                          pendingUploads.length >=
+                          5
+                      }
+                    />
+                  </label>
+                  {uploadingImages && (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                      <span className="text-sm text-gray-600">
+                        Saving changes...
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Image Count and Limit Info */}
+                <div className="text-sm text-gray-600">
+                  <span
+                    className={`${(serviceImages?.length || 0) - pendingRemovals.length + pendingUploads.length >= 5 ? "font-semibold text-amber-600" : ""}`}
+                  >
+                    {(serviceImages?.length || 0) -
+                      pendingRemovals.length +
+                      pendingUploads.length}
+                    /5 images
+                  </span>
+                  {(serviceImages?.length || 0) -
+                    pendingRemovals.length +
+                    pendingUploads.length >=
+                    5 && (
+                    <span className="ml-2 text-amber-600">
+                      Maximum limit reached
+                    </span>
+                  )}
+                  {(pendingUploads.length > 0 ||
+                    pendingRemovals.length > 0) && (
+                    <div className="mt-1 text-xs text-blue-600">
+                      {pendingUploads.length > 0 &&
+                        `${pendingUploads.length} pending upload(s)`}
+                      {pendingUploads.length > 0 &&
+                        pendingRemovals.length > 0 &&
+                        ", "}
+                      {pendingRemovals.length > 0 &&
+                        `${pendingRemovals.length} pending removal(s)`}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Image Grid */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                {/* Render existing images */}
+                {serviceImages &&
+                  serviceImages.map((image, index) => {
+                    const isMarkedForRemoval = pendingRemovals.includes(index);
+                    return (
+                      <div
+                        key={`existing-${index}`}
+                        className={`relative aspect-video overflow-hidden rounded-lg border shadow-sm transition-opacity ${
+                          isMarkedForRemoval
+                            ? "border-red-300 bg-red-50 opacity-50"
+                            : "border-gray-200"
+                        }`}
+                      >
+                        {image.error ? (
+                          <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
+                            <div className="text-center">
+                              <PhotoIcon className="mx-auto h-8 w-8 text-gray-300" />
+                              <p className="mt-1">Failed to load</p>
+                            </div>
+                          </div>
+                        ) : image.dataUrl ? (
+                          <>
+                            <img
+                              src={image.dataUrl}
+                              alt={`Service image ${index + 1}`}
+                              className={`h-full w-full object-cover ${isMarkedForRemoval ? "grayscale" : ""}`}
+                              loading="lazy"
+                            />
+                            {isMarkedForRemoval && (
+                              <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center bg-black">
+                                <span className="rounded bg-red-500 px-2 py-1 text-xs font-semibold text-white">
+                                  Will be removed
+                                </span>
+                              </div>
+                            )}
+                            <button
+                              onClick={() => handleRemoveImage(index)}
+                              disabled={uploadingImages}
+                              className={`absolute top-1 right-1 rounded-full p-1 text-white transition-colors ${
+                                uploadingImages
+                                  ? "cursor-not-allowed bg-gray-400"
+                                  : isMarkedForRemoval
+                                    ? "bg-green-500 hover:bg-green-600"
+                                    : "bg-red-500 hover:bg-red-600"
+                              }`}
+                              aria-label={
+                                isMarkedForRemoval
+                                  ? "Undo removal"
+                                  : "Remove image"
+                              }
+                            >
+                              {isMarkedForRemoval ? (
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4.5 12.75l6 6 9-13.5"
+                                  />
+                                </svg>
+                              ) : (
+                                <XMarkIcon className="h-4 w-4" />
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                            <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                {/* Render pending upload previews */}
+                {pendingImagePreviews.map((previewUrl, index) => (
+                  <div
+                    key={`pending-${index}`}
+                    className="relative aspect-video overflow-hidden rounded-lg border border-blue-300 bg-blue-50 shadow-sm"
+                  >
+                    <img
+                      src={previewUrl}
+                      alt={`Pending upload ${index + 1}`}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="bg-opacity-30 absolute inset-0 flex items-center justify-center bg-black">
+                      <span className="rounded bg-blue-500 px-2 py-1 text-xs font-semibold text-white">
+                        Pending upload
+                      </span>
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleRemoveImage((serviceImages?.length || 0) + index)
+                      }
+                      disabled={uploadingImages}
+                      className={`absolute top-1 right-1 rounded-full p-1 text-white transition-colors ${
+                        uploadingImages
+                          ? "cursor-not-allowed bg-gray-400"
+                          : "bg-red-500 hover:bg-red-600"
+                      }`}
+                      aria-label="Remove pending upload"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* No images message */}
+                {(!serviceImages || serviceImages.length === 0) &&
+                  pendingImagePreviews.length === 0 && (
+                    <p className="col-span-full py-4 text-center text-gray-400">
+                      No images uploaded yet.
+                    </p>
+                  )}
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-gray-400">
-              {service.images && service.images.length > 0 ? (
+            <div className="py-4">
+              {isLoadingImages ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">Loading images...</span>
+                </div>
+              ) : isImageError ? (
+                <div className="py-8 text-center text-red-500">
+                  <p>Failed to load service images</p>
+                  <button
+                    onClick={() => refetchImages()}
+                    className="mt-2 text-sm text-blue-600 underline hover:text-blue-800"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : serviceImages && serviceImages.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                  {service.images.map((imageUrl, index) => (
+                  {serviceImages.map((image: any, index: number) => (
                     <div
                       key={index}
                       className="aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
                     >
-                      <img
-                        src={imageUrl}
-                        alt={`Service image ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
+                      {image.error ? (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
+                          <div className="text-center">
+                            <PhotoIcon className="mx-auto h-8 w-8 text-gray-300" />
+                            <p className="mt-1">Failed to load</p>
+                          </div>
+                        </div>
+                      ) : image.dataUrl ? (
+                        <img
+                          src={image.dataUrl}
+                          alt={`Service image ${index + 1}`}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                          <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p>No service images available.</p>
+                <div className="py-8 text-center text-gray-400">
+                  <PhotoIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+                  <p>No service images available.</p>
+                  <p className="mt-2 text-sm">
+                    Images help customers see what your service offers.
+                  </p>
+                </div>
               )}
             </div>
           )}

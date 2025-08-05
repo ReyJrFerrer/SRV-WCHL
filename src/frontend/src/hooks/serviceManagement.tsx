@@ -17,6 +17,11 @@ import {
   FrontendProfile,
   authCanisterService,
 } from "../services/authCanisterService";
+import {
+  ImageUploadOptions,
+  processServiceImageFiles,
+  validateImageFile,
+} from "../services/mediaService";
 
 // Export availability-related types for use in components
 export type {
@@ -54,6 +59,11 @@ export interface ServiceCreateRequest {
   instantBookingEnabled?: boolean;
   bookingNoticeHours?: number;
   maxBookingsPerDay?: number;
+  serviceImages?: Array<{
+    fileName: string;
+    contentType: string;
+    fileData: Uint8Array;
+  }>;
 }
 
 export interface ServiceUpdateRequest extends Partial<ServiceCreateRequest> {
@@ -194,6 +204,19 @@ interface ServiceManagementHook {
   organizeWeeklySchedule: (
     weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>,
   ) => OrganizedWeeklySchedule;
+
+  // Image processing utilities
+  processImageFilesForService: (
+    files: File[],
+    options?: ImageUploadOptions,
+  ) => Promise<
+    Array<{
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }>
+  >;
+  validateImageFiles: (files: File[], options?: ImageUploadOptions) => string[];
 
   // Category management
   getCategories: () => Promise<ServiceCategory[]>;
@@ -420,6 +443,42 @@ export const useServiceManagement = (): ServiceManagementHook => {
     async (request: ServiceCreateRequest): Promise<EnhancedService> => {
       try {
         setOperationLoading("createService", true);
+
+        // Process service images if provided using mediaService utilities
+        let processedImages:
+          | Array<{
+              fileName: string;
+              contentType: string;
+              fileData: Uint8Array;
+            }>
+          | undefined;
+
+        if (request.serviceImages && request.serviceImages.length > 0) {
+          try {
+            // Images are already processed, just validate the structure and maintain order
+            processedImages = request.serviceImages.map((image, index) => {
+              if (!image.fileName || !image.contentType || !image.fileData) {
+                throw new Error(`Invalid image data at position ${index + 1}`);
+              }
+              return {
+                fileName: image.fileName,
+                contentType: image.contentType,
+                fileData: image.fileData,
+              };
+            });
+
+            console.log(
+              `Successfully prepared ${processedImages.length} images for service creation`,
+            );
+          } catch (imageError) {
+            console.warn(
+              "Image processing failed, creating service without images:",
+              imageError,
+            );
+            processedImages = undefined;
+          }
+        }
+
         const newService = await serviceCanisterService.createService(
           request.title,
           request.description,
@@ -430,6 +489,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
           request.instantBookingEnabled,
           request.bookingNoticeHours,
           request.maxBookingsPerDay,
+          processedImages,
         );
 
         if (!newService) {
@@ -1141,6 +1201,50 @@ export const useServiceManagement = (): ServiceManagementHook => {
     },
     [],
   );
+
+  // Image processing utility functions
+  const processImageFilesForService = useCallback(
+    async (
+      files: File[],
+      options?: ImageUploadOptions,
+    ): Promise<
+      Array<{
+        fileName: string;
+        contentType: string;
+        fileData: Uint8Array;
+      }>
+    > => {
+      try {
+        return await processServiceImageFiles(files, options);
+      } catch (error) {
+        handleError(error, "process image files");
+        throw error;
+      }
+    },
+    [handleError],
+  );
+
+  const validateImageFiles = useCallback(
+    (files: File[], options?: ImageUploadOptions): string[] => {
+      const errors: string[] = [];
+
+      if (files.length > 5) {
+        errors.push("Maximum 5 images allowed per service");
+      }
+
+      // Use mediaService validation for each file
+      files.forEach((file, index) => {
+        const validationError = validateImageFile(file, options);
+        if (validationError) {
+          errors.push(`File ${index + 1} (${file.name}): ${validationError}`);
+        }
+      });
+
+      return errors;
+    },
+    [],
+  );
+
   // Return the hook interface
   return {
     // Core data states
@@ -1204,6 +1308,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
     retryOperation,
     isOperationInProgress,
     organizeWeeklySchedule,
+
+    // Image processing utilities
+    processImageFilesForService,
+    validateImageFiles,
     // Category management
     getCategories,
     refreshCategories,

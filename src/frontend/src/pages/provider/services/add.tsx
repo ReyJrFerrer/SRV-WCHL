@@ -107,6 +107,8 @@ const AddServicePage: React.FC = () => {
     getCategories,
     createService,
     createPackage,
+    processImageFilesForService,
+    validateImageFiles,
   } = useServiceManagement();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -115,6 +117,7 @@ const AddServicePage: React.FC = () => {
     {},
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
   // Service image upload state
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -125,52 +128,74 @@ const AddServicePage: React.FC = () => {
   );
 
   // Handle image file selection
-  const handleImageFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files ? Array.from(e.target.files) : [];
-    if (files.length === 0) return;
-    setServiceImageFiles((prev) => [...prev, ...files]);
-    // Generate previews in order and avoid duplicates
-    const fileReaders: FileReader[] = [];
-    const newPreviews: string[] = [];
-    let loaded = 0;
-    files.forEach((file, idx) => {
-      const reader = new FileReader();
-      fileReaders.push(reader);
-      reader.onloadend = () => {
-        newPreviews[idx] = reader.result as string;
-        loaded++;
-        if (loaded === files.length) {
-          setImagePreviews((prev) => [...prev, ...newPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = "";
-  };
-
-  // Handle certification file selection
-  const handleCertificationFilesChange = (
+  const handleImageFilesChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
+
+    setIsProcessingImages(true);
+
+    try {
+      // Update files immediately
+      setServiceImageFiles((prev) => [...prev, ...files]);
+
+      // Generate previews using Promise.all to avoid race conditions
+      const newPreviews = await Promise.all(
+        files.map((file) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () =>
+              reject(new Error(`Failed to read file: ${file.name}`));
+            reader.readAsDataURL(file);
+          });
+        }),
+      );
+
+      // Update previews only after all files are processed
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
+    } catch (error) {
+      console.error("Error generating image previews:", error);
+      // Remove the files that failed to process
+      setServiceImageFiles((prev) => prev.slice(0, -files.length));
+    } finally {
+      setIsProcessingImages(false);
+    }
+
+    e.target.value = "";
+  };
+
+  // Handle certification file selection
+  const handleCertificationFilesChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+
+    // Update files immediately
     setCertificationFiles((prev) => [...prev, ...files]);
-    // Generate previews in order and avoid duplicates
-    const fileReaders: FileReader[] = [];
-    const newPreviews: string[] = [];
-    let loaded = 0;
-    files.forEach((file, idx) => {
-      const reader = new FileReader();
-      fileReaders.push(reader);
-      reader.onloadend = () => {
-        newPreviews[idx] = reader.result as string;
-        loaded++;
-        if (loaded === files.length) {
-          setCertificationPreviews((prev) => [...prev, ...newPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+
+    // Generate previews using Promise.all to avoid race conditions
+    try {
+      const newPreviews = await Promise.all(
+        files.map((file) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () =>
+              reject(new Error(`Failed to read file: ${file.name}`));
+            reader.readAsDataURL(file);
+          });
+        }),
+      );
+
+      // Update previews only after all files are processed
+      setCertificationPreviews((prev) => [...prev, ...newPreviews]);
+    } catch (error) {
+      console.error("Error generating certification previews:", error);
+    }
+
     e.target.value = "";
   };
 
@@ -178,6 +203,10 @@ const AddServicePage: React.FC = () => {
   const handleRemoveImage = (index: number) => {
     setServiceImageFiles((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    // Clear any processing-related errors
+    if (validationErrors.general?.includes("Processing")) {
+      setValidationErrors((prev) => ({ ...prev, general: undefined }));
+    }
   };
 
   // Remove certification by index
@@ -387,14 +416,52 @@ const AddServicePage: React.FC = () => {
         }
         break;
 
+      case 4: // Image Upload (optional step)
+        // Don't block navigation if images are still processing
+        if (isProcessingImages) {
+          errors.general =
+            "Please wait for images to finish processing before continuing.";
+          break;
+        }
+
+        // Validate service images if any are provided
+        if (serviceImageFiles.length > 0) {
+          try {
+            const imageErrors = validateImageFiles(serviceImageFiles);
+            if (imageErrors.length > 0) {
+              errors.general = imageErrors.join("; ");
+            }
+          } catch (validationError) {
+            console.error("Image validation error:", validationError);
+            errors.general =
+              "Error validating images. Please try removing and re-adding them.";
+          }
+        }
+        break;
+
       default:
         break;
     }
 
     return errors;
-  }, [currentStep, formData]);
+  }, [
+    currentStep,
+    formData,
+    serviceImageFiles,
+    validateImageFiles,
+    isProcessingImages,
+  ]);
 
   const handleNext = () => {
+    // Don't allow navigation if images are still processing
+    if (isProcessingImages) {
+      setValidationErrors({
+        general:
+          "Please wait for images to finish processing before continuing.",
+      });
+      return;
+    }
+
     const errors = validateCurrentStep();
     if (Object.keys(errors).length === 0) {
       setCurrentStep((prev) => prev + 1);
@@ -511,6 +578,35 @@ const AddServicePage: React.FC = () => {
         },
       }));
 
+      // Process service images if any were uploaded
+      let processedServiceImages:
+        | Array<{
+            fileName: string;
+            contentType: string;
+            fileData: Uint8Array;
+          }>
+        | undefined;
+
+      if (serviceImageFiles.length > 0) {
+        try {
+          console.log(
+            `Processing ${serviceImageFiles.length} service images...`,
+          );
+          processedServiceImages =
+            await processImageFilesForService(serviceImageFiles);
+          console.log(
+            `Successfully processed ${processedServiceImages.length} images`,
+          );
+        } catch (imageError) {
+          console.warn(
+            "Image processing failed, creating service without images:",
+            imageError,
+          );
+          // Continue with service creation without images rather than failing completely
+          processedServiceImages = undefined;
+        }
+      }
+
       // Create service
       const serviceRequest: ServiceCreateRequest = {
         title: formData.serviceOfferingTitle.trim(),
@@ -524,6 +620,7 @@ const AddServicePage: React.FC = () => {
         instantBookingEnabled: true,
         bookingNoticeHours: 2,
         maxBookingsPerDay: 10,
+        serviceImages: processedServiceImages,
       };
 
       console.log("Creating service with data:", serviceRequest);
@@ -654,6 +751,29 @@ const AddServicePage: React.FC = () => {
                 step is optional but highly recommended.
               </p>
             </div>
+            {/* Display validation errors for this step */}
+            {validationErrors.general && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="flex items-center">
+                  <svg
+                    className="mr-2 h-5 w-5 text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-sm text-red-700">
+                    {validationErrors.general}
+                  </p>
+                </div>
+              </div>
+            )}
             <ServiceImageUpload
               serviceImageFiles={serviceImageFiles}
               imagePreviews={imagePreviews}
@@ -1017,22 +1137,24 @@ const AddServicePage: React.FC = () => {
           {currentStep < 5 ? (
             <button
               onClick={handleNext}
-              disabled={isSubmitting}
-              className="ml-auto rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              disabled={isSubmitting || isProcessingImages}
+              className="ml-auto rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Next
+              {isProcessingImages ? "Processing Images..." : "Next"}
             </button>
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="ml-auto flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              disabled={isSubmitting || isProcessingImages}
+              className="ml-auto flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
                   Creating Service...
                 </>
+              ) : isProcessingImages ? (
+                "Processing Images..."
               ) : (
                 "Create Service"
               )}
