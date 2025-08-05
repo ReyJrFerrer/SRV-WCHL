@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
+import { Filter } from "bad-words";
 
 // Step Components
 import ServiceDetails from "../../../components/provider/ServiceDetails";
@@ -38,6 +39,8 @@ interface ValidationErrors {
   timeSlots?: string;
   locationMunicipalityCity?: string;
   general?: string;
+  // New field to check if any inputs contain profanity
+  profanity?: string;
 }
 
 // Backend validation constants (from service.mo)
@@ -49,6 +52,9 @@ const VALIDATION_LIMITS = {
   MIN_PRICE: 1,
   MAX_PRICE: 1_000_000,
 };
+
+// Initialize the profanity filter
+const filter = new Filter();
 
 const initialServiceState = {
   serviceOfferingTitle: "",
@@ -215,6 +221,9 @@ const AddServicePage: React.FC = () => {
           VALIDATION_LIMITS.MAX_TITLE_LENGTH
         ) {
           errors.serviceOfferingTitle = `Service title must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+        } else if (filter.isProfane(formData.serviceOfferingTitle)) {
+          errors.serviceOfferingTitle =
+            "Service title contains inappropriate language.";
         }
 
         // Validate category
@@ -244,34 +253,66 @@ const AddServicePage: React.FC = () => {
           formData.servicePackages.forEach((pkg, index) => {
             if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
               if (!pkg.name.trim()) {
-                errors.servicePackages = `Package ${index + 1}: Name is required`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Name is required`;
               } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Name must be at least ${
+                  VALIDATION_LIMITS.MIN_TITLE_LENGTH
+                } character`;
               } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${index + 1}: Name must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Name must be no more than ${
+                  VALIDATION_LIMITS.MAX_TITLE_LENGTH
+                } characters`;
+              } else if (filter.isProfane(pkg.name)) {
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Name contains inappropriate language.`;
               }
 
               if (!pkg.description.trim()) {
-                errors.servicePackages = `Package ${index + 1}: Description is required`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Description is required`;
               } else if (
                 pkg.description.length <
                 VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} character`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Description must be at least ${
+                  VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
+                } character`;
               } else if (
                 pkg.description.length >
                 VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${index + 1}: Description must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Description must be no more than ${
+                  VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
+                } characters`;
+              } else if (filter.isProfane(pkg.description)) {
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Description contains inappropriate language.`;
               }
 
               if (
                 !pkg.price ||
                 Number(pkg.price) < VALIDATION_LIMITS.MIN_PRICE
               ) {
-                errors.servicePackages = `Package ${index + 1}: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
               } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
-                errors.servicePackages = `Package ${index + 1}: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
+                errors.servicePackages = `Package ${
+                  index + 1
+                }: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
               }
             }
           });

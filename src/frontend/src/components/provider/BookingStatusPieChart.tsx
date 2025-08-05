@@ -22,7 +22,7 @@ const BookingStatusPieChart: React.FC = () => {
   const { analytics, loadingAnalytics } = useProviderBookingManagement();
 
   if (loadingAnalytics || !analytics) {
-    return <div>Loading chart...</div>;
+    return <div>Add a service and be booked...</div>;
   }
 
   const data = [

@@ -200,7 +200,7 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
               </span>
             ) : (
               <span className="cursor-pointer font-medium text-blue-900 transition-all duration-200 select-text hover:text-lg hover:underline focus:outline-none">
-                {userAddress}, {userProvince}
+                {userAddress} {userProvince}
               </span>
             )}
           </div>
