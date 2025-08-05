@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
-import { BriefcaseIcon } from "@heroicons/react/24/solid";
 
 // Assuming these hooks are available in your new project structure
 // You may need to adjust the import paths
@@ -29,8 +28,8 @@ const BottomNavigation: React.FC = () => {
     },
     {
       to: "/provider/services",
-      label: "services", // Changed label to lowercase for consistency
-      icon: BriefcaseIcon, // Note: You're importing Heroicons here, but the code below uses image paths
+      label: "services", 
+      icon: null, 
       count: 0,
     },
     {
