@@ -28,8 +28,8 @@ const BottomNavigation: React.FC = () => {
     },
     {
       to: "/provider/services",
-      label: "services", 
-      icon: null, 
+      label: "services",
+      icon: null,
       count: 0,
     },
     {
