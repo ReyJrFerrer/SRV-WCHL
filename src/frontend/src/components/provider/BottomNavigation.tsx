@@ -48,9 +48,14 @@ const BottomNavigation: React.FC = () => {
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           if (
-            ["home", "booking", "settings", "notifications", "chat", "services"].includes(
-              item.label.toLowerCase()
-            )
+            [
+              "home",
+              "booking",
+              "settings",
+              "notifications",
+              "chat",
+              "services",
+            ].includes(item.label.toLowerCase())
           ) {
             const [iconSrc, setIconSrc] = React.useState(
               isActive
@@ -129,21 +134,21 @@ const BottomNavigation: React.FC = () => {
                             zIndex: 10,
                           }
                         : isActive
-                        ? {
-                            height: activeOtherSize,
-                            width: activeOtherSize,
-                            maxHeight: activeOtherSize,
-                            maxWidth: activeOtherSize,
-                            margin: "0 auto",
-                            pointerEvents: "none",
-                          }
-                        : {
-                            height: defaultSize,
-                            width: defaultSize,
-                            maxHeight: defaultSize,
-                            maxWidth: defaultSize,
-                            pointerEvents: "none",
-                          }
+                          ? {
+                              height: activeOtherSize,
+                              width: activeOtherSize,
+                              maxHeight: activeOtherSize,
+                              maxWidth: activeOtherSize,
+                              margin: "0 auto",
+                              pointerEvents: "none",
+                            }
+                          : {
+                              height: defaultSize,
+                              width: defaultSize,
+                              maxHeight: defaultSize,
+                              maxWidth: defaultSize,
+                              pointerEvents: "none",
+                            }
                     }
                     draggable={false}
                   />
