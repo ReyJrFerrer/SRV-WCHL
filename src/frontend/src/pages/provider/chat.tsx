@@ -5,7 +5,7 @@ import { useChat } from "../../hooks/useChat";
 
 // Components
 import BottomNavigation from "../../components/provider/BottomNavigation";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
+import { ProfileImage } from "../../components/common/ProfileImage";
 
 const ProviderChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -20,7 +20,7 @@ const ProviderChatPage: React.FC = () => {
   const handleConversationClick = async (
     conversationId: string,
     otherUserName: string,
-    otherUserImage?: string,
+    otherUserImageUrl?: string,
   ) => {
     try {
       // Mark conversation as read when clicked
@@ -31,7 +31,7 @@ const ProviderChatPage: React.FC = () => {
         state: {
           conversationId,
           otherUserName,
-          otherUserImage,
+          otherUserImage: otherUserImageUrl,
         },
       });
     } catch (error) {
@@ -77,6 +77,9 @@ const ProviderChatPage: React.FC = () => {
                   const otherUserName =
                     conversationSummary.otherUserName ||
                     `User ${otherUserId.slice(0, 8)}...`;
+                  // Use otherUserImageUrl (profile image) if available
+                  const otherUserImageUrl =
+                    conversationSummary.otherUserImageUrl;
 
                   // Get unread count for current user
                   const unreadEntry = conversation.unreadCount.find(
@@ -102,12 +105,21 @@ const ProviderChatPage: React.FC = () => {
                     <li
                       key={conversation.id}
                       onClick={() =>
-                        handleConversationClick(conversation.id, otherUserName)
+                        handleConversationClick(
+                          conversation.id,
+                          otherUserName,
+                          otherUserImageUrl,
+                        )
                       }
                       className="flex cursor-pointer items-center space-x-4 p-4 transition-colors hover:bg-gray-50"
                     >
                       <div className="relative h-12 w-12 flex-shrink-0">
-                        <UserCircleIcon className="h-12 w-12 text-gray-300" />
+                        <ProfileImage
+                          profilePictureUrl={otherUserImageUrl}
+                          userName={otherUserName}
+                          size="h-12 w-12"
+                          className=""
+                        />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">

@@ -8,12 +8,12 @@ import chatCanisterService, {
 } from "../services/chatCanisterService";
 import { authCanisterService } from "../services/authCanisterService";
 
-// Enhanced conversation summary with user name
+// Enhanced conversation summary with user name and profile image URL
 export interface EnhancedConversationSummary
   extends FrontendConversationSummary {
   otherUserName?: string;
   otherUserId: string;
-  otherUserImage?: string; // provider/client profile image
+  otherUserImageUrl?: string; // Raw profile picture URL from backend
 }
 
 /**
@@ -100,7 +100,7 @@ export const useChat = () => {
             const otherUserName = await getUserName(otherUserId);
 
             // Fetch the other user's profile for image
-            let otherUserImage: string | undefined = undefined;
+            let otherUserImageUrl: string | undefined = undefined;
             try {
               const profile = await authCanisterService.getProfile(otherUserId);
               if (
@@ -108,7 +108,7 @@ export const useChat = () => {
                 profile.profilePicture &&
                 profile.profilePicture.imageUrl
               ) {
-                otherUserImage = profile.profilePicture.imageUrl;
+                otherUserImageUrl = profile.profilePicture.imageUrl;
               }
             } catch (e) {
               // ignore image fetch errors, fallback to undefined
@@ -118,7 +118,7 @@ export const useChat = () => {
               ...summary,
               otherUserId,
               otherUserName,
-              otherUserImage,
+              otherUserImageUrl,
             };
           },
         ),
