@@ -22,8 +22,8 @@ persistent actor ChatCanister {
     type Result<T> = Types.Result<T>;
 
     // State variables
-    private stable var conversationEntries : [(Text, Conversation)] = [];
-    private stable var messageEntries : [(Text, Message)] = [];
+    private var conversationEntries : [(Text, Conversation)] = [];
+    private var messageEntries : [(Text, Message)] = [];
     private transient var conversations = HashMap.HashMap<Text, Conversation>(10, Text.equal, Text.hash);
     private transient var messages = HashMap.HashMap<Text, Message>(100, Text.equal, Text.hash);
     

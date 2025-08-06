@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add frontend service image management hooks and utilities with support for galleries
 - Integrate image processing utilities in service creation workflow with support for optional image uploads
 - Add immediate UI feedback for service image upload and removal operations with proper Save/Cancel workflow
+
+### Fixed
+
+- Fix media canister ID generation to prevent duplicate IDs when uploading multiple images simultaneously
 - Replace placeholder images with actual service images in ServiceDetailPage gallery using useImageLoader hook
 - Enhance chat pages with profile picture loading using useImageLoader hook with loading skeletons and fallback support
 

@@ -393,9 +393,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     refetch: refetchImages,
   } = useServiceImages(service?.id, service?.imageUrls || []);
 
-  // logging
-  console.log(service);
-
   // Image upload hook
   const { uploadImages, removeImage } = useServiceImageUpload(service?.id);
   const [packages, setPackages] = useState<ServicePackage[]>([]);

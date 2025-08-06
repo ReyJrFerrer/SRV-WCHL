@@ -21,7 +21,7 @@ persistent actor ReviewCanister {
     type Result<T> = Types.Result<T>;
 
     // State variables
-    private stable var reviewEntries : [(Text, Review)] = [];
+    private var reviewEntries : [(Text, Review)] = [];
     private transient var reviews = HashMap.HashMap<Text, Review>(10, Text.equal, Text.hash);
     
     // Canister references

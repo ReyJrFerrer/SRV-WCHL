@@ -20,7 +20,7 @@ persistent actor AuthCanister {
     type MediaType = Types.MediaType;
 
     // State variables
-    private stable var profileEntries : [(Principal, Profile)] = [];
+    private var profileEntries : [(Principal, Profile)] = [];
     private transient var profiles = HashMap.HashMap<Principal, Profile>(10, Principal.equal, Principal.hash);
     private transient var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
     private transient var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);

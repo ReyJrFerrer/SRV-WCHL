@@ -27,18 +27,18 @@ persistent actor ServiceCanister {
     type ServicePackage = Types.ServicePackage;
 
     // State variables
-    private stable var serviceEntries : [(Text, Service)] = [];
+    private var serviceEntries : [(Text, Service)] = [];
     private transient var services = HashMap.HashMap<Text, Service>(10, Text.equal, Text.hash);
     
-    private stable var categoryEntries : [(Text, ServiceCategory)] = [];
+    private var categoryEntries : [(Text, ServiceCategory)] = [];
     private transient var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
 
     // Availability state variables
-    private stable var availabilityEntries : [(Text, ProviderAvailability)] = [];
+    private var availabilityEntries : [(Text, ProviderAvailability)] = [];
     private transient var serviceAvailabilities = HashMap.HashMap<Text, ProviderAvailability>(10, Text.equal, Text.hash);
     
     // Service package state variables
-    private stable var packageEntries : [(Text, ServicePackage)] = [];
+    private var packageEntries : [(Text, ServicePackage)] = [];
     private transient var servicePackages = HashMap.HashMap<Text, ServicePackage>(10, Text.equal, Text.hash);
 
     // Canister references
