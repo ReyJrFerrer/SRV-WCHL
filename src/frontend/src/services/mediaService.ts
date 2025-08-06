@@ -288,107 +288,6 @@ export const resizeImage = (
 };
 
 /**
- * Complete profile picture upload workflow
- */
-export const uploadProfilePicture = async (
-  file: File,
-  options: ImageUploadOptions = {},
-): Promise<any> => {
-  try {
-    // Validate file
-    const validationError = validateImageFile(file, options);
-    if (validationError) {
-      throw new Error(validationError);
-    }
-
-    // Resize if needed
-    const opts = { ...DEFAULT_OPTIONS, ...options };
-    let processedFile = file;
-
-    if (opts.maxWidth || opts.maxHeight) {
-      processedFile = await resizeImage(file, opts.maxWidth, opts.maxHeight);
-    }
-
-    // Convert to Uint8Array
-    const fileData = await fileToUint8Array(processedFile);
-
-    // Upload via auth canister
-    const result = await authCanisterService.uploadProfilePicture(
-      processedFile.name,
-      processedFile.type,
-      fileData,
-    );
-
-    return result;
-  } catch (error) {
-    console.error("Error uploading profile picture:", error);
-    throw error;
-  }
-};
-
-/**
- * Service image upload workflow with multiple files support
- */
-export const uploadServiceImages = async (
-  serviceId: string,
-  files: File[],
-  options: ImageUploadOptions = {},
-): Promise<any> => {
-  try {
-    if (files.length === 0) {
-      throw new Error("No files provided for upload");
-    }
-
-    if (files.length > 5) {
-      throw new Error("Maximum 5 images allowed per service");
-    }
-
-    // Validate and process each file
-    const processedFiles: {
-      fileName: string;
-      contentType: string;
-      fileData: Uint8Array;
-    }[] = [];
-
-    for (const file of files) {
-      // Validate file
-      const validationError = validateImageFile(file, options);
-      if (validationError) {
-        throw new Error(`File ${file.name}: ${validationError}`);
-      }
-
-      // Resize if needed
-      const opts = { ...DEFAULT_OPTIONS, ...options };
-      let processedFile = file;
-
-      if (opts.maxWidth || opts.maxHeight) {
-        processedFile = await resizeImage(file, opts.maxWidth, opts.maxHeight);
-      }
-
-      // Convert to Uint8Array
-      const fileData = await fileToUint8Array(processedFile);
-
-      processedFiles.push({
-        fileName: processedFile.name,
-        contentType: processedFile.type,
-        fileData,
-      });
-    }
-
-    // Upload via service canister
-    const result = await serviceCanisterService.uploadServiceImages(
-      serviceId,
-      processedFiles,
-    );
-
-    return result;
-  } catch (error) {
-    console.error("Error uploading service images:", error);
-    throw error;
-  }
-};
-
-/**
  * Batch process multiple files for service upload
  */
 export const processServiceImageFiles = async (
@@ -826,9 +725,7 @@ export const mediaService = {
   processServiceImageFiles,
 
   // Upload functionality
-  uploadProfilePicture,
   uploadProfilePictureWithDescaling,
-  uploadServiceImages,
   uploadServiceImagesWithDescaling,
 
   // Image retrieval functionality
