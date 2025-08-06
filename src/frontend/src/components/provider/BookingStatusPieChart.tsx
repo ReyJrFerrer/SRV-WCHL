@@ -21,8 +21,22 @@ const COLORS = [
 const BookingStatusPieChart: React.FC = () => {
   const { analytics, loadingAnalytics } = useProviderBookingManagement();
 
-  if (loadingAnalytics || !analytics) {
-    return <div>Add a service and be booked...</div>;
+  // If the data is still loading, display a loading message.
+  if (loadingAnalytics) {
+    return <div>Chart is loading...</div>;
+  }
+
+  // Check if there is no analytics data at all.
+  const hasAnalyticsData = analytics && (
+    analytics.acceptedBookings > 0 ||
+    analytics.completedBookings > 0 ||
+    analytics.pendingRequests > 0 ||
+    analytics.cancelledBookings > 0 ||
+    analytics.disputedBookings > 0
+  );
+
+  if (!hasAnalyticsData) {
+    return <div>Add your first service and be booked...</div>;
   }
 
   const data = [

@@ -244,7 +244,7 @@ const AddServicePage: React.FC = () => {
           formData.serviceOfferingTitle.length <
           VALIDATION_LIMITS.MIN_TITLE_LENGTH
         ) {
-          errors.serviceOfferingTitle = `Service title must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+            errors.serviceOfferingTitle = `Service title must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} characters`;
         } else if (
           formData.serviceOfferingTitle.length >
           VALIDATION_LIMITS.MAX_TITLE_LENGTH
@@ -1115,13 +1115,13 @@ const AddServicePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
+          <h1 className="text-l font-extrabold text-black sm:text-xl md:text-2xl">
             Add New Service (Step {currentStep}/5)
           </h1>
         </div>
       </header>
       <main className="container mx-auto flex-grow p-4 sm:p-6">
-        <div className="mt-6 rounded-xl bg-white p-6 shadow-lg sm:p-8">
+        <div className="mt-6 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
           {renderStep()}
         </div>
         <div className="mt-6 mb-8 flex justify-between">

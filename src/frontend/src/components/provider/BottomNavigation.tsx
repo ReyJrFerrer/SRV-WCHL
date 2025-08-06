@@ -1,11 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
-import { useNotifications } from "../../hooks/useNotifications";
 
 const BottomNavigation: React.FC = () => {
   const location = useLocation();
-  const { unreadCount } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
 
   const navItems = [
@@ -34,12 +32,6 @@ const BottomNavigation: React.FC = () => {
       icon: null,
       count: 0,
     },
-    {
-      to: "/provider/notifications",
-      label: "notifications",
-      icon: null,
-      count: unreadCount,
-    },
   ];
 
   return (
@@ -52,7 +44,6 @@ const BottomNavigation: React.FC = () => {
               "home",
               "booking",
               "settings",
-              "notifications",
               "chat",
               "services",
             ].includes(item.label.toLowerCase())

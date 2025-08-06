@@ -136,6 +136,47 @@ const TimeSlotInput: React.FC<{
   </div>
 );
 
+/**
+ * Converts a TimeSlotUIData object to a JavaScript Date object.
+ * @param {string} hour - The hour of the time slot (e.g., "09").
+ * @param {string} minute - The minute of the time slot (e.g., "00").
+ * @param {"AM" | "PM"} period - The period of the time slot ("AM" or "PM").
+ * @returns {Date} A Date object representing the given time.
+ */
+const toDate = (hour: string, minute: string, period: "AM" | "PM"): Date => {
+  const date = new Date();
+  let h = parseInt(hour, 10);
+  if (period === "PM" && h !== 12) {
+    h += 12;
+  } else if (period === "AM" && h === 12) {
+    h = 0;
+  }
+  date.setHours(h, parseInt(minute, 10), 0, 0);
+  return date;
+};
+
+/**
+ * Converts a JavaScript Date object back to the TimeSlotUIData format.
+ * @param {Date} date - The Date object to convert.
+ * @returns {{ hour: string, minute: string, period: "AM" | "PM" }} An object representing the time in the specified format.
+ */
+const fromDate = (
+  date: Date,
+): { hour: string; minute: string; period: "AM" | "PM" } => {
+  let h = date.getHours();
+  const m = String(date.getMinutes()).padStart(2, "0");
+  const period = h >= 12 ? "PM" : "AM";
+  if (h > 12) {
+    h -= 12;
+  } else if (h === 0) {
+    h = 12;
+  }
+  const hour = String(h).padStart(2, "0");
+  return { hour, minute: m, period };
+};
+
+// --- End of Helper Functions ---
+
 const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   formData,
   setFormData,
@@ -221,33 +262,67 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   };
 
   const addTimeSlot = (day: DayOfWeek | "common") => {
-    const newSlot: TimeSlotUIData = {
-      id: nanoid(),
-      startHour: "09",
-      startMinute: "00",
-      startPeriod: "AM",
-      endHour: "05",
-      endMinute: "00",
-      endPeriod: "PM",
-    };
     setFormData(
       (prev: {
-        commonTimeSlots: any;
-        perDayTimeSlots: { [x: string]: any };
+        commonTimeSlots: TimeSlotUIData[];
+        perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
       }) => {
+        const currentSlots =
+          day === "common"
+            ? prev.commonTimeSlots
+            : prev.perDayTimeSlots[day] || [];
+        let newSlot: TimeSlotUIData;
+
+        if (currentSlots.length > 0) {
+          const lastSlot = currentSlots[currentSlots.length - 1];
+          const lastEndTime = toDate(
+            lastSlot.endHour,
+            lastSlot.endMinute,
+            lastSlot.endPeriod,
+          );
+          const newStartTime = fromDate(lastEndTime);
+
+          // Calculate the new end time (e.g., 1 hour after the start time)
+          const newEndTimeDate = new Date(lastEndTime.getTime());
+          newEndTimeDate.setHours(newEndTimeDate.getHours() + 1);
+          const newEndTime = fromDate(newEndTimeDate);
+
+          newSlot = {
+            id: nanoid(),
+            startHour: newStartTime.hour,
+            startMinute: newStartTime.minute,
+            startPeriod: newStartTime.period,
+            endHour: newEndTime.hour,
+            endMinute: newEndTime.minute,
+            endPeriod: newEndTime.period,
+          };
+        } else {
+          // Default time slot for the very first entry
+          newSlot = {
+            id: nanoid(),
+            startHour: "09",
+            startMinute: "00",
+            startPeriod: "AM",
+            endHour: "05",
+            endMinute: "00",
+            endPeriod: "PM",
+          };
+        }
+
         if (day === "common") {
           return {
             ...prev,
-            commonTimeSlots: [...prev.commonTimeSlots, newSlot],
+            commonTimeSlots: [...currentSlots, newSlot],
+          };
+        } else {
+          return {
+            ...prev,
+            perDayTimeSlots: {
+              ...prev.perDayTimeSlots,
+              [day]: [...currentSlots, newSlot],
+            },
           };
         }
-        return {
-          ...prev,
-          perDayTimeSlots: {
-            ...prev.perDayTimeSlots,
-            [day]: [...(prev.perDayTimeSlots[day] || []), newSlot],
-          },
-        };
       },
     );
   };
