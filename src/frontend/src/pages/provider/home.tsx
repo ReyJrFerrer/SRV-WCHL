@@ -49,7 +49,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
       lastName: nameParts.slice(1).join(" ") || "",
       phone: userProfile.phone || "",
       profilePicture: userProfile.profilePicture || "",
-      isVerified: userProfile.isVerified || false,
       rating: 0,
       totalReviews: 0,
       joinDate: userProfile.createdAt || new Date().toISOString(),

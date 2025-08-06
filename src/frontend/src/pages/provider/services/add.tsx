@@ -18,6 +18,7 @@ import {
 } from "../../../hooks/serviceManagement";
 
 import { ServiceCategory } from "../../../services/serviceCanisterService";
+import { processServiceCertificateFiles } from "../../../services/mediaService";
 
 // Define TimeSlotUIData interface to ensure type consistency
 interface TimeSlotUIData {
@@ -607,6 +608,35 @@ const AddServicePage: React.FC = () => {
         }
       }
 
+      // Process service certificates if any were uploaded
+      let processedServiceCertificates:
+        | Array<{
+            fileName: string;
+            contentType: string;
+            fileData: Uint8Array;
+          }>
+        | undefined;
+
+      if (certificationFiles.length > 0) {
+        try {
+          console.log(
+            `Processing ${certificationFiles.length} service certificates...`,
+          );
+          processedServiceCertificates =
+            await processServiceCertificateFiles(certificationFiles);
+          console.log(
+            `Successfully processed ${processedServiceCertificates?.length || 0} certificates`,
+          );
+        } catch (certificateError) {
+          console.warn(
+            "Certificate processing failed, creating service without certificates:",
+            certificateError,
+          );
+          // Continue with service creation without certificates rather than failing completely
+          processedServiceCertificates = undefined;
+        }
+      }
+
       // Create service
       const serviceRequest: ServiceCreateRequest = {
         title: formData.serviceOfferingTitle.trim(),
@@ -621,6 +651,7 @@ const AddServicePage: React.FC = () => {
         bookingNoticeHours: 2,
         maxBookingsPerDay: 10,
         serviceImages: processedServiceImages,
+        serviceCertificates: processedServiceCertificates,
       };
 
       console.log("Creating service with data:", serviceRequest);

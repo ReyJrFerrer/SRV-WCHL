@@ -4,7 +4,7 @@ import authCanisterService, {
   FrontendProfile,
 } from "../services/authCanisterService"; // Adjust path as needed
 import { mediaService } from "../services/mediaService";
-import { useProfileImage } from "./useImageLoader";
+import { useProfileImage } from "./useMediaLoader";
 
 /**
  * Custom hook to manage the client's profile data, including fetching and updating.
