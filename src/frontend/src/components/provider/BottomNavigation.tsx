@@ -1,14 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
-import { BriefcaseIcon } from "@heroicons/react/24/solid";
-
-// Assuming these hooks are available in your new project structure
-// You may need to adjust the import paths
 import { useNotifications } from "../../hooks/useNotifications";
 
 const BottomNavigation: React.FC = () => {
-  // useLocation is the replacement for Next.js's useRouter to get the current path
   const location = useLocation();
   const { unreadCount } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
@@ -29,8 +24,8 @@ const BottomNavigation: React.FC = () => {
     },
     {
       to: "/provider/services",
-      label: "services", // Changed label to lowercase for consistency
-      icon: BriefcaseIcon, // Note: You're importing Heroicons here, but the code below uses image paths
+      label: "services",
+      icon: null,
       count: 0,
     },
     {
@@ -52,7 +47,6 @@ const BottomNavigation: React.FC = () => {
       <div className="mx-auto grid h-full max-w-lg grid-cols-5 font-medium">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
-          // Update the list to include the "services" label
           if (
             [
               "home",
@@ -61,16 +55,14 @@ const BottomNavigation: React.FC = () => {
               "notifications",
               "chat",
               "services",
-            ].includes(item.label.toLowerCase()) // Convert label to lowercase for a reliable check
+            ].includes(item.label.toLowerCase())
           ) {
-            // Use React state to manage the icon src
             const [iconSrc, setIconSrc] = React.useState(
               isActive
                 ? `/images/navigation icons/${item.label.toLowerCase()}-selected.svg`
                 : `/images/navigation icons/${item.label.toLowerCase()}.svg`,
             );
 
-            // Update icon if route changes
             React.useEffect(() => {
               setIconSrc(
                 isActive
@@ -78,6 +70,11 @@ const BottomNavigation: React.FC = () => {
                   : `/images/navigation icons/${item.label.toLowerCase()}.svg`,
               );
             }, [isActive, item.label]);
+
+            const isServices = item.label.toLowerCase() === "services";
+            const servicesSize = "80px";
+            const defaultSize = "28px";
+            const activeOtherSize = "56px";
 
             return (
               <Link
@@ -119,30 +116,43 @@ const BottomNavigation: React.FC = () => {
                     className={`transition-all duration-300 ease-in-out ${
                       isActive
                         ? "scale-110 drop-shadow-lg"
-                        : "mb-1 h-7 w-7 group-hover:scale-105 group-hover:drop-shadow-md"
+                        : "mb-1 group-hover:scale-105 group-hover:drop-shadow-md"
                     }`}
                     style={
-                      isActive
+                      isServices
                         ? {
-                            height: "56px",
-                            width: "56px",
-                            maxHeight: "64px",
-                            maxWidth: "64px",
-                            margin: "0 auto",
+                            position: "absolute",
+                            top: isActive ? "-15px" : "-20px",
+                            left: "51%",
+                            // FIX: Use a single transform for both centering and scaling
+                            transform: `translateX(-50%) scale(${isActive ? 1.1 : 1})`,
+                            height: servicesSize,
+                            width: servicesSize,
+                            maxHeight: servicesSize,
+                            maxWidth: servicesSize,
                             pointerEvents: "none",
+                            zIndex: 10,
                           }
-                        : {
-                            height: "28px",
-                            width: "28px",
-                            maxHeight: "28px",
-                            maxWidth: "28px",
-                            pointerEvents: "none",
-                          }
+                        : isActive
+                          ? {
+                              height: activeOtherSize,
+                              width: activeOtherSize,
+                              maxHeight: activeOtherSize,
+                              maxWidth: activeOtherSize,
+                              margin: "0 auto",
+                              pointerEvents: "none",
+                            }
+                          : {
+                              height: defaultSize,
+                              width: defaultSize,
+                              maxHeight: defaultSize,
+                              maxWidth: defaultSize,
+                              pointerEvents: "none",
+                            }
                     }
                     draggable={false}
                   />
                 </div>
-                {/* Hide label when selected */}
                 <span
                   className={`text-xs transition duration-300 ease-in-out ${
                     isActive
@@ -150,20 +160,20 @@ const BottomNavigation: React.FC = () => {
                       : "text-blue-900 group-hover:scale-105 group-hover:text-yellow-500"
                   }`}
                   style={{
+                    position: isServices ? "absolute" : "static",
+                    bottom: isServices ? "5px" : "",
                     opacity: isActive ? 1 : 0.9,
                     transform: isActive ? "scale(1.05)" : undefined,
                   }}
                 >
                   {item.label}
                 </span>
-                {/* Notification badge */}
                 {item.count > 0 && (
                   <span className="absolute top-1 right-5 block h-2 w-2 rounded-full bg-red-500"></span>
                 )}
               </Link>
             );
           }
-          // All other nav items (This block will now be empty if all items are included above)
           return (
             <Link
               key={item.label}
@@ -191,7 +201,6 @@ const BottomNavigation: React.FC = () => {
               >
                 {item.label}
               </span>
-              {/* Notification badge */}
               {item.count > 0 && (
                 <span className="absolute top-1 right-5 block h-2 w-2 rounded-full bg-red-500"></span>
               )}

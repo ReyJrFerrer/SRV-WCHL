@@ -45,9 +45,9 @@ interface ValidationErrors {
 
 // Backend validation constants (from service.mo)
 const VALIDATION_LIMITS = {
-  MIN_TITLE_LENGTH: 1,
+  MIN_TITLE_LENGTH: 3,
   MAX_TITLE_LENGTH: 100,
-  MIN_DESCRIPTION_LENGTH: 1,
+  MIN_DESCRIPTION_LENGTH: 3,
   MAX_DESCRIPTION_LENGTH: 1000,
   MIN_PRICE: 1,
   MAX_PRICE: 1_000_000,
