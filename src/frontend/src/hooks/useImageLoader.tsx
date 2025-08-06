@@ -253,7 +253,7 @@ export const useServiceImageUpload = (serviceId: string | null | undefined) => {
       }
 
       try {
-        return await mediaService.uploadServiceImages(
+        return await mediaService.uploadServiceImagesWithDescaling(
           serviceId,
           files,
           options,

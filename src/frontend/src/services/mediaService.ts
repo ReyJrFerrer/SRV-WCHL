@@ -183,10 +183,10 @@ export const validateImageFile = (
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   // Check file size
-  const fileSizeKB = file.size / 1024;
-  if (fileSizeKB > opts.maxSizeKB) {
-    return `File size (${fileSizeKB.toFixed(1)}KB) exceeds maximum allowed size of ${opts.maxSizeKB}KB`;
-  }
+  // const fileSizeKB = file.size / 1024;
+  // if (fileSizeKB > opts.maxSizeKB) {
+  //   return `File size (${fileSizeKB.toFixed(1)}KB) exceeds maximum allowed size of ${opts.maxSizeKB}KB`;
+  // }
 
   // Check file type
   if (!opts.allowedTypes.includes(file.type)) {
@@ -288,25 +288,335 @@ export const resizeImage = (
 };
 
 /**
- * Complete profile picture upload workflow
+ * Batch process multiple files for service upload
  */
-export const uploadProfilePicture = async (
+export const processServiceImageFiles = async (
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<
+  { fileName: string; contentType: string; fileData: Uint8Array }[]
+> => {
+  try {
+    if (files.length === 0) {
+      return [];
+    }
+
+    if (files.length > 5) {
+      throw new Error("Maximum 5 images allowed per service");
+    }
+
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const processedFiles: {
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }[] = [];
+
+    for (const file of files) {
+      // Validate file type only (we'll handle size through scaling)
+      if (!opts.allowedTypes.includes(file.type)) {
+        throw new Error(
+          `File ${file.name}: File type ${file.type} is not supported. Allowed types: ${opts.allowedTypes.join(", ")}`,
+        );
+      }
+
+      let processedFile = file;
+      const currentSizeKB = file.size / 1024;
+
+      // Scale down if file exceeds size limit
+      if (currentSizeKB > opts.maxSizeKB) {
+        console.log(
+          `Scaling ${file.name} from ${currentSizeKB.toFixed(1)}KB to ${opts.maxSizeKB}KB...`,
+        );
+        processedFile = await intelligentScaleImageTo450KB(
+          file,
+          opts.maxSizeKB,
+        );
+        console.log(
+          `Successfully scaled ${file.name} to ${(processedFile.size / 1024).toFixed(1)}KB`,
+        );
+      }
+
+      // Apply dimension limits if specified
+      if (opts.maxWidth || opts.maxHeight) {
+        processedFile = await resizeImage(
+          processedFile,
+          opts.maxWidth,
+          opts.maxHeight,
+        );
+
+        // Check if resizing caused the file to exceed size limit again
+        const resizedSizeKB = processedFile.size / 1024;
+        if (resizedSizeKB > opts.maxSizeKB) {
+          console.log(
+            `File size after dimension resize: ${resizedSizeKB.toFixed(1)}KB. Scaling down again...`,
+          );
+          processedFile = await intelligentScaleImageTo450KB(
+            processedFile,
+            opts.maxSizeKB,
+          );
+        }
+      }
+
+      // Convert to Uint8Array
+      const fileData = await fileToUint8Array(processedFile);
+
+      processedFiles.push({
+        fileName: processedFile.name,
+        contentType: processedFile.type,
+        fileData,
+      });
+    }
+
+    return processedFiles;
+  } catch (error) {
+    console.error("Error processing service image files:", error);
+    throw error;
+  }
+};
+/**
+ * Scales down an image to meet the 450KB size limit through iterative resizing and quality adjustment
+ */
+export const scaleImageTo450KB = async (
+  file: File,
+  targetSizeKB: number = 450,
+  maxIterations: number = 10,
+): Promise<File> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // If already under limit, return original
+      const currentSizeKB = file.size / 1024;
+      if (currentSizeKB <= targetSizeKB) {
+        resolve(file);
+        return;
+      }
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+
+      if (!ctx) {
+        reject(new Error("Canvas context not available"));
+        return;
+      }
+
+      img.onload = async () => {
+        let currentFile = file;
+        let iterations = 0;
+
+        // Initial dimensions and quality
+        let scaleFactor = Math.sqrt(targetSizeKB / currentSizeKB); // Estimate initial scale
+        let quality = 0.9;
+
+        while (iterations < maxIterations) {
+          // Calculate new dimensions
+          const newWidth = Math.floor(img.width * scaleFactor);
+          const newHeight = Math.floor(img.height * scaleFactor);
+
+          // Set canvas dimensions
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+
+          // Clear and draw image
+          ctx.clearRect(0, 0, newWidth, newHeight);
+          ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+          // Convert to blob with current quality
+          const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(resolve, file.type, quality);
+          });
+
+          if (!blob) {
+            reject(new Error("Failed to create blob"));
+            return;
+          }
+
+          const newFile = new File([blob], file.name, {
+            type: file.type,
+            lastModified: Date.now(),
+          });
+
+          const newSizeKB = newFile.size / 1024;
+
+          // Check if we've reached the target
+          if (newSizeKB <= targetSizeKB) {
+            resolve(newFile);
+            return;
+          }
+
+          // Adjust parameters for next iteration
+          if (newSizeKB > targetSizeKB * 1.1) {
+            // Still too big, reduce more aggressively
+            scaleFactor *= 0.9;
+            quality = Math.max(0.3, quality - 0.1);
+          } else {
+            // Close but still too big, fine-tune
+            scaleFactor *= 0.95;
+            quality = Math.max(0.3, quality - 0.05);
+          }
+
+          iterations++;
+          currentFile = newFile;
+        }
+
+        // If we've exhausted iterations, return the last result
+        console.warn(
+          `Could not reach ${targetSizeKB}KB target after ${maxIterations} iterations. Final size: ${currentFile.size / 1024}KB`,
+        );
+        resolve(currentFile);
+      };
+
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+
+      img.src = URL.createObjectURL(file);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Enhanced version that tries different strategies based on image characteristics
+ */
+export const intelligentScaleImageTo450KB = async (
+  file: File,
+  targetSizeKB: number = 450,
+): Promise<File> => {
+  try {
+    const currentSizeKB = file.size / 1024;
+
+    if (currentSizeKB <= targetSizeKB) {
+      return file;
+    }
+
+    // Strategy 1: If image is only slightly over, try quality reduction first
+    if (currentSizeKB < targetSizeKB * 1.5) {
+      const qualityReduced = await reduceImageQuality(file, targetSizeKB);
+      if (qualityReduced.size / 1024 <= targetSizeKB) {
+        return qualityReduced;
+      }
+    }
+
+    // Strategy 2: If significantly over, use dimension + quality reduction
+    return await scaleImageTo450KB(file, targetSizeKB);
+  } catch (error) {
+    console.error("Error in intelligent scaling:", error);
+    throw error;
+  }
+};
+
+/**
+ * Reduces image quality while maintaining dimensions
+ */
+const reduceImageQuality = async (
+  file: File,
+  targetSizeKB: number,
+  maxIterations: number = 8,
+): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    if (!ctx) {
+      reject(new Error("Canvas context not available"));
+      return;
+    }
+
+    img.onload = async () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      let quality = 0.9;
+      let iterations = 0;
+
+      while (iterations < maxIterations && quality > 0.1) {
+        const blob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(resolve, file.type, quality);
+        });
+
+        if (!blob) {
+          reject(new Error("Failed to create blob"));
+          return;
+        }
+
+        const newFile = new File([blob], file.name, {
+          type: file.type,
+          lastModified: Date.now(),
+        });
+
+        if (newFile.size / 1024 <= targetSizeKB) {
+          resolve(newFile);
+          return;
+        }
+
+        quality -= 0.1;
+        iterations++;
+      }
+
+      // Return the last attempt if we couldn't meet the target
+      const finalBlob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, file.type, quality);
+      });
+
+      if (finalBlob) {
+        resolve(
+          new File([finalBlob], file.name, {
+            type: file.type,
+            lastModified: Date.now(),
+          }),
+        );
+      } else {
+        reject(new Error("Failed to reduce image quality"));
+      }
+    };
+
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+/**
+ * Enhanced upload profile picture with automatic descaling
+ */
+export const uploadProfilePictureWithDescaling = async (
   file: File,
   options: ImageUploadOptions = {},
 ): Promise<any> => {
   try {
-    // Validate file
-    const validationError = validateImageFile(file, options);
-    if (validationError) {
-      throw new Error(validationError);
+    // First validate file type (but not size since we'll handle that)
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+
+    if (!opts.allowedTypes.includes(file.type)) {
+      throw new Error(
+        `File type ${file.type} is not supported. Allowed types: ${opts.allowedTypes.join(", ")}`,
+      );
     }
 
-    // Resize if needed
-    const opts = { ...DEFAULT_OPTIONS, ...options };
+    // Scale down if needed
     let processedFile = file;
+    const currentSizeKB = file.size / 1024;
 
+    if (currentSizeKB > opts.maxSizeKB) {
+      console.log(
+        `Image size (${currentSizeKB.toFixed(1)}KB) exceeds limit. Scaling down to ${opts.maxSizeKB}KB...`,
+      );
+      processedFile = await intelligentScaleImageTo450KB(file, opts.maxSizeKB);
+      console.log(
+        `Successfully scaled image to ${(processedFile.size / 1024).toFixed(1)}KB`,
+      );
+    }
+
+    // Apply dimension limits if specified
     if (opts.maxWidth || opts.maxHeight) {
-      processedFile = await resizeImage(file, opts.maxWidth, opts.maxHeight);
+      processedFile = await resizeImage(
+        processedFile,
+        opts.maxWidth,
+        opts.maxHeight,
+      );
     }
 
     // Convert to Uint8Array
@@ -321,15 +631,15 @@ export const uploadProfilePicture = async (
 
     return result;
   } catch (error) {
-    console.error("Error uploading profile picture:", error);
+    console.error("Error uploading profile picture with descaling:", error);
     throw error;
   }
 };
 
 /**
- * Service image upload workflow with multiple files support
+ * Enhanced service image upload with automatic descaling
  */
-export const uploadServiceImages = async (
+export const uploadServiceImagesWithDescaling = async (
   serviceId: string,
   files: File[],
   options: ImageUploadOptions = {},
@@ -343,7 +653,7 @@ export const uploadServiceImages = async (
       throw new Error("Maximum 5 images allowed per service");
     }
 
-    // Validate and process each file
+    const opts = { ...DEFAULT_OPTIONS, ...options };
     const processedFiles: {
       fileName: string;
       contentType: string;
@@ -351,18 +661,37 @@ export const uploadServiceImages = async (
     }[] = [];
 
     for (const file of files) {
-      // Validate file
-      const validationError = validateImageFile(file, options);
-      if (validationError) {
-        throw new Error(`File ${file.name}: ${validationError}`);
+      // Validate file type
+      if (!opts.allowedTypes.includes(file.type)) {
+        throw new Error(
+          `File ${file.name}: File type ${file.type} is not supported`,
+        );
       }
 
-      // Resize if needed
-      const opts = { ...DEFAULT_OPTIONS, ...options };
+      // Scale down if needed
       let processedFile = file;
+      const currentSizeKB = file.size / 1024;
 
+      if (currentSizeKB > opts.maxSizeKB) {
+        console.log(
+          `Scaling ${file.name} from ${currentSizeKB.toFixed(1)}KB to ${opts.maxSizeKB}KB...`,
+        );
+        processedFile = await intelligentScaleImageTo450KB(
+          file,
+          opts.maxSizeKB,
+        );
+        console.log(
+          `Successfully scaled ${file.name} to ${(processedFile.size / 1024).toFixed(1)}KB`,
+        );
+      }
+
+      // Apply dimension limits
       if (opts.maxWidth || opts.maxHeight) {
-        processedFile = await resizeImage(file, opts.maxWidth, opts.maxHeight);
+        processedFile = await resizeImage(
+          processedFile,
+          opts.maxWidth,
+          opts.maxHeight,
+        );
       }
 
       // Convert to Uint8Array
@@ -383,63 +712,7 @@ export const uploadServiceImages = async (
 
     return result;
   } catch (error) {
-    console.error("Error uploading service images:", error);
-    throw error;
-  }
-};
-
-/**
- * Batch process multiple files for service upload
- */
-export const processServiceImageFiles = async (
-  files: File[],
-  options: ImageUploadOptions = {},
-): Promise<
-  { fileName: string; contentType: string; fileData: Uint8Array }[]
-> => {
-  try {
-    if (files.length === 0) {
-      return [];
-    }
-
-    if (files.length > 5) {
-      throw new Error("Maximum 5 images allowed per service");
-    }
-
-    const processedFiles: {
-      fileName: string;
-      contentType: string;
-      fileData: Uint8Array;
-    }[] = [];
-
-    for (const file of files) {
-      // Validate file
-      const validationError = validateImageFile(file, options);
-      if (validationError) {
-        throw new Error(`File ${file.name}: ${validationError}`);
-      }
-
-      // Resize if needed
-      const opts = { ...DEFAULT_OPTIONS, ...options };
-      let processedFile = file;
-
-      if (opts.maxWidth || opts.maxHeight) {
-        processedFile = await resizeImage(file, opts.maxWidth, opts.maxHeight);
-      }
-
-      // Convert to Uint8Array
-      const fileData = await fileToUint8Array(processedFile);
-
-      processedFiles.push({
-        fileName: processedFile.name,
-        contentType: processedFile.type,
-        fileData,
-      });
-    }
-
-    return processedFiles;
-  } catch (error) {
-    console.error("Error processing service image files:", error);
+    console.error("Error uploading service images with descaling:", error);
     throw error;
   }
 };
@@ -452,8 +725,8 @@ export const mediaService = {
   processServiceImageFiles,
 
   // Upload functionality
-  uploadProfilePicture,
-  uploadServiceImages,
+  uploadProfilePictureWithDescaling,
+  uploadServiceImagesWithDescaling,
 
   // Image retrieval functionality
   getImageDataUrl,

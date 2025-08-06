@@ -5,10 +5,10 @@ import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
+import Nat32 "mo:base/Nat32";
 import Int "mo:base/Int";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
-import Option "mo:base/Option";
 import Types "../types/shared";
 
 persistent actor MediaCanister {
@@ -27,6 +27,9 @@ persistent actor MediaCanister {
     private transient var mediaItems = HashMap.HashMap<Text, MediaItem>(10, Text.equal, Text.hash);
     private transient var fileDataStore = HashMap.HashMap<Text, Blob>(10, Text.equal, Text.hash);
     private transient var userMediaIndex = HashMap.HashMap<Principal, [Text]>(10, Principal.equal, Principal.hash);
+    
+    // Counter for ensuring unique IDs
+    private var idCounter : Nat = 0;
 
     // Constants
     private transient let MAX_FILE_SIZE : Nat = 450_000; // 450KB in bytes
@@ -41,10 +44,12 @@ persistent actor MediaCanister {
     ];
 
     // Helper functions
-    private func generateId() : Text {
+    private func generateId(caller : Principal) : Text {
         let now = Int.abs(Time.now());
-        let random = Int.abs(Time.now()) % 10000;
-        return Int.toText(now) # "-" # Int.toText(random);
+        idCounter += 1;
+        let callerText = Principal.toText(caller);
+        let callerHash = Nat32.toNat(Text.hash(callerText));
+        return Int.toText(now) # "-" # Nat.toText(idCounter) # "-" # Nat.toText(callerHash);
     };
 
     private func validateContentType(contentType : Text) : Bool {
@@ -66,10 +71,6 @@ persistent actor MediaCanister {
         mediaTypeText # "/" # ownerText # "/" # fileName
     };
 
-    private func generateUrl(mediaId : Text) : Text {
-        // Generate HTTP URL that can be served by the canister
-        "/media/" # mediaId
-    };
 
     private func addToUserIndex(userId : Principal, mediaId : Text) {
         switch (userMediaIndex.get(userId)) {
@@ -148,7 +149,7 @@ persistent actor MediaCanister {
             return #err("File name must be between 1 and 255 characters");
         };
 
-        let mediaId = generateId();
+        let mediaId = generateId(caller);
         let filePath = generateFilePath(caller, mediaType, fileName);
         let url = "/media/" # mediaId; // Use media ID for HTTP URL
         
