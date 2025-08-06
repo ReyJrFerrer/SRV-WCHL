@@ -9,7 +9,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceById } from "../../../../hooks/serviceInformation";
-import { useUserImage } from "../../../../hooks/useImageLoader";
 import { useReputation } from "../../../../hooks/useReputation";
 
 // Displays the provider's reputation score
@@ -139,7 +138,6 @@ const ServiceReviewsPage: React.FC = () => {
 
   // Provider avatar logic
   const providerName = service?.providerName || "Service Provider";
-  const { userImageUrl } = useUserImage(service?.providerAvatar);
 
   // Loading state
   if (serviceLoading || reviewsLoading) {
@@ -224,7 +222,7 @@ const ServiceReviewsPage: React.FC = () => {
         <div className="mb-8 flex items-center gap-4 rounded-2xl border border-blue-100 bg-white/90 p-4 shadow-lg md:p-6">
           <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border-2 border-blue-200 bg-white md:h-20 md:w-20">
             <img
-              src={userImageUrl || "/default-provider.svg"}
+              src={service.providerAvatar || "/default-provider.svg"}
               alt={providerName}
               className="h-full w-full rounded-full object-cover"
               style={{ borderRadius: "50%" }}
