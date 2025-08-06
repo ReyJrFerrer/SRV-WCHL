@@ -2,18 +2,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import authCanisterService, {
-  FrontendProfile,
-} from "../../services/authCanisterService";
+import authCanisterService from "../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
+// Props for Header component
 interface HeaderProps {
   className?: string;
 }
 
-// Fix leaflet marker icon (required for proper marker display)
+// Fix leaflet marker icon for proper display
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -33,11 +32,17 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
     setLocation,
     isLoading: isAuthLoading,
   } = useAuth();
-  const [profile, setProfile] = useState<FrontendProfile | null>(null);
+  // User profile state
+  const [profile, setProfile] = useState<any>(null);
+  // Search bar state
   const [searchQuery, setSearchQuery] = useState("");
+  // Location display state
   const [userAddress, setUserAddress] = useState<string>("Unknown");
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);
+  // Modal for denied location permission
+  const [showDeniedModal, setShowDeniedModal] = useState(false);
+  // Search bar placeholder options
   const searchPlaceholders = [
     "Looking for a plumber?",
     "Looking for an electrician?",
@@ -51,24 +56,22 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
     "Looking for a babysitter?",
   ];
   const [placeholder, setPlaceholder] = useState(searchPlaceholders[0]);
-
-  // New: Show/hide map modal
+  // Show/hide map modal
   const [showMap, setShowMap] = useState(false);
 
+  // Effect: fetch user profile and location info after auth
   useEffect(() => {
-    // This function will run only when authentication is no longer loading.
     const loadInitialData = async () => {
-      // 1. Fetch User Profile if authenticated
+      // Fetch user profile if authenticated
       if (isAuthenticated) {
         try {
           const userProfile = await authCanisterService.getMyProfile();
           setProfile(userProfile);
         } catch (error) {
-          console.error("Failed to fetch profile:", error);
+          // Profile fetch failed
         }
       }
-
-      // 2. Determine and Set Location
+      // Fetch and set location info
       setLocationLoading(true);
       if (locationStatus === "allowed" && location) {
         try {
@@ -94,7 +97,6 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
               data.address.region ||
               data.address.province ||
               "";
-            // Compose address with house number/building if available
             const houseOrBuilding = house_number || building || "";
             const streetPart = road || "";
             const areaPart = suburb || village || "";
@@ -118,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           setLocationLoading(false);
         }
       } else {
-        // Handle cases where location is not yet known or denied
+        // Location not allowed or not set
         setLocationLoading(false);
         switch (locationStatus) {
           case "denied":
@@ -132,53 +134,49 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         }
       }
     };
-
-    // Only run the data fetching logic after the initial auth check is complete.
     if (!isAuthLoading) {
       loadInitialData();
     }
-
+    // Randomize search bar placeholder
     setPlaceholder(
       searchPlaceholders[Math.floor(Math.random() * searchPlaceholders.length)],
     );
   }, [isAuthenticated, isAuthLoading, location, locationStatus]);
 
+  // Handler: request location permission
   const handleRequestLocation = useCallback(() => {
+    if (locationStatus === "denied") {
+      setShowDeniedModal(true);
+      return;
+    }
     setLocationLoading(true);
     setUserAddress("Detecting location...");
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation("allowed", { latitude, longitude });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocation("denied");
-        },
-      );
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setLocation("allowed", { latitude, longitude });
+      });
     } else {
       setLocation("unsupported");
     }
-  }, [setLocation]);
+  }, [setLocation, locationStatus]);
 
+  // Handler: go to profile page
   const handleProfileClick = () => {
     navigate("/client/profile");
   };
-
+  // Display name for welcome message
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
 
-  // --- New: Map Modal Component ---
+  // Map modal for showing user's location
   const MapModal: React.FC = () => {
     if (!location || locationStatus !== "allowed") return null;
-
     // Close modal if background is clicked
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) {
         setShowMap(false);
       }
     };
-
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
@@ -187,7 +185,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         aria-modal="true"
       >
         <div className="relative flex h-[70vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-lg">
-          {/* Close Button - always visible */}
+          {/* Close Button */}
           <button
             className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
             onClick={() => setShowMap(false)}
@@ -217,11 +215,12 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
     );
   };
 
+  // --- Render: Header layout ---
   return (
     <header
       className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
     >
-      {/* --- Desktop Header --- */}
+      {/* Desktop header: logo, welcome, profile button */}
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-6">
           <Link to="/client/home">
@@ -251,7 +250,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         )}
       </div>
 
-      {/* --- Mobile Header --- */}
+      {/* Mobile header: logo, welcome, profile button */}
       <div className="md:hidden">
         <div className="flex items-center justify-between">
           <Link to="/client/home">
@@ -279,7 +278,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* --- Location & Search Section --- */}
+      {/* Location & search section */}
       <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
@@ -322,7 +321,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             </span>
           )}
         </div>
-        {/* Search Bar */}
+        {/* Search bar for service queries */}
         <form
           className="mt-4 w-full"
           onSubmit={(e) => {
@@ -346,8 +345,63 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
         </form>
       </div>
 
-      {/* Map Modal */}
+      {/* Map modal for location display */}
       {showMap && <MapModal />}
+
+      {/* Modal: location permission denied instructions */}
+      {showDeniedModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDeniedModal(false);
+          }}
+        >
+          <div className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
+            <button
+              className="absolute top-3 right-3 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+              onClick={() => setShowDeniedModal(false)}
+              aria-label="Close"
+              tabIndex={0}
+            >
+              <span className="text-xl font-bold text-gray-700">&times;</span>
+            </button>
+            <h2 className="mb-4 text-xl font-bold text-blue-700">
+              Location Permission Blocked
+            </h2>
+            <p className="mb-2 text-gray-700">
+              You have previously blocked location access for this site. To
+              share your location, please enable location permissions in your
+              browser settings and reload the page.
+            </p>
+            <ul className="mb-4 list-disc pl-5 text-sm text-gray-600">
+              <li>
+                Chrome: Click the lock icon in the address bar &gt; Site
+                settings &gt; Allow Location
+              </li>
+              <li>
+                Brave: Click the lion icon in the address bar &gt; Shields &gt;
+                Allow Location, or use Site settings via the lock icon
+              </li>
+              <li>
+                Safari: Go to Preferences &gt; Websites &gt; Location &gt; Allow
+                for this site
+              </li>
+              <li>
+                Firefox: Click the lock icon &gt; Permissions &gt; Allow
+                Location
+              </li>
+            </ul>
+            <button
+              className="mt-2 w-full rounded bg-blue-600 py-2 font-bold text-white hover:bg-blue-700"
+              onClick={() => setShowDeniedModal(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
