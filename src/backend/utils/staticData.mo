@@ -186,7 +186,6 @@ module {
                 activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000; // 2022-01-01
                 updatedAt = 1640995200000000000;
-                isVerified = true;
                 profilePicture = ?{
                     imageUrl = "/images/CleaningServices-HouseMaid1.jpg";
                     thumbnailUrl = "/images/CleaningServices-HouseMaid2.jpg";
@@ -201,7 +200,6 @@ module {
                 activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
-                isVerified = true;
                 profilePicture = ?{
                     imageUrl = "/images/HomeServices-Plumbing1.jpg";
                     thumbnailUrl = "/images/HomeServices-Plumbing2.jpg";
@@ -216,7 +214,6 @@ module {
                 activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
-                isVerified = true;
                 profilePicture = ?{
                     imageUrl = "/images/Technician1.jpg";
                     thumbnailUrl = "/images/Technician1.jpg";
@@ -231,7 +228,6 @@ module {
                 activeRole = #ServiceProvider; // Preferred UI mode
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
-                isVerified = true;
                 profilePicture = ?{
                     imageUrl = "/images/BeautyServices-Hairstylist1.jpg";
                     thumbnailUrl = "/images/BeautyServices-Hairstylist1.jpg";
@@ -247,7 +243,6 @@ module {
                 activeRole = #Client; // Initially same as role
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
-                isVerified = true;
                 profilePicture = null;
                 biography = null;
             })
@@ -315,6 +310,8 @@ module {
                 rating = ?4.9;
                 reviewCount = 31;
                 imageUrls = []; // Empty for static data
+                certificateUrls = []; // Empty for static data
+                isVerifiedService = false; // Static services are not verified by default
                 // Availability information - 24/7 emergency service
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "00:00"; endTime = "23:59" }] }),
@@ -350,6 +347,8 @@ module {
                 rating = ?4.6;
                 reviewCount = 18;
                 imageUrls = []; // Empty for static data
+                certificateUrls = []; // Empty for static data
+                isVerifiedService = false; // Static services are not verified by default
                 // Availability information
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "18:00" }] }),
@@ -385,6 +384,8 @@ module {
                 rating = ?4.7;
                 reviewCount = 27;
                 imageUrls = [];
+                certificateUrls = [];
+                isVerifiedService = false;
                 // Availability information - Beauty salon hours
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = false; slots = [] }), // Closed Mondays
@@ -420,6 +421,8 @@ module {
                 rating = ?4.7;
                 reviewCount = 19;
                 imageUrls = [];
+                certificateUrls = [];
+                isVerifiedService = false;
                 // Availability information - Handyman service schedule
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "17:00" }] }),
