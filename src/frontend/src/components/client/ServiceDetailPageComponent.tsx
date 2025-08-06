@@ -1073,7 +1073,8 @@ const ServiceDetailPage: React.FC = () => {
         {/* --- Packages Section (below service info) --- */}
         <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
-            <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages Offered
+            <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages
+            Offered
           </h3>
           {loadingPackages ? (
             <div className="p-4 text-center text-gray-500">
