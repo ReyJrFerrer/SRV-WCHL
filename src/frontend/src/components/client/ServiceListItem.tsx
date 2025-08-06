@@ -240,7 +240,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 ) : (
                   <div className="flex items-center text-gray-400">
                     {renderRatingStars(0, "h-5 w-5")}
-                    <span className="ml-1">No reviews</span>
+                    <span className="ml-1">(0)</span>
                   </div>
                 )}
               </div>

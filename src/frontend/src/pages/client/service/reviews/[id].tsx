@@ -1,10 +1,22 @@
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeftIcon,
+  StarIcon as StarSolid,
+  UserIcon,
+  EyeSlashIcon,
+  ArrowPathRoundedSquareIcon,
+} from "@heroicons/react/24/solid";
+import { useServiceReviews } from "../../../../hooks/reviewManagement";
+import { useServiceById } from "../../../../hooks/serviceInformation";
+import { useUserImage } from "../../../../hooks/useImageLoader";
 import { useReputation } from "../../../../hooks/useReputation";
-// Reputation Score Component
+
+// Displays the provider's reputation score
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
   const [reputationScore, setReputationScore] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
   useEffect(() => {
     const loadReputation = async () => {
       setLoading(true);
@@ -19,7 +31,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
     };
     if (providerId) loadReputation();
   }, [providerId, fetchUserReputation]);
-
   if (loading) {
     return (
       <span className="mt-1 flex items-center text-xs text-gray-400">
@@ -46,51 +57,36 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
     </span>
   );
 };
-import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeftIcon,
-  StarIcon as StarSolid,
-  UserIcon,
-  EyeSlashIcon,
-  ArrowPathRoundedSquareIcon,
-} from "@heroicons/react/24/solid";
-import { useServiceReviews } from "../../../../hooks/reviewManagement"; // Adjust path as needed
-import { useServiceById } from "../../../../hooks/serviceInformation"; // Adjust path as needed
 
-// --- Reusable Star Rating Component ---
+// Displays star rating for reviews and service info
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
   maxStars = 5,
-}) => {
-  return (
-    <div className="flex items-center">
-      {[...Array(maxStars)].map((_, index) => {
-        const starValue = index + 1;
-        return (
-          <StarSolid
-            key={index}
-            className={`h-5 w-5 ${starValue <= rating ? "text-yellow-400" : "text-gray-300"}`}
-          />
-        );
-      })}
-    </div>
-  );
-};
+}) => (
+  <div className="flex items-center">
+    {[...Array(maxStars)].map((_, index) => {
+      const starValue = index + 1;
+      return (
+        <StarSolid
+          key={index}
+          className={`h-5 w-5 ${starValue <= rating ? "text-yellow-400" : "text-gray-300"}`}
+        />
+      );
+    })}
+  </div>
+);
 
-// --- Main Page Component ---
+// Main reviews page component
 const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
 
-  // Get service data with provider information
+  // Fetch service data and reviews
   const {
     service,
     loading: serviceLoading,
     error: serviceError,
   } = useServiceById(serviceId as string);
-
-  // Get reviews using the review management hook
   const {
     reviews,
     loading: reviewsLoading,
@@ -103,27 +99,25 @@ const ServiceReviewsPage: React.FC = () => {
     refreshReviews,
   } = useServiceReviews(serviceId as string);
 
-  // Local state for filtering and sorting
+  // State for sorting and filtering reviews
   const [sortBy, setSortBy] = useState<
     "newest" | "oldest" | "highest" | "lowest"
   >("newest");
   const [filterRating, setFilterRating] = useState<number | null>(null);
 
-  // Set the document title dynamically
+  // Set the document title based on service
   useEffect(() => {
     if (service) {
       document.title = `Reviews for ${service.name} by ${service.providerName || "Provider"}`;
     }
   }, [service]);
 
-  // Computed values for sorted and filtered reviews
+  // Memoized sorted and filtered reviews
   const sortedAndFilteredReviews = useMemo(() => {
     let filtered = reviews.filter((review) => review.status === "Visible");
-
     if (filterRating) {
       filtered = filtered.filter((review) => review.rating === filterRating);
     }
-
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
@@ -143,7 +137,11 @@ const ServiceReviewsPage: React.FC = () => {
   const ratingDistribution = getRatingDistribution(reviews);
   const averageRating = getAverageRating(reviews);
 
-  // --- Render States ---
+  // Provider avatar logic
+  const providerName = service?.providerName || "Service Provider";
+  const { userImageUrl } = useUserImage(service?.providerAvatar);
+
+  // Loading state
   if (serviceLoading || reviewsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -153,6 +151,7 @@ const ServiceReviewsPage: React.FC = () => {
     );
   }
 
+  // Error state
   if (serviceError || reviewsError) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
@@ -160,7 +159,7 @@ const ServiceReviewsPage: React.FC = () => {
           Error Loading Reviews
         </h1>
         <button
-          onClick={() => navigate(-1)} // Go back to the previous page
+          onClick={() => navigate(-1)}
           className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
         >
           Go Back
@@ -169,6 +168,7 @@ const ServiceReviewsPage: React.FC = () => {
     );
   }
 
+  // Service not found state
   if (!service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
@@ -188,13 +188,9 @@ const ServiceReviewsPage: React.FC = () => {
     );
   }
 
-  const providerName = service.providerName || "Service Provider";
-  // Use provider's profile picture if available, else fallback
-  const providerAvatar = service.providerAvatar || "/default-provider.svg";
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100">
-      {/* Header */}
+      {/* Header Section */}
       <header className="sticky top-0 z-50 bg-white/90 shadow backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <div className="flex items-center">
@@ -222,16 +218,20 @@ const ServiceReviewsPage: React.FC = () => {
           </button>
         </div>
       </header>
-
-      {/* Main Content */}
+      {/* Main Content Section */}
       <main className="mx-auto w-full max-w-2xl p-4">
-        {/* Service Info Card */}
+        {/* Service Info Card Section */}
         <div className="mb-8 flex items-center gap-4 rounded-2xl border border-blue-100 bg-white/90 p-4 shadow-lg md:p-6">
           <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border-2 border-blue-200 bg-white md:h-20 md:w-20">
             <img
-              src={providerAvatar}
+              src={userImageUrl || "/default-provider.svg"}
               alt={providerName}
-              className="h-full w-full object-cover"
+              className="h-full w-full rounded-full object-cover"
+              style={{ borderRadius: "50%" }}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/default-provider.svg";
+              }}
             />
           </div>
           <div className="flex-grow">
@@ -249,8 +249,7 @@ const ServiceReviewsPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Rating Summary and Filters */}
+        {/* Rating Summary and Filters Section */}
         <div className="mb-8 rounded-2xl border border-blue-100 bg-white/90 p-4 shadow-lg md:p-6">
           <h3 className="mb-4 text-lg font-bold text-blue-900">
             Rating Breakdown
@@ -346,8 +345,7 @@ const ServiceReviewsPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Reviews List */}
+        {/* Reviews List Section */}
         {sortedAndFilteredReviews.length > 0 ? (
           <div className="space-y-6">
             {sortedAndFilteredReviews.map((review) => (

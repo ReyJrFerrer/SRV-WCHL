@@ -1,3 +1,81 @@
+interface AboutReputationScoreModalProps {
+  show: boolean;
+  onClose: () => void;
+  reputationDisplay: any;
+}
+
+const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
+  show,
+  onClose,
+  reputationDisplay,
+}) => {
+  if (!show) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
+          What is Reputation Score?
+        </h2>
+        <div className="mb-4 text-sm text-gray-700">
+          <p>
+            Your reputation score is a numeric value (0-100) that reflects your
+            reliability, conduct, and activity on SRV. It helps service
+            providers assess your trustworthiness as a client.
+          </p>
+          <ul className="mt-3 list-disc pl-5 text-xs text-gray-600">
+            <li>Completing bookings increases your score.</li>
+            <li>Receiving positive ratings and reviews boosts your score.</li>
+            <li>
+              Canceling bookings, negative feedback, or misconduct can lower
+              your score.
+            </li>
+            <li>
+              Score ranges determine your badge level (see badge info for
+              details).
+            </li>
+            <li>
+              Scores update automatically as you interact with the platform.
+            </li>
+          </ul>
+          {reputationDisplay && reputationDisplay.bookings > 0 && (
+            <div className="mt-3 text-xs text-gray-500">
+              <strong>Current stats:</strong> {reputationDisplay.bookings}{" "}
+              completed booking{reputationDisplay.bookings !== 1 ? "s" : ""}
+              {reputationDisplay.rating &&
+                `, ${reputationDisplay.rating.toFixed(1)}★ average rating`}
+            </div>
+          )}
+        </div>
+        <button
+          className="absolute top-2 right-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="h-6 w-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,7 +96,7 @@ import { useLogout } from "../../hooks/logout";
 import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
 import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 
-// --- Provider's advanced TrustLevelBadge ---
+// TrustLevelBadge: Displays the user's trust level badge in the profile reputation section
 interface TrustLevelBadgeProps {
   trustLevel: string;
   onInfoClick?: () => void;
@@ -40,18 +118,6 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
               <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-blue-700">
                 <span className="inline-block text-2xl">🎉</span> Welcome to
                 SRV!
-                {onInfoClick && (
-                  <button
-                    type="button"
-                    aria-label="Show info about reputation score"
-                    className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                    onClick={onInfoClick}
-                  >
-                    <InformationCircleIcon
-                      className={`h-5 w-5 text-blue-500 transition-transform ${infoOpen ? "rotate-90" : ""}`}
-                    />
-                  </button>
-                )}
               </span>
               <span className="block text-gray-700">
                 Complete your first booking to start building your reputation.
@@ -103,6 +169,17 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
       >
         <span className="mr-2">{config.icon}</span>
         {trustLevel} User
+        {/* Info button for all badges */}
+        <button
+          type="button"
+          aria-label="Show badge info"
+          className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          onClick={onInfoClick}
+        >
+          <InformationCircleIcon
+            className={`h-5 w-5 text-blue-500 transition-transform ${infoOpen ? "rotate-90" : ""}`}
+          />
+        </button>
       </div>
       <div className="mt-3 flex w-full max-w-md flex-col items-center">
         {trustLevel === "New" ? (
@@ -119,38 +196,111 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
   );
 };
 
-// Collapsible About Reputation Info Section
-interface AboutReputationInfoProps {
-  show: boolean;
-  reputationDisplay: any;
-}
-const AboutReputationInfo: React.FC<AboutReputationInfoProps> = ({
+// TrustLevelInfoModal: Modal popup for badge level information (opened from TrustLevelBadge)
+const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
   show,
-  reputationDisplay,
+  onClose,
 }) => {
   if (!show) return null;
   return (
-    <div className="mx-auto mt-2 max-w-md">
-      <div className="animate-fade-in rounded-lg border border-gray-200 bg-gray-50 p-4 text-center shadow-sm">
-        <span className="mb-1 block text-sm text-gray-600">
-          Your reputation reflects your reliability and conduct on the platform.
-          Higher scores and trust levels build stronger relationships with
-          service providers.
-        </span>
-        {reputationDisplay && reputationDisplay.bookings > 0 && (
-          <span className="mt-1 block text-xs text-gray-500">
-            Based on {reputationDisplay.bookings} completed booking
-            {reputationDisplay.bookings !== 1 ? "s" : ""}
-            {reputationDisplay.rating &&
-              ` with ${reputationDisplay.rating.toFixed(1)}★ average rating`}
-          </span>
-        )}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
+          User Badge Levels
+        </h2>
+        <ul className="space-y-4">
+          <li className="flex flex-col gap-1 rounded-lg border border-blue-100 bg-blue-50 p-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🆕</span>
+              <span className="font-semibold text-blue-700">New User</span>
+              <span className="text-xs text-gray-500">Score: 0 - 19</span>
+            </div>
+            <span className="text-xs text-gray-700">
+              Signifies: You just joined SRV. Complete your first booking to
+              start building your reputation and unlock higher trust levels.
+            </span>
+          </li>
+          <li className="flex flex-col gap-1 rounded-lg border border-red-100 bg-red-50 p-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <span className="font-semibold text-red-700">Low Trust</span>
+              <span className="text-xs text-gray-500">Score: 20 - 39</span>
+            </div>
+            <span className="text-xs text-gray-700">
+              Signifies: Building trust. Focus on completing bookings and
+              maintaining good conduct to improve your client rating.
+            </span>
+          </li>
+          <li className="flex flex-col gap-1 rounded-lg border border-yellow-100 bg-yellow-50 p-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⭐</span>
+              <span className="font-semibold text-yellow-700">
+                Medium Trust
+              </span>
+              <span className="text-xs text-gray-500">Score: 40 - 59</span>
+            </div>
+            <span className="text-xs text-gray-700">
+              Signifies: Reliable client. You're building a good reputation!
+              Keep up the excellent conduct.
+            </span>
+          </li>
+          <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-100 p-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🏆</span>
+              <span className="font-semibold text-blue-700">High Trust</span>
+              <span className="text-xs text-gray-500">Score: 60 - 79</span>
+            </div>
+            <span className="text-xs text-gray-700">
+              Signifies: Trusted client. Excellent reputation! Service providers
+              trust you as a reliable client.
+            </span>
+          </li>
+          <li className="flex flex-col gap-1 rounded-lg border border-green-200 bg-green-50 p-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💎</span>
+              <span className="font-semibold text-green-700">
+                Very High Trust
+              </span>
+              <span className="text-xs text-gray-500">Score: 80 - 100</span>
+            </div>
+            <span className="text-xs text-gray-700">
+              Signifies: Elite client. Outstanding reputation! You're among the
+              top-rated clients on our platform.
+            </span>
+          </li>
+        </ul>
+        <button
+          className="absolute top-2 right-2 rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-blue-100"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="h-6 w-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
       </div>
     </div>
   );
 };
 
-// Component for displaying client statistics
+// ClientStats: Displays booking and activity summary stats in the profile right column
 const ClientStats: React.FC = () => {
   const {
     loading: analyticsLoading,
@@ -260,7 +410,7 @@ const ClientStats: React.FC = () => {
   );
 };
 
-// ProfilePictureModal: Clickable, hoverable, pops out in modal using canonical backend image
+// ProfilePictureModal: Displays and allows editing/viewing of profile picture in left column
 interface ProfilePictureModalProps {
   src: string | null | undefined;
   isLoading: boolean;
@@ -342,6 +492,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   );
 };
 
+// ClientProfilePage: Main profile view for clients, includes profile info, reputation, stats, and navigation
 const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -370,26 +521,27 @@ const ClientProfilePage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
-  // Get reputation score with fallback for display
+  // State: Editing profile, switching role, modal visibility, and reputation display
   const [showAboutInfo, setShowAboutInfo] = useState(false);
+  const [showBadgeInfo, setShowBadgeInfo] = useState(false);
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
+  // Set page title on mount
   useEffect(() => {
     document.title = "My Profile | SRV";
   }, []);
 
+  // Update name/phone fields when profile changes
   useEffect(() => {
     if (profile) {
       setName(profile.name);
       setPhone(profile.phone || "");
-      // Don't set previewImage here anymore - use profileImageUrl from hook
     }
   }, [profile]);
 
-  const handleImageUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+  // Handlers for profile editing, image upload, and role switching
+  const handleImageUploadClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -422,8 +574,6 @@ const ClientProfilePage: React.FC = () => {
     try {
       await switchRole();
       navigate("/provider/profile");
-    } catch (err) {
-      // handle error if needed
     } finally {
       setIsSwitchingRole(false);
     }
@@ -594,9 +744,24 @@ const ClientProfilePage: React.FC = () => {
           {/* --- Right Column: Reputation and Stats --- */}
           <div className="mt-8 lg:col-span-2 lg:mt-0">
             <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-              <h3 className="mb-6 text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
-                Your Reputation Score
-              </h3>
+              <div className="mb-6 flex items-center justify-center gap-2">
+                <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
+                  Your Reputation Score
+                </h3>
+                <button
+                  type="button"
+                  aria-label="What is reputation score?"
+                  className="rounded-full p-1 hover:bg-gray-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  onClick={() => setShowAboutInfo(true)}
+                >
+                  <InformationCircleIcon className="h-6 w-6 text-blue-500" />
+                </button>
+                <AboutReputationScoreModal
+                  show={showAboutInfo}
+                  onClose={() => setShowAboutInfo(false)}
+                  reputationDisplay={reputationDisplay}
+                />
+              </div>
               {/* Reputation Score, Trust Level, and About Info */}
               {reputationLoading ? (
                 <div className="flex justify-center">
@@ -648,26 +813,19 @@ const ClientProfilePage: React.FC = () => {
                       <div className="flex w-full justify-center">
                         <TrustLevelBadge
                           trustLevel={reputationDisplay.level}
-                          onInfoClick={
-                            reputationDisplay.level === "New"
-                              ? () => setShowAboutInfo((v) => !v)
-                              : undefined
-                          }
-                          infoOpen={
-                            reputationDisplay.level === "New"
-                              ? showAboutInfo
-                              : undefined
-                          }
+                          onInfoClick={() => setShowBadgeInfo(true)}
+                          infoOpen={showBadgeInfo}
                         />
                       </div>
-                      {reputationDisplay.level === "New" && (
-                        <div className="flex w-full justify-center">
-                          <AboutReputationInfo
-                            show={showAboutInfo}
-                            reputationDisplay={reputationDisplay}
-                          />
-                        </div>
-                      )}
+                      <TrustLevelInfoModal
+                        show={showBadgeInfo}
+                        onClose={() => setShowBadgeInfo(false)}
+                      />
+                      <AboutReputationScoreModal
+                        show={showAboutInfo}
+                        onClose={() => setShowAboutInfo(false)}
+                        reputationDisplay={reputationDisplay}
+                      />
                     </>
                   )}
                 </div>
@@ -685,6 +843,7 @@ const ClientProfilePage: React.FC = () => {
               Reputation: {reputationError}
             </p>
           )}
+          {/* End grid container */}
         </div>
       </main>
       {/* Mobile Logout Button (bottom of page, only on mobile) */}
