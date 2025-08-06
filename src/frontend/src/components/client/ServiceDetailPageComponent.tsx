@@ -27,10 +27,10 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useReputation } from "../../hooks/useReputation";
-import { useServiceImages } from "../../hooks/useImageLoader";
+import { useServiceImages } from "../../hooks/useMediaLoader";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { ServicePackage } from "../../services/serviceCanisterService";
-import { useUserImage } from "../../hooks/useImageLoader";
+import { useUserImage } from "../../hooks/useMediaLoader";
 
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();

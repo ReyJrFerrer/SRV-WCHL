@@ -28,7 +28,7 @@ import {
 import {
   useServiceImages,
   useServiceImageUpload,
-} from "../../../hooks/useImageLoader";
+} from "../../../hooks/useMediaLoader";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
   ServicePackage,

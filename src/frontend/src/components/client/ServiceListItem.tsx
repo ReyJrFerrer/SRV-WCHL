@@ -8,7 +8,7 @@ import {
 import useServiceById from "../../hooks/serviceDetail";
 import { useServiceReviews } from "../../hooks/reviewManagement";
 import { EnrichedService } from "../../hooks/serviceInformation";
-import { useUserImage } from "../../hooks/useImageLoader";
+import { useUserImage } from "../../hooks/useMediaLoader";
 
 interface ServiceListItemProps {
   service: EnrichedService;

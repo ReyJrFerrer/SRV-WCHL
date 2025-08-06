@@ -64,6 +64,11 @@ export interface ServiceCreateRequest {
     contentType: string;
     fileData: Uint8Array;
   }>;
+  serviceCertificates?: Array<{
+    fileName: string;
+    contentType: string;
+    fileData: Uint8Array;
+  }>;
 }
 
 export interface ServiceUpdateRequest extends Partial<ServiceCreateRequest> {
@@ -479,6 +484,52 @@ export const useServiceManagement = (): ServiceManagementHook => {
           }
         }
 
+        // Process service certificates if provided
+        let processedCertificates:
+          | Array<{
+              fileName: string;
+              contentType: string;
+              fileData: Uint8Array;
+            }>
+          | undefined;
+
+        if (
+          request.serviceCertificates &&
+          request.serviceCertificates.length > 0
+        ) {
+          try {
+            // Certificates are already processed, just validate the structure and maintain order
+            processedCertificates = request.serviceCertificates.map(
+              (certificate, index) => {
+                if (
+                  !certificate.fileName ||
+                  !certificate.contentType ||
+                  !certificate.fileData
+                ) {
+                  throw new Error(
+                    `Invalid certificate data at position ${index + 1}`,
+                  );
+                }
+                return {
+                  fileName: certificate.fileName,
+                  contentType: certificate.contentType,
+                  fileData: certificate.fileData,
+                };
+              },
+            );
+
+            console.log(
+              `Successfully prepared ${processedCertificates.length} certificates for service creation`,
+            );
+          } catch (certificateError) {
+            console.warn(
+              "Certificate processing failed, creating service without certificates:",
+              certificateError,
+            );
+            processedCertificates = undefined;
+          }
+        }
+
         const newService = await serviceCanisterService.createService(
           request.title,
           request.description,
@@ -490,6 +541,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
           request.bookingNoticeHours,
           request.maxBookingsPerDay,
           processedImages,
+          processedCertificates,
         );
 
         if (!newService) {
