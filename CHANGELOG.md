@@ -15,9 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add service-level certificate verification system with PDF and image certificate uploads replacing user-level verification
 - Add frontend service image management hooks and utilities with support for galleries
 - Integrate image processing utilities in service creation workflow with support for optional image uploads
 - Add immediate UI feedback for service image upload and removal operations with proper Save/Cancel workflow
+
+### Changed
+
+- Remove user-level verification system in favor of service-level verification
+- Replace user isVerified field with service-level certificate verification system
 
 ### Fixed
 

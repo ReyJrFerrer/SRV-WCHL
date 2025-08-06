@@ -22,7 +22,6 @@ persistent actor AuthCanister {
     // State variables
     private var profileEntries : [(Principal, Profile)] = [];
     private transient var profiles = HashMap.HashMap<Principal, Profile>(10, Principal.equal, Principal.hash);
-    private transient var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
     private transient var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
 
     // Canister references
@@ -83,7 +82,6 @@ persistent actor AuthCanister {
         // Add profiles from shared static data
         for ((principal, profile) in StaticData.getSTATIC_PROFILES().vals()) {
             profiles.put(principal, profile);
-            verifiedUsers.put(principal, true);
             phoneToPrincipal.put(profile.phone, principal);
         };
     };
@@ -163,13 +161,11 @@ persistent actor AuthCanister {
                     role = #ServiceProvider; // Everyone is a ServiceProvider by default
                     createdAt = Time.now();
                     updatedAt = Time.now();
-                    isVerified = false;
                     profilePicture = null;
                     biography = null;
                 };
                 
                 profiles.put(caller, newProfile);
-                verifiedUsers.put(caller, false);
                 phoneToPrincipal.put(phone, caller);
                 
                 // Initialize reputation for new user
@@ -263,7 +259,6 @@ persistent actor AuthCanister {
                     activeRole = existingProfile.activeRole; // Preserve activeRole during profile updates
                     createdAt = existingProfile.createdAt;
                     updatedAt = Time.now();
-                    isVerified = existingProfile.isVerified;
                     profilePicture = existingProfile.profilePicture;
                     biography = existingProfile.biography;
                 };
@@ -277,50 +272,6 @@ persistent actor AuthCanister {
                 
                 profiles.put(caller, updatedProfile);
                 return #ok(updatedProfile);
-            };
-            case (null) {
-                return #err("Profile not found");
-            };
-        };
-    };
-    
-    // Verify a user's identity
-    public shared(msg) func verifyUser(userId : Principal) : async Result<Bool> {
-        let caller = msg.caller;
-        
-        if (Principal.isAnonymous(caller)) {
-            return #err("Anonymous principal not allowed");
-        };
-        
-        // Only allow self-verification or admin verification
-        if (caller != userId) {
-            // TODO: Add admin check here when admin functionality is implemented
-            return #err("Unauthorized to verify other users");
-        };
-        
-        switch (profiles.get(userId)) {
-            case (?profile) {
-                if (profile.isVerified) {
-                    return #err("User is already verified");
-                };
-                
-                // Update verification status
-                let updatedProfile : Profile = {
-                    id = profile.id;
-                    name = profile.name;
-                    phone = profile.phone;
-                    role = profile.role;
-                    activeRole = profile.activeRole; // Preserve activeRole during verification
-                    createdAt = profile.createdAt;
-                    updatedAt = Time.now();
-                    isVerified = true;
-                    profilePicture = profile.profilePicture;
-                    biography = profile.biography;
-                };
-                
-                profiles.put(userId, updatedProfile);
-                verifiedUsers.put(userId, true);
-                return #ok(true);
             };
             case (null) {
                 return #err("Profile not found");
@@ -352,7 +303,6 @@ persistent actor AuthCanister {
                     activeRole = newActiveRole; // Only change the active role
                     createdAt = existingProfile.createdAt;
                     updatedAt = Time.now();
-                    isVerified = existingProfile.isVerified;
                     profilePicture = existingProfile.profilePicture;
                     biography = existingProfile.biography;
                 };
@@ -411,27 +361,21 @@ persistent actor AuthCanister {
                         
                         switch (uploadResult) {
                             case (#ok(mediaItem)) {
-                                // Update profile with new profile picture
-                                let updatedProfile : Profile = {
-                                    id = existingProfile.id;
-                                    name = existingProfile.name;
-                                    phone = existingProfile.phone;
-                                    role = existingProfile.role;
-                                    activeRole = existingProfile.activeRole;
-                                    createdAt = existingProfile.createdAt;
-                                    updatedAt = Time.now();
-                                    isVerified = existingProfile.isVerified;
-                                    profilePicture = ?{
-                                        imageUrl = mediaItem.url;
-                                        thumbnailUrl = switch (mediaItem.thumbnailUrl) {
-                                            case (?thumb) thumb;
-                                            case (null) mediaItem.url; // Use main image as thumbnail for now
-                                        };
-                                    };
-                                    biography = existingProfile.biography;
-                                };
-                                
-                                profiles.put(caller, updatedProfile);
+                        // Update profile with new image URL
+                        let updatedProfile : Profile = {
+                            id = existingProfile.id;
+                            name = existingProfile.name;
+                            phone = existingProfile.phone;
+                            role = existingProfile.role;
+                            activeRole = existingProfile.activeRole;
+                            createdAt = existingProfile.createdAt;
+                            updatedAt = Time.now();
+                            profilePicture = ?{
+                                imageUrl = mediaItem.url;
+                                thumbnailUrl = mediaItem.url; // For now, use same URL
+                            };
+                            biography = existingProfile.biography;
+                        };                                profiles.put(caller, updatedProfile);
                                 return #ok(updatedProfile);
                             };
                             case (#err(error)) {
@@ -460,20 +404,17 @@ persistent actor AuthCanister {
 
         switch (profiles.get(caller)) {
             case (?existingProfile) {
-                let updatedProfile : Profile = {
-                    id = existingProfile.id;
-                    name = existingProfile.name;
-                    phone = existingProfile.phone;
-                    role = existingProfile.role;
-                    activeRole = existingProfile.activeRole;
-                    createdAt = existingProfile.createdAt;
-                    updatedAt = Time.now();
-                    isVerified = existingProfile.isVerified;
-                    profilePicture = null;
-                    biography = existingProfile.biography;
-                };
-                
-                profiles.put(caller, updatedProfile);
+            let updatedProfile : Profile = {
+                id = existingProfile.id;
+                name = existingProfile.name;
+                phone = existingProfile.phone;
+                role = existingProfile.role;
+                activeRole = existingProfile.activeRole;
+                createdAt = existingProfile.createdAt;
+                updatedAt = Time.now();
+                profilePicture = null;
+                biography = existingProfile.biography;
+            };                profiles.put(caller, updatedProfile);
                 return #ok(updatedProfile);
             };
             case (null) {

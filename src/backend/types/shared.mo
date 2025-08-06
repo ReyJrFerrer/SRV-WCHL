@@ -23,6 +23,7 @@ module {
     public type MediaType = {
         #UserProfile;
         #ServiceImage;
+        #ServiceCertificate;
     };
 
     public type MediaItem = {
@@ -54,7 +55,6 @@ module {
         activeRole: UserRole; // Current active role for UI and permissions
         createdAt: Time.Time;
         updatedAt: Time.Time;
-        isVerified: Bool;
         profilePicture: ?ProfileImage;
         biography: ?Text;
     };
@@ -149,6 +149,8 @@ module {
         rating: ?Float;
         reviewCount: Nat;
         imageUrls: [Text]; // Array of media URLs for service images (max 5)
+        certificateUrls: [Text]; // Array of media URLs for service certificates
+        isVerifiedService: Bool; // Service verification status based on certificates
         // Availability information
         weeklySchedule: ?[(DayOfWeek, DayAvailability)];
         instantBookingEnabled: ?Bool;

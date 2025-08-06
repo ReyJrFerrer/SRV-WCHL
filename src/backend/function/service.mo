@@ -56,6 +56,7 @@ persistent actor ServiceCanister {
     private transient let MIN_PRICE : Nat = 1;
     private transient let MAX_PRICE : Nat = 1_000_000;
     private transient let MAX_SERVICE_IMAGES : Nat = 5;
+    private transient let MAX_SERVICE_CERTIFICATES : Nat = 10;
 
     // Set canister references
     public shared(_msg) func setCanisterReferences(
@@ -219,7 +220,8 @@ persistent actor ServiceCanister {
         instantBookingEnabled : ?Bool,
         bookingNoticeHours : ?Nat,
         maxBookingsPerDay : ?Nat,
-        serviceImages : ?[(Text, Text, Blob)] // (fileName, contentType, fileData)
+        serviceImages : ?[(Text, Text, Blob)], // (fileName, contentType, fileData)
+        serviceCertificates : ?[(Text, Text, Blob)] // (fileName, contentType, fileData)
     ) : async Result<Service> {
         let caller = msg.caller;
         
@@ -300,6 +302,47 @@ persistent actor ServiceCanister {
                 // No images provided, use empty array
             };
         };
+
+        // Upload service certificates if provided
+        var certificateUrls : [Text] = [];
+        switch (serviceCertificates) {
+            case (?certificates) {
+                // Validate certificate count
+                if (certificates.size() > MAX_SERVICE_CERTIFICATES) {
+                    return #err("Maximum " # Nat.toText(MAX_SERVICE_CERTIFICATES) # " certificates allowed per service");
+                };
+
+                // Upload certificates to media canister
+                switch (mediaCanisterId) {
+                    case (?mediaCanister) {
+                        let mediaActor = actor(Principal.toText(mediaCanister)) : actor {
+                            uploadMedia : (Text, Text, Types.MediaType, Blob) -> async Types.Result<Types.MediaItem>;
+                        };
+
+                        let uploadResults = Buffer.Buffer<Text>(certificates.size());
+                        for ((fileName, contentType, fileData) in certificates.vals()) {
+                            switch (await mediaActor.uploadMedia(fileName, contentType, #ServiceCertificate, fileData)) {
+                                case (#ok(mediaItem)) {
+                                    uploadResults.add(mediaItem.url);
+                                };
+                                case (#err(error)) {
+                                    return #err("Failed to upload certificate: " # error);
+                                };
+                            };
+                        };
+                        certificateUrls := Buffer.toArray(uploadResults);
+                    };
+                    case (null) {
+                        if (certificates.size() > 0) {
+                            return #err("Media canister not configured");
+                        };
+                    };
+                };
+            };
+            case (null) {
+                // No certificates provided, use empty array
+            };
+        };
         
         let serviceId = generateId();
         
@@ -317,6 +360,8 @@ persistent actor ServiceCanister {
             rating = null;
             reviewCount = 0;
             imageUrls = imageUrls;
+            certificateUrls = certificateUrls;
+            isVerifiedService = certificateUrls.size() > 0; // Service is verified if it has certificates
             // Availability information
             weeklySchedule = weeklySchedule;
             instantBookingEnabled = instantBookingEnabled;
