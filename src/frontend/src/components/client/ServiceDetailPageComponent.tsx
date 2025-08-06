@@ -1000,7 +1000,7 @@ const ServiceDetailPage: React.FC = () => {
                   >
                     <img
                       src={
-                        userImageUrl == "/default-avatar.png"
+                        userImageUrl == "/default-provider.svg"
                           ? `/images/ai-sp/${service.category.slug}.svg`
                           : userImageUrl
                       }
