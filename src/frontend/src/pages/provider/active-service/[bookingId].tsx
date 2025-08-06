@@ -243,7 +243,7 @@ const ActiveServicePage: React.FC = () => {
           </section>
 
           {/* Right Column: Actions */}
-          <section className="mt-6 rounded-xl bg-white p-4 shadow-lg sm:p-6 md:mt-0 md:w-auto md:max-w-xs lg:w-1/3 xl:w-1/4 mb-20 md:mb-0">
+          <section className="mt-6 mb-20 rounded-xl bg-white p-4 shadow-lg sm:p-6 md:mt-0 md:mb-0 md:w-auto md:max-w-xs lg:w-1/3 xl:w-1/4">
             <h3 className="mb-4 text-lg font-semibold text-gray-800 sm:text-xl">
               Actions
             </h3>

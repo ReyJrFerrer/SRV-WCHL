@@ -244,7 +244,7 @@ const AddServicePage: React.FC = () => {
           formData.serviceOfferingTitle.length <
           VALIDATION_LIMITS.MIN_TITLE_LENGTH
         ) {
-            errors.serviceOfferingTitle = `Service title must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} characters`;
+          errors.serviceOfferingTitle = `Service title must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} characters`;
         } else if (
           formData.serviceOfferingTitle.length >
           VALIDATION_LIMITS.MAX_TITLE_LENGTH

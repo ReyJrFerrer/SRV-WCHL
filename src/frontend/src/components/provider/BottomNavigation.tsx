@@ -40,13 +40,9 @@ const BottomNavigation: React.FC = () => {
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
           if (
-            [
-              "home",
-              "booking",
-              "settings",
-              "chat",
-              "services",
-            ].includes(item.label.toLowerCase())
+            ["home", "booking", "settings", "chat", "services"].includes(
+              item.label.toLowerCase(),
+            )
           ) {
             const [iconSrc, setIconSrc] = React.useState(
               isActive
