@@ -1011,6 +1011,8 @@ export const serviceCanisterService = {
         ],
       );
 
+      console.log(canisterImages);
+
       const result = await actor.uploadServiceImages(serviceId, canisterImages);
 
       if ("ok" in result) {

@@ -23,10 +23,10 @@ persistent actor BookingCanister {
     type ReputationScore = Types.ReputationScore;
 
     // State variables
-    private stable var bookingEntries : [(Text, Booking)] = [];
+    private var bookingEntries : [(Text, Booking)] = [];
     private transient var bookings = HashMap.HashMap<Text, Booking>(10, Text.equal, Text.hash);
     
-    private stable var evidenceEntries : [(Text, Evidence)] = [];
+    private var evidenceEntries : [(Text, Evidence)] = [];
     private transient var evidences = HashMap.HashMap<Text, Evidence>(10, Text.equal, Text.hash);
 
     // Canister references
