@@ -345,4 +345,241 @@ export const useServiceImageGallery = (
   };
 };
 
+/**
+ * Hook for managing service certificates
+ * Provides loading and management functionality for service certificates (PDFs and images)
+ */
+export const useServiceCertificates = (
+  serviceId: string | null | undefined,
+  certificateUrls: (string | null | undefined)[] = [],
+  options: UseImageLoaderOptions = {},
+) => {
+  const validUrls = certificateUrls.filter((url): url is string => !!url);
+
+  // Load all service certificates
+  const {
+    data: loadedCertificates,
+    isLoading: isLoadingCertificates,
+    error: loadError,
+    isError: isLoadError,
+    refetch: refetchCertificates,
+  } = useQuery({
+    queryKey: ["service-certificates", serviceId, validUrls],
+    queryFn: async () => {
+      if (!validUrls.length) return [];
+
+      const certificatePromises = validUrls.map(async (url) => {
+        try {
+          const dataUrl = await mediaService.getImageDataUrl(url, {
+            enableCache: true,
+            ...options,
+          });
+          return { url, dataUrl, error: null };
+        } catch (error) {
+          return {
+            url,
+            dataUrl: null,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to load certificate",
+          };
+        }
+      });
+
+      return await Promise.all(certificatePromises);
+    },
+    enabled: !!serviceId && validUrls.length > 0,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  return {
+    /** Array of loaded certificates with their data URLs */
+    certificates: loadedCertificates || [],
+    /** Whether certificates are currently loading */
+    isLoading: isLoadingCertificates,
+    /** Any error that occurred during loading */
+    error: loadError as Error | null,
+    /** Whether an error occurred */
+    isError: isLoadError,
+    /** Function to manually refetch all certificates */
+    refetch: refetchCertificates,
+    /** Whether certificates have been loaded successfully */
+    isSuccess: !!loadedCertificates,
+    /** Number of successfully loaded certificates */
+    successCount:
+      loadedCertificates?.filter((cert) => cert.dataUrl).length || 0,
+    /** Number of failed certificate loads */
+    errorCount: loadedCertificates?.filter((cert) => cert.error).length || 0,
+  };
+};
+
+/**
+ * Hook for managing service certificate uploads
+ * Provides upload functionality with progress tracking and validation for PDFs and images
+ */
+export const useServiceCertificateUpload = (
+  serviceId: string | null | undefined,
+) => {
+  return {
+    /**
+     * Upload multiple certificates to a service
+     */
+    async uploadCertificates(files: File[], options: any = {}) {
+      if (!serviceId) {
+        throw new Error("Service ID is required for certificate upload");
+      }
+
+      try {
+        return await mediaService.uploadServiceCertificatesWithProcessing(
+          serviceId,
+          files,
+          options,
+        );
+      } catch (error) {
+        console.error("Error uploading service certificates:", error);
+        throw error;
+      }
+    },
+
+    /**
+     * Remove a specific certificate from the service
+     */
+    async removeCertificate(certificateUrl: string) {
+      if (!serviceId) {
+        throw new Error("Service ID is required to remove certificate");
+      }
+
+      try {
+        return await serviceCanisterService.removeServiceCertificate(
+          serviceId,
+          certificateUrl,
+        );
+      } catch (error) {
+        console.error("Error removing service certificate:", error);
+        throw error;
+      }
+    },
+
+    /**
+     * Verify service manually (admin function)
+     */
+    async verifyService(isVerified: boolean) {
+      if (!serviceId) {
+        throw new Error("Service ID is required to verify service");
+      }
+
+      try {
+        return await serviceCanisterService.verifyService(
+          serviceId,
+          isVerified,
+        );
+      } catch (error) {
+        console.error("Error verifying service:", error);
+        throw error;
+      }
+    },
+
+    /**
+     * Process certificate files for upload without actually uploading
+     */
+    async processFiles(files: File[], options: any = {}) {
+      try {
+        return await mediaService.processServiceCertificateFiles(
+          files,
+          options,
+        );
+      } catch (error) {
+        console.error("Error processing service certificate files:", error);
+        throw error;
+      }
+    },
+
+    /**
+     * Validate certificate file (PDF or image)
+     */
+    validateCertificateFile(file: File, options: any = {}) {
+      try {
+        return mediaService.validateCertificateFile(file, options);
+      } catch (error) {
+        console.error("Error validating certificate file:", error);
+        throw error;
+      }
+    },
+  };
+};
+
+/**
+ * Hook for service certificate gallery management
+ * Combines loading and upload functionality for a complete certificate gallery experience
+ */
+export const useServiceCertificateGallery = (
+  serviceId: string | null | undefined,
+  certificateUrls: (string | null | undefined)[] = [],
+  options: UseImageLoaderOptions = {},
+) => {
+  const certificateLoader = useServiceCertificates(
+    serviceId,
+    certificateUrls,
+    options,
+  );
+  const uploader = useServiceCertificateUpload(serviceId);
+
+  return {
+    // Certificate loading
+    ...certificateLoader,
+
+    // Certificate management
+    uploadCertificates: uploader.uploadCertificates,
+    removeCertificate: uploader.removeCertificate,
+    verifyService: uploader.verifyService,
+    processFiles: uploader.processFiles,
+    validateCertificateFile: uploader.validateCertificateFile,
+
+    // Gallery state
+    hasCertificates: (certificateLoader.certificates?.length || 0) > 0,
+    canAddMore: (certificateUrls.length || 0) < 10, // Max 10 certificates per service
+    remainingSlots: Math.max(0, 10 - (certificateUrls.length || 0)),
+  };
+};
+
+/**
+ * Combined hook for managing both service images and certificates
+ * Provides a unified interface for all service media management
+ */
+export const useServiceMediaGallery = (
+  serviceId: string | null | undefined,
+  imageUrls: (string | null | undefined)[] = [],
+  certificateUrls: (string | null | undefined)[] = [],
+  options: UseImageLoaderOptions = {},
+) => {
+  const imageGallery = useServiceImageGallery(serviceId, imageUrls, options);
+  const certificateGallery = useServiceCertificateGallery(
+    serviceId,
+    certificateUrls,
+    options,
+  );
+
+  return {
+    // Image management
+    images: imageGallery,
+
+    // Certificate management
+    certificates: certificateGallery,
+
+    // Combined state
+    isLoading: imageGallery.isLoading || certificateGallery.isLoading,
+    hasAnyMedia: imageGallery.hasImages || certificateGallery.hasCertificates,
+    totalMediaCount: (imageUrls.length || 0) + (certificateUrls.length || 0),
+
+    // Combined actions
+    async refreshAll() {
+      await Promise.all([imageGallery.refetch(), certificateGallery.refetch()]);
+    },
+  };
+};
+
 export default useImageLoader;

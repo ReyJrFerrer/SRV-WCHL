@@ -40,7 +40,8 @@ persistent actor MediaCanister {
         "image/gif",
         "image/webp",
         "image/bmp",
-        "image/svg+xml"
+        "image/svg+xml",
+        "application/pdf"
     ];
 
     // Helper functions
@@ -67,6 +68,7 @@ persistent actor MediaCanister {
         let mediaTypeText = switch (mediaType) {
             case (#UserProfile) "users";
             case (#ServiceImage) "services";
+            case (#ServiceCertificate) "certificates";
         };
         mediaTypeText # "/" # ownerText # "/" # fileName
     };
@@ -336,11 +338,13 @@ persistent actor MediaCanister {
         
         var userProfileCount : Nat = 0;
         var serviceImageCount : Nat = 0;
+        var serviceCertificateCount : Nat = 0;
         
         for (item in allItems.vals()) {
             switch (item.mediaType) {
                 case (#UserProfile) userProfileCount += 1;
                 case (#ServiceImage) serviceImageCount += 1;
+                case (#ServiceCertificate) serviceCertificateCount += 1;
             };
         };
 
@@ -350,7 +354,8 @@ persistent actor MediaCanister {
             userCount = userMediaIndex.size();
             typeBreakdown = [
                 (#UserProfile, userProfileCount),
-                (#ServiceImage, serviceImageCount)
+                (#ServiceImage, serviceImageCount),
+                (#ServiceCertificate, serviceCertificateCount)
             ];
         }
     };

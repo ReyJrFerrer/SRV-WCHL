@@ -1,4 +1,4 @@
-import { useProfileImage } from "../../hooks/useImageLoader";
+import { useProfileImage } from "../../hooks/useMediaLoader";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 export const ProfileImage: React.FC<{
   profilePictureUrl?: string;

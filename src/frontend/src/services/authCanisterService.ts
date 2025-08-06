@@ -17,7 +17,6 @@ export interface FrontendProfile {
   phone: string;
   role: "Client" | "ServiceProvider"; // Original role (everyone is ServiceProvider for discoverability)
   activeRole: "Client" | "ServiceProvider"; // Current UI preference/mode
-  isVerified: boolean;
   profilePicture?: {
     imageUrl: string | null; // Asset URL or null
     thumbnailUrl: string | null; // Asset URL or null
@@ -192,29 +191,6 @@ export const authCanisterService = {
     } catch (error) {
       console.error("Error updating profile:", error);
       throw new Error(`Failed to update profile: ${error}`);
-    }
-  },
-
-  /**
-   * Verify a user (requires authentication)
-   * @param userId The principal ID of the user to verify
-   */
-  async verifyUser(userId: string): Promise<boolean> {
-    try {
-      const actor = getAuthActor(true); // Requires authentication
-      // Convert string to Principal
-      const userPrincipal = Principal.fromText(userId);
-      const result = await actor.verifyUser(userPrincipal);
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        console.error("Error verifying user:", result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      console.error("Error verifying user:", error);
-      throw new Error(`Failed to verify user: ${error}`);
     }
   },
 

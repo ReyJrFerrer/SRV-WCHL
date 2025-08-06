@@ -25,6 +25,7 @@ const DEFAULT_OPTIONS: Required<ImageUploadOptions> = {
     "image/webp",
     "image/bmp",
     "image/svg+xml",
+    "application/pdf", // Add PDF support for certificates
   ],
   maxWidth: 1024,
   maxHeight: 1024,
@@ -374,6 +375,103 @@ export const processServiceImageFiles = async (
     throw error;
   }
 };
+
+/**
+ * Batch process multiple certificate files for service upload (supports PDFs and images)
+ */
+export const processServiceCertificateFiles = async (
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<
+  { fileName: string; contentType: string; fileData: Uint8Array }[]
+> => {
+  try {
+    if (files.length === 0) {
+      return [];
+    }
+
+    if (files.length > 10) {
+      throw new Error("Maximum 10 certificates allowed per service");
+    }
+
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const processedFiles: {
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }[] = [];
+
+    for (const file of files) {
+      // Validate file type
+      if (!opts.allowedTypes.includes(file.type)) {
+        throw new Error(
+          `File ${file.name}: File type ${file.type} is not supported. Allowed types: ${opts.allowedTypes.join(", ")}`,
+        );
+      }
+
+      let processedFile = file;
+      const currentSizeKB = file.size / 1024;
+
+      // For PDFs, we don't resize/scale - just check size limit
+      if (file.type === "application/pdf") {
+        if (currentSizeKB > opts.maxSizeKB) {
+          throw new Error(
+            `PDF file ${file.name} size (${currentSizeKB.toFixed(1)}KB) exceeds maximum allowed size of ${opts.maxSizeKB}KB`,
+          );
+        }
+      } else {
+        // For image certificates, scale down if needed
+        if (currentSizeKB > opts.maxSizeKB) {
+          console.log(
+            `Scaling certificate ${file.name} from ${currentSizeKB.toFixed(1)}KB to ${opts.maxSizeKB}KB...`,
+          );
+          processedFile = await intelligentScaleImageTo450KB(
+            file,
+            opts.maxSizeKB,
+          );
+          console.log(
+            `Successfully scaled certificate ${file.name} to ${(processedFile.size / 1024).toFixed(1)}KB`,
+          );
+        }
+
+        // Apply dimension limits for image certificates
+        if (opts.maxWidth || opts.maxHeight) {
+          processedFile = await resizeImage(
+            processedFile,
+            opts.maxWidth,
+            opts.maxHeight,
+          );
+
+          // Check if resizing caused the file to exceed size limit again
+          const resizedSizeKB = processedFile.size / 1024;
+          if (resizedSizeKB > opts.maxSizeKB) {
+            console.log(
+              `Certificate size after dimension resize: ${resizedSizeKB.toFixed(1)}KB. Scaling down again...`,
+            );
+            processedFile = await intelligentScaleImageTo450KB(
+              processedFile,
+              opts.maxSizeKB,
+            );
+          }
+        }
+      }
+
+      // Convert to Uint8Array
+      const fileData = await fileToUint8Array(processedFile);
+
+      processedFiles.push({
+        fileName: processedFile.name,
+        contentType: processedFile.type,
+        fileData,
+      });
+    }
+
+    return processedFiles;
+  } catch (error) {
+    console.error("Error processing service certificate files:", error);
+    throw error;
+  }
+};
 /**
  * Scales down an image to meet the 450KB size limit through iterative resizing and quality adjustment
  */
@@ -717,16 +815,50 @@ export const uploadServiceImagesWithDescaling = async (
   }
 };
 
+/**
+ * Enhanced service certificate upload with automatic processing
+ */
+export const uploadServiceCertificatesWithProcessing = async (
+  serviceId: string,
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<any> => {
+  try {
+    if (files.length === 0) {
+      throw new Error("No files provided for upload");
+    }
+
+    if (files.length > 10) {
+      throw new Error("Maximum 10 certificates allowed per service");
+    }
+
+    const processedFiles = await processServiceCertificateFiles(files, options);
+
+    // Upload via service canister
+    const result = await serviceCanisterService.uploadServiceCertificates(
+      serviceId,
+      processedFiles,
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error uploading service certificates:", error);
+    throw error;
+  }
+};
+
 export const mediaService = {
   // File validation and processing
   validateImageFile,
   fileToUint8Array,
   resizeImage,
   processServiceImageFiles,
+  processServiceCertificateFiles,
 
   // Upload functionality
   uploadProfilePictureWithDescaling,
   uploadServiceImagesWithDescaling,
+  uploadServiceCertificatesWithProcessing,
 
   // Image retrieval functionality
   getImageDataUrl,
@@ -784,6 +916,67 @@ export const mediaService = {
       console.error("Error updating service image order:", error);
       throw error;
     }
+  },
+
+  /**
+   * Delete service certificates
+   */
+  async deleteServiceCertificates(
+    serviceId: string,
+    certificateUrls: string[],
+  ) {
+    try {
+      // Note: removeServiceCertificate removes one certificate at a time
+      const results = [];
+      for (const certificateUrl of certificateUrls) {
+        const result = await serviceCanisterService.removeServiceCertificate(
+          serviceId,
+          certificateUrl,
+        );
+        results.push(result);
+      }
+      return results;
+    } catch (error) {
+      console.error("Error deleting service certificates:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Verify service manually
+   */
+  async verifyService(serviceId: string, isVerified: boolean) {
+    try {
+      return await serviceCanisterService.verifyService(serviceId, isVerified);
+    } catch (error) {
+      console.error("Error verifying service:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Validate certificate file (PDF or image)
+   */
+  validateCertificateFile(
+    file: File,
+    options: ImageUploadOptions = {},
+  ): string | null {
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+
+    // Check file type
+    if (!opts.allowedTypes.includes(file.type)) {
+      return `File type ${file.type} is not supported. Allowed types: ${opts.allowedTypes.join(", ")}`;
+    }
+
+    // Check file size for PDFs (we don't resize them)
+    if (file.type === "application/pdf") {
+      const fileSizeKB = file.size / 1024;
+      if (fileSizeKB > opts.maxSizeKB) {
+        return `PDF file size (${fileSizeKB.toFixed(1)}KB) exceeds maximum allowed size of ${opts.maxSizeKB}KB`;
+      }
+    }
+
+    return null; // Valid file
   },
 };
 
