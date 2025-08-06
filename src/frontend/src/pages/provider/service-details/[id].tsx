@@ -28,6 +28,8 @@ import {
 import {
   useServiceImages,
   useServiceImageUpload,
+  useServiceCertificates,
+  useServiceCertificateUpload,
 } from "../../../hooks/useMediaLoader";
 import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
@@ -395,6 +397,19 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   // Image upload hook
   const { uploadImages, removeImage } = useServiceImageUpload(service?.id);
+
+  // Load service certificates using the useServiceCertificates hook
+  const {
+    certificates: serviceCertificates,
+    isLoading: isLoadingCertificates,
+    isError: isCertificateError,
+    refetch: refetchCertificates,
+  } = useServiceCertificates(service?.id, service?.certificateUrls || []);
+
+  // Certificate upload hook
+  const { uploadCertificates, removeCertificate } = useServiceCertificateUpload(
+    service?.id,
+  );
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -412,6 +427,12 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Certificate upload states
+  const [uploadingCertificates, setUploadingCertificates] = useState(false);
+  const [certificateUploadError, setCertificateUploadError] = useState<
+    string | null
+  >(null);
+
   // Temporary display state for immediate UI feedback
   const [tempDisplayImages, setTempDisplayImages] = useState<
     Array<{
@@ -422,9 +443,28 @@ const ProviderServiceDetailPage: React.FC = () => {
     }>
   >([]);
 
+  // Temporary display state for certificates
+  const [tempDisplayCertificates, setTempDisplayCertificates] = useState<
+    Array<{
+      url: string;
+      dataUrl: string | null;
+      error: string | null;
+      isNew?: boolean;
+      fileName?: string;
+    }>
+  >([]);
+
   // Batch operations state for persistence
   const [pendingUploads, setPendingUploads] = useState<File[]>([]);
   const [pendingRemovals, setPendingRemovals] = useState<number[]>([]);
+
+  // Certificate batch operations state
+  const [pendingCertificateUploads, setPendingCertificateUploads] = useState<
+    File[]
+  >([]);
+  const [pendingCertificateRemovals, setPendingCertificateRemovals] = useState<
+    number[]
+  >([]);
 
   // --- State for Package Form (Inline) ---
   const [isAddingOrEditingPackage, setIsAddingOrEditingPackage] =
@@ -446,10 +486,6 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [editedWeeklySchedule, setEditedWeeklySchedule] = useState<
     WeeklyScheduleEntry[]
   >([]); // Adjusted type
-  const [editedCertifications, setEditedCertifications] = useState<string[]>(
-    [],
-  ); // Assuming certification URLs or names
-
   // Categories state
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -475,8 +511,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           },
         })) || [];
       setEditedWeeklySchedule(initialSchedule);
-      // Initialize certification states (assuming they exist on service object)
-      setEditedCertifications(service.certifications || []); // Assuming 'certifications' field
     } else {
       document.title = "Service Details | SRV Provider";
     }
@@ -959,45 +993,211 @@ const ProviderServiceDetailPage: React.FC = () => {
   // --- Certification Upload Handlers ---
   const handleEditCertifications = useCallback(() => {
     setEditCertifications(true);
-    if (service) {
-      setEditedCertifications(service.certifications || []);
+    // Initialize temp display with current certificates
+    if (serviceCertificates) {
+      setTempDisplayCertificates([...serviceCertificates]);
     }
-  }, [service]);
+    setCertificateUploadError(null);
+  }, [serviceCertificates]);
 
   const handleCertificationUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (!event.target.files || !service) return;
 
-    // For now, certifications are static - just show a message
-    alert(
-      "Certification upload functionality will be implemented in a future update.",
+    const files = Array.from(event.target.files);
+    setCertificateUploadError(null);
+
+    // Validate files
+    for (const file of files) {
+      // Check file type (PDFs and images)
+      const isValidType = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+        "application/pdf",
+      ].includes(file.type);
+
+      if (!isValidType) {
+        setCertificateUploadError(
+          `File ${file.name} is not a supported format. Only images and PDFs are allowed.`,
+        );
+        event.target.value = "";
+        return;
+      }
+
+      // Check file size (450KB limit)
+      if (file.size > 450 * 1024) {
+        setCertificateUploadError(
+          `File ${file.name} exceeds the 450KB size limit.`,
+        );
+        event.target.value = "";
+        return;
+      }
+    }
+
+    // Check total certificate limit (10 max)
+    const currentCount = tempDisplayCertificates.length;
+    if (currentCount + files.length > 10) {
+      setCertificateUploadError(
+        `Cannot add ${files.length} certificate(s). Maximum 10 certificates allowed per service.`,
+      );
+      event.target.value = "";
+      return;
+    }
+
+    // Create temporary display entries for immediate UI feedback
+    const newTempCertificates = await Promise.all(
+      files.map(async (file) => {
+        const tempUrl = URL.createObjectURL(file);
+        let dataUrl: string | null = null;
+
+        try {
+          // For images, create data URL for preview
+          if (file.type.startsWith("image/")) {
+            dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          }
+        } catch (error) {
+          console.warn("Failed to create preview for", file.name);
+        }
+
+        return {
+          url: tempUrl,
+          dataUrl,
+          error: null,
+          isNew: true,
+          fileName: file.name,
+        };
+      }),
     );
+
+    // Add new certificates to temporary display
+    setTempDisplayCertificates((prev) => [...prev, ...newTempCertificates]);
+
+    // Add files to pending uploads
+    setPendingCertificateUploads((prev) => [...prev, ...files]);
 
     // Reset the input
     event.target.value = "";
   };
 
-  const handleRemoveCertification = async () => {
+  const handleRemoveCertificate = async (certificateIndex: number) => {
     if (!service) return;
 
-    // For now, certifications are static - just show a message
-    alert(
-      "Certification removal functionality will be implemented in a future update.",
-    );
+    const newTempCertificates = [...tempDisplayCertificates];
+    const removedCertificate = newTempCertificates[certificateIndex];
+
+    if (!removedCertificate) return;
+
+    // If it's a new certificate (has isNew property), clean up the URL and remove from pending uploads
+    if (removedCertificate?.isNew) {
+      URL.revokeObjectURL(removedCertificate.url);
+      // Find and remove from pending uploads
+      const pendingIndex = tempDisplayCertificates
+        .slice(0, certificateIndex)
+        .filter((cert) => cert.isNew).length;
+      const newPendingUploads = [...pendingCertificateUploads];
+      newPendingUploads.splice(pendingIndex, 1);
+      setPendingCertificateUploads(newPendingUploads);
+    } else {
+      // It's an existing certificate, add to pending removals
+      const originalIndex =
+        serviceCertificates?.findIndex(
+          (cert) => cert.url === removedCertificate.url,
+        ) ?? -1;
+      if (
+        originalIndex >= 0 &&
+        !pendingCertificateRemovals.includes(originalIndex)
+      ) {
+        setPendingCertificateRemovals((prev) => [...prev, originalIndex]);
+      }
+    }
+
+    // Remove from temporary display
+    newTempCertificates.splice(certificateIndex, 1);
+    setTempDisplayCertificates(newTempCertificates);
+    setCertificateUploadError(null);
   };
 
   const handleSaveCertifications = async () => {
-    setEditCertifications(false);
-    // Certifications are static for now
+    if (!service) return;
+
+    setUploadingCertificates(true);
+    setCertificateUploadError(null);
+
+    try {
+      // Process removals first
+      if (pendingCertificateRemovals.length > 0) {
+        for (const certificateIndex of pendingCertificateRemovals.sort(
+          (a, b) => b - a,
+        )) {
+          // Remove from end to start
+          if (
+            serviceCertificates &&
+            serviceCertificates[certificateIndex]?.url
+          ) {
+            await removeCertificate(serviceCertificates[certificateIndex].url);
+          }
+        }
+      }
+
+      // Process uploads
+      if (pendingCertificateUploads.length > 0) {
+        await uploadCertificates(pendingCertificateUploads);
+      }
+
+      // Cleanup temporary URLs for new certificates
+      tempDisplayCertificates.forEach((cert) => {
+        if (cert.isNew) {
+          URL.revokeObjectURL(cert.url);
+        }
+      });
+
+      // Reset all temporary state
+      setPendingCertificateUploads([]);
+      setPendingCertificateRemovals([]);
+      setTempDisplayCertificates([]);
+
+      // Reload the page to get fresh data
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to save certificate changes:", error);
+      setCertificateUploadError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save certificate changes. Please try again.",
+      );
+    } finally {
+      setUploadingCertificates(false);
+    }
   };
 
   const handleCancelCertifications = useCallback(() => {
+    // Cleanup temporary URLs for new certificates to prevent memory leaks
+    tempDisplayCertificates.forEach((cert) => {
+      if (cert.isNew) {
+        URL.revokeObjectURL(cert.url);
+      }
+    });
+
+    // Reset all temporary state back to original
+    setPendingCertificateUploads([]);
+    setPendingCertificateRemovals([]);
+    setTempDisplayCertificates(
+      serviceCertificates ? [...serviceCertificates] : [],
+    );
+
     setEditCertifications(false);
-    if (service) {
-      setEditedCertifications(service.certifications || []);
-    }
-  }, [service]);
+    setCertificateUploadError(null);
+  }, [service, tempDisplayCertificates, serviceCertificates]);
 
   // --- Package Management Handlers ---
   const handleAddPackage = () => {
@@ -1806,15 +2006,19 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <button
                   onClick={handleSaveCertifications}
                   className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:opacity-50"
-                  disabled={loading}
+                  disabled={uploadingCertificates}
                   aria-label="Save certifications"
                 >
-                  <CheckIcon className="h-4 w-4" />
+                  {uploadingCertificates ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                  ) : (
+                    <CheckIcon className="h-4 w-4" />
+                  )}
                 </button>
                 <button
                   onClick={handleCancelCertifications}
-                  className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300"
-                  disabled={loading}
+                  className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  disabled={uploadingCertificates}
                   aria-label="Cancel editing certifications"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -1845,60 +2049,165 @@ const ProviderServiceDetailPage: React.FC = () => {
 
           {editCertifications ? (
             <div className="space-y-4">
+              {/* Upload Error Display */}
+              {certificateUploadError && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <XMarkIcon className="h-5 w-5 text-red-400" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">
+                        Certificate Upload Error
+                      </h3>
+                      <div className="mt-2 text-sm text-red-700">
+                        <p>{certificateUploadError}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-3">
                 <label className="cursor-pointer rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-                  Upload Certifications
+                  Upload Certificates
                   <input
                     type="file"
-                    multiple // Allow multiple files for certifications
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" // Example file types
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp"
                     className="hidden"
                     onChange={handleCertificationUpload}
                   />
                 </label>
                 <span className="text-sm text-gray-600">
-                  (Upload PDF, images, etc.)
+                  (PDF files and images up to 450KB, max 10 certificates)
                 </span>
               </div>
-              <ul className="space-y-2">
-                {editedCertifications.length > 0 ? (
-                  editedCertifications.map((certName, index) => (
-                    <li
+
+              {/* Certificate Grid */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                {tempDisplayCertificates.length > 0 ? (
+                  tempDisplayCertificates.map((certificate, index) => (
+                    <div
                       key={index}
-                      className="flex items-center justify-between rounded-md bg-gray-100 p-2 text-sm text-gray-800"
+                      className="relative aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
                     >
-                      <span>{certName}</span>
-                      <button
-                        onClick={() => handleRemoveCertification()}
-                        className="rounded-full p-1 text-red-600 hover:bg-red-100"
-                        aria-label="Remove certification"
-                      >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
-                    </li>
+                      {certificate.error ? (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
+                          <div className="text-center">
+                            <AcademicCapIcon className="mx-auto h-8 w-8 text-gray-300" />
+                            <p className="mt-1">Failed to load</p>
+                          </div>
+                        </div>
+                      ) : certificate.dataUrl ? (
+                        // Image certificate preview
+                        <img
+                          src={certificate.dataUrl}
+                          alt={`Certificate ${index + 1}`}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : certificate.fileName
+                          ?.toLowerCase()
+                          .endsWith(".pdf") ? (
+                        // PDF certificate placeholder
+                        <div className="flex h-full w-full items-center justify-center bg-red-50">
+                          <div className="text-center">
+                            <AcademicCapIcon className="mx-auto h-8 w-8 text-red-500" />
+                            <p className="mt-1 text-xs text-red-700">
+                              {certificate.fileName}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                          <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                        </div>
+                      )}
+
+                      {/* Remove button */}
+                      <>
+                        {certificate.isNew && (
+                          <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                            NEW
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleRemoveCertificate(index)}
+                          className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                          aria-label="Remove certificate"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </>
+                    </div>
                   ))
                 ) : (
-                  <p className="py-4 text-center text-gray-400">
-                    No certifications uploaded yet.
+                  <p className="col-span-full py-4 text-center text-gray-400">
+                    No certificates uploaded yet.
                   </p>
                 )}
-              </ul>
+              </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-gray-400">
-              {service.certifications && service.certifications.length > 0 ? (
-                <ul className="space-y-2">
-                  {service.certifications.map((certName, index) => (
-                    <li
-                      key={index}
-                      className="rounded-md bg-gray-50 p-2 text-sm text-gray-800"
-                    >
-                      {certName}
-                    </li>
-                  ))}
-                </ul>
+            <div className="py-4">
+              {isLoadingCertificates ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">
+                    Loading certificates...
+                  </span>
+                </div>
+              ) : isCertificateError ? (
+                <div className="py-8 text-center text-red-500">
+                  <p>Failed to load service certificates</p>
+                  <button
+                    onClick={() => refetchCertificates()}
+                    className="mt-2 text-sm text-blue-600 underline hover:text-blue-800"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : serviceCertificates && serviceCertificates.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                  {serviceCertificates.map(
+                    (certificate: any, index: number) => (
+                      <div
+                        key={index}
+                        className="aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
+                      >
+                        {certificate.error ? (
+                          <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
+                            <div className="text-center">
+                              <AcademicCapIcon className="mx-auto h-8 w-8 text-gray-300" />
+                              <p className="mt-1">Failed to load</p>
+                            </div>
+                          </div>
+                        ) : certificate.dataUrl ? (
+                          <img
+                            src={certificate.dataUrl}
+                            alt={`Certificate ${index + 1}`}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                            <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                          </div>
+                        )}
+                      </div>
+                    ),
+                  )}
+                </div>
               ) : (
-                <p>No certifications available.</p>
+                <div className="py-8 text-center text-gray-400">
+                  <AcademicCapIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+                  <p>No certificates available.</p>
+                  <p className="mt-2 text-sm">
+                    Upload certificates to verify your professional
+                    qualifications.
+                  </p>
+                </div>
               )}
             </div>
           )}
