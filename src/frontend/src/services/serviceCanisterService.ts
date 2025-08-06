@@ -134,6 +134,8 @@ export interface Service {
   rating?: number;
   reviewCount: number;
   imageUrls: string[]; // Array of media URLs for service images (max 5)
+  certificateUrls: string[]; // Array of media URLs for service certificates
+  isVerifiedService: boolean; // Service verification status based on certificates
   weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>;
   instantBookingEnabled?: boolean;
   bookingNoticeHours?: number;
@@ -305,6 +307,8 @@ const convertCanisterService = (service: CanisterService): Service => ({
   rating: service.rating[0],
   reviewCount: Number(service.reviewCount),
   imageUrls: service.imageUrls || [], // Convert canister imageUrls or default to empty array
+  certificateUrls: service.certificateUrls || [], // Convert canister certificateUrls or default to empty array
+  isVerifiedService: service.isVerifiedService || false, // Convert canister isVerifiedService or default to false
   weeklySchedule: service.weeklySchedule[0]?.map(([day, avail]) => ({
     day: convertCanisterDayOfWeek(day),
     availability: convertCanisterDayAvailability(avail),
@@ -352,6 +356,11 @@ export const serviceCanisterService = {
       contentType: string;
       fileData: Uint8Array;
     }>,
+    serviceCertificates?: Array<{
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }>,
   ): Promise<Service | null> {
     try {
       const actor = await getServiceActor(true);
@@ -359,6 +368,14 @@ export const serviceCanisterService = {
       // Convert service images to canister format
       const canisterImages: [string, string, Uint8Array][] =
         serviceImages?.map(({ fileName, contentType, fileData }) => [
+          fileName,
+          contentType,
+          fileData,
+        ]) || [];
+
+      // Convert service certificates to canister format
+      const canisterCertificates: [string, string, Uint8Array][] =
+        serviceCertificates?.map(({ fileName, contentType, fileData }) => [
           fileName,
           contentType,
           fileData,
@@ -382,6 +399,7 @@ export const serviceCanisterService = {
         bookingNoticeHours ? [BigInt(bookingNoticeHours)] : [],
         maxBookingsPerDay ? [BigInt(maxBookingsPerDay)] : [],
         canisterImages.length > 0 ? [canisterImages] : [],
+        canisterCertificates.length > 0 ? [canisterCertificates] : [],
       );
 
       if ("ok" in result) {
@@ -1073,6 +1091,96 @@ export const serviceCanisterService = {
     } catch (error) {
       console.error("Error reordering service images:", error);
       throw new Error(`Failed to reorder service images: ${error}`);
+    }
+  },
+
+  // SERVICE CERTIFICATE MANAGEMENT FUNCTIONS
+
+  /**
+   * Upload additional certificates to existing service
+   */
+  async uploadServiceCertificates(
+    serviceId: string,
+    serviceCertificates: Array<{
+      fileName: string;
+      contentType: string;
+      fileData: Uint8Array;
+    }>,
+  ): Promise<Service | null> {
+    try {
+      const actor = await getServiceActor(true);
+
+      // Convert service certificates to canister format
+      const canisterCertificates: [string, string, Uint8Array][] =
+        serviceCertificates.map(({ fileName, contentType, fileData }) => [
+          fileName,
+          contentType,
+          fileData,
+        ]);
+
+      const result = await actor.uploadServiceCertificates(
+        serviceId,
+        canisterCertificates,
+      );
+
+      if ("ok" in result) {
+        return convertCanisterService(result.ok);
+      } else {
+        console.error("Error uploading service certificates:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error uploading service certificates:", error);
+      throw new Error(`Failed to upload service certificates: ${error}`);
+    }
+  },
+
+  /**
+   * Remove specific certificate from service
+   */
+  async removeServiceCertificate(
+    serviceId: string,
+    certificateUrl: string,
+  ): Promise<Service | null> {
+    try {
+      const actor = await getServiceActor(true);
+      const result = await actor.removeServiceCertificate(
+        serviceId,
+        certificateUrl,
+      );
+
+      if ("ok" in result) {
+        return convertCanisterService(result.ok);
+      } else {
+        console.error("Error removing service certificate:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error removing service certificate:", error);
+      throw new Error(`Failed to remove service certificate: ${error}`);
+    }
+  },
+
+  /**
+   * Verify service manually (admin function)
+   */
+  async verifyService(
+    serviceId: string,
+    isVerified: boolean,
+  ): Promise<Service | null> {
+    try {
+      const actor = await getServiceActor(true);
+      const result = await actor.verifyService(serviceId, isVerified);
+
+      if ("ok" in result) {
+        return convertCanisterService(result.ok);
+      } else {
+        console.error("Error verifying service:", result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error("Error verifying service:", error);
+      throw new Error(`Failed to verify service: ${error}`);
     }
   },
 };
