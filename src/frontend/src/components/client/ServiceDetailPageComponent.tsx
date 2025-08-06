@@ -32,6 +32,7 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 import { ServicePackage } from "../../services/serviceCanisterService";
 import { useUserImage } from "../../hooks/useImageLoader";
 
+// --- Provider Reputation Score ---
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
   const [reputationScore, setReputationScore] = useState<number>(50); // Default score
@@ -48,7 +49,6 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
           setReputationScore(50); // Fallback to default
         }
       } catch (error) {
-        console.error("Failed to fetch provider reputation:", error);
         setReputationScore(50); // Fallback to default on error
       } finally {
         setLoading(false);
@@ -106,7 +106,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   );
 };
 
-// Star rating display (used in reviews and service info)
+// --- Star Rating Display ---
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
   maxStars = 5,
@@ -126,6 +126,7 @@ const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
 
 import { Link } from "react-router-dom";
 
+// --- Reviews Section ---
 const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
   const { reviews, loading, error, getAverageRating, getRatingDistribution } =
     useServiceReviews(serviceId);
@@ -168,6 +169,7 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
 
   return (
     <div className="mt-8 rounded-3xl bg-white p-6 shadow-2xl">
+      {/* Reviews header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ChatBubbleIcon />
@@ -185,6 +187,7 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
           View All
         </Link>
       </div>
+      {/* Reviews summary and list */}
       {totalReviews > 0 ? (
         <div>
           <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-8">
@@ -263,7 +266,7 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
   );
 };
 
-// Modal: Inspect service gallery image (centered overlay)
+// --- Modal for Service Gallery Image ---
 const ServiceImageModal: React.FC<{ src: string; onClose: () => void }> = ({
   src,
   onClose,
@@ -305,7 +308,7 @@ const ServiceImageModal: React.FC<{ src: string; onClose: () => void }> = ({
   </div>
 );
 
-// Service gallery section (middle of page, below availability)
+// --- Service Gallery Section ---
 const ServiceGallerySection: React.FC<{
   serviceId: string;
   imageUrls: string[];
@@ -321,12 +324,12 @@ const ServiceGallerySection: React.FC<{
 
   return (
     <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
-      <h3 className="mb-4 text-lg font-semibold text-gray-800">
-        Service Gallery
+      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
+        <CameraIcon className="h-6 w-6 text-blue-400" /> Service Gallery
       </h3>
-
+      {/* Responsive grid for images */}
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: Math.min(imageUrls.length || 4, 5) }).map(
             (_, index) => (
               <div
@@ -339,11 +342,11 @@ const ServiceGallerySection: React.FC<{
           )}
         </div>
       ) : displayImages.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {displayImages.map((image, index) => (
             <div
               key={index}
-              className="group flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-gray-100"
+              className="group relative flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-blue-100 bg-gray-50 shadow transition-all duration-200 focus-within:scale-105 hover:z-10 hover:scale-105"
               onClick={() => image.dataUrl && setModalImage(image.dataUrl)}
               tabIndex={0}
               aria-label={`Inspect service image ${index + 1}`}
@@ -354,21 +357,34 @@ const ServiceGallerySection: React.FC<{
               }}
             >
               {image.error ? (
-                <div className="flex h-full w-full items-center justify-center">
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2">
                   <CameraIcon className="h-10 w-10 text-gray-300" />
+                  <span className="text-xs text-red-400">Failed to load</span>
                 </div>
               ) : image.dataUrl ? (
-                <img
-                  src={image.dataUrl}
-                  alt={`Service gallery image ${index + 1}`}
-                  className="h-full w-full rounded-lg border-4 border-yellow-200 object-cover transition-all duration-200 group-hover:border-blue-700 group-focus:border-blue-700"
-                  loading="lazy"
-                  tabIndex={-1}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "/default-provider.svg";
-                  }}
-                />
+                <div className="relative h-full w-full">
+                  <img
+                    src={image.dataUrl}
+                    alt={`Service gallery image ${index + 1}`}
+                    className="h-full w-full rounded-xl border-4 border-yellow-200 object-cover transition-all duration-200 group-hover:border-blue-700 group-focus:border-blue-700"
+                    loading="lazy"
+                    tabIndex={-1}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "/default-provider.svg";
+                    }}
+                  />
+                  {/* Overlay for zoom icon */}
+                  <span className="absolute right-2 bottom-2 rounded-full bg-white/80 p-1 text-blue-700 shadow transition-transform group-hover:scale-110 group-focus:scale-110">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                      <path
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"
+                      />
+                    </svg>
+                  </span>
+                </div>
               ) : (
                 <div className="flex h-full w-full animate-pulse items-center justify-center bg-gray-200">
                   <div className="h-6 w-6 rounded bg-gray-300"></div>
@@ -378,18 +394,17 @@ const ServiceGallerySection: React.FC<{
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
-              className="flex aspect-square items-center justify-center rounded-lg bg-gray-100"
+              className="flex aspect-square items-center justify-center rounded-xl border-2 border-gray-100 bg-gray-50"
             >
               <CameraIcon className="h-10 w-10 text-gray-300" />
             </div>
           ))}
         </div>
       )}
-
       <p className="mt-4 text-center text-xs text-gray-500">
         {displayImages.length > 0
           ? `Showing ${displayImages.length} of ${imageUrls.length} service images${errorCount > 0 ? ` (${errorCount} failed to load)` : ""}`
@@ -406,23 +421,45 @@ const ServiceGallerySection: React.FC<{
   );
 };
 
-// Credentials section (below gallery)
+// --- Credentials Section ---
 const CredentialsSection: React.FC<{ isVerified: boolean }> = ({
   isVerified,
 }) => (
   <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
-    <h3 className="mb-4 text-lg font-semibold text-gray-800">Credentials</h3>
-    <div className="flex items-center rounded-lg bg-gray-50 p-4">
-      <DocumentCheckIcon className="mr-4 h-10 w-10 text-gray-400" />
+    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
+      <DocumentCheckIcon className="h-6 w-6 text-blue-400" /> Credentials
+    </h3>
+    <div
+      className={`flex items-center rounded-lg p-4 ${isVerified ? "border border-blue-200 bg-blue-50" : "border border-yellow-200 bg-yellow-50"}`}
+    >
+      <DocumentCheckIcon
+        className={`mr-4 h-10 w-10 ${isVerified ? "text-blue-400" : "text-yellow-400"}`}
+      />
       <div>
-        <p className="font-semibold text-gray-700">
-          {isVerified ? "Provider Verified" : "Verification Pending"}
+        <p
+          className={`font-semibold ${isVerified ? "text-blue-700" : "text-yellow-700"}`}
+        >
+          {isVerified ? "Provider Verified" : "Not Verified"}
         </p>
         <p className="text-sm text-gray-500">
           {isVerified
             ? "Credentials have been successfully verified."
-            : "Credentials will be displayed here once verified."}
+            : "This provider has not uploaded any credentials yet. Once credentials are submitted and verified, they will be displayed here."}
         </p>
+        {!isVerified && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-block rounded-full bg-yellow-200 px-3 py-1 text-xs font-semibold text-yellow-800">
+              No credentials uploaded
+            </span>
+            <button
+              disabled
+              className="cursor-not-allowed rounded bg-gray-200 px-3 py-1 text-xs text-gray-500"
+              title="Feature coming soon"
+            >
+              Upload Credentials
+            </button>
+          </div>
+        )}
       </div>
     </div>
   </div>
@@ -440,8 +477,8 @@ const ServiceDetailPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
 
-  const { getServicePackages } = useServiceManagement(); // Use the hook for package fetching
-  const { conversations, createConversation, loading: chatLoading } = useChat(); // Add the useChat hook
+  const { getServicePackages } = useServiceManagement();
+  const { conversations, createConversation, loading: chatLoading } = useChat();
   const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
 
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -577,7 +614,6 @@ const ServiceDetailPage: React.FC = () => {
   }
 
   const { rating, providerName, name, category, location } = service;
-  // Use isVerified from service object only
   const isVerified = service.isVerified;
   const averageRating = rating?.average ?? 0;
   const reviewCount = rating?.count ?? 0;
@@ -596,7 +632,7 @@ const ServiceDetailPage: React.FC = () => {
     availability?: Availability;
   }
 
-  // Visualize each day with all its corresponding time slots
+  // --- Availability Section ---
   const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
     availability,
   }) => {
@@ -643,6 +679,7 @@ const ServiceDetailPage: React.FC = () => {
             </span>
           )}
         </div>
+        {/* Availability days and slots */}
         {hasDays ? (
           <div>
             {/* Mobile: stacked list, Desktop: grid */}
@@ -786,7 +823,7 @@ const ServiceDetailPage: React.FC = () => {
     );
   };
 
-  // Map backend availability to frontend expected fields, supporting multiple time slots per day
+  // --- Map backend availability to frontend expected fields ---
   let mappedAvailability:
     | (Availability & { timeSlotsByDay?: Record<string, string[]> })
     | undefined = undefined;
@@ -997,7 +1034,6 @@ const ServiceDetailPage: React.FC = () => {
               </div>
             </div>
           </div>
-
           {/* --- Right Column: Service Info Card --- */}
           <div className="mt-6 w-full lg:mt-0 lg:w-[400px]">
             <div className="flex h-auto min-h-[220px] flex-col justify-center rounded-3xl border-white bg-white p-8 shadow-2xl">
@@ -1037,8 +1073,7 @@ const ServiceDetailPage: React.FC = () => {
         {/* --- Packages Section (below service info) --- */}
         <div className="mt-8 rounded-xl bg-white p-6 shadow-lg">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
-            <Squares2X2Icon className="h-6 w-6 text-yellow-400" /> Packages
-            Offered
+            <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages Offered
           </h3>
           {loadingPackages ? (
             <div className="p-4 text-center text-gray-500">
@@ -1091,7 +1126,6 @@ const ServiceDetailPage: React.FC = () => {
         <CredentialsSection isVerified={isVerified} />
         <ReviewsSection serviceId={service.id} />
       </div>
-
       {/* --- Sticky Footer for Actions (bottom of page) --- */}
       <div className="shadow-t-lg fixed bottom-16 left-0 z-40 w-full border-t border-gray-200 bg-white p-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
@@ -1110,7 +1144,6 @@ const ServiceDetailPage: React.FC = () => {
             ) : null}
             <span className="text-base font-semibold">Chat</span>
           </button>
-
           {/* Book Now button (right, wider and more prominent) */}
           <div
             className="group relative flex flex-grow justify-end"
@@ -1133,7 +1166,6 @@ const ServiceDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
-
       {/* --- Bottom navigation bar (always visible) --- */}
       <BottomNavigation />
     </div>
