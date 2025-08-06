@@ -278,6 +278,8 @@ module {
                 rating = ?4.8;
                 reviewCount = 23;
                 imageUrls = []; // Empty for static data
+                certificateUrls = []; // Empty for static data
+                isVerifiedService = false; // Static services are not verified by default
                 // Availability information
                 weeklySchedule = ?[
                     (#Monday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "17:00" }] }),

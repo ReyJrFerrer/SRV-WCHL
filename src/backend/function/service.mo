@@ -479,6 +479,8 @@ persistent actor ServiceCanister {
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
                     imageUrls = existingService.imageUrls;
+                    certificateUrls = existingService.certificateUrls;
+                    isVerifiedService = existingService.isVerifiedService;
                     // Preserve availability information
                     weeklySchedule = existingService.weeklySchedule;
                     instantBookingEnabled = existingService.instantBookingEnabled;
@@ -589,6 +591,8 @@ persistent actor ServiceCanister {
                     rating = ?newRating;
                     reviewCount = newReviewCount;
                     imageUrls = existingService.imageUrls;
+                    certificateUrls = existingService.certificateUrls;
+                    isVerifiedService = existingService.isVerifiedService;
                     // Preserve availability information
                     weeklySchedule = existingService.weeklySchedule;
                     instantBookingEnabled = existingService.instantBookingEnabled;
@@ -723,6 +727,8 @@ persistent actor ServiceCanister {
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
                     imageUrls = existingService.imageUrls; // Preserve existing images
+                    certificateUrls = existingService.certificateUrls; // Preserve existing certificates
+                    isVerifiedService = existingService.isVerifiedService; // Preserve verification status
                     // Update availability information
                     weeklySchedule = updatedWeeklySchedule;
                     instantBookingEnabled = updatedInstantBookingEnabled;
@@ -903,6 +909,8 @@ persistent actor ServiceCanister {
                             rating = existingService.rating;
                             reviewCount = existingService.reviewCount;
                             imageUrls = Buffer.toArray(existingUrls);
+                            certificateUrls = existingService.certificateUrls;
+                            isVerifiedService = existingService.isVerifiedService;
                             weeklySchedule = existingService.weeklySchedule;
                             instantBookingEnabled = existingService.instantBookingEnabled;
                             bookingNoticeHours = existingService.bookingNoticeHours;
@@ -966,6 +974,8 @@ persistent actor ServiceCanister {
                             rating = existingService.rating;
                             reviewCount = existingService.reviewCount;
                             imageUrls = filteredUrls;
+                            certificateUrls = existingService.certificateUrls;
+                            isVerifiedService = existingService.isVerifiedService;
                             weeklySchedule = existingService.weeklySchedule;
                             instantBookingEnabled = existingService.instantBookingEnabled;
                             bookingNoticeHours = existingService.bookingNoticeHours;
@@ -1039,6 +1049,214 @@ persistent actor ServiceCanister {
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
                     imageUrls = orderedImageUrls;
+                    certificateUrls = existingService.certificateUrls;
+                    isVerifiedService = existingService.isVerifiedService;
+                    weeklySchedule = existingService.weeklySchedule;
+                    instantBookingEnabled = existingService.instantBookingEnabled;
+                    bookingNoticeHours = existingService.bookingNoticeHours;
+                    maxBookingsPerDay = existingService.maxBookingsPerDay;
+                };
+
+                services.put(serviceId, updatedService);
+                return #ok(updatedService);
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+
+    // SERVICE CERTIFICATE MANAGEMENT FUNCTIONS
+
+    // Upload additional certificates to existing service
+    public shared(msg) func uploadServiceCertificates(
+        serviceId : Text,
+        serviceCertificates : [(Text, Text, Blob)] // (fileName, contentType, fileData)
+    ) : async Result<Service> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to upload certificates for this service");
+                };
+
+                // Check if adding these certificates would exceed the limit
+                if (existingService.certificateUrls.size() + serviceCertificates.size() > MAX_SERVICE_CERTIFICATES) {
+                    return #err("Maximum " # Nat.toText(MAX_SERVICE_CERTIFICATES) # " certificates allowed per service");
+                };
+
+                // Upload certificates to media canister
+                switch (mediaCanisterId) {
+                    case (?mediaCanister) {
+                        let mediaActor = actor(Principal.toText(mediaCanister)) : actor {
+                            uploadMedia : (Text, Text, Types.MediaType, Blob) -> async Types.Result<Types.MediaItem>;
+                        };
+
+                        let uploadResults = Buffer.Buffer<Text>(serviceCertificates.size());
+                        for ((fileName, contentType, fileData) in serviceCertificates.vals()) {
+                            switch (await mediaActor.uploadMedia(fileName, contentType, #ServiceCertificate, fileData)) {
+                                case (#ok(mediaItem)) {
+                                    uploadResults.add(mediaItem.url);
+                                };
+                                case (#err(error)) {
+                                    return #err("Failed to upload certificate: " # error);
+                                };
+                            };
+                        };
+
+                        // Combine existing and new certificate URLs
+                        let existingUrls = Buffer.fromArray<Text>(existingService.certificateUrls);
+                        let newUrls = Buffer.toArray(uploadResults);
+                        for (url in newUrls.vals()) {
+                            existingUrls.add(url);
+                        };
+
+                        let updatedService : Service = {
+                            id = existingService.id;
+                            providerId = existingService.providerId;
+                            title = existingService.title;
+                            description = existingService.description;
+                            category = existingService.category;
+                            price = existingService.price;
+                            location = existingService.location;
+                            status = existingService.status;
+                            createdAt = existingService.createdAt;
+                            updatedAt = Time.now();
+                            rating = existingService.rating;
+                            reviewCount = existingService.reviewCount;
+                            imageUrls = existingService.imageUrls;
+                            certificateUrls = Buffer.toArray(existingUrls);
+                            isVerifiedService = Buffer.toArray(existingUrls).size() > 0; // Update verification status
+                            weeklySchedule = existingService.weeklySchedule;
+                            instantBookingEnabled = existingService.instantBookingEnabled;
+                            bookingNoticeHours = existingService.bookingNoticeHours;
+                            maxBookingsPerDay = existingService.maxBookingsPerDay;
+                        };
+
+                        services.put(serviceId, updatedService);
+                        return #ok(updatedService);
+                    };
+                    case (null) {
+                        return #err("Media canister not configured");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+
+    // Remove specific certificate from service
+    public shared(msg) func removeServiceCertificate(
+        serviceId : Text,
+        certificateUrl : Text
+    ) : async Result<Service> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to update this service");
+                };
+
+                // Check if certificate exists in service
+                let certificateExists = Array.find<Text>(existingService.certificateUrls, func(url : Text) : Bool {
+                    url == certificateUrl
+                });
+
+                switch (certificateExists) {
+                    case (?_) {
+                        // Remove certificate URL from service
+                        let filteredUrls = Array.filter<Text>(existingService.certificateUrls, func(url : Text) : Bool {
+                            url != certificateUrl
+                        });
+
+                        let updatedService : Service = {
+                            id = existingService.id;
+                            providerId = existingService.providerId;
+                            title = existingService.title;
+                            description = existingService.description;
+                            category = existingService.category;
+                            price = existingService.price;
+                            location = existingService.location;
+                            status = existingService.status;
+                            createdAt = existingService.createdAt;
+                            updatedAt = Time.now();
+                            rating = existingService.rating;
+                            reviewCount = existingService.reviewCount;
+                            imageUrls = existingService.imageUrls;
+                            certificateUrls = filteredUrls;
+                            isVerifiedService = filteredUrls.size() > 0; // Update verification status
+                            weeklySchedule = existingService.weeklySchedule;
+                            instantBookingEnabled = existingService.instantBookingEnabled;
+                            bookingNoticeHours = existingService.bookingNoticeHours;
+                            maxBookingsPerDay = existingService.maxBookingsPerDay;
+                        };
+
+                        services.put(serviceId, updatedService);
+
+                        // Optionally delete from media canister
+                        // Note: We would need to extract media ID from URL and call deleteMedia
+                        // For now, just removing the reference from service
+
+                        return #ok(updatedService);
+                    };
+                    case (null) {
+                        return #err("Certificate not found in service");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+
+    // Verify service manually (admin function)
+    public shared(msg) func verifyService(
+        serviceId : Text,
+        isVerified : Bool
+    ) : async Result<Service> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                // TODO: Add admin check here when admin functionality is implemented
+                // For now, only allow service owner to verify their own service
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to verify this service");
+                };
+
+                let updatedService : Service = {
+                    id = existingService.id;
+                    providerId = existingService.providerId;
+                    title = existingService.title;
+                    description = existingService.description;
+                    category = existingService.category;
+                    price = existingService.price;
+                    location = existingService.location;
+                    status = existingService.status;
+                    createdAt = existingService.createdAt;
+                    updatedAt = Time.now();
+                    rating = existingService.rating;
+                    reviewCount = existingService.reviewCount;
+                    imageUrls = existingService.imageUrls;
+                    certificateUrls = existingService.certificateUrls;
+                    isVerifiedService = isVerified;
                     weeklySchedule = existingService.weeklySchedule;
                     instantBookingEnabled = existingService.instantBookingEnabled;
                     bookingNoticeHours = existingService.bookingNoticeHours;
@@ -1144,6 +1362,8 @@ persistent actor ServiceCanister {
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
                     imageUrls = existingService.imageUrls;
+                    certificateUrls = existingService.certificateUrls;
+                    isVerifiedService = existingService.isVerifiedService;
                     // UPDATE: Sync availability information with the service record
                     weeklySchedule = ?weeklySchedule;
                     instantBookingEnabled = ?instantBookingEnabled;
