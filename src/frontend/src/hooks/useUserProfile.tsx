@@ -47,7 +47,8 @@ export const useUserProfile = () => {
   ): Promise<FrontendProfile | null> => {
     try {
       // Use the media service to upload the profile picture
-      const updatedProfile = await mediaService.uploadProfilePicture(imageFile);
+      const updatedProfile =
+        await mediaService.uploadProfilePictureWithDescaling(imageFile);
       return updatedProfile;
     } catch (error) {
       console.error("Error uploading profile picture:", error);
