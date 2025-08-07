@@ -1,4 +1,4 @@
-// frontend/src/components/client/ClientBookingItemCard.tsx
+// --- Client Booking Item Card ---
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
@@ -27,50 +27,41 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Add state for review status
+  // --- State: Review status ---
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
 
-  // Check review status when booking is finished
+  // --- Effect: Check review status when booking is finished ---
   useEffect(() => {
     const checkReviewStatus = async () => {
-      // Only check for completed bookings (exclude cancelled)
       if (booking.status !== "Completed" || !booking.id) {
-        // For cancelled bookings, explicitly set to false
         if (booking.status === "Cancelled") {
           setCanUserReview(false);
         }
         return;
       }
-
       try {
         setCheckingReviewStatus(true);
-
-        // Get current user ID
         const userProfile = await authCanisterService.getMyProfile();
         if (!userProfile?.id) {
           setCanUserReview(false);
           return;
         }
-
-        // Check if user can review this booking
         const canReview = await reviewCanisterService.canUserReviewBooking(
           booking.id,
           userProfile.id,
         );
         setCanUserReview(canReview);
       } catch (error) {
-        // Default to allowing review if check fails (only for completed bookings)
         setCanUserReview(true);
       } finally {
         setCheckingReviewStatus(false);
       }
     };
-
     checkReviewStatus();
   }, [booking.id, booking.status]);
 
-  // Extract booking data with fallbacks
+  // --- Extract booking data with fallbacks ---
   const serviceTitle = booking.serviceName;
   const serviceImage =
     booking.providerProfile?.profilePicture?.imageUrl ||
@@ -83,7 +74,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       ? booking.location
       : "Location not specified");
 
-  // Format date function
+  // --- Format date function ---
   const formatDate = (date: Date | string | number) => {
     try {
       const dateObj = new Date(date);
@@ -99,7 +90,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // Status color mapping
+  // --- Status color mapping ---
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case "REQUESTED":
@@ -124,7 +115,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // Event handlers
+  // --- Event Handlers ---
   const handleCancelClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -170,17 +161,17 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // Check if booking can be cancelled
+  // --- Check if booking can be cancelled ---
   const canCancel = ["Requested", "Pending", "Accepted", "Confirmed"].includes(
     booking.status,
   );
 
-  // Check if booking is completed/cancelled for actions
+  // --- Check if booking is completed/cancelled for actions ---
   const isCompleted = booking.status === "Completed";
   const isCancelled = booking.status === "Cancelled";
   const isFinished = isCompleted || isCancelled;
 
-  // Update the review button content logic
+  // --- Review button content logic ---
   const getReviewButtonContent = () => {
     // Handle cancelled bookings first
     if (isCancelled) {
@@ -256,7 +247,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
-  // Update the render logic for the buttons section
+  // --- Render: Booking Card Layout ---
   return (
     <Link
       to={`/client/booking/${booking.id}`}

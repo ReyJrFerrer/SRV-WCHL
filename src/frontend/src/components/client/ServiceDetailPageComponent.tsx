@@ -1,4 +1,4 @@
-// Helper: Format 24-hour time to 12-hour format with AM/PM (used in availability section)
+// --- Helper: Format 24-hour time to 12-hour format with AM/PM ---
 function formatTime12Hour(time: string): string {
   if (!time) return "";
   const [hourStr, minuteStr] = time.split(":");
@@ -32,7 +32,7 @@ import BottomNavigation from "../../components/client/BottomNavigation";
 import { ServicePackage } from "../../services/serviceCanisterService";
 import { useUserImage } from "../../hooks/useMediaLoader";
 
-// --- Provider Reputation Score ---
+// --- Provider Reputation Score Section ---
 const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   const { fetchUserReputation } = useReputation();
   const [reputationScore, setReputationScore] = useState<number>(50); // Default score
@@ -106,7 +106,7 @@ const ReputationScore: React.FC<{ providerId: string }> = ({ providerId }) => {
   );
 };
 
-// --- Star Rating Display ---
+// --- Star Rating Display Section ---
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
   maxStars = 5,
@@ -618,7 +618,7 @@ const ServiceDetailPage: React.FC = () => {
   const averageRating = rating?.average ?? 0;
   const reviewCount = rating?.count ?? 0;
 
-  // --- Types and Component for the Availability Section ---
+  // --- Availability Section Types and Component ---
   type Availability = {
     isAvailableNow?: boolean;
     availableDays?: string[]; // e.g. ["Monday", "Tuesday"]
@@ -1000,7 +1000,7 @@ const ServiceDetailPage: React.FC = () => {
                   >
                     <img
                       src={
-                        userImageUrl == "/default-avatar.png"
+                        userImageUrl == "/default-provider.svg"
                           ? `/images/ai-sp/${service.category.slug}.svg`
                           : userImageUrl
                       }

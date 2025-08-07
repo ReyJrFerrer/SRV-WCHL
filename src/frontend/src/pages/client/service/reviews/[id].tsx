@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useUserImage } from "../../../../hooks/useMediaLoader";
 import {
   ArrowLeftIcon,
   StarIcon as StarSolid,
@@ -136,8 +137,10 @@ const ServiceReviewsPage: React.FC = () => {
   const ratingDistribution = getRatingDistribution(reviews);
   const averageRating = getAverageRating(reviews);
 
-  // Provider avatar logic
+  // Provider avatar logic (ServiceDetailPageComponent reference)
   const providerName = service?.providerName || "Service Provider";
+  const providerAvatarRaw = service?.providerAvatar;
+  const { userImageUrl } = useUserImage(providerAvatarRaw);
 
   // Loading state
   if (serviceLoading || reviewsLoading) {
@@ -220,9 +223,10 @@ const ServiceReviewsPage: React.FC = () => {
       <main className="mx-auto w-full max-w-2xl p-4">
         {/* Service Info Card Section */}
         <div className="mb-8 flex items-center gap-4 rounded-2xl border border-blue-100 bg-white/90 p-4 shadow-lg md:p-6">
+          {/* Provider profile picture (matches ServiceDetailPageComponent logic) */}
           <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border-2 border-blue-200 bg-white md:h-20 md:w-20">
             <img
-              src={service.providerAvatar || "/default-provider.svg"}
+              src={userImageUrl || "/default-provider.svg"}
               alt={providerName}
               className="h-full w-full rounded-full object-cover"
               style={{ borderRadius: "50%" }}

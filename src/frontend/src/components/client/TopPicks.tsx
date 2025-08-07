@@ -8,14 +8,14 @@ import {
 } from "../../hooks/serviceInformation";
 import { getCategoryImage } from "../../utils/serviceHelpers";
 
-// --- Interfaces ---
+// --- Types and Props ---
 interface TopPicksProps {
   style?: object;
   limit?: number;
   onViewAllPress: () => void; // Navigation is handled by the parent
 }
 
-// --- SVG Icons for React Web ---
+// --- SVG Icons ---
 const ArrowRightIcon = () => (
   <svg
     fill="none"
@@ -62,7 +62,7 @@ const TopPicks: React.FC<TopPicksProps> = ({
     heroImage: getCategoryImage(service.category.name),
   });
 
-  // --- Render States ---
+  // --- Render: Top Picks Layout ---
   if (loading) {
     return (
       <div

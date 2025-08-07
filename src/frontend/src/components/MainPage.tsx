@@ -13,8 +13,20 @@ export default function MainPage({
   isLoginLoading,
   onNavigateToAbout,
 }: MainPageProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Modal for Internet Identity info
+  const [showIdentityInfoModal, setShowIdentityInfoModal] = useState(false);
 
+  // Handler for login button click
+  const handleLoginClick = () => {
+    setShowIdentityInfoModal(true);
+  };
+
+  // Handler for confirming identity info
+  const handleConfirmIdentityInfo = () => {
+    setShowIdentityInfoModal(false);
+    onLoginClick();
+  };
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
     const nav = document.querySelector(".main-nav");
@@ -23,123 +35,199 @@ export default function MainPage({
 
   return (
     <div>
-      {/* Header Section */}
-      <header className="site-header">
-        <div className="container">
-          <div className="header-content">
-            <div className="logo-container">
-              <a href="/" className="logo-link" aria-label="SRV Home">
-                <img src="/logo.svg" alt="SRV Logo" className="logo-image" />
-              </a>
-            </div>
-
+      {/* Internet Identity Info Modal (top-level, so all buttons trigger it) */}
+      {showIdentityInfoModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowIdentityInfoModal(false);
+          }}
+        >
+          <div className="relative w-full max-w-md rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-8 shadow-2xl">
             <button
-              className={`mobile-menu-toggle ${isMobileMenuOpen ? "active" : ""}`}
-              aria-label="Toggle menu"
-              onClick={toggleMobileMenu}
+              className="absolute top-3 right-3 rounded-full border border-gray-300 bg-gray-100 p-2 hover:bg-gray-200"
+              onClick={() => setShowIdentityInfoModal(false)}
+              aria-label="Close"
+              tabIndex={0}
             >
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
+              <span className="text-xl font-bold text-gray-700">&times;</span>
             </button>
-
-            <nav className={`main-nav ${isMobileMenuOpen ? "active" : ""}`}>
-              <ul className="nav-list">
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="nav-link nav-link-active"
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                  >
-                    Home
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a
-                    href="#"
-                    className="nav-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigateToAbout();
-                    }}
-                  >
-                    About
-                  </a>
-                </li>
-                <li className="nav-item"></li>
-                <li className="nav-item nav-cta">
-                  <button
-                    onClick={onLoginClick}
-                    disabled={isLoginLoading}
-                    className={"btn-primary"}
-                  >
-                    {isLoginLoading ? (
-                      <>
-                        <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
-                        <span>Connecting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FingerPrintIcon className="mr-3 h-6 w-6" />
-                        <span>Login / Sign Up</span>
-                      </>
-                    )}
-                  </button>
-                </li>
-              </ul>
-            </nav>
-
-            <div className="header-button">
-              <button
-                onClick={onLoginClick}
-                disabled={isLoginLoading}
-                className={"btn-primary"}
-              >
-                {isLoginLoading ? (
-                  <>
-                    <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-slate-800"></div>
-                    <span>Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <FingerPrintIcon className="mr-3 h-6 w-6" />
-                    <span>Login / Sign Up</span>
-                  </>
-                )}
-              </button>
+            <div className="mb-4 flex flex-col items-center">
+              <FingerPrintIcon className="mb-2 h-12 w-12 text-blue-600 drop-shadow" />
+              <h2 className="mb-1 text-2xl font-extrabold text-blue-700">
+                Internet Identity Login
+              </h2>
+              <span className="mb-2 inline-block rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+                Secure & Private
+              </span>
             </div>
+            <div className="mb-6 text-center">
+              <p className="mb-2 text-base text-gray-700">
+                <span className="font-semibold text-blue-700">
+                  You will be redirected
+                </span>{" "}
+                to Internet Identity to securely log in or sign up.
+              </p>
+              <div className="mb-2 rounded-lg border border-blue-100 bg-blue-50 p-3">
+                <strong className="mb-1 block text-blue-700">
+                  Why is this important?
+                </strong>
+                <span className="text-sm text-gray-700">
+                  Internet Identity protects your privacy and security,{" "}
+                  <strong>
+                    allowing you to use SRV without sharing personal passwords.
+                  </strong>
+                  <br />
+                  It helps keep your account safe and enables trusted
+                  interactions on the platform.
+                </span>
+              </div>
+            </div>
+            <button
+              className="mt-2 w-full rounded-lg bg-blue-600 py-3 text-lg font-bold text-white shadow transition hover:bg-blue-700"
+              onClick={handleConfirmIdentityInfo}
+            >
+              Continue to Internet Identity
+            </button>
           </div>
         </div>
+      )}
+      {/* Modernized Header Section */}
+      <header className="site-header sticky top-0 z-40 rounded-b-2xl border-b border-blue-100 bg-white/80 shadow-lg backdrop-blur-lg">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-4">
+            <a
+              href="/"
+              className="logo-link flex items-center gap-2"
+              aria-label="SRV Home"
+            >
+              <img
+                src="/logo.svg"
+                alt="SRV Logo"
+                className="logo-image h-10 w-auto"
+              />
+            </a>
+          </div>
+          <nav
+            className={`main-nav hidden items-center gap-6 md:flex ${isMobileMenuOpen ? "active" : ""}`}
+          >
+            <a
+              href="#"
+              className="nav-link nav-link-active font-semibold text-blue-700 hover:underline"
+              onClick={(e) => e.preventDefault()}
+            >
+              Home
+            </a>
+            <a
+              href="#"
+              className="nav-link font-semibold text-gray-700 hover:underline"
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigateToAbout();
+              }}
+            >
+              About
+            </a>
+            <button
+              onClick={handleLoginClick}
+              disabled={isLoginLoading}
+              className="btn-primary ml-2 flex min-h-0 items-center gap-1 px-2 py-1 text-xs"
+            >
+              {isLoginLoading ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                  <span className="text-xs">Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <FingerPrintIcon className="h-4 w-4" />
+                  <span className="text-xs">Login / Sign Up</span>
+                </>
+              )}
+            </button>
+          </nav>
+          <button
+            className={`mobile-menu-toggle md:hidden ${isMobileMenuOpen ? "active" : ""} shadow"} rounded-lg border border-gray-300 bg-white p-2`}
+            aria-label="Toggle menu"
+            onClick={toggleMobileMenu}
+          >
+            <span className="hamburger-line mb-1 block h-0.5 w-6 bg-blue-700"></span>
+            <span className="hamburger-line mb-1 block h-0.5 w-6 bg-blue-700"></span>
+            <span className="hamburger-line block h-0.5 w-6 bg-blue-700"></span>
+          </button>
+        </div>
+        {/* Mobile nav */}
+        {isMobileMenuOpen && (
+          <nav className="main-nav-mobile mt-2 flex flex-col gap-3 rounded-lg bg-white p-4 shadow md:hidden">
+            <a
+              href="#"
+              className="nav-link nav-link-active font-semibold text-blue-700 hover:underline"
+              onClick={(e) => e.preventDefault()}
+            >
+              Home
+            </a>
+            <a
+              href="#"
+              className="nav-link font-semibold text-gray-700 hover:underline"
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigateToAbout();
+              }}
+            >
+              About
+            </a>
+            <button
+              onClick={handleLoginClick}
+              disabled={isLoginLoading}
+              className="flex items-center gap-2 rounded-lg bg-yellow-400 px-5 py-2 font-bold text-blue-900 shadow transition hover:bg-blue-600 hover:text-white"
+            >
+              {isLoginLoading ? (
+                <>
+                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <FingerPrintIcon className="h-6 w-6" />
+                  <span>Login / Sign Up</span>
+                </>
+              )}
+            </button>
+          </nav>
+        )}
       </header>
 
       {/* Hero Section */}
       <section className="hero-section">
-        <div className="container">
-          <div className="hero-content">
-            <div className="hero-text-container">
-              <h1 className="hero-text">
-                <div className="text-line">
+        <div className="container mx-auto px-4 py-12 md:py-20">
+          <div className="hero-content relative flex flex-col items-center rounded-3xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-8 shadow-xl md:p-16">
+            {/* Decorative background shapes */}
+            <div className="absolute top-0 left-0 -z-10 h-32 w-32 rounded-full bg-blue-100 opacity-40 blur-2xl"></div>
+            <div className="absolute right-0 bottom-0 -z-10 h-24 w-24 rounded-full bg-yellow-200 opacity-30 blur-2xl"></div>
+            <div className="hero-text-container mb-8">
+              <h1 className="hero-text text-center text-3xl leading-tight font-extrabold text-blue-800 drop-shadow-lg md:text-5xl">
+                <div className="text-line mb-2 flex items-center justify-center gap-2">
                   <span className="text-segment">Ang Serbisyo,</span>
-                  <span className="component-group-after">
+                  <span className="component-group-after flex items-center gap-1">
                     <span className="arrow-circle">
                       <img
                         src="/hero/arrow.png"
                         alt="Arrow"
-                        className="arrow-image"
+                        className="arrow-image h-7 w-7 drop-shadow md:h-10 md:w-10"
                       />
                     </span>
                     <span className="toggle-switch"></span>
                   </span>
                 </div>
 
-                <div className="text-line">
+                <div className="text-line mb-2 flex items-center justify-center gap-2">
                   <span className="component-group-before">
                     <img
                       src="/hero/star.svg"
                       alt="star"
-                      className="star-image"
+                      className="star-image h-6 w-6 drop-shadow md:h-8 md:w-8"
                     />
                   </span>
                   <span className="text-segment">Rito ay</span>
@@ -147,51 +235,52 @@ export default function MainPage({
                     <img
                       src="/hero/message-load.svg"
                       alt="message-load"
-                      className="message-load-image"
+                      className="message-load-image h-6 w-6 drop-shadow md:h-8 md:w-8"
                     />
                   </span>
                 </div>
 
-                <div className="text-line">
+                <div className="text-line flex items-center justify-center gap-2">
                   <span className="component-group-before">
-                    <div className="dots-line">
-                      <span className="line"></span>
-                      <span className="dots">
-                        <span className="dot"></span>
-                        <span className="dot"></span>
+                    <div className="dots-line flex items-center gap-1">
+                      <span className="line h-0.5 w-6 rounded bg-blue-300"></span>
+                      <span className="dots flex gap-0.5">
+                        <span className="dot h-2 w-2 rounded-full bg-yellow-400"></span>
+                        <span className="dot h-2 w-2 rounded-full bg-blue-400"></span>
                       </span>
-                      <span className="line"></span>
+                      <span className="line h-0.5 w-6 rounded bg-blue-300"></span>
                     </div>
                   </span>
 
                   <span className="text-segment">always Valued!</span>
-                  <span className="component-group-after">
+                  <span className="component-group-after flex gap-1">
                     <img
                       src="/hero/polygon1.svg"
                       alt="star"
-                      className="polygon-image1"
+                      className="polygon-image1 h-5 w-5 drop-shadow md:h-7 md:w-7"
                     />
                     <img
                       src="/hero/polygon1.svg"
                       alt="star"
-                      className="polygon-image2"
+                      className="polygon-image2 h-5 w-5 drop-shadow md:h-7 md:w-7"
                     />
                   </span>
                 </div>
               </h1>
             </div>
 
-            <p className="hero-description">
+            <p className="hero-description mx-auto mb-8 max-w-2xl text-center text-lg text-gray-700 md:text-2xl">
               Finding reliable help for everyday tasks can be a challenge.
-              <strong>SRV</strong> is your platform to easily discover, compare,
-              and book a wide range of local service providers.
+              <strong className="text-blue-700">SRV</strong> is your platform to
+              easily discover, compare, and book a wide range of local service
+              providers.
             </p>
 
-            <div className="hero-buttons">
+            <div className="hero-buttons flex justify-center">
               <button
-                onClick={onLoginClick}
+                onClick={handleLoginClick}
                 disabled={isLoginLoading}
-                className={"btn-primary"}
+                className="btn-primary rounded-xl px-6 py-3 text-lg font-bold shadow-lg transition-all hover:scale-105"
               >
                 {isLoginLoading ? (
                   <>
@@ -206,14 +295,6 @@ export default function MainPage({
                 )}
               </button>
             </div>
-            <div
-              style={{
-                marginTop: "20px",
-                textAlign: "center",
-                fontSize: "1rem",
-                color: "#444",
-              }}
-            ></div>
           </div>
         </div>
       </section>
@@ -463,7 +544,7 @@ export default function MainPage({
             </p>
             <div className="about-cta-button-container">
               <button
-                onClick={onLoginClick}
+                onClick={handleLoginClick}
                 disabled={isLoginLoading}
                 className={"btn-primary"}
               >
