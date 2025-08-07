@@ -10,6 +10,7 @@ import L from "leaflet";
 // Props for Header component
 interface HeaderProps {
   className?: string;
+  manualLocation?: { province: string; municipality: string } | null;
 }
 
 // Fix leaflet marker icon for proper display
@@ -23,15 +24,16 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const Header: React.FC<HeaderProps> = ({ className = "" }) => {
+const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
   const navigate = useNavigate();
   const {
     isAuthenticated,
-    location,
+    location: geoLocation,
     locationStatus,
     setLocation,
     isLoading: isAuthLoading,
   } = useAuth();
+  // manualLocation prop is used directly for display
   // User profile state
   const [profile, setProfile] = useState<any>(null);
   // Search bar state
@@ -73,10 +75,10 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
       }
       // Fetch and set location info
       setLocationLoading(true);
-      if (locationStatus === "allowed" && location) {
+      if (locationStatus === "allowed" && geoLocation) {
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${geoLocation.latitude}&lon=${geoLocation.longitude}`,
           );
           const data = await res.json();
           if (data && data.address) {
@@ -141,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
     setPlaceholder(
       searchPlaceholders[Math.floor(Math.random() * searchPlaceholders.length)],
     );
-  }, [isAuthenticated, isAuthLoading, location, locationStatus]);
+  }, [isAuthenticated, isAuthLoading, geoLocation, locationStatus]);
 
   // Handler: request location permission
   const handleRequestLocation = useCallback(() => {
@@ -170,7 +172,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
 
   // Map modal for showing user's location
   const MapModal: React.FC = () => {
-    if (!location || locationStatus !== "allowed") return null;
+    if (!geoLocation || locationStatus !== "allowed") return null;
     // Close modal if background is clicked
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) {
@@ -196,7 +198,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
           </button>
           <div className="flex-1 overflow-hidden rounded-b-lg">
             <MapContainer
-              center={[location.latitude, location.longitude]}
+              center={[geoLocation.latitude, geoLocation.longitude]}
               zoom={16}
               scrollWheelZoom={true}
               style={{ height: "100%", width: "100%" }}
@@ -205,7 +207,7 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
                 attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <Marker position={[location.latitude, location.longitude]}>
+              <Marker position={[geoLocation.latitude, geoLocation.longitude]}>
                 <Popup>You are here</Popup>
               </Marker>
             </MapContainer>
@@ -301,7 +303,13 @@ const Header: React.FC<HeaderProps> = ({ className = "" }) => {
             )}
         </div>
         <div className="mt-2 flex items-center gap-2">
-          {locationLoading || isAuthLoading ? (
+          {manualLocation &&
+          manualLocation.province &&
+          manualLocation.municipality ? (
+            <span className="font-medium text-blue-900">
+              {manualLocation.municipality}, {manualLocation.province}
+            </span>
+          ) : locationLoading || isAuthLoading ? (
             <span className="animate-pulse text-gray-500">
               Detecting location...
             </span>

@@ -1,0 +1,21 @@
+{
+  "provinces": [
+    {
+      "name": "Benguet",
+      "municipalities": ["Baguio", "La Trinidad", "Itogon", "Tuba"]
+    },
+    {
+      "name": "Pangasinan",
+      "municipalities": [
+        "Mapandan",
+        "Manaoag",
+        "Mangaldan",
+        "San Jacinto",
+        "Dagupan",
+        "Sta. Barbara",
+        "Calasiao",
+        "San Fabian"
+      ]
+    }
+  ]
+}
