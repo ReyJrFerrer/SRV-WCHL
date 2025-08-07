@@ -31,7 +31,7 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// --- Sub-Components ---
+// --- Payment Section Sub-Component ---
 type PaymentSectionProps = {
   paymentMethod: string;
   setPaymentMethod: (method: string) => void;
@@ -130,7 +130,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   </div>
 );
 
-// --- Main Page Component ---
+// --- Main Booking Page Component ---
 const ClientBookingPageComponent: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
@@ -153,7 +153,7 @@ const ClientBookingPageComponent: React.FC = () => {
     calculateTotalPrice,
   } = useBookRequest();
 
-  // Memoize map center for performance
+  // --- Memoize map center for performance ---
   const mapCenter = useMemo<[number, number]>(() => {
     if (markerPosition) return markerPosition;
     if (locationStatus === "allowed" && location) {
@@ -163,7 +163,7 @@ const ClientBookingPageComponent: React.FC = () => {
     return [16.4023, 120.596];
   }, [markerPosition, location, locationStatus]);
 
-  // State Management
+  // --- State Management ---
   const [packages, setPackages] = useState<
     {
       id: string;
@@ -246,7 +246,7 @@ const ClientBookingPageComponent: React.FC = () => {
   // Track detected province for manual address
   const [detectedProvince, setDetectedProvince] = useState("");
 
-  // Effects
+  // --- Effects ---
   useEffect(() => {
     if (serviceId) loadServiceData(serviceId);
   }, [serviceId, loadServiceData]);
@@ -382,7 +382,7 @@ const ClientBookingPageComponent: React.FC = () => {
     }
   }, [amountPaid, totalPrice, paymentMethod, packages]);
 
-  // Event Handlers
+  // --- Event Handlers ---
   const handlePackageChange = (packageId: string) => {
     setPackages((prev) =>
       prev.map((pkg) =>
@@ -407,7 +407,7 @@ const ClientBookingPageComponent: React.FC = () => {
     setFormError(null);
   };
 
-  // Reverse geocode on marker drag end
+  // --- Reverse geocode on marker drag end ---
   const handleMarkerDragEnd = async (e: L.LeafletEvent) => {
     const marker = e.target;
     const latlng = marker.getLatLng();
@@ -581,7 +581,7 @@ const ClientBookingPageComponent: React.FC = () => {
     }
   };
 
-  // --- Render Logic ---
+  // --- Render: Booking Page Layout ---
   if (loading)
     return <div className="p-10 text-center">Loading service details...</div>;
   if (error)

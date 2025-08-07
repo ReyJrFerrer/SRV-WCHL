@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -30,7 +30,6 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
     isAuthenticated,
     location: geoLocation,
     locationStatus,
-    setLocation,
     isLoading: isAuthLoading,
   } = useAuth();
   // manualLocation prop is used directly for display
@@ -144,24 +143,6 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
       searchPlaceholders[Math.floor(Math.random() * searchPlaceholders.length)],
     );
   }, [isAuthenticated, isAuthLoading, geoLocation, locationStatus]);
-
-  // Handler: request location permission
-  const handleRequestLocation = useCallback(() => {
-    if (locationStatus === "denied") {
-      setShowDeniedModal(true);
-      return;
-    }
-    setLocationLoading(true);
-    setUserAddress("Detecting location...");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const { latitude, longitude } = position.coords;
-        setLocation("allowed", { latitude, longitude });
-      });
-    } else {
-      setLocation("unsupported");
-    }
-  }, [setLocation, locationStatus]);
 
   // Handler: go to profile page
   const handleProfileClick = () => {
@@ -289,18 +270,6 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
               My Location
             </span>
           </div>
-          {!locationLoading &&
-            (locationStatus === "denied" ||
-              locationStatus === "not_set" ||
-              locationStatus === "unsupported") && (
-              <button
-                onClick={handleRequestLocation}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-300 to-yellow-400 px-6 py-2 text-base font-bold text-blue-800 shadow-md transition-all hover:scale-105 hover:from-yellow-400 hover:to-yellow-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-              >
-                <MapPinIcon className="h-5 w-5 text-blue-600" />
-                <span>Share Location</span>
-              </button>
-            )}
         </div>
         <div className="mt-2 flex items-center gap-2">
           {manualLocation &&

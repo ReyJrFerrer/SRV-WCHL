@@ -1,60 +1,58 @@
 import React, { useEffect, useState } from "react";
 import phLocations from "../../data/ph_locations.json";
-
-// Components
 import Header from "../../components/client/Header";
 import Categories from "../../components/client/Categories";
 import ServiceList from "../../components/client/ServiceListReact";
 import BottomNavigation from "../../components/client/BottomNavigation";
-
-// Hooks
 import { useServiceManagement } from "../../hooks/serviceManagement";
 
+// --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
+  // --- State: Service category error ---
   const { error } = useServiceManagement();
-  const [locationBlocked, setLocationBlocked] = React.useState(false);
-  const [showLocationPrompt, setShowLocationPrompt] = React.useState(false);
+  // --- State: Location permission and manual input modal ---
+  const [locationBlocked, setLocationBlocked] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  // --- State: Province and municipality dropdown ---
   const [province, setProvince] = useState("");
   const [municipality, setMunicipality] = useState("");
   const [municipalityOptions, setMunicipalityOptions] = useState<string[]>([]);
-  const [userLocation, setUserLocation] = React.useState<{
+  // --- State: User's selected manual location ---
+  const [userLocation, setUserLocation] = useState<{
     province: string;
     municipality: string;
   } | null>(null);
 
+  // --- Effect: Set page title and check geolocation permission status on mount ---
   useEffect(() => {
     document.title = "Home | SRV";
-    // Check geolocation permission status
     if (navigator.permissions) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
         if (result.state === "denied") {
           setLocationBlocked(true);
         }
       });
-    } else {
-      // Fallback: try to get location, catch error
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          () => {},
-          (err) => {
-            if (err.code === 1) {
-              setLocationBlocked(true);
-            }
-          },
-        );
-      }
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => {},
+        (err) => {
+          if (err.code === 1) {
+            setLocationBlocked(true);
+          }
+        },
+      );
     }
   }, []);
 
-  // Example: Call this when location permission is blocked
+  // --- Effect: Show manual location modal if location is blocked ---
   useEffect(() => {
     if (locationBlocked) {
       setShowLocationPrompt(true);
     }
   }, [locationBlocked]);
 
+  // --- Effect: Update municipality dropdown when province changes ---
   useEffect(() => {
-    // Update municipality options when province changes
     if (province) {
       const found = phLocations.provinces.find((p) => p.name === province);
       setMunicipalityOptions(found ? found.municipalities : []);
@@ -65,6 +63,7 @@ const ClientHomePage: React.FC = () => {
     }
   }, [province]);
 
+  // --- Handler: Manual location form submit ---
   const handleLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (province && municipality) {
@@ -73,9 +72,10 @@ const ClientHomePage: React.FC = () => {
     }
   };
 
+  // --- Render: Client Home Page Layout ---
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-20">
-      {/* Location prompt modal */}
+      {/* Modal: Manual location input when geolocation is blocked */}
       {showLocationPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
@@ -90,6 +90,7 @@ const ClientHomePage: React.FC = () => {
               onSubmit={handleLocationSubmit}
               className="flex flex-col gap-4"
             >
+              {/* Province dropdown */}
               <div>
                 <label
                   htmlFor="province"
@@ -114,6 +115,7 @@ const ClientHomePage: React.FC = () => {
                   ))}
                 </select>
               </div>
+              {/* Municipality/City dropdown */}
               <div>
                 <label
                   htmlFor="municipality"
@@ -146,6 +148,7 @@ const ClientHomePage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Error: Service categories failed to load */}
       {error && (
         <div className="mx-4 mt-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
           <span className="block sm:inline">
@@ -153,19 +156,24 @@ const ClientHomePage: React.FC = () => {
           </span>
         </div>
       )}
+      {/* Main content: header, categories, service list */}
       <div className="w-full max-w-full px-4 pt-4 pb-16">
+        {/* Header: displays welcome and location */}
         <Header
           className="mb-6 w-full max-w-full"
           manualLocation={userLocation}
         />
+        {/* Categories section */}
         <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>
         <Categories
           className="mb-8 w-full max-w-full"
           moreButtonImageUrl="/images/categories/more.svg"
           lessButtonImageUrl="/images/categories/more.svg"
         />
+        {/* Service list section */}
         <ServiceList className="w-full max-w-full" />
       </div>
+      {/* Bottom navigation bar */}
       <BottomNavigation />
     </div>
   );

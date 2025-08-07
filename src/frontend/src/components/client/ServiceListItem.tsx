@@ -17,6 +17,7 @@ interface ServiceListItemProps {
   retainMobileLayout?: boolean;
 }
 
+// ===================== ServiceListItem Component =====================
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
   ({ service, isGridItem = false, retainMobileLayout = false }) => {
     // Fetch the latest service data to get isVerified
@@ -258,4 +259,5 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
   },
 );
 
+// ===================== End ServiceListItem Component =====================
 export default ServiceListItem;

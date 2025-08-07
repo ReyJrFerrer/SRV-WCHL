@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-// Generic service interface for search functionality
+// --- Types: Service and Props ---
 interface SearchableService {
   id: string;
   title?: string;
@@ -13,7 +13,6 @@ interface SearchableService {
     name: string;
   };
 }
-
 interface SearchBarProps {
   onSearch?: (query: string) => void;
   placeholder?: string;
@@ -23,6 +22,7 @@ interface SearchBarProps {
   servicesList?: SearchableService[];
 }
 
+// --- Main SearchBar Component ---
 const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
   placeholder = "Search for service",
@@ -31,6 +31,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   initialQuery = "",
   servicesList = [],
 }) => {
+  // --- State ---
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<SearchableService[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -39,10 +40,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
+  // --- Suggestion Logic ---
   const fetchSuggestions = useCallback(
     (currentQuery: string) => {
       if (currentQuery.trim().length > 1) {
-        // Fetch suggestions if query is at least 2 chars
         const lowerCaseQuery = currentQuery.toLowerCase();
         const filteredSuggestions = servicesList
           .filter(
@@ -58,7 +59,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 service.name.toLowerCase().includes(lowerCaseQuery)),
           )
           .slice(0, 5); // Limit to 5 suggestions
-
         setSuggestions(filteredSuggestions);
         setShowSuggestions(true);
       } else {
@@ -69,12 +69,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
     [servicesList],
   );
 
+  // --- Handlers ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
     fetchSuggestions(newQuery);
   };
-
   const handleSubmit = (
     e?: React.FormEvent,
     submissionQuery: string = query,
@@ -82,19 +82,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
     e?.preventDefault();
     setShowSuggestions(false);
     inputRef.current?.blur();
-
     const finalQuery = submissionQuery.trim();
     if (finalQuery) {
-      if (onSearch) {
-        onSearch(finalQuery);
-      }
-
+      if (onSearch) onSearch(finalQuery);
       if (redirectToSearchResultsPage) {
         navigate(`/client/search-results?q=${encodeURIComponent(finalQuery)}`);
       }
     }
   };
-
   const handleSuggestionClick = (service: SearchableService) => {
     const suggestionText =
       service.title ||
@@ -105,14 +100,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setShowSuggestions(false);
     handleSubmit(undefined, suggestionText);
   };
-
   const handleClearSearch = () => {
     setQuery("");
     setSuggestions([]);
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (showSuggestions) {
       if (e.key === "ArrowDown") {
@@ -135,7 +128,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     }
   };
 
-  // Close suggestions when clicking outside
+  // --- Effect: Close suggestions when clicking outside ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -145,15 +138,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
         setShowSuggestions(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  // --- Render: SearchBar Layout ---
   return (
     <div ref={searchBarRef} className="relative">
+      {/* Search input and button */}
       <form
         onSubmit={handleSubmit}
         className={`search-bar group flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm transition-all focus-within:border-green-400 focus-within:shadow-md hover:border-gray-300 hover:shadow ${className}`}
@@ -181,7 +175,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           </button>
         )}
       </form>
-
+      {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
         <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg">
           <ul className="py-1">

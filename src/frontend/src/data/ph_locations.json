@@ -2,7 +2,7 @@
   "provinces": [
     {
       "name": "Benguet",
-      "municipalities": ["Baguio", "La Trinidad", "Itogon", "Tuba"]
+      "municipalities": ["Baguio City", "La Trinidad", "Itogon", "Tuba"]
     },
     {
       "name": "Pangasinan",
