@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import phLocations from "../../data/ph_locations.json";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -148,10 +148,40 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Routing and Context ---
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
+  const routerLocation = useLocation();
+  // --- Location context from Header.tsx ---
   const { headerManualFields } = useHeaderLocation();
-  // --- Address display (from header context) ---
-  const displayMunicipality = headerManualFields?.municipality || "";
-  const displayProvince = headerManualFields?.province || "";
+  // Debug: log context value on every render
+  console.log("[BookingPage] useHeaderLocation value:", headerManualFields);
+  // --- Address display (from header context, kept in state for reactivity) ---
+  const [displayMunicipality, setDisplayMunicipality] = useState<string>("");
+  const [displayProvince, setDisplayProvince] = useState<string>("");
+  useEffect(() => {
+    console.log("[BookingPage] Location effect triggered");
+    console.log(
+      "[BookingPage] headerManualFields.municipality:",
+      headerManualFields?.municipality,
+    );
+    console.log(
+      "[BookingPage] headerManualFields.province:",
+      headerManualFields?.province,
+    );
+    console.log(
+      "[BookingPage] routerLocation.pathname:",
+      routerLocation.pathname,
+    );
+    setDisplayMunicipality(headerManualFields?.municipality || "");
+    setDisplayProvince(headerManualFields?.province || "");
+    // Reset address fields when location changes
+    setStreet("");
+    setHouseNumber("");
+    setLandmark("");
+    setSelectedBarangay("");
+  }, [
+    headerManualFields?.municipality,
+    headerManualFields?.province,
+    routerLocation.pathname,
+  ]);
   // Remove unused displayAddress state
 
   // --- Service and booking data (from hook) ---
@@ -673,14 +703,16 @@ const ClientBookingPageComponent: React.FC = () => {
               </div>
               {/* --- Service Location Section --- */}
               <div className="glass-card rounded-2xl border border-gray-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                {/* --- Service Location Section (uses location from Header.tsx context) --- */}
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
                   Service Location <span className="text-red-500">*</span>
                 </h3>
                 <div className="mt-2 space-y-3">
+                  {/* The Municipality/City and Province below are sourced from Header.tsx context */}
                   <p className="text-xs text-gray-600">
                     Please enter your address manually. Municipality and
-                    Province are already set:
+                    Province are already set from your header location:
                   </p>
                   <div className="mb-2 w-full rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm">
                     <div className="flex gap-2">
@@ -708,6 +740,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  {/* Barangay dropdown populated from ph_locations.json */}
                   <select
                     value={selectedBarangay}
                     onChange={(e) => setSelectedBarangay(e.target.value)}
@@ -722,6 +755,7 @@ const ClientBookingPageComponent: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                  {/* Street Name input, enabled after barangay selection */}
                   <input
                     type="text"
                     placeholder="Street Name *"
@@ -732,6 +766,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     minLength={3}
                     maxLength={20}
                   />
+                  {/* House/Unit No. input, enabled after street name input */}
                   <input
                     type="text"
                     placeholder="House/Unit No. *"
@@ -741,6 +776,7 @@ const ClientBookingPageComponent: React.FC = () => {
                     disabled={!street}
                     maxLength={15}
                   />
+                  {/* Landmark input, always enabled */}
                   <input
                     type="text"
                     placeholder="Building/Subdivision Name (optional)"

@@ -134,7 +134,26 @@
     {
       "name": "Pangasinan",
       "municipalities": [
-        { "name": "Mapandan" },
+        {
+          "name": "Mapandan",
+          "barangays": [
+            "Amanoaoac",
+            "Apaya",
+            "Aserda",
+            "Baloling",
+            "Coral",
+            "Golden",
+            "Jimenez",
+            "Lambayan",
+            "Luyan",
+            "Nilombot",
+            "Pias",
+            "Poblacion",
+            "Primicias",
+            "Santa Maria",
+            "Torres"
+          ]
+        },
         { "name": "Manaoag" },
         { "name": "Mangaldan" },
         { "name": "San Jacinto" },
