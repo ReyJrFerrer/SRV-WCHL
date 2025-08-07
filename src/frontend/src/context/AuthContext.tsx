@@ -24,6 +24,15 @@ interface Location {
   latitude: number;
   longitude: number;
 }
+// --- Shared manual address fields ---
+export interface ManualFields {
+  barangay: string;
+  street: string;
+  houseNumber: string;
+  landmark?: string;
+  municipality?: string;
+  province?: string;
+}
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -33,10 +42,17 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
-  // --- NEW: Location properties ---
+  // --- Location properties ---
   location: Location | null;
   locationStatus: LocationStatus;
   setLocation: (status: LocationStatus, location?: Location | null) => void;
+  // --- Shared address state ---
+  addressMode: "context" | "manual";
+  setAddressMode: (mode: "context" | "manual") => void;
+  displayAddress: string;
+  setDisplayAddress: (address: string) => void;
+  manualFields: ManualFields;
+  setManualFields: (fields: ManualFields) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,20 +92,32 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Auto-detect geolocation on mount
+  // Only use manual location from localStorage for address context
   useEffect(() => {
-    if (!("geolocation" in navigator)) {
-      setLocationStatus("unsupported");
-      setLocationState(null);
-      return;
+    const manualLocationRaw = localStorage.getItem("manualLocation");
+    let manualLocation: { municipality?: string; province?: string } | null =
+      null;
+    if (manualLocationRaw) {
+      try {
+        manualLocation = JSON.parse(manualLocationRaw);
+      } catch {}
     }
-    navigator.geolocation.getCurrentPosition((pos) => {
-      setLocationStatus("allowed");
-      setLocationState({
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-      });
-    });
+    setLocationStatus("unsupported");
+    setLocationState(null);
+    if (
+      manualLocation &&
+      manualLocation.municipality &&
+      manualLocation.province
+    ) {
+      setManualFields((prev) => ({
+        ...prev,
+        municipality: manualLocation.municipality,
+        province: manualLocation.province,
+      }));
+      setDisplayAddress(
+        `${manualLocation.municipality}, ${manualLocation.province}`,
+      );
+    }
   }, []);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -97,10 +125,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // --- NEW: State for Location ---
+  // --- Location state ---
   const [location, setLocationState] = useState<Location | null>(null);
   const [locationStatus, setLocationStatus] =
     useState<LocationStatus>("not_set");
+  // --- Shared address state ---
+  const [addressMode, setAddressMode] = useState<"context" | "manual">(
+    "context",
+  );
+  const [displayAddress, setDisplayAddress] = useState<string>(
+    "Detecting location...",
+  );
+  const [manualFields, setManualFields] = useState<ManualFields>({
+    barangay: "",
+    street: "",
+    houseNumber: "",
+    landmark: "",
+    municipality: "",
+    province: "",
+  });
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -191,10 +234,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     error,
-    // --- NEW: Add location state to context value ---
     location,
     locationStatus,
     setLocation,
+    addressMode,
+    setAddressMode,
+    displayAddress,
+    setDisplayAddress,
+    manualFields,
+    setManualFields,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

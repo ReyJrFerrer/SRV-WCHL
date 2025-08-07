@@ -1,37 +1,21 @@
 import React, { useState, useEffect, useMemo } from "react";
+import phLocations from "../../data/ph_locations.json";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-
 import {
   CurrencyDollarIcon,
   CreditCardIcon,
   GlobeAltIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
-  MapPinIcon,
 } from "@heroicons/react/24/outline";
-
-// Hooks and Services
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
-import { useAuth } from "../../context/AuthContext";
-import { DayOfWeek } from "../../services/serviceCanisterService";
-
-// Fix leaflet marker icon (required for proper marker display)
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
+import { useHeaderLocation } from "../../hooks/useHeaderLocation";
 
 // --- Payment Section Sub-Component ---
+
+// Payment method selection and input for cash change
 type PaymentSectionProps = {
   paymentMethod: string;
   setPaymentMethod: (method: string) => void;
@@ -132,38 +116,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 
 // --- Main Booking Page Component ---
 const ClientBookingPageComponent: React.FC = () => {
-  const navigate = useNavigate();
-  const { id: serviceId } = useParams<{ id: string }>();
-  const { location, locationStatus } = useAuth();
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
-    null,
-  );
-
-  const {
-    service,
-    packages: hookPackages,
-    providerProfile,
-    loading,
-    error,
-    availableSlots,
-    isSameDayAvailable,
-    loadServiceData,
-    getAvailableSlots,
-    createBookingRequest,
-    calculateTotalPrice,
-  } = useBookRequest();
-
-  // --- Memoize map center for performance ---
-  const mapCenter = useMemo<[number, number]>(() => {
-    if (markerPosition) return markerPosition;
-    if (locationStatus === "allowed" && location) {
-      return [location.latitude, location.longitude];
-    }
-    // Default to Baguio City if not available
-    return [16.4023, 120.596];
-  }, [markerPosition, location, locationStatus]);
-
-  // --- State Management ---
+  // --- Booking state ---
   const [packages, setPackages] = useState<
     {
       id: string;
@@ -179,198 +132,96 @@ const ClientBookingPageComponent: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-
-  // --- Determine if Same Day is within service hours ---
-  const isSameDayWithinServiceHours = React.useMemo(() => {
-    if (!service || !service.weeklySchedule) return false;
-    const now = new Date();
-    const dayIndexToName = (dayIndex: number): string => {
-      const days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-      return days[dayIndex] || "";
-    };
-    const todayName = dayIndexToName(now.getDay()) as DayOfWeek;
-    const todaySchedule = service.weeklySchedule.find(
-      (s) => s.day === todayName && s.availability.isAvailable,
-    );
-    if (
-      !todaySchedule ||
-      !todaySchedule.availability.slots ||
-      todaySchedule.availability.slots.length === 0
-    )
-      return false;
-    // Check if any slot for today is still available (endTime > now)
-    return todaySchedule.availability.slots.some((slot) => {
-      const [endH, endM] = slot.endTime.split(":").map(Number);
-      const end = new Date(now);
-      end.setHours(endH, endM, 0, 0);
-      return now < end;
-    });
-  }, [service]);
-  const [displayAddress, setDisplayAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [addressMode, setAddressMode] = useState<"context" | "manual">(
-    "context",
-  );
-  // Remove province/municipality, only use barangay
-  const [nearbyBarangays, setNearbyBarangays] = useState<string[]>([]);
-  const [selectedBarangay, setSelectedBarangay] = useState("");
-  const [street, setStreet] = useState("");
-  const [houseNumber, setHouseNumber] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [notes, setNotes] = useState("");
-  // Track notes word limit
+  // --- Address and notes state ---
+  const [street, setStreet] = useState<string>("");
+  const [houseNumber, setHouseNumber] = useState<string>("");
+  const [landmark, setLandmark] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
   const NOTES_CHAR_LIMIT = 50;
-  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    if (value.length <= NOTES_CHAR_LIMIT) {
-      setNotes(value);
-    } else {
-      setNotes(value.slice(0, NOTES_CHAR_LIMIT));
-    }
-  };
+  // --- Payment state ---
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  // Add detectedMunicipality state
-  const [detectedMunicipality, setDetectedMunicipality] = useState("");
-  // Track detected province for manual address
-  const [detectedProvince, setDetectedProvince] = useState("");
+  // --- Barangay dropdown options ---
+  // (Already declared above, remove duplicate)
+  // --- Routing and Context ---
+  const navigate = useNavigate();
+  const { id: serviceId } = useParams<{ id: string }>();
+  const { headerManualFields } = useHeaderLocation();
+  // --- Address display (from header context) ---
+  const displayMunicipality = headerManualFields?.municipality || "";
+  const displayProvince = headerManualFields?.province || "";
+  // Remove unused displayAddress state
 
-  // --- Effects ---
+  // --- Service and booking data (from hook) ---
+  const {
+    service,
+    packages: hookPackages,
+    providerProfile,
+    loading,
+    error,
+    availableSlots,
+    loadServiceData,
+    getAvailableSlots,
+    createBookingRequest,
+    calculateTotalPrice,
+  } = useBookRequest();
+  // --- Barangay dropdown options ---
+  const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
+  const [selectedBarangay, setSelectedBarangay] = useState<string>("");
+  useEffect(() => {
+    let foundBarangays: string[] = [];
+    if (displayMunicipality) {
+      for (const province of phLocations.provinces) {
+        for (const muni of province.municipalities) {
+          if (
+            typeof muni === "object" &&
+            muni.name === displayMunicipality &&
+            Array.isArray(muni.barangays)
+          ) {
+            foundBarangays = muni.barangays as string[];
+            break;
+          }
+        }
+      }
+    }
+    if (foundBarangays.length > 0) {
+      setBarangayOptions(foundBarangays);
+    } else if (displayMunicipality) {
+      setBarangayOptions(
+        Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
+      );
+    } else {
+      setBarangayOptions([]);
+    }
+    setSelectedBarangay("");
+    // --- Notes change handler ---
+  }, [displayMunicipality]);
+  // --- Load service and packages on mount ---
   useEffect(() => {
     if (serviceId) loadServiceData(serviceId);
   }, [serviceId, loadServiceData]);
-
   useEffect(() => {
     if (hookPackages.length > 0) {
-      setPackages(hookPackages.map((pkg) => ({ ...pkg, checked: false })));
+      setPackages(hookPackages.map((pkg: any) => ({ ...pkg, checked: false })));
     }
   }, [hookPackages]);
-
-  useEffect(() => {
-    if (locationStatus === "allowed" && location) {
-      setMarkerPosition([location.latitude, location.longitude]);
-    }
-  }, [location, locationStatus]);
-
-  useEffect(() => {
-    if (locationStatus === "allowed" && location) {
-      fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.address) {
-            const cityPart =
-              data.address.city ||
-              data.address.town ||
-              data.address.municipality ||
-              "";
-            setDetectedMunicipality(cityPart);
-            // Compose address as before
-            const houseOrBuilding =
-              [
-                data.address.house_number,
-                data.address.building,
-                data.address.landmark,
-                data.address.neighbourhood,
-              ]
-                .filter(Boolean)
-                .join(" ") || "";
-            const streetPart = data.address.road || data.address.street || "";
-            const barangay =
-              data.address.suburb ||
-              data.address.village ||
-              data.address.district ||
-              "";
-            const provincePart =
-              data.address.county ||
-              data.address.state ||
-              data.address.region ||
-              data.address.province ||
-              "";
-            setDetectedProvince(provincePart);
-            const fullAddress = [
-              houseOrBuilding,
-              streetPart,
-              barangay,
-              cityPart,
-              provincePart,
-            ]
-              .filter(Boolean)
-              .join(", ");
-            setDisplayAddress(
-              fullAddress ||
-                data.display_name ||
-                `Lat: ${location.latitude}, Lon: ${location.longitude}`,
-            );
-            if (addressMode === "manual" && cityPart) {
-              fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&extratags=1&country=Philippines&city=${encodeURIComponent(
-                  cityPart,
-                )}&viewbox=${location.longitude - 0.05},${location.latitude - 0.05},${location.longitude + 0.05},${location.latitude + 0.05}&bounded=1`,
-              )
-                .then((res) => res.json())
-                .then((results) => {
-                  const brgySet = new Set<string>();
-                  results.forEach((r: any) => {
-                    if (
-                      r.address &&
-                      (r.address.suburb ||
-                        r.address.village ||
-                        r.address.district)
-                    ) {
-                      brgySet.add(
-                        r.address.suburb ||
-                          r.address.village ||
-                          r.address.district,
-                      );
-                    }
-                  });
-                  setNearbyBarangays(Array.from(brgySet));
-                });
-            }
-          } else {
-            setDisplayAddress(
-              `Lat: ${location.latitude}, Lon: ${location.longitude}`,
-            );
-          }
-        })
-        .catch(() =>
-          setDisplayAddress(
-            `Lat: ${location.latitude}, Lon: ${location.longitude}`,
-          ),
-        );
-    } else if (locationStatus === "denied") {
-      setDisplayAddress("Location not shared. Please enter manually.");
-      setAddressMode("manual");
-    } else {
-      setDisplayAddress("Detecting location...");
-    }
-  }, [location, locationStatus, addressMode]);
-
+  // --- Load available slots when date changes ---
   useEffect(() => {
     if (service && selectedDate) getAvailableSlots(service.id, selectedDate);
   }, [service, selectedDate, getAvailableSlots]);
 
+  // --- Calculate total price for selected packages ---
   const totalPrice = useMemo(() => {
     return packages
-      .filter((p) => p.checked)
-      .reduce((sum, pkg) => sum + pkg.price, 0);
+      .filter((p: any) => p.checked)
+      .reduce((sum: number, pkg: any) => sum + pkg.price, 0);
   }, [packages, hookPackages, calculateTotalPrice]);
 
+  // --- Validate payment amount ---
   useEffect(() => {
-    if (paymentMethod === "cash" && packages.some((p) => p.checked)) {
+    if (paymentMethod === "cash" && packages.some((p: any) => p.checked)) {
       const paidAmount = parseFloat(amountPaid);
       if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice)) {
         setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
@@ -382,7 +233,7 @@ const ClientBookingPageComponent: React.FC = () => {
     }
   }, [amountPaid, totalPrice, paymentMethod, packages]);
 
-  // --- Event Handlers ---
+  // --- Package selection handler ---
   const handlePackageChange = (packageId: string) => {
     setPackages((prev) =>
       prev.map((pkg) =>
@@ -391,152 +242,108 @@ const ClientBookingPageComponent: React.FC = () => {
     );
     setFormError(null);
   };
+  // --- Booking option handler ---
   const handleBookingOptionChange = (option: "sameday" | "scheduled") => {
-    if (option === "sameday" && !isSameDayAvailable) return;
     setBookingOption(option);
     setFormError(null);
   };
+  // --- Date selection handler ---
   const handleDateChange = (date: Date | null) => {
     setSelectedDate(date);
     setSelectedTime("");
     setFormError(null);
   };
+  // --- Payment amount handler ---
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value: string = e.target.value;
     if (/^\d*\.?\d{0,2}$/.test(value)) setAmountPaid(value);
     setFormError(null);
   };
 
-  // --- Reverse geocode on marker drag end ---
-  const handleMarkerDragEnd = async (e: L.LeafletEvent) => {
-    const marker = e.target;
-    const latlng = marker.getLatLng();
-    setMarkerPosition([latlng.lat, latlng.lng]);
-    // Reverse geocode to update displayAddress
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`,
-      );
-      const data = await res.json();
-      if (data && data.address) {
-        const {
-          road,
-          suburb,
-          village,
-          city,
-          town,
-          county,
-          state,
-          municipality,
-          district,
-          region,
-          province,
-        } = data.address;
-        const barangay = suburb || village || district || "";
-        const cityPart = city || town || municipality || "";
-        const provincePart = county || state || region || province || "";
-        const fullAddress = [road, barangay, cityPart, provincePart]
-          .filter(Boolean)
-          .join(", ");
-        setDisplayAddress(
-          fullAddress || `Lat: ${latlng.lat}, Lon: ${latlng.lng}`,
-        );
-      } else {
-        setDisplayAddress(`Lat: ${latlng.lat}, Lon: ${latlng.lng}`);
-      }
-    } catch {
-      setDisplayAddress(`Lat: ${latlng.lat}, Lon: ${latlng.lng}`);
-    }
+  // --- Notes change handler ---
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNotes(e.target.value);
+    setFormError(null);
   };
 
+  // --- Confirm booking handler ---
   const handleConfirmBooking = async () => {
     setFormError(null);
-    // Validate all required fields and show specific error messages
-    if (!bookingOption) {
-      setFormError("Please select a booking schedule (Same Day or Scheduled).");
-      return;
-    }
-    if (!packages.some((pkg) => pkg.checked)) {
-      setFormError("Please select at least one package.");
-      return;
-    }
-    if (bookingOption === "scheduled" && (!selectedDate || !selectedTime)) {
-      setFormError("Please select a date and time for your booking.");
-      return;
-    }
-    // Location validation
-    if (addressMode === "context") {
-      if (
-        locationStatus === undefined ||
-        locationStatus === null ||
-        locationStatus === "not_set"
-      ) {
-        setFormError(
-          `Location status is not set. Please wait for location detection or enter your address manually. [locationStatus: ${locationStatus}]`,
-        );
-        return;
-      }
-      if (locationStatus !== "allowed") {
-        setFormError(
-          `Please allow location access or enter your address manually. [locationStatus: ${locationStatus}]`,
-        );
-        return;
-      }
-      if (
-        !displayAddress ||
-        displayAddress.trim() === "" ||
-        displayAddress.trim() === "Detecting location..."
-      ) {
-        setFormError(
-          `A valid location must be detected before proceeding. [locationStatus: ${locationStatus}, displayAddress: ${displayAddress}]`,
-        );
-        return;
-      }
-    } else if (addressMode === "manual") {
-      if (!selectedBarangay || !street || !houseNumber) {
-        setFormError("Please complete all required address fields.");
-        return;
-      }
-    } else {
-      setFormError(
-        "Please provide your location by enabling it or entering it manually.",
-      );
-      return;
-    }
-    // Payment validation
-    if (paymentMethod === "cash" && packages.some((p) => p.checked)) {
-      const paidAmount = parseFloat(amountPaid);
-      if (!amountPaid) {
-        setFormError("Please enter the amount to pay.");
-        return;
-      }
-      if (isNaN(paidAmount) || paidAmount < totalPrice) {
-        setFormError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
-        return;
-      }
-    }
     setIsSubmitting(true);
-    let finalAddress = "Address not specified.";
-    if (addressMode === "context" && locationStatus === "allowed") {
-      finalAddress = displayAddress;
-    } else if (addressMode === "manual") {
-      finalAddress = `${houseNumber}, ${street}, ${selectedBarangay}, ${detectedMunicipality}, ${detectedProvince}`;
-    }
     try {
-      let finalScheduledDate: Date | undefined = undefined;
-      if (bookingOption === "scheduled" && selectedDate && selectedTime) {
-        const [startTime] = selectedTime.split("-");
-        const [hours, minutes] = startTime.split(":").map(Number);
-        finalScheduledDate = new Date(selectedDate);
-        finalScheduledDate.setHours(hours, minutes, 0, 0);
+      // Validate required address fields
+      if (!selectedBarangay.trim()) {
+        setFormError("Please select your Barangay before proceeding.");
+        setIsSubmitting(false);
+        return;
       }
+      if (street.trim().length < 3 || street.trim().length > 20) {
+        setFormError("Street Name must be between 3 and 20 characters.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (
+        !houseNumber.trim() ||
+        houseNumber.length > 15 ||
+        !/\d/.test(houseNumber)
+      ) {
+        setFormError(
+          "House/Unit No. must be at most 15 characters and contain at least one number.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      // Require cash amount input if payment method is cash
+      if (paymentMethod === "cash" && packages.some((pkg) => pkg.checked)) {
+        const paidAmount = parseFloat(amountPaid);
+        if (!amountPaid.trim()) {
+          setFormError("Please enter the cash amount before proceeding.");
+          setIsSubmitting(false);
+          return;
+        }
+        if (isNaN(paidAmount) || paidAmount < totalPrice) {
+          setFormError(
+            `Cash amount must be at least ₱${totalPrice.toFixed(2)}.`,
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      // Validate at least one package is selected
+      if (!packages.some((pkg) => pkg.checked)) {
+        setFormError("Please select at least one package before proceeding.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!bookingOption) {
+        setFormError("Please select a booking type (Same Day or Scheduled).");
+        setIsSubmitting(false);
+        return;
+      }
+      let finalScheduledDate: Date | undefined = undefined;
+      if (bookingOption === "sameday") {
+        finalScheduledDate = new Date();
+      } else if (bookingOption === "scheduled" && selectedDate) {
+        finalScheduledDate = selectedDate;
+      }
+      // Build address string from manual entry and header context
+      const finalAddress = [
+        houseNumber,
+        street,
+        selectedBarangay,
+        displayMunicipality,
+        displayProvince,
+        landmark,
+      ]
+        .filter(Boolean)
+        .join(", ");
       const bookingData: BookingRequest = {
         serviceId: service!.id,
         serviceName: service!.title,
         providerId: service!.providerId.toString(),
         packages: packages.filter((pkg) => pkg.checked),
         totalPrice,
-        bookingType: bookingOption,
+        bookingType: bookingOption as "sameday" | "scheduled",
         scheduledDate: finalScheduledDate,
         scheduledTime: bookingOption === "scheduled" ? selectedTime : undefined,
         location: finalAddress,
@@ -544,6 +351,7 @@ const ClientBookingPageComponent: React.FC = () => {
       };
       const booking = await createBookingRequest(bookingData);
       if (booking) {
+        setFormError(null); // Clear error after successful booking
         const confirmationDetails = {
           ...bookingData,
           providerName: providerProfile?.name,
@@ -556,7 +364,6 @@ const ClientBookingPageComponent: React.FC = () => {
               })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
-          // For receipt page compatibility:
           packagePrice: totalPrice.toFixed(2),
           amountToPay:
             paymentMethod === "cash"
@@ -580,16 +387,20 @@ const ClientBookingPageComponent: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  // --- Clear error message when user edits required address fields ---
+  useEffect(() => {
+    setFormError(null);
+  }, [selectedBarangay, street, houseNumber]);
 
   // --- Render: Booking Page Layout ---
+  // Loading, error, and not found states
   if (loading)
     return <div className="p-10 text-center">Loading service details...</div>;
   if (error)
     return <div className="p-10 text-center text-red-500">{String(error)}</div>;
   if (!service)
     return <div className="p-10 text-center">Service not found.</div>;
-
-  // Restore dayIndexToName function for scheduled booking
+  // Helper: Convert day index to name (for calendar)
   const dayIndexToName = (dayIndex: number): string => {
     const days = [
       "Sunday",
@@ -602,9 +413,6 @@ const ClientBookingPageComponent: React.FC = () => {
     ];
     return days[dayIndex] || "";
   };
-
-  // DEBUG: Show locationStatus and displayAddress for troubleshooting
-  // Remove isLocationValid, not used for button state
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
@@ -687,6 +495,7 @@ const ClientBookingPageComponent: React.FC = () => {
               </div>
             </div>
             <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
+              {/* --- Booking Schedule Section (with calendar and slot selection) --- */}
               <div className="glass-card rounded-2xl border border-yellow-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-yellow-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-yellow-400"></span>
@@ -698,11 +507,8 @@ const ClientBookingPageComponent: React.FC = () => {
                       bookingOption === "sameday"
                         ? "border-blue-600 bg-blue-600 text-white"
                         : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
-                    } ${!isSameDayAvailable || !isSameDayWithinServiceHours ? "cursor-not-allowed opacity-50" : ""}`}
+                    }`}
                     onClick={() => handleBookingOptionChange("sameday")}
-                    disabled={
-                      !isSameDayAvailable || !isSameDayWithinServiceHours
-                    }
                   >
                     <div className="text-base font-semibold">Same Day</div>
                   </button>
@@ -726,12 +532,12 @@ const ClientBookingPageComponent: React.FC = () => {
                         minDate={
                           new Date(new Date().setDate(new Date().getDate() + 1))
                         }
-                        filterDate={(date) => {
+                        filterDate={(date: Date) => {
                           const dayName = dayIndexToName(date.getDay());
                           return service.weeklySchedule
                             ? service.weeklySchedule.some(
                                 (s) =>
-                                  s.day === (dayName as DayOfWeek) &&
+                                  s.day === dayName &&
                                   s.availability.isAvailable,
                               )
                             : false;
@@ -795,7 +601,7 @@ const ClientBookingPageComponent: React.FC = () => {
                             </button>
                           </div>
                         )}
-                        dayClassName={(date) => {
+                        dayClassName={(date: Date) => {
                           const isSelected =
                             selectedDate &&
                             date.toDateString() === selectedDate.toDateString();
@@ -803,7 +609,7 @@ const ClientBookingPageComponent: React.FC = () => {
                           const isAvailable = service.weeklySchedule
                             ? service.weeklySchedule.some(
                                 (s) =>
-                                  s.day === (dayName as DayOfWeek) &&
+                                  s.day === dayName &&
                                   s.availability.isAvailable,
                               )
                             : false;
@@ -829,8 +635,8 @@ const ClientBookingPageComponent: React.FC = () => {
                         <div className="flex flex-wrap gap-2">
                           {availableSlots.length > 0 ? (
                             availableSlots
-                              .filter((slot) => slot.isAvailable)
-                              .map((slot, index) => {
+                              .filter((slot: any) => slot.isAvailable)
+                              .map((slot: any, index: number) => {
                                 const to12Hour = (t: string) => {
                                   const [h, m] = t.split(":").map(Number);
                                   const hour = h % 12 || 12;
@@ -865,149 +671,84 @@ const ClientBookingPageComponent: React.FC = () => {
                   </div>
                 )}
               </div>
+              {/* --- Service Location Section --- */}
               <div className="glass-card rounded-2xl border border-gray-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
                 <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                   <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
                   Service Location <span className="text-red-500">*</span>
                 </h3>
-                <div className="mb-3 rounded-xl border border-gray-200 bg-gray-50/80 p-3 shadow-sm">
-                  <div className="flex items-center">
-                    <MapPinIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-600" />
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-500">
-                        {addressMode === "context"
-                          ? "Using Your Current Location"
-                          : "Using Manual Address"}
-                      </p>
-                      <p className="text-sm font-semibold text-gray-800">
-                        {addressMode === "context"
-                          ? displayAddress
-                          : "See form below"}
-                      </p>
-                    </div>
-                  </div>
-                  {/* --- OpenStreetMap Visual with Draggable Marker --- */}
-                  {addressMode === "context" &&
-                    locationStatus === "allowed" &&
-                    markerPosition && (
-                      <div
-                        className="mt-3 overflow-hidden rounded-lg"
-                        style={{ height: 220, marginBottom: 24, zIndex: 0 }}
-                      >
-                        <MapContainer
-                          center={mapCenter}
-                          zoom={16}
-                          scrollWheelZoom={false}
-                          style={{ height: "100%", width: "100%", zIndex: 0 }}
-                        >
-                          <TileLayer
-                            attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          />
-                          <Marker
-                            position={markerPosition}
-                            draggable={true}
-                            eventHandlers={{
-                              dragend: handleMarkerDragEnd,
-                            }}
-                          >
-                            <Popup>Drag me to adjust your location!</Popup>
-                          </Marker>
-                        </MapContainer>
-                      </div>
-                    )}
-                  {/* --- End OpenStreetMap Visual --- */}
-                </div>
-                <button
-                  onClick={() =>
-                    setAddressMode(
-                      addressMode === "manual" ? "context" : "manual",
-                    )
-                  }
-                  className="w-full rounded-xl bg-gray-200 p-3 text-base font-medium text-gray-800 shadow-sm transition-colors hover:bg-gray-300"
-                >
-                  {addressMode === "manual"
-                    ? "Use Current Location"
-                    : "Enter Address Manually"}
-                </button>
-                {addressMode === "manual" && (
-                  <div className="mt-2 space-y-3">
-                    <p className="text-xs text-gray-600">
-                      Please enter your address manually:
-                    </p>
-                    <div className="mb-2 w-full rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm">
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <label className="mb-1 block text-xs text-gray-500">
-                            Municipality/City
-                          </label>
-                          <input
-                            type="text"
-                            value={detectedMunicipality}
-                            readOnly
-                            className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="mb-1 block text-xs text-gray-500">
-                            Province
-                          </label>
-                          <input
-                            type="text"
-                            value={detectedProvince}
-                            readOnly
-                            className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {nearbyBarangays.length > 0 ? (
-                      <select
-                        value={selectedBarangay}
-                        onChange={(e) => setSelectedBarangay(e.target.value)}
-                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                      >
-                        <option value="">Select Barangay</option>
-                        {nearbyBarangays.map((brgy) => (
-                          <option key={brgy} value={brgy}>
-                            {brgy}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="Enter Barangay *"
-                        value={selectedBarangay}
-                        onChange={(e) => setSelectedBarangay(e.target.value)}
-                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                      />
-                    )}
-                    <input
-                      type="text"
-                      placeholder="Street Name *"
-                      value={street}
-                      onChange={(e) => setStreet(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                    />
+                <div className="mt-2 space-y-3">
+                  <p className="text-xs text-gray-600">
+                    Please enter your address manually. Municipality and
+                    Province are already set:
+                  </p>
+                  <div className="mb-2 w-full rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm">
                     <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="House/Unit No. *"
-                        value={houseNumber}
-                        onChange={(e) => setHouseNumber(e.target.value)}
-                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Landmark (optional)"
-                        value={landmark}
-                        onChange={(e) => setLandmark(e.target.value)}
-                        className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                      />
+                      <div className="flex-1">
+                        <label className="mb-1 block text-xs text-gray-500">
+                          Municipality/City
+                        </label>
+                        <input
+                          type="text"
+                          value={displayMunicipality}
+                          readOnly
+                          className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="mb-1 block text-xs text-gray-500">
+                          Province
+                        </label>
+                        <input
+                          type="text"
+                          value={displayProvince}
+                          readOnly
+                          className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
+                        />
+                      </div>
                     </div>
                   </div>
-                )}
+                  <select
+                    value={selectedBarangay}
+                    onChange={(e) => setSelectedBarangay(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                  >
+                    <option value="" disabled>
+                      Select Barangay *
+                    </option>
+                    {barangayOptions.map((barangay, idx) => (
+                      <option key={idx} value={barangay}>
+                        {barangay}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Street Name *"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400" : "border-gray-300 bg-white text-gray-700"}`}
+                    disabled={!selectedBarangay}
+                    minLength={3}
+                    maxLength={20}
+                  />
+                  <input
+                    type="text"
+                    placeholder="House/Unit No. *"
+                    value={houseNumber}
+                    onChange={(e) => setHouseNumber(e.target.value)}
+                    className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400" : "border-gray-300 bg-white text-gray-700"}`}
+                    disabled={!street}
+                    maxLength={15}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Building/Subdivision Name (optional)"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                  />
+                </div>
               </div>
               <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
                 <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">

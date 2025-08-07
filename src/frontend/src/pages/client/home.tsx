@@ -11,7 +11,7 @@ const ClientHomePage: React.FC = () => {
   // --- State: Service category error ---
   const { error } = useServiceManagement();
   // --- State: Location permission and manual input modal ---
-  const [locationBlocked, setLocationBlocked] = useState(false);
+  const [, setLocationBlocked] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   // --- State: Province and municipality dropdown ---
   const [province, setProvince] = useState("");
@@ -21,7 +21,17 @@ const ClientHomePage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{
     province: string;
     municipality: string;
-  } | null>(null);
+  } | null>(() => {
+    const saved = localStorage.getItem("manualLocation");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   // --- Effect: Set page title and check geolocation permission status on mount ---
   useEffect(() => {
@@ -44,18 +54,29 @@ const ClientHomePage: React.FC = () => {
     }
   }, []);
 
-  // --- Effect: Show manual location modal if location is blocked ---
+  // --- Effect: Show manual location modal if no manual location is set ---
   useEffect(() => {
-    if (locationBlocked) {
+    if (!userLocation) {
       setShowLocationPrompt(true);
+    } else {
+      setShowLocationPrompt(false);
     }
-  }, [locationBlocked]);
+  }, [userLocation]);
 
   // --- Effect: Update municipality dropdown when province changes ---
   useEffect(() => {
     if (province) {
       const found = phLocations.provinces.find((p) => p.name === province);
-      setMunicipalityOptions(found ? found.municipalities : []);
+      if (found && Array.isArray(found.municipalities)) {
+        // If municipalities are objects, extract their names
+        setMunicipalityOptions(
+          found.municipalities.map((mun: any) =>
+            typeof mun === "object" && mun.name ? mun.name : mun,
+          ),
+        );
+      } else {
+        setMunicipalityOptions([]);
+      }
       setMunicipality("");
     } else {
       setMunicipalityOptions([]);
@@ -67,10 +88,14 @@ const ClientHomePage: React.FC = () => {
   const handleLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (province && municipality) {
-      setUserLocation({ province, municipality });
+      const location = { province, municipality };
+      setUserLocation(location);
+      localStorage.setItem("manualLocation", JSON.stringify(location));
       setShowLocationPrompt(false);
     }
   };
+
+  // Remove redundant effect: location prompt is now managed by userLocation only
 
   // --- Render: Client Home Page Layout ---
   return (
@@ -80,7 +105,7 @@ const ClientHomePage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
             <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
-              Location Access Blocked
+              Enter Your Location
             </h2>
             <p className="mb-4 text-center text-gray-700">
               Please enter your current province and municipality/city so we can
