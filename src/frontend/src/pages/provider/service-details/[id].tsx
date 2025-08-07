@@ -2426,7 +2426,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         </div>
 
         {/* Action Buttons Card */}
-        <div className="mb-8 flex flex-col gap-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:gap-3">
+        <div className="mb-18 flex flex-col gap-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:gap-3">
           {/* Deactivate/Activate Button */}
           <button
             onClick={handleStatusToggle}

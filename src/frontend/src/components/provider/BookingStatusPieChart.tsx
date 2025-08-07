@@ -18,6 +18,9 @@ const COLORS = [
   "#FF5733",
 ];
 
+const PLACEHOLDER_COLOR = "#E0E0E0"; // A light gray color for the placeholder
+const placeholderData = [{ name: "No Data", value: 100 }];
+
 const BookingStatusPieChart: React.FC = () => {
   const { analytics, loadingAnalytics } = useProviderBookingManagement();
 
@@ -35,9 +38,55 @@ const BookingStatusPieChart: React.FC = () => {
       analytics.cancelledBookings > 0 ||
       analytics.disputedBookings > 0);
 
+  // --- Start of the updated placeholder logic ---
   if (!hasAnalyticsData) {
-    return <div>Add your first service and be booked...</div>;
+    return (
+      <div style={{ width: "100%", height: 275 }}>
+        <h3 className="text-lg font-semibold text-gray-800">Booking Status</h3>
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
+          <ResponsiveContainer>
+            <PieChart>
+              <Pie
+                data={placeholderData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                fill={PLACEHOLDER_COLOR}
+                dataKey="value"
+              >
+                <Cell key={`cell-placeholder`} fill={PLACEHOLDER_COLOR} />
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div
+            style={{
+              position: "absolute",
+              textAlign: "center",
+              width: "80%",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: "#888",
+            }}
+          >
+            Add your first service and be booked to see analytics.
+          </div>
+        </div>
+      </div>
+    );
   }
+  // --- End of the updated placeholder logic ---
 
   const data = [
     { name: "Accepted", value: analytics.acceptedBookings },

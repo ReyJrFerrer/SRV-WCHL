@@ -486,7 +486,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         </div>
       </main>
 
-      <div className="md:hidden">
+      <div>
         <BottomNavigationNextjs />
       </div>
     </div>
