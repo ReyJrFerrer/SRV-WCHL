@@ -65,10 +65,8 @@ export default function MainPage({
             </div>
             <div className="mb-6 text-center">
               <p className="mb-2 text-base text-gray-700">
-                <span className="font-semibold text-blue-700">
-                  You will be redirected
-                </span>{" "}
-                to Internet Identity to securely log in or sign up.
+                You will be redirected to Internet Identity to securely log in
+                or sign up.
               </p>
               <div className="mb-2 rounded-lg border border-blue-100 bg-blue-50 p-3">
                 <strong className="mb-1 block text-blue-700">
@@ -79,7 +77,6 @@ export default function MainPage({
                   <strong>
                     allowing you to use SRV without sharing personal passwords.
                   </strong>
-                  <br />
                   It helps keep your account safe and enables trusted
                   interactions on the platform.
                 </span>
