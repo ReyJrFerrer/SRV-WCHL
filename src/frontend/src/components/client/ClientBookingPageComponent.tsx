@@ -1,53 +1,20 @@
 import React, { useState, useEffect, useMemo } from "react";
+import phLocations from "../../data/ph_locations.json";
 import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-
 import {
   CurrencyDollarIcon,
   CreditCardIcon,
   GlobeAltIcon,
   ExclamationCircleIcon,
-  PencilSquareIcon,
   CheckCircleIcon,
-  MapPinIcon,
 } from "@heroicons/react/24/outline";
-
-// Hooks and Services
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
-import { useAuth } from "../../context/AuthContext";
-import { DayOfWeek } from "../../services/serviceCanisterService";
 
-// Fix leaflet marker icon (required for proper marker display)
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
+// --- Payment Section Sub-Component ---
 
-// Helper Data and Types
-const dayIndexToName = (dayIndex: number): string => {
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  return days[dayIndex] || "";
-};
-import { phLocations } from "../../data/phLocations";
-
-// --- Sub-Components ---
+// Payment method selection and input for cash change
 type PaymentSectionProps = {
   paymentMethod: string;
   setPaymentMethod: (method: string) => void;
@@ -95,7 +62,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
       {paymentMethod === "cash" && packages.some((p) => p.checked) && (
         <div className="pt-2 pl-4">
           <label className="text-sm font-medium text-gray-700">
-            Amount to Pay
+            Change for how much?
           </label>
           <input
             type="text"
@@ -146,40 +113,9 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   </div>
 );
 
-// --- Main Page Component ---
+// --- Main Booking Page Component ---
 const ClientBookingPageComponent: React.FC = () => {
-  const navigate = useNavigate();
-  const { id: serviceId } = useParams<{ id: string }>();
-  const { location, locationStatus } = useAuth();
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
-    null,
-  );
-
-  const {
-    service,
-    packages: hookPackages,
-    providerProfile,
-    loading,
-    error,
-    availableSlots,
-    isSameDayAvailable,
-    loadServiceData,
-    getAvailableSlots,
-    createBookingRequest,
-    calculateTotalPrice,
-  } = useBookRequest();
-
-  // Memoize map center for performance
-  const mapCenter = useMemo<[number, number]>(() => {
-    if (markerPosition) return markerPosition;
-    if (locationStatus === "allowed" && location) {
-      return [location.latitude, location.longitude];
-    }
-    // Default to Baguio City if not available
-    return [16.4023, 120.596];
-  }, [markerPosition, location, locationStatus]);
-
-  // State Management
+  // --- Booking state ---
   const [packages, setPackages] = useState<
     {
       id: string;
@@ -195,41 +131,56 @@ const ClientBookingPageComponent: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [displayAddress, setDisplayAddress] = useState<string>(
-    "Detecting location...",
-  );
-  const [addressMode, setAddressMode] = useState<"context" | "manual">(
-    "context",
-  );
-  const [selectedProvince, setSelectedProvince] = useState("");
-  const [selectedMunicipality, setSelectedMunicipality] = useState("");
-  const [selectedBarangay, setSelectedBarangay] = useState("");
-  const [street, setStreet] = useState("");
-  const [houseNumber, setHouseNumber] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [concerns, setConcerns] = useState("");
+  // --- Address and notes state ---
+  const [street, setStreet] = useState<string>("");
+  const [houseNumber, setHouseNumber] = useState<string>("");
+  const [landmark, setLandmark] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+  const NOTES_CHAR_LIMIT = 50;
+  // --- Payment state ---
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
-
-  // Effects
+  // --- Routing ---
+  const navigate = useNavigate();
+  const { id: serviceId } = useParams<{ id: string }>();
+  // --- Location detection state ---
+  const [locationStatus, setLocationStatus] = useState<
+    "detecting" | "allowed" | "denied"
+  >("detecting");
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
+    null,
+  );
+  const [displayMunicipality, setDisplayMunicipality] = useState<string>("");
+  const [displayProvince, setDisplayProvince] = useState<string>("");
+  // --- Detect location on mount ---
   useEffect(() => {
-    if (serviceId) loadServiceData(serviceId);
-  }, [serviceId, loadServiceData]);
-
-  useEffect(() => {
-    if (hookPackages.length > 0) {
-      setPackages(hookPackages.map((pkg) => ({ ...pkg, checked: false })));
+    if (!navigator.geolocation) {
+      setLocationStatus("denied");
+      return;
     }
-  }, [hookPackages]);
-
-  useEffect(() => {
-    if (locationStatus === "allowed" && location) {
-      setMarkerPosition([location.latitude, location.longitude]);
-    }
-  }, [location, locationStatus]);
-
+    setLocationStatus("detecting");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocationStatus("allowed");
+        setLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+        setMarkerPosition([pos.coords.latitude, pos.coords.longitude]);
+      },
+      () => {
+        setLocationStatus("denied");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }, []);
+  // --- Reverse geocode to get municipality/city and province ---
   useEffect(() => {
     if (locationStatus === "allowed" && location) {
       fetch(
@@ -238,79 +189,143 @@ const ClientBookingPageComponent: React.FC = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data && data.address) {
-            // Extract address parts, including more possible fields
             const {
-              house_number,
-              building,
-              landmark,
-              neighbourhood,
-              road,
-              street,
-              suburb,
-              village,
               city,
               town,
+              municipality,
+              village,
               county,
               state,
-              municipality,
-              district,
               region,
               province,
             } = data.address;
-            // Compose a more complete address
-            const houseOrBuilding =
-              [house_number, building, landmark, neighbourhood]
-                .filter(Boolean)
-                .join(" ") || "";
-            const streetPart = road || street || "";
-            const barangay = suburb || village || district || "";
-            const cityPart = city || town || municipality || "";
-            const provincePart = county || state || region || province || "";
-            const fullAddress = [
-              houseOrBuilding,
-              streetPart,
-              barangay,
-              cityPart,
-              provincePart,
-            ]
-              .filter(Boolean)
-              .join(", ");
-            setDisplayAddress(
-              fullAddress ||
-                data.display_name ||
-                `Lat: ${location.latitude}, Lon: ${location.longitude}`,
+            setDisplayMunicipality(
+              city || town || municipality || village || "",
             );
-          } else {
-            setDisplayAddress(
-              `Lat: ${location.latitude}, Lon: ${location.longitude}`,
+            setDisplayProvince(county || state || region || province || "");
+            console.log(
+              "[DEBUG] Set municipality:",
+              city || town || municipality || village || "",
+            );
+            console.log(
+              "[DEBUG] Set province:",
+              county || state || region || province || "",
             );
           }
         })
-        .catch(() =>
-          setDisplayAddress(
-            `Lat: ${location.latitude}, Lon: ${location.longitude}`,
-          ),
-        );
-    } else if (locationStatus === "denied") {
-      setDisplayAddress("Location not shared. Please enter manually.");
-      setAddressMode("manual");
-    } else {
-      setDisplayAddress("Detecting location...");
+        .catch(() => {
+          setDisplayMunicipality("");
+          setDisplayProvince("");
+        });
     }
-  }, [location, locationStatus]);
+  }, [locationStatus, location]);
+  // --- Service and booking data (from hook) ---
+  const {
+    service,
+    packages: hookPackages,
+    providerProfile,
+    loading,
+    error,
+    availableSlots,
+    loadServiceData,
+    getAvailableSlots,
+    createBookingRequest,
+    calculateTotalPrice,
+  } = useBookRequest();
+  // --- Barangay dropdown options ---
+  const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
+  const [selectedBarangay, setSelectedBarangay] = useState<string>("");
+  const [otherBarangay, setOtherBarangay] = useState("");
+  useEffect(() => {
+    let foundBarangays: string[] = [];
+    const cityNorm = (displayMunicipality || "").trim().toLowerCase();
+    const provNorm = (displayProvince || "").trim().toLowerCase();
+    console.log(
+      "[DEBUG] Normalized city:",
+      cityNorm,
+      "Normalized province:",
+      provNorm,
+    );
 
+    // Always search for Baguio City under Benguet if city is Baguio
+    const isBaguio = cityNorm === "baguio" || cityNorm === "baguio city";
+    if (isBaguio) {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const baguio = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "baguio city",
+      );
+      if (baguio && Array.isArray(baguio.barangays)) {
+        foundBarangays = baguio.barangays;
+        console.log(
+          "[DEBUG] Using Baguio City barangays from JSON:",
+          foundBarangays,
+        );
+      } else {
+        console.log("[DEBUG] Baguio City not found in JSON");
+      }
+    } else if (cityNorm) {
+      // General lookup for other cities
+      let matched = false;
+      for (const province of phLocations.provinces) {
+        for (const muni of province.municipalities) {
+          if (
+            typeof muni === "object" &&
+            muni.name.trim().toLowerCase() === cityNorm &&
+            Array.isArray(muni.barangays)
+          ) {
+            foundBarangays = muni.barangays as string[];
+            matched = true;
+            console.log(
+              `[DEBUG] Found barangays for ${cityNorm}:`,
+              foundBarangays,
+            );
+            break;
+          }
+        }
+        if (matched) break;
+      }
+      if (!matched) {
+        console.log(`[DEBUG] No barangays found for ${cityNorm}`);
+      }
+    }
+    if (foundBarangays.length > 0) {
+      setBarangayOptions(foundBarangays);
+    } else if (cityNorm) {
+      setBarangayOptions(
+        Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
+      );
+    } else {
+      setBarangayOptions([]);
+    }
+    setSelectedBarangay("");
+    // --- Notes change handler ---
+  }, [displayMunicipality, displayProvince]);
+  // --- Load service and packages on mount ---
+  useEffect(() => {
+    if (serviceId) loadServiceData(serviceId);
+  }, [serviceId, loadServiceData]);
+  useEffect(() => {
+    if (hookPackages.length > 0) {
+      setPackages(hookPackages.map((pkg: any) => ({ ...pkg, checked: false })));
+    }
+  }, [hookPackages]);
+  // --- Load available slots when date changes ---
   useEffect(() => {
     if (service && selectedDate) getAvailableSlots(service.id, selectedDate);
   }, [service, selectedDate, getAvailableSlots]);
 
+  // --- Calculate total price for selected packages ---
   const totalPrice = useMemo(() => {
     return packages
-      .filter((p) => p.checked)
-      .reduce((sum, pkg) => sum + pkg.price, 0);
+      .filter((p: any) => p.checked)
+      .reduce((sum: number, pkg: any) => sum + pkg.price, 0);
   }, [packages, hookPackages, calculateTotalPrice]);
 
+  // --- Validate payment amount ---
   useEffect(() => {
-    if (paymentMethod === "cash" && packages.some((p) => p.checked)) {
+    if (paymentMethod === "cash" && packages.some((p: any) => p.checked)) {
       const paidAmount = parseFloat(amountPaid);
       if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice)) {
         setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
@@ -322,170 +337,139 @@ const ClientBookingPageComponent: React.FC = () => {
     }
   }, [amountPaid, totalPrice, paymentMethod, packages]);
 
-  // Event Handlers
+  // --- Package selection handler ---
   const handlePackageChange = (packageId: string) => {
     setPackages((prev) =>
       prev.map((pkg) =>
         pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg,
       ),
     );
+    setFormError(null);
   };
+  // --- Booking option handler ---
   const handleBookingOptionChange = (option: "sameday" | "scheduled") => {
-    if (option === "sameday" && !isSameDayAvailable) return;
     setBookingOption(option);
+    setFormError(null);
   };
+  // --- Date selection handler ---
   const handleDateChange = (date: Date | null) => {
     setSelectedDate(date);
     setSelectedTime("");
+    setFormError(null);
   };
+  // --- Payment amount handler ---
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value: string = e.target.value;
     if (/^\d*\.?\d{0,2}$/.test(value)) setAmountPaid(value);
+    setFormError(null);
   };
 
-  // Reverse geocode on marker drag end
-  const handleMarkerDragEnd = async (e: L.LeafletEvent) => {
-    const marker = e.target;
-    const latlng = marker.getLatLng();
-    setMarkerPosition([latlng.lat, latlng.lng]);
-    // Reverse geocode to update displayAddress
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`,
-      );
-      const data = await res.json();
-      if (data && data.address) {
-        const {
-          road,
-          suburb,
-          village,
-          city,
-          town,
-          county,
-          state,
-          municipality,
-          district,
-          region,
-          province,
-        } = data.address;
-        const barangay = suburb || village || district || "";
-        const cityPart = city || town || municipality || "";
-        const provincePart = county || state || region || province || "";
-        const fullAddress = [road, barangay, cityPart, provincePart]
-          .filter(Boolean)
-          .join(", ");
-        setDisplayAddress(
-          fullAddress || `Lat: ${latlng.lat}, Lon: ${latlng.lng}`,
-        );
-      } else {
-        setDisplayAddress(`Lat: ${latlng.lat}, Lon: ${latlng.lng}`);
-      }
-    } catch {
-      setDisplayAddress(`Lat: ${latlng.lat}, Lon: ${latlng.lng}`);
-    }
+  // --- Notes change handler ---
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNotes(e.target.value);
+    setFormError(null);
   };
 
+  // --- Confirm booking handler ---
   const handleConfirmBooking = async () => {
     setFormError(null);
-    // Validate all required fields and show specific error messages
-    if (!bookingOption) {
-      setFormError("Please select a booking schedule (Same Day or Scheduled).");
-      return;
-    }
-    if (!packages.some((pkg) => pkg.checked)) {
-      setFormError("Please select at least one package.");
-      return;
-    }
-    if (bookingOption === "scheduled" && (!selectedDate || !selectedTime)) {
-      setFormError("Please select a date and time for your booking.");
-      return;
-    }
-    // Location validation
-    if (addressMode === "context") {
-      if (
-        locationStatus === undefined ||
-        locationStatus === null ||
-        locationStatus === "not_set"
-      ) {
-        setFormError(
-          `Location status is not set. Please wait for location detection or enter your address manually. [locationStatus: ${locationStatus}]`,
-        );
-        return;
-      }
-      if (locationStatus !== "allowed") {
-        setFormError(
-          `Please allow location access or enter your address manually. [locationStatus: ${locationStatus}]`,
-        );
-        return;
-      }
-      if (
-        !displayAddress ||
-        displayAddress.trim() === "" ||
-        displayAddress.trim() === "Detecting location..."
-      ) {
-        setFormError(
-          `A valid location must be detected before proceeding. [locationStatus: ${locationStatus}, displayAddress: ${displayAddress}]`,
-        );
-        return;
-      }
-    } else if (addressMode === "manual") {
-      if (
-        !selectedProvince ||
-        !selectedMunicipality ||
-        !selectedBarangay ||
-        !street ||
-        !houseNumber
-      ) {
-        setFormError("Please complete all required address fields.");
-        return;
-      }
-    } else {
-      setFormError(
-        "Please provide your location by enabling it or entering it manually.",
-      );
-      return;
-    }
-    // Payment validation
-    if (paymentMethod === "cash" && packages.some((p) => p.checked)) {
-      const paidAmount = parseFloat(amountPaid);
-      if (!amountPaid) {
-        setFormError("Please enter the amount to pay.");
-        return;
-      }
-      if (isNaN(paidAmount) || paidAmount < totalPrice) {
-        setFormError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
-        return;
-      }
-    }
     setIsSubmitting(true);
-    let finalAddress = "Address not specified.";
-    if (addressMode === "context" && locationStatus === "allowed") {
-      finalAddress = displayAddress;
-    } else if (addressMode === "manual") {
-      finalAddress = `${houseNumber}, ${street}, ${selectedBarangay}, ${selectedMunicipality}, ${selectedProvince}`;
-    }
     try {
-      let finalScheduledDate: Date | undefined = undefined;
-      if (bookingOption === "scheduled" && selectedDate && selectedTime) {
-        const [startTime] = selectedTime.split("-");
-        const [hours, minutes] = startTime.split(":").map(Number);
-        finalScheduledDate = new Date(selectedDate);
-        finalScheduledDate.setHours(hours, minutes, 0, 0);
+      // Validate required address fields
+      if (selectedBarangay === "__other__") {
+        if (
+          !otherBarangay ||
+          otherBarangay.trim().length < 3 ||
+          otherBarangay.trim().length > 20
+        ) {
+          setFormError(
+            "Please enter a valid barangay name (3-20 characters) for 'Others'.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (!selectedBarangay.trim()) {
+        setFormError("Please select your Barangay before proceeding.");
+        setIsSubmitting(false);
+        return;
       }
+      if (street.trim().length < 3 || street.trim().length > 20) {
+        setFormError("Street Name must be between 3 and 20 characters.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (
+        !houseNumber.trim() ||
+        houseNumber.length > 15 ||
+        !/\d/.test(houseNumber)
+      ) {
+        setFormError(
+          "House/Unit No. must be at most 15 characters and contain at least one number.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      // Require cash amount input if payment method is cash
+      if (paymentMethod === "cash" && packages.some((pkg) => pkg.checked)) {
+        const paidAmount = parseFloat(amountPaid);
+        if (!amountPaid.trim()) {
+          setFormError("Please enter the cash amount before proceeding.");
+          setIsSubmitting(false);
+          return;
+        }
+        if (isNaN(paidAmount) || paidAmount < totalPrice) {
+          setFormError(
+            `Cash amount must be at least ₱${totalPrice.toFixed(2)}.`,
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      // Validate at least one package is selected
+      if (!packages.some((pkg) => pkg.checked)) {
+        setFormError("Please select at least one package before proceeding.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!bookingOption) {
+        setFormError("Please select a booking type (Same Day or Scheduled).");
+        setIsSubmitting(false);
+        return;
+      }
+      let finalScheduledDate: Date | undefined = undefined;
+      if (bookingOption === "sameday") {
+        finalScheduledDate = new Date();
+      } else if (bookingOption === "scheduled" && selectedDate) {
+        finalScheduledDate = selectedDate;
+      }
+      // Build address string from manual entry and header context
+      const barangayValue =
+        selectedBarangay === "__other__" ? otherBarangay : selectedBarangay;
+      const finalAddress = [
+        houseNumber,
+        street,
+        barangayValue,
+        displayMunicipality,
+        displayProvince,
+        landmark,
+      ]
+        .filter(Boolean)
+        .join(", ");
       const bookingData: BookingRequest = {
         serviceId: service!.id,
         serviceName: service!.title,
         providerId: service!.providerId.toString(),
         packages: packages.filter((pkg) => pkg.checked),
         totalPrice,
-        bookingType: bookingOption,
+        bookingType: bookingOption as "sameday" | "scheduled",
         scheduledDate: finalScheduledDate,
         scheduledTime: bookingOption === "scheduled" ? selectedTime : undefined,
         location: finalAddress,
-        concerns: concerns,
+        notes: notes,
       };
       const booking = await createBookingRequest(bookingData);
       if (booking) {
+        setFormError(null); // Clear error after successful booking
         const confirmationDetails = {
           ...bookingData,
           providerName: providerProfile?.name,
@@ -498,7 +482,6 @@ const ClientBookingPageComponent: React.FC = () => {
               })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
-          // For receipt page compatibility:
           packagePrice: totalPrice.toFixed(2),
           amountToPay:
             paymentMethod === "cash"
@@ -522,186 +505,337 @@ const ClientBookingPageComponent: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  // --- Clear error message when user edits required address fields ---
+  useEffect(() => {
+    setFormError(null);
+  }, [selectedBarangay, street, houseNumber]);
 
-  // --- Render Logic ---
+  // --- Render: Booking Page Layout ---
+  // Loading, error, and not found states
   if (loading)
     return <div className="p-10 text-center">Loading service details...</div>;
   if (error)
     return <div className="p-10 text-center text-red-500">{String(error)}</div>;
   if (!service)
     return <div className="p-10 text-center">Service not found.</div>;
-
-  // DEBUG: Show locationStatus and displayAddress for troubleshooting
-  // Remove isLocationValid, not used for button state
+  // Helper: Convert day index to name (for calendar)
+  const dayIndexToName = (dayIndex: number): string => {
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    return days[dayIndex] || "";
+  };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
       <style>
         {`
-                .booking-calendar-wrapper .react-datepicker { width: 100%; border: 1; }
-                .booking-calendar-wrapper .react-datepicker__month-container { width: 100%; }
-                .booking-calendar-wrapper .react-datepicker__header { background-color: #f3f4f6; }
-                .booking-calendar-wrapper .react-datepicker__day-names, .booking-calendar-wrapper .react-datepicker__week { display: flex; justify-content: space-around; }
-                .booking-calendar-wrapper .react-datepicker__day { margin: 0.25rem; }
-                `}
+        .booking-calendar-wrapper .react-datepicker { width: 100%; border: none; box-shadow: none; }
+        .booking-calendar-wrapper .react-datepicker__month-container { width: 100%; }
+        .booking-calendar-wrapper .react-datepicker__header { background-color: #f3f4f6; border-bottom: none; border-radius: 0.75rem 0.75rem 0 0; }
+        .booking-calendar-wrapper .react-datepicker__day-names, .booking-calendar-wrapper .react-datepicker__week { display: flex; justify-content: space-around; }
+        .booking-calendar-wrapper .react-datepicker__day { margin: 0.25rem; border-radius: 0.5rem; transition: background 0.2s, color 0.2s; }
+        .booking-calendar-wrapper .react-datepicker__day--selected, .booking-calendar-wrapper .react-datepicker__day--keyboard-selected {
+          background-color: #2563eb !important;
+          color: #fff !important;
+          font-weight: bold;
+        }
+        .booking-calendar-wrapper .react-datepicker__day--disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+        .booking-calendar-wrapper .react-datepicker__day:hover:not(.react-datepicker__day--disabled) {
+          background-color: #dbeafe;
+          color: #1e40af;
+        }
+        .booking-calendar-wrapper .react-datepicker__current-month {
+          font-weight: 600;
+          color: #1e293b;
+        }
+      `}
       </style>
-      <div className="flex-grow pb-28 md:pb-24">
-        <div className="md:flex md:flex-row md:gap-x-8 md:p-6">
-          <div className="md:w-1/2">
-            <div className="bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Select Package(s) *
-              </h3>
-              {packages.map((pkg) => (
-                <label
-                  key={pkg.id}
-                  className="mb-3 flex cursor-pointer items-start space-x-3 rounded-md p-2 hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={pkg.checked}
-                    onChange={() => handlePackageChange(pkg.id)}
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{pkg.title}</div>
-                    <div className="text-sm text-gray-600">
-                      {pkg.description}
-                    </div>
-                    <div className="text-sm font-medium text-blue-600">
-                      ₱
-                      {pkg.price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-            <div className="hidden md:block">
-              <PaymentSection
-                {...{
-                  paymentMethod,
-                  setPaymentMethod,
-                  packages,
-                  amountPaid,
-                  handleAmountChange,
-                  paymentError,
-                  totalPrice,
-                }}
-              />
-            </div>
-          </div>
-          <div className="mt-4 md:mt-0 md:w-1/2">
-            <div className="bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Booking Schedule *
-              </h3>
-              <div className="mb-4 flex gap-3">
-                <button
-                  className={`flex-1 rounded-lg border p-3 text-center transition-colors ${bookingOption === "sameday" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"} ${!isSameDayAvailable ? "cursor-not-allowed opacity-50" : ""}`}
-                  onClick={() => handleBookingOptionChange("sameday")}
-                  disabled={!isSameDayAvailable}
-                >
-                  <div className="text-sm font-medium">Same Day</div>
-                </button>
-                <button
-                  className={`flex-1 rounded-lg border p-3 text-center transition-colors ${bookingOption === "scheduled" ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"}`}
-                  onClick={() => handleBookingOptionChange("scheduled")}
-                >
-                  <div className="text-sm font-medium">Scheduled</div>
-                </button>
-              </div>
-              {bookingOption === "scheduled" && (
-                <div className="space-y-4">
-                  <div className="booking-calendar-wrapper">
-                    <DatePicker
-                      selected={selectedDate}
-                      onChange={handleDateChange}
-                      minDate={
-                        new Date(new Date().setDate(new Date().getDate() + 1))
-                      }
-                      filterDate={(date) => {
-                        const dayName = dayIndexToName(date.getDay());
-                        return service.weeklySchedule
-                          ? service.weeklySchedule.some(
-                              (s) =>
-                                s.day === (dayName as DayOfWeek) &&
-                                s.availability.isAvailable,
-                            )
-                          : false;
-                      }}
-                      inline
+      <div className="flex-grow pb-36 md:pb-28">
+        <div className="mx-auto max-w-5xl px-2 py-8 md:px-0">
+          <div className="md:flex md:gap-x-8">
+            <div className="space-y-6 md:w-1/2">
+              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Select Package(s) <span className="text-red-500">*</span>
+                </h3>
+                {packages.map((pkg) => (
+                  <label
+                    key={pkg.id}
+                    className="mb-3 flex cursor-pointer items-start space-x-3 rounded-xl p-3 transition hover:bg-blue-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={pkg.checked}
+                      onChange={() => handlePackageChange(pkg.id)}
+                      className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
                     />
-                  </div>
-                  {selectedDate && (
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Select a time:
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {availableSlots.length > 0 ? (
-                          availableSlots
-                            .filter((slot) => slot.isAvailable)
-                            .map((slot, index) => {
-                              const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
-                              return (
-                                <button
-                                  key={index}
-                                  onClick={() => setSelectedTime(time)}
-                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${selectedTime === time ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
-                                >
-                                  {time}
-                                </button>
-                              );
-                            })
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            No available slots for this day.
-                          </p>
-                        )}
+                    <div className="flex-1">
+                      <div className="text-lg font-semibold text-gray-900">
+                        {pkg.title}
+                      </div>
+                      <div className="mb-1 text-sm text-gray-600">
+                        {pkg.description}
+                      </div>
+                      <div className="text-base font-bold text-blue-600">
+                        ₱
+                        {pkg.price.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  </label>
+                ))}
+              </div>
+              <div className="hidden md:block">
+                <PaymentSection
+                  {...{
+                    paymentMethod,
+                    setPaymentMethod,
+                    packages,
+                    amountPaid,
+                    handleAmountChange,
+                    paymentError,
+                    totalPrice,
+                  }}
+                />
+              </div>
             </div>
-
-            {/* --- REFACTORED LOCATION SECTION --- */}
-            <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Service Location *
-              </h3>
-              <div className="mb-3 rounded-lg border border-gray-300 bg-gray-50 p-3">
-                <div className="flex items-center">
-                  <MapPinIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-gray-500">
-                      {addressMode === "context"
-                        ? "Using Your Current Location"
-                        : "Using Manual Address"}
-                    </p>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {addressMode === "context"
-                        ? displayAddress
-                        : "See form below"}
-                    </p>
-                  </div>
+            <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
+              {/* --- Booking Schedule Section (with calendar and slot selection) --- */}
+              <div className="glass-card rounded-2xl border border-yellow-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-yellow-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-yellow-400"></span>
+                  Booking Schedule <span className="text-red-500">*</span>
+                </h3>
+                <div className="mb-4 flex gap-3">
+                  <button
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
+                      bookingOption === "sameday"
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                    }`}
+                    onClick={() => handleBookingOptionChange("sameday")}
+                  >
+                    <div className="text-base font-semibold">Same Day</div>
+                  </button>
+                  <button
+                    className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
+                      bookingOption === "scheduled"
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                    }`}
+                    onClick={() => handleBookingOptionChange("scheduled")}
+                  >
+                    <div className="text-base font-semibold">Scheduled</div>
+                  </button>
                 </div>
-                {/* --- OpenStreetMap Visual with Draggable Marker --- */}
-                {addressMode === "context" &&
-                  locationStatus === "allowed" &&
-                  markerPosition && (
-                    <div
-                      className="mt-3 overflow-hidden rounded-lg"
-                      style={{ height: 220, marginBottom: 24, zIndex: 0 }}
-                    >
-                      <MapContainer
-                        center={mapCenter}
-                        zoom={16}
+                {bookingOption === "scheduled" && (
+                  <div className="space-y-4">
+                    <div className="booking-calendar-wrapper">
+                      <DatePicker
+                        selected={selectedDate}
+                        onChange={handleDateChange}
+                        minDate={
+                          new Date(new Date().setDate(new Date().getDate() + 1))
+                        }
+                        filterDate={(date: Date) => {
+                          const dayName = dayIndexToName(date.getDay());
+                          return service.weeklySchedule
+                            ? service.weeklySchedule.some(
+                                (s) =>
+                                  s.day === dayName &&
+                                  s.availability.isAvailable,
+                              )
+                            : false;
+                        }}
+                        inline
+                        renderCustomHeader={({
+                          date,
+                          decreaseMonth,
+                          increaseMonth,
+                          prevMonthButtonDisabled,
+                          nextMonthButtonDisabled,
+                        }) => (
+                          <div className="flex items-center justify-between rounded-t-lg bg-gray-100 px-2 py-2">
+                            <button
+                              onClick={decreaseMonth}
+                              disabled={prevMonthButtonDisabled}
+                              className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                              type="button"
+                              aria-label="Previous Month"
+                            >
+                              <svg
+                                className="h-5 w-5 text-gray-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 19l-7-7 7-7"
+                                />
+                              </svg>
+                            </button>
+                            <span className="text-base font-semibold text-gray-800">
+                              {date.toLocaleString("default", {
+                                month: "long",
+                              })}{" "}
+                              {date.getFullYear()}
+                            </span>
+                            <button
+                              onClick={increaseMonth}
+                              disabled={nextMonthButtonDisabled}
+                              className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                              type="button"
+                              aria-label="Next Month"
+                            >
+                              <svg
+                                className="h-5 w-5 text-gray-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                        dayClassName={(date: Date) => {
+                          const isSelected =
+                            selectedDate &&
+                            date.toDateString() === selectedDate.toDateString();
+                          const dayName = dayIndexToName(date.getDay());
+                          const isAvailable = service.weeklySchedule
+                            ? service.weeklySchedule.some(
+                                (s) =>
+                                  s.day === dayName &&
+                                  s.availability.isAvailable,
+                              )
+                            : false;
+                          return [
+                            "transition-colors duration-150",
+                            isSelected
+                              ? "!bg-blue-600 !text-white !font-bold"
+                              : "",
+                            isAvailable
+                              ? "hover:bg-blue-100 cursor-pointer"
+                              : "opacity-40 cursor-not-allowed",
+                          ].join(" ");
+                        }}
+                        calendarClassName="rounded-lg shadow-lg border border-gray-200 bg-white"
+                        wrapperClassName="w-full"
+                      />
+                    </div>
+                    {selectedDate && (
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Select a time:
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {availableSlots.length > 0 ? (
+                            availableSlots
+                              .filter((slot: any) => slot.isAvailable)
+                              .map((slot: any, index: number) => {
+                                const to12Hour = (t: string) => {
+                                  const [h, m] = t.split(":").map(Number);
+                                  const hour = h % 12 || 12;
+                                  const ampm = h < 12 ? "AM" : "PM";
+                                  return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
+                                };
+                                const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
+                                const [start, end] = time.split("-");
+                                const formatted = `${to12Hour(start)} - ${to12Hour(end)}`;
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={() => setSelectedTime(time)}
+                                    className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
+                                      selectedTime === time
+                                        ? "border-blue-600 bg-blue-600 text-white"
+                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    {formatted}
+                                  </button>
+                                );
+                              })
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No available slots for this day.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* --- Service Location Section --- */}
+              <div className="glass-card rounded-2xl border border-gray-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                {/* --- Service Location Section (uses location from Header.tsx context) --- */}
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-gray-400"></span>
+                  Service Location <span className="text-red-500">*</span>
+                </h3>
+                <div className="mt-2 space-y-3">
+                  {/* The Municipality/City and Province below are sourced from Header.tsx context */}
+                  <p className="text-xs text-gray-600">
+                    Your location is automatically detected. You may drag the
+                    map marker to adjust. Municipality/City and Province will
+                    update accordingly.
+                  </p>
+                  <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="mb-1 block text-xs text-blue-700">
+                          Municipality/City
+                        </label>
+                        <input
+                          type="text"
+                          value={displayMunicipality}
+                          readOnly
+                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="mb-1 block text-xs text-blue-700">
+                          Province
+                        </label>
+                        <input
+                          type="text"
+                          value={displayProvince}
+                          readOnly
+                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {locationStatus === "allowed" && markerPosition && (
+                    <div className="mb-2">
+                      {/* <MapContainer
+                        center={markerPosition}
+                        zoom={15}
                         scrollWheelZoom={false}
-                        style={{ height: "100%", width: "100%", zIndex: 0 }}
+                        style={{ height: "220px", width: "100%", zIndex: 0 }}
                       >
                         <TileLayer
                           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -710,151 +844,114 @@ const ClientBookingPageComponent: React.FC = () => {
                         <Marker
                           position={markerPosition}
                           draggable={true}
-                          eventHandlers={{
-                            dragend: handleMarkerDragEnd,
-                          }}
+                          eventHandlers={{ dragend: handleMarkerDragEnd }}
                         >
                           <Popup>Drag me to adjust your location!</Popup>
                         </Marker>
-                      </MapContainer>
+                      </MapContainer> */}
                     </div>
                   )}
-                {/* --- End OpenStreetMap Visual --- */}
-              </div>
-              <button
-                onClick={() =>
-                  setAddressMode(
-                    addressMode === "manual" ? "context" : "manual",
-                  )
-                }
-                className="w-full rounded-lg bg-gray-200 p-3 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-300"
-              >
-                {addressMode === "manual"
-                  ? "Use Current Location"
-                  : "Enter Address Manually"}
-              </button>
-              {addressMode === "manual" && (
-                <div className="mt-2 space-y-3">
-                  <p className="text-xs text-gray-600">
-                    Please enter your address manually:
-                  </p>
-                  <select
-                    value={selectedProvince}
-                    onChange={(e) => {
-                      setSelectedProvince(e.target.value);
-                      setSelectedMunicipality("");
-                      setSelectedBarangay("");
-                    }}
-                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm"
-                  >
-                    <option value="">Select Province</option>
-                    {phLocations.map((prov) => (
-                      <option key={prov.name} value={prov.name}>
-                        {prov.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={selectedMunicipality}
-                    onChange={(e) => {
-                      setSelectedMunicipality(e.target.value);
-                      setSelectedBarangay("");
-                    }}
-                    disabled={!selectedProvince}
-                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm disabled:bg-gray-100"
-                  >
-                    <option value="">Select Municipality/City</option>
-                    {selectedProvince &&
-                      phLocations
-                        .find((prov) => prov.name === selectedProvince)
-                        ?.municipalities.map((mun) => (
-                          <option key={mun.name} value={mun.name}>
-                            {mun.name}
-                          </option>
-                        ))}
-                  </select>
+                  {/* Barangay dropdown populated from ph_locations.json */}
                   <select
                     value={selectedBarangay}
                     onChange={(e) => setSelectedBarangay(e.target.value)}
-                    disabled={!selectedMunicipality}
-                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm disabled:bg-gray-100"
+                    className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
                   >
-                    <option value="">Select Barangay</option>
-                    {selectedMunicipality &&
-                      phLocations
-                        .find((prov) => prov.name === selectedProvince)
-                        ?.municipalities.find(
-                          (mun) => mun.name === selectedMunicipality,
-                        )
-                        ?.barangays?.map((brgy) => (
-                          <option key={brgy} value={brgy}>
-                            {brgy}
-                          </option>
-                        ))}
+                    <option value="" disabled>
+                      Select Barangay *
+                    </option>
+                    {barangayOptions.map((barangay, idx) => (
+                      <option key={idx} value={barangay}>
+                        {barangay}
+                      </option>
+                    ))}
+                    <option value="__other__">Others</option>
                   </select>
+                  {selectedBarangay === "__other__" && (
+                    <input
+                      type="text"
+                      placeholder="Enter your Barangay *"
+                      value={otherBarangay}
+                      onChange={(e) => setOtherBarangay(e.target.value)}
+                      className="mt-3 w-full rounded-xl border border-blue-400 bg-white p-3 text-sm text-gray-700 capitalize"
+                      minLength={3}
+                      maxLength={20}
+                      required
+                    />
+                  )}
+                  {/* Street Name input, enabled after barangay selection */}
                   <input
                     type="text"
                     placeholder="Street Name *"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+                    className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400" : "border-gray-300 bg-white text-gray-700"}`}
+                    disabled={!selectedBarangay}
+                    minLength={3}
+                    maxLength={20}
                   />
+                  {/* House/Unit No. input, enabled after street name input */}
                   <input
                     type="text"
-                    placeholder="House No. / Unit / Building *"
+                    placeholder="House/Unit No. *"
                     value={houseNumber}
                     onChange={(e) => setHouseNumber(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+                    className={`mt-3 w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400" : "border-gray-300 bg-white text-gray-700"}`}
+                    disabled={!street}
+                    maxLength={15}
                   />
+                  {/* Landmark input, always enabled */}
                   <input
                     type="text"
-                    placeholder="Landmark / Additional Info (Optional)"
+                    placeholder="Building/Subdivision Name (optional)"
                     value={landmark}
                     onChange={(e) => setLandmark(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-sm"
+                    className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
                   />
                 </div>
-              )}
-            </div>
-            <div className="mt-4 bg-white p-4 md:rounded-xl md:shadow-sm">
-              <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
-                <PencilSquareIcon className="mr-2 h-5 w-5 text-gray-500" />
-                Notes for Provider (Optional)
-              </h3>
-              <textarea
-                placeholder="e.g., Beware of the dog, please bring a ladder, etc."
-                value={concerns}
-                onChange={(e) => setConcerns(e.target.value)}
-                rows={4}
-                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div className="md:hidden">
-              <PaymentSection
-                {...{
-                  paymentMethod,
-                  setPaymentMethod,
-                  packages,
-                  amountPaid,
-                  handleAmountChange,
-                  paymentError,
-                  totalPrice,
-                }}
-              />
+              </div>
+              <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+                <h3 className="mb-4 flex items-center text-xl font-bold text-blue-900">
+                  <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+                  Notes for Provider{" "}
+                  <span className="text-base font-normal text-gray-400">
+                    (Optional)
+                  </span>
+                </h3>
+                <textarea
+                  placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
+                  value={notes}
+                  onChange={handleNotesChange}
+                  rows={4}
+                  maxLength={NOTES_CHAR_LIMIT}
+                  className="w-full rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mt-4 md:hidden">
+                <PaymentSection
+                  paymentMethod={paymentMethod}
+                  setPaymentMethod={setPaymentMethod}
+                  packages={packages}
+                  amountPaid={amountPaid}
+                  handleAmountChange={handleAmountChange}
+                  paymentError={paymentError}
+                  totalPrice={totalPrice}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 z-10 border-t bg-white p-4">
+      <div className="sticky bottom-0 z-20 border-t bg-white/80 p-4 shadow-xl backdrop-blur-md">
         <div className="mx-auto max-w-md">
           {formError && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-center text-base text-red-700 shadow-sm">
               {formError}
             </div>
           )}
           <button
             onClick={handleConfirmBooking}
-            className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-yellow-500 disabled:bg-gray-300"
+            className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-yellow-400 px-8 py-4 text-lg font-bold text-white shadow-lg transition-colors hover:from-yellow-400 hover:to-blue-600 disabled:bg-gray-300 disabled:text-gray-400"
           >
             {isSubmitting && (
               <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
