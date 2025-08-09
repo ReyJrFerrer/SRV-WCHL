@@ -1,5 +1,4 @@
 import { useProfileImage } from "../../hooks/useMediaLoader";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
 export const ProfileImage: React.FC<{
   profilePictureUrl?: string;
   userName: string;
@@ -18,7 +17,13 @@ export const ProfileImage: React.FC<{
   }
 
   if (isUsingDefaultAvatar || !profileImageUrl) {
-    return <UserCircleIcon className={`${size} text-gray-300 ${className}`} />;
+    return (
+      <img
+        src={"/default-provider.svg"}
+        alt={userName}
+        className={`${size} rounded-full border-2 border-blue-100 object-cover shadow ${className}`}
+      />
+    );
   }
 
   return (

@@ -477,6 +477,12 @@ const ServiceDetailPage: React.FC = () => {
     error: serviceError,
   } = useServiceById(serviceId as string);
 
+  // Load service gallery images for hero image (must be top-level)
+  const { images: heroImages } = useServiceImages(
+    service?.id,
+    service?.media || [],
+  );
+
   const { getServicePackages } = useServiceManagement();
   const { conversations, createConversation, loading: chatLoading } = useChat();
   const { userImageUrl, refetch } = useUserImage(service?.providerAvatar);
@@ -961,9 +967,19 @@ const ServiceDetailPage: React.FC = () => {
       {/* Hero image (top of page) */}
       <div className="relative h-60 w-full">
         <img
-          src={service.heroImage || "/../default-provider.svg"}
+          src={
+            heroImages && heroImages.length > 0 && heroImages[0].dataUrl
+              ? heroImages[0].dataUrl
+              : service?.category?.slug
+                ? `/images/ai-sp/${service.category.slug}.svg`
+                : "/default-provider.svg"
+          }
           alt={name}
           className="h-full w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/default-provider.svg";
+          }}
         />
       </div>
 
@@ -1005,9 +1021,7 @@ const ServiceDetailPage: React.FC = () => {
                         userImageUrl !== "" &&
                         userImageUrl !== undefined
                           ? userImageUrl
-                          : service?.category?.slug
-                            ? `/images/ai-sp/${service.category.slug}.svg`
-                            : "/default-provider.svg"
+                          : "/default-provider.svg"
                       }
                       alt={providerName}
                       className="h-full w-full rounded-full object-cover"
