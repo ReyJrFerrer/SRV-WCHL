@@ -4,6 +4,7 @@ import Categories from "../../components/client/Categories";
 import ServiceList from "../../components/client/ServiceListReact";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
+import { useBookingManagement } from "../../hooks/bookingManagement";
 
 // --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
@@ -17,6 +18,10 @@ const ClientHomePage: React.FC = () => {
     province: string;
     municipality: string;
   } | null>(null);
+  const { bookings } = useBookingManagement();
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  // --- State: Star rating for feedback ---
+  const [feedbackRating, setFeedbackRating] = useState<number>(0);
 
   // --- Effect: Set page title and check geolocation permission status on mount ---
   useEffect(() => {
@@ -58,9 +63,69 @@ const ClientHomePage: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Show feedback popup after first completed booking
+    const hasSeenFeedback = localStorage.getItem("hasSeenFeedbackPopup");
+    const completedBookings = bookings.filter((b) => b.status === "Completed");
+    if (!hasSeenFeedback && completedBookings.length === 1) {
+      setShowFeedbackPopup(true);
+      localStorage.setItem("hasSeenFeedbackPopup", "true");
+    }
+  }, [bookings]);
+
   // --- Render: Client Home Page Layout ---
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-20">
+      {/* Feedback popup after first completed booking */}
+      {showFeedbackPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+            <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
+              We value your feedback!
+            </h2>
+            <p className="mb-4 text-center text-gray-700">
+              You just completed your first booking. Please let us know about
+              your experience.
+            </p>
+            {/* Star rating input */}
+            <div className="mb-4 flex items-center justify-center">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                  className={
+                    `mx-1 text-3xl transition-colors ` +
+                    (feedbackRating >= star
+                      ? "text-yellow-400"
+                      : "text-gray-300 hover:text-yellow-400")
+                  }
+                  onClick={() => setFeedbackRating(star)}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="mb-4 w-full rounded-lg border border-gray-300 p-3"
+              rows={4}
+              placeholder="Share your thoughts..."
+            />
+            <button
+              className="btn-primary w-full"
+              onClick={() => setShowFeedbackPopup(false)}
+            >
+              Submit Feedback
+            </button>
+            <button
+              className="mt-2 w-full text-sm text-gray-500 hover:text-blue-700"
+              onClick={() => setShowFeedbackPopup(false)}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
       {/* Show location blocked message if location is denied */}
       {locationStatus === "denied" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">

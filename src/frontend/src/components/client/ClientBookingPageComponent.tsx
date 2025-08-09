@@ -203,14 +203,6 @@ const ClientBookingPageComponent: React.FC = () => {
               city || town || municipality || village || "",
             );
             setDisplayProvince(county || state || region || province || "");
-            console.log(
-              "[DEBUG] Set municipality:",
-              city || town || municipality || village || "",
-            );
-            console.log(
-              "[DEBUG] Set province:",
-              county || state || region || province || "",
-            );
           }
         })
         .catch(() => {
@@ -239,13 +231,6 @@ const ClientBookingPageComponent: React.FC = () => {
   useEffect(() => {
     let foundBarangays: string[] = [];
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
-    const provNorm = (displayProvince || "").trim().toLowerCase();
-    console.log(
-      "[DEBUG] Normalized city:",
-      cityNorm,
-      "Normalized province:",
-      provNorm,
-    );
 
     // Always search for Baguio City under Benguet if city is Baguio
     const isBaguio = cityNorm === "baguio" || cityNorm === "baguio city";
@@ -258,12 +243,6 @@ const ClientBookingPageComponent: React.FC = () => {
       );
       if (baguio && Array.isArray(baguio.barangays)) {
         foundBarangays = baguio.barangays;
-        console.log(
-          "[DEBUG] Using Baguio City barangays from JSON:",
-          foundBarangays,
-        );
-      } else {
-        console.log("[DEBUG] Baguio City not found in JSON");
       }
     } else if (cityNorm) {
       // General lookup for other cities
@@ -277,17 +256,13 @@ const ClientBookingPageComponent: React.FC = () => {
           ) {
             foundBarangays = muni.barangays as string[];
             matched = true;
-            console.log(
-              `[DEBUG] Found barangays for ${cityNorm}:`,
-              foundBarangays,
-            );
             break;
           }
         }
         if (matched) break;
       }
       if (!matched) {
-        console.log(`[DEBUG] No barangays found for ${cityNorm}`);
+        // No match found, do nothing
       }
     }
     if (foundBarangays.length > 0) {
@@ -811,9 +786,14 @@ const ClientBookingPageComponent: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          value={displayMunicipality}
+                          value={
+                            locationStatus === "detecting"
+                              ? "Detecting..."
+                              : displayMunicipality || ""
+                          }
                           readOnly
                           className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                          placeholder="Municipality/City"
                         />
                       </div>
                       <div className="flex-1">
@@ -822,35 +802,22 @@ const ClientBookingPageComponent: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          value={displayProvince}
+                          value={
+                            locationStatus === "detecting"
+                              ? "Detecting..."
+                              : displayProvince || ""
+                          }
                           readOnly
                           className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                          placeholder="Province"
                         />
                       </div>
                     </div>
                   </div>
                   {locationStatus === "allowed" && markerPosition && (
-                    <div className="mb-2">
-                      {/* <MapContainer
-                        center={markerPosition}
-                        zoom={15}
-                        scrollWheelZoom={false}
-                        style={{ height: "220px", width: "100%", zIndex: 0 }}
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <Marker
-                          position={markerPosition}
-                          draggable={true}
-                          eventHandlers={{ dragend: handleMarkerDragEnd }}
-                        >
-                          <Popup>Drag me to adjust your location!</Popup>
-                        </Marker>
-                      </MapContainer> */}
-                    </div>
+                    <div className="mb-2"></div>
                   )}
+
                   {/* Barangay dropdown populated from ph_locations.json */}
                   <select
                     value={selectedBarangay}

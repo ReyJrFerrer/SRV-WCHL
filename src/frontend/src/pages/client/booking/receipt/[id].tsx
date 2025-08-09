@@ -37,9 +37,7 @@ const ReceiptPage: React.FC = () => {
           text: `Here is my receipt for the service: ${booking.serviceName}. Booking ID: ${booking.id}`,
           url: window.location.href,
         });
-      } catch (error) {
-        console.error("Error sharing:", error);
-      }
+      } catch (error) {}
     } else {
       // Fallback for browsers that do not support the Share API
       // NOTE: alert() is blocking. Consider a custom toast notification.
@@ -190,46 +188,20 @@ const ReceiptPage: React.FC = () => {
 
       {/* Action Buttons */}
       <div className="mt-6 w-full max-w-md">
-        {userRating && userRating >= 4 ? (
-          <>
-            <div className="mb-3 flex gap-3">
-              <button
-                className="flex w-1/2 items-center justify-center rounded-lg bg-yellow-200 px-6 py-3 font-semibold text-yellow-800 transition-colors hover:bg-yellow-300"
-                type="button"
-                // TODO: Add vouching logic here
-              >
-                Vouch
-              </button>
-              <button
-                onClick={handleShare}
-                className="flex w-1/2 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
-              >
-                <ShareIcon className="mr-2 h-5 w-5" /> Share
-              </button>
-            </div>
-            <Link
-              to="/client/booking"
-              className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
-            >
-              <ArrowUturnLeftIcon className="mr-2 h-5 w-5" /> Done
-            </Link>
-          </>
-        ) : (
-          <div className="flex gap-3">
-            <button
-              onClick={handleShare}
-              className="flex w-1/2 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
-            >
-              <ShareIcon className="mr-2 h-5 w-5" /> Share
-            </button>
-            <Link
-              to="/client/booking"
-              className="flex w-1/2 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
-            >
-              <ArrowUturnLeftIcon className="mr-2 h-5 w-5" /> Done
-            </Link>
-          </div>
-        )}
+        <div className="flex gap-3">
+          <button
+            onClick={handleShare}
+            className="flex w-1/2 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
+          >
+            <ShareIcon className="mr-2 h-5 w-5" /> Share
+          </button>
+          <Link
+            to="/client/booking"
+            className="flex w-1/2 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
+          >
+            <ArrowUturnLeftIcon className="mr-2 h-5 w-5" /> Done
+          </Link>
+        </div>
       </div>
     </div>
   );
