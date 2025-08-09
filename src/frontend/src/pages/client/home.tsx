@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import phLocations from "../../data/ph_locations.json";
 import Header from "../../components/client/Header";
 import Categories from "../../components/client/Categories";
 import ServiceList from "../../components/client/ServiceListReact";
@@ -10,166 +9,350 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 const ClientHomePage: React.FC = () => {
   // --- State: Service category error ---
   const { error } = useServiceManagement();
-  // --- State: Location permission and manual input modal ---
-  const [, setLocationBlocked] = useState(false);
-  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-  // --- State: Province and municipality dropdown ---
-  const [province, setProvince] = useState("");
-  const [municipality, setMunicipality] = useState("");
-  const [municipalityOptions, setMunicipalityOptions] = useState<string[]>([]);
-  // --- State: User's selected manual location ---
-  const [userLocation, setUserLocation] = useState<{
+  // --- State: Location permission ---
+  const [locationStatus, setLocationStatus] = useState<
+    "pending" | "allowed" | "denied"
+  >("pending");
+  const [geoLocation, setGeoLocation] = useState<{
     province: string;
     municipality: string;
-  } | null>(() => {
-    const saved = localStorage.getItem("manualLocation");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
+  } | null>(null);
 
   // --- Effect: Set page title and check geolocation permission status on mount ---
   useEffect(() => {
     document.title = "Home | SRV";
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: "geolocation" }).then((result) => {
-        if (result.state === "denied") {
-          setLocationBlocked(true);
-        }
-      });
-    } else if (navigator.geolocation) {
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        () => {},
-        (err) => {
-          if (err.code === 1) {
-            setLocationBlocked(true);
+        async (position) => {
+          // Permission accepted
+          const { latitude, longitude } = position.coords;
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            );
+            const data = await res.json();
+            const province =
+              data.address.county ||
+              data.address.state ||
+              data.address.region ||
+              data.address.province ||
+              "";
+            const municipality =
+              data.address.city ||
+              data.address.town ||
+              data.address.village ||
+              "";
+            setGeoLocation({ province, municipality });
+            setLocationStatus("allowed");
+          } catch {
+            setLocationStatus("denied");
           }
         },
+        (_err) => {
+          // Permission denied
+          setLocationStatus("denied");
+        },
       );
+    } else {
+      setLocationStatus("denied");
     }
   }, []);
-
-  // --- Effect: Show manual location modal if no manual location is set ---
-  useEffect(() => {
-    if (!userLocation) {
-      setShowLocationPrompt(true);
-    } else {
-      setShowLocationPrompt(false);
-    }
-  }, [userLocation]);
-
-  // --- Effect: Update municipality dropdown when province changes ---
-  useEffect(() => {
-    if (province) {
-      const found = phLocations.provinces.find((p) => p.name === province);
-      if (found && Array.isArray(found.municipalities)) {
-        // If municipalities are objects, extract their names
-        setMunicipalityOptions(
-          found.municipalities.map((mun: any) =>
-            typeof mun === "object" && mun.name ? mun.name : mun,
-          ),
-        );
-      } else {
-        setMunicipalityOptions([]);
-      }
-      setMunicipality("");
-    } else {
-      setMunicipalityOptions([]);
-      setMunicipality("");
-    }
-  }, [province]);
-
-  // --- Handler: Manual location form submit ---
-  const handleLocationSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (province && municipality) {
-      const location = { province, municipality };
-      setUserLocation(location);
-      localStorage.setItem("manualLocation", JSON.stringify(location));
-      setShowLocationPrompt(false);
-    }
-  };
-
-  // Remove redundant effect: location prompt is now managed by userLocation only
 
   // --- Render: Client Home Page Layout ---
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-20">
-      {/* Modal: Manual location input when geolocation is blocked */}
-      {showLocationPrompt && (
+      {/* Show location blocked message if location is denied */}
+      {locationStatus === "denied" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
             <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
-              Enter Your Location
+              Location Access Required
             </h2>
             <p className="mb-4 text-center text-gray-700">
-              Please enter your current province and municipality/city so we can
-              show services near you.
+              This app requires location access to show services near you.
+              Please enable location access in your browser settings.
+              <br />
+              <span className="font-semibold text-red-600">
+                Features are unusable until location is enabled.
+              </span>
+              <br />
+              <span className="mt-2 block font-medium text-blue-700">
+                After changing your browser settings, please reload the website.
+              </span>
             </p>
-            <form
-              onSubmit={handleLocationSubmit}
-              className="flex flex-col gap-4"
-            >
-              {/* Province dropdown */}
-              <div>
-                <label
-                  htmlFor="province"
-                  className="mb-1 block font-semibold text-gray-700"
-                >
-                  Province
-                </label>
-                <select
-                  id="province"
-                  value={province}
-                  onChange={(e) => setProvince(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                  required
-                >
-                  <option value="" disabled>
-                    Select province
-                  </option>
-                  {phLocations.provinces.map((prov) => (
-                    <option key={prov.name} value={prov.name}>
-                      {prov.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="mb-2 text-left text-sm text-gray-700">
+              <b>How to enable location access:</b>
+              <div className="mt-2">
+                {/* Dropdown for Brave */}
+                <details className="mb-2">
+                  <summary className="cursor-pointer font-semibold text-blue-700">
+                    Brave
+                  </summary>
+                  <div className="mt-1 pl-4">
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Desktop
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>Go to the specific website.</li>
+                        <li>Click the lock icon 🔒 in the address bar.</li>
+                        <li>Click Site settings.</li>
+                        <li>
+                          Find Location in the permissions list and change its
+                          setting to <b>Allow</b>.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (Android)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          Tap the three-dots menu (⋮) at the bottom-right.
+                        </li>
+                        <li>Tap Settings ⚙️.</li>
+                        <li>
+                          Tap Site settings. (If you don't see it, first tap
+                          Privacy and security).
+                        </li>
+                        <li>
+                          Tap Location and ensure the main toggle is on to allow
+                          sites to ask for permission.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (iOS - iPhone/iPad)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          The primary control for location is in the main iOS
+                          Settings.
+                        </li>
+                        <li>Open the Settings app on your iPhone/iPad.</li>
+                        <li>Scroll down and tap on Brave.</li>
+                        <li>Tap on Location.</li>
+                        <li>
+                          Select <b>While Using the App</b> or{" "}
+                          <b>Ask Next Time Or When I Share</b>.
+                        </li>
+                      </ul>
+                    </details>
+                  </div>
+                </details>
+                {/* Dropdown for Chrome */}
+                <details className="mb-2">
+                  <summary className="cursor-pointer font-semibold text-blue-700">
+                    Chrome
+                  </summary>
+                  <div className="mt-1 pl-4">
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Desktop
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>Go to the specific website.</li>
+                        <li>Click the lock icon 🔒 in the address bar.</li>
+                        <li>Click Site settings.</li>
+                        <li>
+                          Find Location in the permissions list and change its
+                          setting to <b>Allow</b>.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (Android)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>Tap the three-dots menu (⋮) at the top-right.</li>
+                        <li>Tap Settings ⚙️.</li>
+                        <li>Tap Site settings.</li>
+                        <li>
+                          Tap Location and ensure the main toggle is on. You can
+                          also manage permissions for individual sites here.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (iOS - iPhone/iPad)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          The primary control for location is in the main iOS
+                          Settings.
+                        </li>
+                        <li>Open the Settings app on your iPhone/iPad.</li>
+                        <li>Scroll down and tap on Chrome.</li>
+                        <li>Tap on Location.</li>
+                        <li>
+                          Select <b>While Using the App</b> or{" "}
+                          <b>Ask Next Time Or When I Share</b>.
+                        </li>
+                      </ul>
+                    </details>
+                  </div>
+                </details>
+                {/* Dropdown for Firefox */}
+                <details className="mb-2">
+                  <summary className="cursor-pointer font-semibold text-blue-700">
+                    Firefox
+                  </summary>
+                  <div className="mt-1 pl-4">
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Desktop
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>Go to the specific website.</li>
+                        <li>
+                          Click the lock icon 🔒 in the address bar. A small
+                          panel will open.
+                        </li>
+                        <li>
+                          Find the Location permission in the panel and use the
+                          dropdown or toggle to <b>Allow</b> access.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (Android)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          Tap the three-dots menu (⋮) at the bottom-right.
+                        </li>
+                        <li>Tap Settings ⚙️.</li>
+                        <li>Scroll down and tap Site permissions.</li>
+                        <li>
+                          Tap Location and choose <b>Ask to allow</b>{" "}
+                          (recommended) or manage exceptions for specific sites.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (iOS - iPhone/iPad)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          The primary control for location is in the main iOS
+                          Settings.
+                        </li>
+                        <li>Open the Settings app on your iPhone/iPad.</li>
+                        <li>Scroll down and tap on Firefox.</li>
+                        <li>Tap on Location.</li>
+                        <li>
+                          Select <b>While Using the App</b> or{" "}
+                          <b>Ask Next Time Or When I Share</b>.
+                        </li>
+                      </ul>
+                    </details>
+                  </div>
+                </details>
+                {/* Dropdown for Safari */}
+                <details className="mb-2">
+                  <summary className="cursor-pointer font-semibold text-blue-700">
+                    Safari
+                  </summary>
+                  <div className="mt-1 pl-4">
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        macOS (Desktop)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          With Safari open, click Safari in the top menu bar
+                          (next to the Apple logo ).
+                        </li>
+                        <li>Click Settings... (or Preferences...).</li>
+                        <li>Go to the Websites tab.</li>
+                        <li>Click on Location in the left-hand sidebar.</li>
+                        <li>
+                          Find the website in the list on the right and change
+                          its permission to <b>Allow</b>.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        iOS/iPadOS (Mobile)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          The primary control for location is in the main iOS
+                          Settings.
+                        </li>
+                        <li>Open the Settings app on your iPhone/iPad.</li>
+                        <li>Scroll down and tap on Safari.</li>
+                        <li>Scroll down again and tap on Location.</li>
+                        <li>
+                          Select <b>Allow</b> or <b>Ask</b>.
+                        </li>
+                      </ul>
+                    </details>
+                  </div>
+                </details>
+                {/* Dropdown for Microsoft Edge */}
+                <details className="mb-2">
+                  <summary className="cursor-pointer font-semibold text-blue-700">
+                    Microsoft Edge
+                  </summary>
+                  <div className="mt-1 pl-4">
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Desktop
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>Go to the specific website.</li>
+                        <li>Click the lock icon 🔒 in the address bar.</li>
+                        <li>Click Permissions for this site.</li>
+                        <li>
+                          Find Location in the permissions list and change its
+                          setting to <b>Allow</b>.
+                        </li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (Android)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          Tap the three-dots menu (...) at the bottom-center.
+                        </li>
+                        <li>Tap Settings ⚙️.</li>
+                        <li>Tap Privacy and security.</li>
+                        <li>Tap Site permissions.</li>
+                        <li>Tap Location and ensure the main toggle is on.</li>
+                      </ul>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer font-medium text-blue-600">
+                        Mobile (iOS - iPhone/iPad)
+                      </summary>
+                      <ul className="mt-1 list-disc pl-5">
+                        <li>
+                          The primary control for location is in the main iOS
+                          Settings.
+                        </li>
+                        <li>Open the Settings app on your iPhone/iPad.</li>
+                        <li>Scroll down and tap on Edge.</li>
+                        <li>Tap on Location.</li>
+                        <li>
+                          Select <b>While Using the App</b> or{" "}
+                          <b>Ask Next Time Or When I Share</b>.
+                        </li>
+                      </ul>
+                    </details>
+                  </div>
+                </details>
               </div>
-              {/* Municipality/City dropdown */}
-              <div>
-                <label
-                  htmlFor="municipality"
-                  className="mb-1 block font-semibold text-gray-700"
-                >
-                  Municipality/City
-                </label>
-                <select
-                  id="municipality"
-                  value={municipality}
-                  onChange={(e) => setMunicipality(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                  required
-                  disabled={!province}
-                >
-                  <option value="" disabled>
-                    Select municipality/city
-                  </option>
-                  {municipalityOptions.map((mun) => (
-                    <option key={mun} value={mun}>
-                      {mun}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button type="submit" className="btn-primary mt-2 w-full">
-                Save Location
-              </button>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -186,7 +369,9 @@ const ClientHomePage: React.FC = () => {
         {/* Header: displays welcome and location */}
         <Header
           className="mb-6 w-full max-w-full"
-          manualLocation={userLocation}
+          manualLocation={
+            locationStatus === "allowed" && geoLocation ? geoLocation : null
+          }
         />
         {/* Categories section */}
         <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>

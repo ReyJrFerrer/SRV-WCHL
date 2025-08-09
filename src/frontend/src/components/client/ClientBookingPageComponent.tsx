@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import phLocations from "../../data/ph_locations.json";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -11,7 +11,6 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import useBookRequest, { BookingRequest } from "../../hooks/bookRequest";
-import { useHeaderLocation } from "../../hooks/useHeaderLocation";
 
 // --- Payment Section Sub-Component ---
 
@@ -143,47 +142,83 @@ const ClientBookingPageComponent: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  // --- Barangay dropdown options ---
-  // (Already declared above, remove duplicate)
-  // --- Routing and Context ---
+  // --- Routing ---
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
-  const routerLocation = useLocation();
-  // --- Location context from Header.tsx ---
-  const { headerManualFields } = useHeaderLocation();
-  // Debug: log context value on every render
-  console.log("[BookingPage] useHeaderLocation value:", headerManualFields);
-  // --- Address display (from header context, kept in state for reactivity) ---
+  // --- Location detection state ---
+  const [locationStatus, setLocationStatus] = useState<
+    "detecting" | "allowed" | "denied"
+  >("detecting");
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
+    null,
+  );
   const [displayMunicipality, setDisplayMunicipality] = useState<string>("");
   const [displayProvince, setDisplayProvince] = useState<string>("");
+  // --- Detect location on mount ---
   useEffect(() => {
-    console.log("[BookingPage] Location effect triggered");
-    console.log(
-      "[BookingPage] headerManualFields.municipality:",
-      headerManualFields?.municipality,
+    if (!navigator.geolocation) {
+      setLocationStatus("denied");
+      return;
+    }
+    setLocationStatus("detecting");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocationStatus("allowed");
+        setLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+        setMarkerPosition([pos.coords.latitude, pos.coords.longitude]);
+      },
+      () => {
+        setLocationStatus("denied");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
     );
-    console.log(
-      "[BookingPage] headerManualFields.province:",
-      headerManualFields?.province,
-    );
-    console.log(
-      "[BookingPage] routerLocation.pathname:",
-      routerLocation.pathname,
-    );
-    setDisplayMunicipality(headerManualFields?.municipality || "");
-    setDisplayProvince(headerManualFields?.province || "");
-    // Reset address fields when location changes
-    setStreet("");
-    setHouseNumber("");
-    setLandmark("");
-    setSelectedBarangay("");
-  }, [
-    headerManualFields?.municipality,
-    headerManualFields?.province,
-    routerLocation.pathname,
-  ]);
-  // Remove unused displayAddress state
-
+  }, []);
+  // --- Reverse geocode to get municipality/city and province ---
+  useEffect(() => {
+    if (locationStatus === "allowed" && location) {
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.address) {
+            const {
+              city,
+              town,
+              municipality,
+              village,
+              county,
+              state,
+              region,
+              province,
+            } = data.address;
+            setDisplayMunicipality(
+              city || town || municipality || village || "",
+            );
+            setDisplayProvince(county || state || region || province || "");
+            console.log(
+              "[DEBUG] Set municipality:",
+              city || town || municipality || village || "",
+            );
+            console.log(
+              "[DEBUG] Set province:",
+              county || state || region || province || "",
+            );
+          }
+        })
+        .catch(() => {
+          setDisplayMunicipality("");
+          setDisplayProvince("");
+        });
+    }
+  }, [locationStatus, location]);
   // --- Service and booking data (from hook) ---
   const {
     service,
@@ -200,25 +235,64 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Barangay dropdown options ---
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
+  const [otherBarangay, setOtherBarangay] = useState("");
   useEffect(() => {
     let foundBarangays: string[] = [];
-    if (displayMunicipality) {
+    const cityNorm = (displayMunicipality || "").trim().toLowerCase();
+    const provNorm = (displayProvince || "").trim().toLowerCase();
+    console.log(
+      "[DEBUG] Normalized city:",
+      cityNorm,
+      "Normalized province:",
+      provNorm,
+    );
+
+    // Always search for Baguio City under Benguet if city is Baguio
+    const isBaguio = cityNorm === "baguio" || cityNorm === "baguio city";
+    if (isBaguio) {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const baguio = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "baguio city",
+      );
+      if (baguio && Array.isArray(baguio.barangays)) {
+        foundBarangays = baguio.barangays;
+        console.log(
+          "[DEBUG] Using Baguio City barangays from JSON:",
+          foundBarangays,
+        );
+      } else {
+        console.log("[DEBUG] Baguio City not found in JSON");
+      }
+    } else if (cityNorm) {
+      // General lookup for other cities
+      let matched = false;
       for (const province of phLocations.provinces) {
         for (const muni of province.municipalities) {
           if (
             typeof muni === "object" &&
-            muni.name === displayMunicipality &&
+            muni.name.trim().toLowerCase() === cityNorm &&
             Array.isArray(muni.barangays)
           ) {
             foundBarangays = muni.barangays as string[];
+            matched = true;
+            console.log(
+              `[DEBUG] Found barangays for ${cityNorm}:`,
+              foundBarangays,
+            );
             break;
           }
         }
+        if (matched) break;
+      }
+      if (!matched) {
+        console.log(`[DEBUG] No barangays found for ${cityNorm}`);
       }
     }
     if (foundBarangays.length > 0) {
       setBarangayOptions(foundBarangays);
-    } else if (displayMunicipality) {
+    } else if (cityNorm) {
       setBarangayOptions(
         Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
       );
@@ -227,7 +301,7 @@ const ClientBookingPageComponent: React.FC = () => {
     }
     setSelectedBarangay("");
     // --- Notes change handler ---
-  }, [displayMunicipality]);
+  }, [displayMunicipality, displayProvince]);
   // --- Load service and packages on mount ---
   useEffect(() => {
     if (serviceId) loadServiceData(serviceId);
@@ -302,7 +376,19 @@ const ClientBookingPageComponent: React.FC = () => {
     setIsSubmitting(true);
     try {
       // Validate required address fields
-      if (!selectedBarangay.trim()) {
+      if (selectedBarangay === "__other__") {
+        if (
+          !otherBarangay ||
+          otherBarangay.trim().length < 3 ||
+          otherBarangay.trim().length > 20
+        ) {
+          setFormError(
+            "Please enter a valid barangay name (3-20 characters) for 'Others'.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (!selectedBarangay.trim()) {
         setFormError("Please select your Barangay before proceeding.");
         setIsSubmitting(false);
         return;
@@ -357,10 +443,12 @@ const ClientBookingPageComponent: React.FC = () => {
         finalScheduledDate = selectedDate;
       }
       // Build address string from manual entry and header context
+      const barangayValue =
+        selectedBarangay === "__other__" ? otherBarangay : selectedBarangay;
       const finalAddress = [
         houseNumber,
         street,
-        selectedBarangay,
+        barangayValue,
         displayMunicipality,
         displayProvince,
         landmark,
@@ -711,35 +799,58 @@ const ClientBookingPageComponent: React.FC = () => {
                 <div className="mt-2 space-y-3">
                   {/* The Municipality/City and Province below are sourced from Header.tsx context */}
                   <p className="text-xs text-gray-600">
-                    Please enter your address manually. Municipality and
-                    Province are already set from your header location:
+                    Your location is automatically detected. You may drag the
+                    map marker to adjust. Municipality/City and Province will
+                    update accordingly.
                   </p>
-                  <div className="mb-2 w-full rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm">
+                  <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <label className="mb-1 block text-xs text-gray-500">
+                        <label className="mb-1 block text-xs text-blue-700">
                           Municipality/City
                         </label>
                         <input
                           type="text"
                           value={displayMunicipality}
                           readOnly
-                          className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
+                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="mb-1 block text-xs text-gray-500">
+                        <label className="mb-1 block text-xs text-blue-700">
                           Province
                         </label>
                         <input
                           type="text"
                           value={displayProvince}
                           readOnly
-                          className="w-full border-none bg-gray-100 font-semibold text-gray-700 capitalize"
+                          className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                         />
                       </div>
                     </div>
                   </div>
+                  {locationStatus === "allowed" && markerPosition && (
+                    <div className="mb-2">
+                      {/* <MapContainer
+                        center={markerPosition}
+                        zoom={15}
+                        scrollWheelZoom={false}
+                        style={{ height: "220px", width: "100%", zIndex: 0 }}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker
+                          position={markerPosition}
+                          draggable={true}
+                          eventHandlers={{ dragend: handleMarkerDragEnd }}
+                        >
+                          <Popup>Drag me to adjust your location!</Popup>
+                        </Marker>
+                      </MapContainer> */}
+                    </div>
+                  )}
                   {/* Barangay dropdown populated from ph_locations.json */}
                   <select
                     value={selectedBarangay}
@@ -754,7 +865,20 @@ const ClientBookingPageComponent: React.FC = () => {
                         {barangay}
                       </option>
                     ))}
+                    <option value="__other__">Others</option>
                   </select>
+                  {selectedBarangay === "__other__" && (
+                    <input
+                      type="text"
+                      placeholder="Enter your Barangay *"
+                      value={otherBarangay}
+                      onChange={(e) => setOtherBarangay(e.target.value)}
+                      className="mt-3 w-full rounded-xl border border-blue-400 bg-white p-3 text-sm text-gray-700 capitalize"
+                      minLength={3}
+                      maxLength={20}
+                      required
+                    />
+                  )}
                   {/* Street Name input, enabled after barangay selection */}
                   <input
                     type="text"

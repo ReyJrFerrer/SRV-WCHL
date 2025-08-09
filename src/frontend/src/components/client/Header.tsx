@@ -1,3 +1,4 @@
+// --- Imports ---
 import React, { useState, useEffect } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,13 +8,13 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Props for Header component
-interface HeaderProps {
+// --- Props ---
+export interface HeaderProps {
   className?: string;
   manualLocation?: { province: string; municipality: string } | null;
 }
 
-// Fix leaflet marker icon for proper display
+// --- Fix leaflet marker icon for proper display ---
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -24,26 +25,22 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
+// --- Main Header Component ---
+const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
   const navigate = useNavigate();
-  const {
-    isAuthenticated,
-    location: geoLocation,
-    locationStatus,
-    isLoading: isAuthLoading,
-  } = useAuth();
-  // manualLocation prop is used directly for display
-  // User profile state
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // --- State: Geolocation for map modal ---
+  const [geoLocation, setGeoLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  // --- State: User profile ---
   const [profile, setProfile] = useState<any>(null);
-  // Search bar state
+
+  // --- State: Search bar ---
   const [searchQuery, setSearchQuery] = useState("");
-  // Location display state
-  const [userAddress, setUserAddress] = useState<string>("Unknown");
-  const [userProvince, setUserProvince] = useState<string>("");
-  const [locationLoading, setLocationLoading] = useState(true);
-  // Modal for denied location permission
-  const [showDeniedModal, setShowDeniedModal] = useState(false);
-  // Search bar placeholder options
   const searchPlaceholders = [
     "Looking for a plumber?",
     "Looking for an electrician?",
@@ -57,11 +54,42 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
     "Looking for a babysitter?",
   ];
   const [placeholder, setPlaceholder] = useState(searchPlaceholders[0]);
-  // Show/hide map modal
+
+  // --- State: Location display ---
+  const [userAddress, setUserAddress] = useState<string>("");
+  const [userProvince, setUserProvince] = useState<string>("");
+  const [locationLoading, setLocationLoading] = useState(true);
+
+  // --- State: Modal for denied location permission ---
+  const [showDeniedModal, setShowDeniedModal] = useState(false);
+
+  // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
 
   // Effect: fetch user profile and location info after auth
+  // --- Effect: Fetch user profile and detect location on mount ---
   useEffect(() => {
+    // Helper: retry fetch with delay (for OpenStreetMap reverse geocoding)
+    const fetchWithRetry = async (
+      url: string,
+      attempts: number,
+      delayMs: number,
+    ): Promise<any> => {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Fetch failed");
+          return await res.json();
+        } catch (err) {
+          if (i < attempts - 1) {
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+          }
+        }
+      }
+      throw new Error("All fetch attempts failed");
+    };
+
+    // Main: load profile and location
     const loadInitialData = async () => {
       // Fetch user profile if authenticated
       if (isAuthenticated) {
@@ -69,91 +97,87 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
           const userProfile = await authCanisterService.getMyProfile();
           setProfile(userProfile);
         } catch (error) {
-          // Profile fetch failed
+          /* Profile fetch failed */
         }
       }
-      // Fetch and set location info
       setLocationLoading(true);
-      if (locationStatus === "allowed" && geoLocation) {
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${geoLocation.latitude}&lon=${geoLocation.longitude}`,
-          );
-          const data = await res.json();
-          if (data && data.address) {
-            const {
-              house_number,
-              building,
-              road,
-              suburb,
-              city,
-              town,
-              village,
-              county,
-              state,
-            } = data.address;
-            const province =
-              county ||
-              state ||
-              data.address.region ||
-              data.address.province ||
-              "";
-            const houseOrBuilding = house_number || building || "";
-            const streetPart = road || "";
-            const areaPart = suburb || village || "";
-            const cityPart = city || town || "";
-            const fullAddress = [
-              houseOrBuilding,
-              streetPart,
-              areaPart,
-              cityPart,
-            ]
-              .filter(Boolean)
-              .join(", ");
-            setUserAddress(fullAddress || "Could not determine address");
-            setUserProvince(province);
-          } else {
-            setUserAddress("Could not determine address");
-          }
-        } catch (error) {
-          setUserAddress("Could not determine address");
-        } finally {
-          setLocationLoading(false);
-        }
+      // Request geolocation from browser
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            setGeoLocation({ latitude, longitude });
+            try {
+              const data = await fetchWithRetry(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+                3, // attempts
+                1500, // delay ms
+              );
+              const province =
+                data.address.county ||
+                data.address.state ||
+                data.address.region ||
+                data.address.province ||
+                "";
+              const municipality =
+                data.address.city ||
+                data.address.town ||
+                data.address.village ||
+                "";
+              setUserProvince(province);
+              setUserAddress(municipality);
+              setLocationLoading(false);
+            } catch (err) {
+              setUserAddress("Could not determine address");
+              setUserProvince("");
+              setLocationLoading(false);
+            }
+          },
+          () => {
+            // Permission denied or error
+            setLocationLoading(false);
+            setUserAddress("");
+            setUserProvince("");
+            setGeoLocation(null);
+          },
+        );
       } else {
-        // Location not allowed or not set
         setLocationLoading(false);
-        switch (locationStatus) {
-          case "denied":
-            setUserAddress("Location not shared");
-            break;
-          case "not_set":
-          case "unsupported":
-          default:
-            setUserAddress("Location not set");
-            break;
-        }
+        setUserAddress("");
+        setUserProvince("");
+        setGeoLocation(null);
       }
     };
     if (!isAuthLoading) {
       loadInitialData();
     }
-    // Randomize search bar placeholder
-    setPlaceholder(
-      searchPlaceholders[Math.floor(Math.random() * searchPlaceholders.length)],
-    );
-  }, [isAuthenticated, isAuthLoading, geoLocation, locationStatus]);
+    // Only run once after auth loads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isAuthLoading]);
 
-  // Handler: go to profile page
+  // --- Effect: Randomize search bar placeholder after location loads ---
+  useEffect(() => {
+    if (!locationLoading && !isAuthLoading) {
+      setPlaceholder(
+        searchPlaceholders[
+          Math.floor(Math.random() * searchPlaceholders.length)
+        ],
+      );
+    }
+  }, [locationLoading, isAuthLoading]);
+
+  // --- Handler: go to profile page ---
   const handleProfileClick = () => {
     navigate("/client/profile");
   };
-  // Display name for welcome message
+
+  // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
 
-  // Map modal for showing user's location
+  // --- Map Modal: Shows user's detected location on a map ---
   const MapModal: React.FC = () => {
-    if (!geoLocation || locationStatus !== "allowed") return null;
+    if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
+      return null;
     // Close modal if background is clicked
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) {
@@ -203,7 +227,7 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
     <header
       className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
     >
-      {/* Desktop header: logo, welcome, profile button */}
+      {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-6">
           <Link to="/client/home">
@@ -233,7 +257,7 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
         )}
       </div>
 
-      {/* Mobile header: logo, welcome, profile button */}
+      {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
       <div className="md:hidden">
         <div className="flex items-center justify-between">
           <Link to="/client/home">
@@ -261,7 +285,7 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
         </div>
       </div>
 
-      {/* Location & search section */}
+      {/* --- Location & Search Section --- */}
       <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
@@ -272,33 +296,30 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
           </div>
         </div>
         <div className="mt-2 flex items-center gap-2">
-          {manualLocation &&
-          manualLocation.province &&
-          manualLocation.municipality ? (
-            <span className="font-medium text-blue-900">
-              {manualLocation.municipality}, {manualLocation.province}
-            </span>
-          ) : locationLoading || isAuthLoading ? (
+          {locationLoading || isAuthLoading ? (
             <span className="animate-pulse text-gray-500">
               Detecting location...
             </span>
-          ) : (
-            <span
-              role="button"
-              tabIndex={0}
-              className="cursor-pointer font-medium text-blue-900 transition-all duration-200 select-text hover:text-lg hover:underline focus:outline-none"
+          ) : userAddress && userProvince ? (
+            <button
+              type="button"
+              className="font-medium text-blue-900 transition-all duration-200 hover:text-lg hover:text-blue-700 focus:outline-none"
               style={{ textDecoration: "none" }}
               onClick={() => setShowMap(true)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") setShowMap(true);
-              }}
-              aria-label="Show my location on map"
             >
               {userAddress}, {userProvince}
+            </button>
+          ) : manualLocation &&
+            manualLocation.municipality &&
+            manualLocation.province ? (
+            <span className="font-medium text-blue-900">
+              {manualLocation.municipality}, {manualLocation.province}
             </span>
+          ) : (
+            <span className="text-gray-500">Location not set</span>
           )}
         </div>
-        {/* Search bar for service queries */}
+        {/* --- Search Bar for Service Queries --- */}
         <form
           className="mt-4 w-full"
           onSubmit={(e) => {
@@ -322,10 +343,10 @@ const Header: React.FC<HeaderProps> = ({ className = "", manualLocation }) => {
         </form>
       </div>
 
-      {/* Map modal for location display */}
+      {/* --- Map Modal for Location Display --- */}
       {showMap && <MapModal />}
 
-      {/* Modal: location permission denied instructions */}
+      {/* --- Modal: Location Permission Denied Instructions --- */}
       {showDeniedModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"

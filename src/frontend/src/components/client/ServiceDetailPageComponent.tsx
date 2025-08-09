@@ -1000,13 +1000,22 @@ const ServiceDetailPage: React.FC = () => {
                   >
                     <img
                       src={
-                        userImageUrl == "/default-provider.svg"
-                          ? `/images/ai-sp/${service.category.slug}.svg`
-                          : userImageUrl
+                        userImageUrl &&
+                        userImageUrl !== "/default-provider.svg" &&
+                        userImageUrl !== "" &&
+                        userImageUrl !== undefined
+                          ? userImageUrl
+                          : service?.category?.slug
+                            ? `/images/ai-sp/${service.category.slug}.svg`
+                            : "/default-provider.svg"
                       }
                       alt={providerName}
                       className="h-full w-full rounded-full object-cover"
                       style={{ borderRadius: "50%" }}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/default-provider.svg";
+                      }}
                     />
                   </div>
                   <div className="mt-2 flex items-center">
