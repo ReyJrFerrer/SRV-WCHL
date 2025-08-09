@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import Header from "../../components/client/Header";
 import Categories from "../../components/client/Categories";
 import ServiceList from "../../components/client/ServiceListReact";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useBookingManagement } from "../../hooks/bookingManagement";
+import {
+  ArrowPathRoundedSquareIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/solid";
 
 // --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
@@ -22,6 +27,9 @@ const ClientHomePage: React.FC = () => {
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   // --- State: Star rating for feedback ---
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
+  // --- State: Button loading for provider CTA ---
+  const [beProviderLoading, setBeProviderLoading] = useState(false);
+  const { switchRole } = useUserProfile();
 
   // --- Effect: Set page title and check geolocation permission status on mount ---
   useEffect(() => {
@@ -75,7 +83,7 @@ const ClientHomePage: React.FC = () => {
 
   // --- Render: Client Home Page Layout ---
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-20">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-32">
       {/* Feedback popup after first completed booking */}
       {showFeedbackPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -447,6 +455,46 @@ const ClientHomePage: React.FC = () => {
         />
         {/* Service list section */}
         <ServiceList className="w-full max-w-full" />
+      </div>
+      {/* Call-to-action: Become a SRVice Provider (non-sticky) */}
+      <div className="flex w-full flex-col items-center justify-center">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center rounded-2xl border border-blue-100 bg-white p-6 shadow-lg">
+          <h3 className="mb-2 text-center text-lg font-semibold text-blue-700">
+            Not enough services in your area?
+          </h3>
+          <p className="mb-4 text-center text-sm text-gray-700">
+            Be a{" "}
+            <span className="font-bold text-blue-700">SRVice Provider</span> and
+            add more to your City/Municipality!
+          </p>
+          <button
+            className="group flex w-full items-center justify-between rounded-2xl bg-yellow-300 p-5 text-left transition-all hover:bg-blue-600"
+            onClick={async () => {
+              setBeProviderLoading(true);
+              const success = await switchRole();
+              if (success) {
+                window.location.href = "/provider";
+              } else {
+                setBeProviderLoading(false);
+              }
+            }}
+            disabled={beProviderLoading}
+          >
+            <div className="flex items-center">
+              <ArrowPathRoundedSquareIcon
+                className={`mr-4 h-7 w-7 text-black transition-transform duration-300 group-hover:text-white ${beProviderLoading ? "animate-spin" : ""}`}
+              />
+              <span
+                className={`text-lg font-semibold text-gray-800 group-hover:text-white ${beProviderLoading ? "opacity-70" : ""}`}
+              >
+                {beProviderLoading ? "Switching..." : "Be a SRVice Provider"}
+              </span>
+            </div>
+            <ChevronRightIcon
+              className={`h-6 w-6 text-black group-hover:text-white ${beProviderLoading ? "opacity-70" : ""}`}
+            />
+          </button>
+        </div>
       </div>
       {/* Bottom navigation bar */}
       <BottomNavigation />
