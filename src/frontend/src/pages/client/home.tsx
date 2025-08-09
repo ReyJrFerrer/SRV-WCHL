@@ -11,7 +11,13 @@ const ClientHomePage: React.FC = () => {
   // --- State: Service category error ---
   const { error } = useServiceManagement();
   // --- State: Location permission and manual input modal ---
-  const [, setLocationBlocked] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<
+    "pending" | "allowed" | "denied"
+  >("pending");
+  const [geoLocation, setGeoLocation] = useState<{
+    province: string;
+    municipality: string;
+  } | null>(null);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   // --- State: Province and municipality dropdown ---
   const [province, setProvince] = useState("");
@@ -36,32 +42,56 @@ const ClientHomePage: React.FC = () => {
   // --- Effect: Set page title and check geolocation permission status on mount ---
   useEffect(() => {
     document.title = "Home | SRV";
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: "geolocation" }).then((result) => {
-        if (result.state === "denied") {
-          setLocationBlocked(true);
-        }
-      });
-    } else if (navigator.geolocation) {
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        () => {},
-        (err) => {
-          if (err.code === 1) {
-            setLocationBlocked(true);
+        async (position) => {
+          // Permission accepted
+          const { latitude, longitude } = position.coords;
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            );
+            const data = await res.json();
+            const province =
+              data.address.county ||
+              data.address.state ||
+              data.address.region ||
+              data.address.province ||
+              "";
+            const municipality =
+              data.address.city ||
+              data.address.town ||
+              data.address.village ||
+              "";
+            setGeoLocation({ province, municipality });
+            setLocationStatus("allowed");
+            setShowLocationPrompt(false);
+          } catch {
+            setLocationStatus("denied");
+            setShowLocationPrompt(true);
           }
         },
+        (err) => {
+          // Permission denied
+          setLocationStatus("denied");
+          setShowLocationPrompt(true);
+        },
       );
+    } else {
+      setLocationStatus("denied");
+      setShowLocationPrompt(true);
     }
   }, []);
 
   // --- Effect: Show manual location modal if no manual location is set ---
   useEffect(() => {
-    if (!userLocation) {
+    // Only show manual location prompt if geolocation is denied and no manual location is set
+    if (locationStatus === "denied" && !userLocation) {
       setShowLocationPrompt(true);
     } else {
       setShowLocationPrompt(false);
     }
-  }, [userLocation]);
+  }, [locationStatus, userLocation]);
 
   // --- Effect: Update municipality dropdown when province changes ---
   useEffect(() => {
@@ -186,7 +216,11 @@ const ClientHomePage: React.FC = () => {
         {/* Header: displays welcome and location */}
         <Header
           className="mb-6 w-full max-w-full"
-          manualLocation={userLocation}
+          manualLocation={
+            locationStatus === "allowed" && geoLocation
+              ? geoLocation
+              : userLocation
+          }
         />
         {/* Categories section */}
         <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>
