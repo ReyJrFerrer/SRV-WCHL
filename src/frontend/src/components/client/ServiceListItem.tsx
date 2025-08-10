@@ -44,8 +44,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       loading: false,
     };
 
-    console.log("From Service List Item", fetchedService);
-
     // Define layout classes based on props
     const itemWidthClass = isGridItem
       ? "w-full" // Full width for grid items
