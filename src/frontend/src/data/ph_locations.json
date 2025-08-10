@@ -314,7 +314,30 @@
             "Tebag"
           ]
         },
-        { "name": "San Jacinto" },
+        {
+          "name": "San Jacinto",
+          "barangays": [
+            "Awai",
+            "Bari",
+            "Bolo",
+            "Capaoay",
+            "Casibong",
+            "Guibel",
+            "Imelda (Decrito)",
+            "Laban",
+            "Lobong",
+            "Macayug",
+            "Magsaysay",
+            "Poblacion East",
+            "Poblacion West",
+            "San Guillermo",
+            "San Jose",
+            "San Juan",
+            "San Roque",
+            "San Vicente",
+            "Santa Cruz"
+          ]
+        },
         {
           "name": "Dagupan",
           "barangays": [

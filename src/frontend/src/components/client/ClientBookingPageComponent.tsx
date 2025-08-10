@@ -287,16 +287,29 @@ const ClientBookingPageComponent: React.FC = () => {
         foundBarangays = tuba.barangays;
       }
     }
-    // Special case: Mapandan in Pangasinan
-    else if (cityNorm === "mapandan" && provinceNorm === "pangasinan") {
+    // Special case: Pangasinan municipalities
+    else if (
+      (provinceNorm === "pangasinan" &&
+        [
+          "mapandan",
+          "manaoag",
+          "san fabian",
+          "mangaldan",
+          "sta. barbara",
+          "san jacinto",
+          "calasiao",
+        ].includes(cityNorm)) ||
+      (cityNorm === "dagupan" && provinceNorm === "region 1")
+    ) {
+      // Use Pangasinan province for Dagupan as well
       const pangasinan = phLocations.provinces.find(
         (prov: any) => prov.name.trim().toLowerCase() === "pangasinan",
       );
-      const mapandan = pangasinan?.municipalities.find(
-        (muni: any) => muni.name.trim().toLowerCase() === "mapandan",
+      const muni = pangasinan?.municipalities.find(
+        (m: any) => m.name.trim().toLowerCase() === cityNorm,
       );
-      if (mapandan && Array.isArray(mapandan.barangays)) {
-        foundBarangays = mapandan.barangays;
+      if (muni && Array.isArray(muni.barangays)) {
+        foundBarangays = muni.barangays;
       }
     }
     // General lookup for other cities/municipalities
