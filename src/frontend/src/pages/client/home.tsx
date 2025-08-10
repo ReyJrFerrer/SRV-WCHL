@@ -10,9 +10,12 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
+import { useNavigate } from "react-router-dom";
 
 // --- Client Home Page ---
 const ClientHomePage: React.FC = () => {
+  // Navigation
+  const navigate = useNavigate();
   // --- State: Service category error ---
   const { error } = useServiceManagement();
   // --- State: Location permission ---
@@ -473,7 +476,7 @@ const ClientHomePage: React.FC = () => {
               setBeProviderLoading(true);
               const success = await switchRole();
               if (success) {
-                window.location.href = "/provider";
+                navigate("/provider/home");
               } else {
                 setBeProviderLoading(false);
               }

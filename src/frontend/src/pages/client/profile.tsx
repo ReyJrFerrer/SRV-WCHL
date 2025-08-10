@@ -1,3 +1,22 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeftIcon,
+  PencilIcon,
+  CameraIcon,
+  BriefcaseIcon,
+  CheckBadgeIcon,
+  CurrencyEuroIcon,
+  CalendarIcon,
+  ArrowPathRoundedSquareIcon,
+  ChevronRightIcon, // Added for the switch button
+  InformationCircleIcon,
+} from "@heroicons/react/24/solid";
+import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
+import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
+import { useLogout } from "../../hooks/logout";
+import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
+import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 interface AboutReputationScoreModalProps {
   show: boolean;
   onClose: () => void;
@@ -76,25 +95,6 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
     </div>
   );
 };
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeftIcon,
-  PencilIcon,
-  CameraIcon,
-  BriefcaseIcon,
-  CheckBadgeIcon,
-  CurrencyEuroIcon,
-  CalendarIcon,
-  ArrowPathRoundedSquareIcon,
-  ChevronRightIcon, // Added for the switch button
-  InformationCircleIcon,
-} from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/client/BottomNavigation"; // Adjust path as needed
-import { useUserProfile } from "../../hooks/useUserProfile"; // Adjust path as needed
-import { useLogout } from "../../hooks/logout";
-import { useReputation } from "../../hooks/useReputation"; // Import the reputation hook
-import { useClientAnalytics } from "../../hooks/useClientAnalytics"; // Import the client analytics hook
 
 // TrustLevelBadge: Displays the user's trust level badge in the profile reputation section
 interface TrustLevelBadgeProps {
