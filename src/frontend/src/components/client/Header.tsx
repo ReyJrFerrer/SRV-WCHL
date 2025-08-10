@@ -296,28 +296,30 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
           </div>
         </div>
         <div className="mt-2 flex items-center gap-2">
-          {locationLoading || isAuthLoading ? (
-            <span className="animate-pulse text-gray-500">
-              Detecting location...
-            </span>
-          ) : userAddress && userProvince ? (
-            <button
-              type="button"
-              className="font-medium text-blue-900 transition-all duration-200 hover:text-lg hover:text-blue-700 focus:outline-none"
-              style={{ textDecoration: "none" }}
-              onClick={() => setShowMap(true)}
-            >
-              {userAddress}, {userProvince}
-            </button>
-          ) : manualLocation &&
-            manualLocation.municipality &&
-            manualLocation.province ? (
-            <span className="font-medium text-blue-900">
-              {manualLocation.municipality}, {manualLocation.province}
-            </span>
-          ) : (
-            <span className="text-gray-500">Location not set</span>
-          )}
+          <div className="flex w-full items-center justify-start">
+            {locationLoading || isAuthLoading ? (
+              <span className="animate-pulse text-gray-500">
+                Detecting location...
+              </span>
+            ) : userAddress && userProvince ? (
+              <button
+                type="button"
+                className="text-left font-medium text-blue-900 transition-all duration-200 hover:text-lg hover:text-blue-700 focus:outline-none"
+                style={{ textDecoration: "none" }}
+                onClick={() => setShowMap(true)}
+              >
+                {userAddress}, {userProvince}
+              </button>
+            ) : manualLocation &&
+              manualLocation.municipality &&
+              manualLocation.province ? (
+              <span className="text-left font-medium text-blue-900">
+                {manualLocation.municipality}, {manualLocation.province}
+              </span>
+            ) : (
+              <span className="text-left text-gray-500">Location not set</span>
+            )}
+          </div>
         </div>
         {/* --- Search Bar for Service Queries --- */}
         <form

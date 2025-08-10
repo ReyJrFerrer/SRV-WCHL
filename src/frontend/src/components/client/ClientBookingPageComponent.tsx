@@ -203,14 +203,6 @@ const ClientBookingPageComponent: React.FC = () => {
               city || town || municipality || village || "",
             );
             setDisplayProvince(county || state || region || province || "");
-            console.log(
-              "[DEBUG] Set municipality:",
-              city || town || municipality || village || "",
-            );
-            console.log(
-              "[DEBUG] Set province:",
-              county || state || region || province || "",
-            );
           }
         })
         .catch(() => {
@@ -239,17 +231,13 @@ const ClientBookingPageComponent: React.FC = () => {
   useEffect(() => {
     let foundBarangays: string[] = [];
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
-    const provNorm = (displayProvince || "").trim().toLowerCase();
-    console.log(
-      "[DEBUG] Normalized city:",
-      cityNorm,
-      "Normalized province:",
-      provNorm,
-    );
+    const provinceNorm = (displayProvince || "").trim().toLowerCase();
 
-    // Always search for Baguio City under Benguet if city is Baguio
-    const isBaguio = cityNorm === "baguio" || cityNorm === "baguio city";
-    if (isBaguio) {
+    // Special case: Baguio City in Benguet
+    if (
+      (cityNorm === "baguio" || cityNorm === "baguio city") &&
+      provinceNorm === "benguet"
+    ) {
       const benguet = phLocations.provinces.find(
         (prov: any) => prov.name.trim().toLowerCase() === "benguet",
       );
@@ -258,15 +246,74 @@ const ClientBookingPageComponent: React.FC = () => {
       );
       if (baguio && Array.isArray(baguio.barangays)) {
         foundBarangays = baguio.barangays;
-        console.log(
-          "[DEBUG] Using Baguio City barangays from JSON:",
-          foundBarangays,
-        );
-      } else {
-        console.log("[DEBUG] Baguio City not found in JSON");
       }
-    } else if (cityNorm) {
-      // General lookup for other cities
+    }
+    // Special case: La Trinidad in Benguet
+    else if (
+      (cityNorm === "la trinidad" || cityNorm === "latrinidad") &&
+      provinceNorm === "benguet"
+    ) {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const laTrinidad = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "la trinidad",
+      );
+      if (laTrinidad && Array.isArray(laTrinidad.barangays)) {
+        foundBarangays = laTrinidad.barangays;
+      }
+    }
+    // Special case: Itogon in Benguet
+    else if (cityNorm === "itogon" && provinceNorm === "benguet") {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const itogon = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "itogon",
+      );
+      if (itogon && Array.isArray(itogon.barangays)) {
+        foundBarangays = itogon.barangays;
+      }
+    }
+    // Special case: Tuba in Benguet
+    else if (cityNorm === "tuba" && provinceNorm === "benguet") {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const tuba = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "tuba",
+      );
+      if (tuba && Array.isArray(tuba.barangays)) {
+        foundBarangays = tuba.barangays;
+      }
+    }
+    // Special case: Pangasinan municipalities
+    else if (
+      (provinceNorm === "pangasinan" &&
+        [
+          "mapandan",
+          "manaoag",
+          "san fabian",
+          "mangaldan",
+          "sta. barbara",
+          "san jacinto",
+          "calasiao",
+        ].includes(cityNorm)) ||
+      (cityNorm === "dagupan" && provinceNorm === "region 1")
+    ) {
+      // Use Pangasinan province for Dagupan as well
+      const pangasinan = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "pangasinan",
+      );
+      const muni = pangasinan?.municipalities.find(
+        (m: any) => m.name.trim().toLowerCase() === cityNorm,
+      );
+      if (muni && Array.isArray(muni.barangays)) {
+        foundBarangays = muni.barangays;
+      }
+    }
+    // General lookup for other cities/municipalities
+    else if (cityNorm) {
       let matched = false;
       for (const province of phLocations.provinces) {
         for (const muni of province.municipalities) {
@@ -277,25 +324,20 @@ const ClientBookingPageComponent: React.FC = () => {
           ) {
             foundBarangays = muni.barangays as string[];
             matched = true;
-            console.log(
-              `[DEBUG] Found barangays for ${cityNorm}:`,
-              foundBarangays,
-            );
             break;
           }
         }
         if (matched) break;
       }
-      if (!matched) {
-        console.log(`[DEBUG] No barangays found for ${cityNorm}`);
-      }
     }
     if (foundBarangays.length > 0) {
-      setBarangayOptions(foundBarangays);
+      // Add 'Others' option for barangay selection
+      setBarangayOptions([...foundBarangays, "Others"]);
     } else if (cityNorm) {
-      setBarangayOptions(
-        Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
-      );
+      setBarangayOptions([
+        ...Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
+        "Others",
+      ]);
     } else {
       setBarangayOptions([]);
     }
@@ -811,9 +853,14 @@ const ClientBookingPageComponent: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          value={displayMunicipality}
+                          value={
+                            locationStatus === "detecting"
+                              ? "Detecting..."
+                              : displayMunicipality || ""
+                          }
                           readOnly
                           className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                          placeholder="Municipality/City"
                         />
                       </div>
                       <div className="flex-1">
@@ -822,35 +869,22 @@ const ClientBookingPageComponent: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          value={displayProvince}
+                          value={
+                            locationStatus === "detecting"
+                              ? "Detecting..."
+                              : displayProvince || ""
+                          }
                           readOnly
                           className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
+                          placeholder="Province"
                         />
                       </div>
                     </div>
                   </div>
                   {locationStatus === "allowed" && markerPosition && (
-                    <div className="mb-2">
-                      {/* <MapContainer
-                        center={markerPosition}
-                        zoom={15}
-                        scrollWheelZoom={false}
-                        style={{ height: "220px", width: "100%", zIndex: 0 }}
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <Marker
-                          position={markerPosition}
-                          draggable={true}
-                          eventHandlers={{ dragend: handleMarkerDragEnd }}
-                        >
-                          <Popup>Drag me to adjust your location!</Popup>
-                        </Marker>
-                      </MapContainer> */}
-                    </div>
+                    <div className="mb-2"></div>
                   )}
+
                   {/* Barangay dropdown populated from ph_locations.json */}
                   <select
                     value={selectedBarangay}
@@ -903,7 +937,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   {/* Landmark input, always enabled */}
                   <input
                     type="text"
-                    placeholder="Building/Subdivision Name (optional)"
+                    placeholder="Building / Subdivision / Sitio / etc. (optional)"
                     value={landmark}
                     onChange={(e) => setLandmark(e.target.value)}
                     className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"

@@ -93,9 +93,12 @@ const ClientChatPage: React.FC = () => {
                     const otherUserName =
                       conversationSummary.otherUserName ||
                       `User ${otherUserId.slice(0, 8)}...`;
-                    // Use otherUserImageUrl (profile image) if available, fallback to default image
+                    // Use otherUserImageUrl (profile image) if available, fallback to default-provider image
                     const otherUserImageUrl =
-                      conversationSummary.otherUserImageUrl;
+                      conversationSummary.otherUserImageUrl &&
+                      conversationSummary.otherUserImageUrl !== ""
+                        ? conversationSummary.otherUserImageUrl
+                        : "";
 
                     // Get unread count for current user
                     const unreadEntry = conversation.unreadCount.find(

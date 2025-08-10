@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
 import { reviewCanisterService } from "../../services/reviewCanisterService";
 import { authCanisterService } from "../../services/authCanisterService";
+import { resolveAssetPath } from "../../utils/assetResolver";
+import { useProfileImage } from "../../hooks/useMediaLoader";
 import {
   CalendarDaysIcon,
   MapPinIcon,
@@ -63,9 +65,34 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   // --- Extract booking data with fallbacks ---
   const serviceTitle = booking.serviceName;
-  const serviceImage =
-    booking.providerProfile?.profilePicture?.imageUrl ||
-    "/default-provider.svg";
+  // Use useProfileImage for provider profile picture
+  const { profileImageUrl: providerImage } = useProfileImage(
+    booking.providerProfile?.profilePicture?.imageUrl,
+    { placeholder: "/default-provider.svg" },
+  );
+  // Fallback to service category slug if profile image is missing or default
+  let fallbackImage = providerImage;
+  if (
+    !providerImage ||
+    providerImage === "/default-provider.svg" ||
+    providerImage === "" ||
+    providerImage === undefined
+  ) {
+    let rawSlug = booking.serviceDetails?.category?.slug;
+    if (rawSlug && typeof rawSlug !== "string") {
+      rawSlug = String(rawSlug);
+    }
+    if (!rawSlug && booking.serviceDetails?.title) {
+      rawSlug = booking.serviceDetails.title.toLowerCase().replace(/\s+/g, "-");
+    }
+    if (rawSlug) {
+      fallbackImage =
+        resolveAssetPath(`images/ai-sp/${rawSlug}.svg`) ||
+        "/default-provider.svg";
+    } else {
+      fallbackImage = "/default-provider.svg";
+    }
+  }
   const providerName = booking.providerProfile?.name;
 
   const bookingLocation =
@@ -254,12 +281,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
     >
       <div className="md:flex">
-        {serviceImage && (
+        {fallbackImage && (
           <div className="md:flex-shrink-0">
             <div className="relative h-48 w-full object-cover md:w-48">
               <img
-                src={serviceImage}
-                alt={serviceTitle!}
+                src={fallbackImage}
+                alt={providerName || serviceTitle || "Provider"}
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/default-provider.svg";
