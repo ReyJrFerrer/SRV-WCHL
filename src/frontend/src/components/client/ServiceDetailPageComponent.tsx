@@ -1166,7 +1166,7 @@ const ServiceDetailPage: React.FC = () => {
                 Creating{" "}
               </>
             ) : null}
-            <span className="text-base font-semibold">Chat</span>
+            <span className="text-base font-semibold"> Chat</span>
           </button>
           {/* Book Now button (right, wider and more prominent) */}
           <div
