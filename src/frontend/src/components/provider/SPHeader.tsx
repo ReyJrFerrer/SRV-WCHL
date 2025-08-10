@@ -6,6 +6,20 @@ import authCanisterService, {
   FrontendProfile,
 } from "../../services/authCanisterService";
 import { useProviderNotifications } from "../../hooks/useProviderNotifications"; // Import the hook
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// --- Fix leaflet marker icon for proper display ---
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 interface SPHeaderProps {
   className?: string;
@@ -25,26 +39,45 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);
 
+  // --- State: Show/hide map modal ---
+  const [showMap, setShowMap] = useState(false);
+
   // Use the provider notifications hook
   const { unreadCount } = useProviderNotifications();
 
-  // --- REFACTORED: Combined data fetching into a single, efficient hook ---
+  // --- Effect: Fetch user profile and update location address ---
   useEffect(() => {
-    // This function will run only when authentication is no longer loading.
     const loadInitialData = async () => {
-      // 1. Fetch User Profile if authenticated (still good to have for displayName)
+      // Fetch user profile if authenticated
       if (isAuthenticated) {
         try {
           const userProfile = await authCanisterService.getMyProfile();
           setProfile(userProfile);
         } catch (error) {
-          console.error("Failed to fetch profile:", error);
+          /* Profile fetch failed */
         }
       }
 
-      // 2. Determine and Set Location
+      // Handle location address display
       setLocationLoading(true);
       if (locationStatus === "allowed" && location) {
+        // Check if we have cached address data
+        const cachedAddress = localStorage.getItem(
+          `address_${location.latitude}_${location.longitude}`,
+        );
+        if (cachedAddress) {
+          try {
+            const { address, province } = JSON.parse(cachedAddress);
+            setUserAddress(address);
+            setUserProvince(province);
+            setLocationLoading(false);
+            return;
+          } catch {
+            // Cache is corrupted, continue with API call
+          }
+        }
+
+        // Fetch address from API
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
@@ -65,13 +98,23 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
             const fullAddress = [streetPart, areaPart, cityPart]
               .filter(Boolean)
               .join(", ");
-            setUserAddress(fullAddress || "Could not determine address");
+            const finalAddress = fullAddress || "Could not determine address";
+
+            setUserAddress(finalAddress);
             setUserProvince(province);
+
+            // Cache the address for faster subsequent loads
+            localStorage.setItem(
+              `address_${location.latitude}_${location.longitude}`,
+              JSON.stringify({ address: finalAddress, province }),
+            );
           } else {
             setUserAddress("Could not determine address");
+            setUserProvince("");
           }
         } catch (error) {
           setUserAddress("Could not determine address");
+          setUserProvince("");
         } finally {
           setLocationLoading(false);
         }
@@ -88,10 +131,10 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
             setUserAddress("Location not set");
             break;
         }
+        setUserProvince("");
       }
     };
 
-    // Only run the data fetching logic after the initial auth check is complete.
     if (!isAuthLoading) {
       loadInitialData();
     }
@@ -109,10 +152,12 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
         (error) => {
           console.error("Error getting location:", error);
           setLocation("denied");
+          setLocationLoading(false);
         },
       );
     } else {
       setLocation("unsupported");
+      setLocationLoading(false);
     }
   }, [setLocation]);
 
@@ -122,6 +167,54 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
   };
 
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
+
+  // --- Map Modal: Shows user's detected location on a map ---
+  const MapModal: React.FC = () => {
+    if (!location || !location.latitude || !location.longitude) return null;
+
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        setShowMap(false);
+      }
+    };
+
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+        onClick={handleBackdropClick}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="relative flex h-[70vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-lg">
+          {/* Close Button */}
+          <button
+            className="absolute top-3 right-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+            onClick={() => setShowMap(false)}
+            aria-label="Close map"
+            tabIndex={0}
+          >
+            <span className="text-xl font-bold text-gray-700">&times;</span>
+          </button>
+          <div className="flex-1 overflow-hidden rounded-b-lg">
+            <MapContainer
+              center={[location.latitude, location.longitude]}
+              zoom={16}
+              scrollWheelZoom={true}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[location.latitude, location.longitude]}>
+                <Popup>You are here</Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <header
@@ -198,10 +291,20 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
               <span className="animate-pulse text-gray-500">
                 Detecting location...
               </span>
+            ) : locationStatus === "allowed" &&
+              location &&
+              userAddress &&
+              userProvince ? (
+              <button
+                type="button"
+                className="text-left font-medium text-blue-900 transition-all duration-200 hover:text-lg hover:text-blue-700 focus:outline-none"
+                style={{ textDecoration: "none" }}
+                onClick={() => setShowMap(true)}
+              >
+                {userAddress}, {userProvince}
+              </button>
             ) : (
-              <span className="cursor-pointer font-medium text-blue-900 transition-all duration-200 select-text hover:text-lg hover:underline focus:outline-none">
-                {userAddress} {userProvince}
-              </span>
+              <span className="text-gray-600">{userAddress}</span>
             )}
           </div>
         </div>
@@ -218,6 +321,9 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
             </button>
           )}
       </div>
+
+      {/* --- Map Modal for Location Display --- */}
+      {showMap && <MapModal />}
     </header>
   );
 };

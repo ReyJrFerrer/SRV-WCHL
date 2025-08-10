@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add service-level certificate verification system with PDF and image certificate uploads replacing user-level verification
 - Add frontend service image management hooks and utilities with support for galleries
 - Integrate image processing utilities in service creation workflow with support for optional image uploads
+
+### Fixed
+
+- Fix location persistence across browser sessions and page reloads in client header
+- Fix location state synchronization between context and component in header component
 - Add immediate UI feedback for service image upload and removal operations with proper Save/Cancel workflow
 
 ### Changed

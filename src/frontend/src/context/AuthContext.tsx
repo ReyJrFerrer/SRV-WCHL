@@ -92,7 +92,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Only use manual location from localStorage for address context
+  // Initialize location from localStorage on mount
   useEffect(() => {
     const manualLocationRaw = localStorage.getItem("manualLocation");
     let manualLocation: { municipality?: string; province?: string } | null =
@@ -102,8 +102,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         manualLocation = JSON.parse(manualLocationRaw);
       } catch {}
     }
-    setLocationStatus("unsupported");
-    setLocationState(null);
     if (
       manualLocation &&
       manualLocation.municipality &&
@@ -170,7 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  // --- NEW: Function to update location state ---
+  // --- Function to update location state ---
   const setLocation = (
     status: LocationStatus,
     newLocation?: Location | null,
@@ -178,6 +176,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLocationStatus(status);
     if (newLocation) {
       setLocationState(newLocation);
+      // Store location in localStorage for persistence
+      localStorage.setItem("userLocation", JSON.stringify(newLocation));
+    } else if (status !== "allowed") {
+      // Clear stored location if status is not allowed
+      localStorage.removeItem("userLocation");
+      setLocationState(null);
     }
     // Store the permission status to avoid asking on every visit
     localStorage.setItem("locationPermission", status);
