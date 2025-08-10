@@ -1163,7 +1163,7 @@ const ServiceDetailPage: React.FC = () => {
             {chatLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
-                Creating
+                Creating{" "}
               </>
             ) : null}
             <span className="text-base font-semibold">Chat</span>
