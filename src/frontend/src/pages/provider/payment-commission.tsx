@@ -11,10 +11,10 @@ const PaymentProviderCommission: React.FC = () => {
     name: "Your Company Name",
     number: "0917-XXX-XXXX",
   };
-  
+
   // Hardcoded outstanding balance for demonstration.
   // In a real app, this would be passed as a prop or fetched from an API.
-  const outstandingBalance = 340.00;
+  const outstandingBalance = 340.0;
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -50,7 +50,7 @@ const PaymentProviderCommission: React.FC = () => {
     //   console.error('Error submitting payment:', error);
     //   alert("Failed to submit payment. Please try again.");
     // });
-    
+
     console.log("Submitting payment proof:", { amountPaid, receipt });
     alert("Payment proof submitted! Awaiting admin verification.");
 
@@ -60,24 +60,26 @@ const PaymentProviderCommission: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="container mx-auto px-4 pt-6 sm:px-6 lg:px-8">
       <h1 className="mb-6 text-xl font-extrabold text-black sm:text-2xl md:text-3xl">
         Pay Commission
       </h1>
 
-      <div className="max-w-md mx-auto rounded-lg bg-white p-8 shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Outstanding Balance:</h2>
-        <p className="text-4xl font-bold text-red-600 mb-6">₱{outstandingBalance.toFixed(2)}</p>
+      <div className="mx-auto max-w-md rounded-lg bg-white p-8 shadow-md">
+        <h2 className="mb-4 text-xl font-semibold">Outstanding Balance:</h2>
+        <p className="mb-6 text-4xl font-bold text-red-600">
+          ₱{outstandingBalance.toFixed(2)}
+        </p>
 
-        <h2 className="text-lg font-semibold mb-2">Company GCash Details:</h2>
+        <h2 className="mb-2 text-lg font-semibold">Company GCash Details:</h2>
         <p className="mb-4">
           <span className="font-medium">Name:</span> {gcashDetails.name} <br />
           <span className="font-medium">Number:</span> {gcashDetails.number}
         </p>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Amount Paid
             </label>
             <input
@@ -90,27 +92,24 @@ const PaymentProviderCommission: React.FC = () => {
             />
           </div>
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Upload Receipt
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100"
+              className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
             />
             {receipt && (
-              <p className="mt-2 text-sm text-gray-500">Selected file: {receipt.name}</p>
+              <p className="mt-2 text-sm text-gray-500">
+                Selected file: {receipt.name}
+              </p>
             )}
           </div>
           <button
             type="submit"
-            className="w-full rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
           >
             Submit Proof of Payment
           </button>

@@ -298,7 +298,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         </div>
         <button
           onClick={handlePayClick} // Add the onClick handler
-          className="w-full rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:w-auto"
+          className="w-full rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none md:w-auto"
         >
           Pay Commission
         </button>

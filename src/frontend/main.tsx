@@ -67,7 +67,7 @@ import ProviderReceipt from "./src/pages/provider/receipt/[bookingId]";
 // Provider Review
 import ProviderReview from "./src/pages/provider/review/[id]";
 
-// Provider Payment Commission 
+// Provider Payment Commission
 import PaymentProviderCommission from "./src/pages/provider/payment-commission";
 
 // Context
@@ -182,7 +182,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               <Route path="review/:id" element={<ProviderReview />} />
 
               {/* Payment Commission Route */}
-              <Route path="payment-commission" element={<PaymentProviderCommission />} />
+              <Route
+                path="payment-commission"
+                element={<PaymentProviderCommission />}
+              />
             </Route>
           </Routes>
         </AuthProvider>
