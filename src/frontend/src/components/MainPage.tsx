@@ -76,7 +76,7 @@ export default function MainPage({
                   Internet Identity protects your privacy and security,{" "}
                   <strong>
                     allowing you to use SRV without sharing personal passwords.
-                  </strong>
+                  </strong>{" "}
                   It helps keep your account safe and enables trusted
                   interactions on the platform.
                 </span>
@@ -135,12 +135,12 @@ export default function MainPage({
               {isLoginLoading ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                  <span className="text-xs">Connecting...</span>
+                  <span className="text-base">Connecting...</span>
                 </>
               ) : (
                 <>
                   <FingerPrintIcon className="h-4 w-4" />
-                  <span className="text-xs">Login / Sign Up</span>
+                  <span className="text-base">Login / Sign Up</span>
                 </>
               )}
             </button>
@@ -268,9 +268,9 @@ export default function MainPage({
 
             <p className="hero-description mx-auto mb-8 max-w-2xl text-center text-lg text-gray-700 md:text-2xl">
               Finding reliable help for everyday tasks can be a challenge.
-              <strong className="text-blue-700">SRV</strong> is your platform to
-              easily discover, compare, and book a wide range of local service
-              providers.
+              <strong className="text-blue-700"> SRV</strong> is your platform
+              to easily discover, compare, and book a wide range of local
+              service providers.
             </p>
 
             <div className="hero-buttons flex justify-center">
