@@ -233,10 +233,12 @@ const ClientBookingPageComponent: React.FC = () => {
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
     const provinceNorm = (displayProvince || "").trim().toLowerCase();
 
-    // Special case: Baguio City in Benguet
+    // Special case: Baguio City in Benguet or Cordillera region
     if (
       (cityNorm === "baguio" || cityNorm === "baguio city") &&
-      provinceNorm === "benguet"
+      ["benguet", "cordillera administrative region", "car", "region"].includes(
+        provinceNorm,
+      )
     ) {
       const benguet = phLocations.provinces.find(
         (prov: any) => prov.name.trim().toLowerCase() === "benguet",
@@ -841,9 +843,7 @@ const ClientBookingPageComponent: React.FC = () => {
                 <div className="mt-2 space-y-3">
                   {/* The Municipality/City and Province below are sourced from Header.tsx context */}
                   <p className="text-xs text-gray-600">
-                    Your location is automatically detected. You may drag the
-                    map marker to adjust. Municipality/City and Province will
-                    update accordingly.
+                    Your location is automatically detected.
                   </p>
                   <div className="mb-2 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
                     <div className="flex gap-2">
