@@ -1,5 +1,5 @@
 // --- Imports ---
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -26,15 +26,15 @@ L.Icon.Default.mergeOptions({
 });
 
 // --- Main Header Component ---
-const Header: React.FC<HeaderProps> = ({ className }) => {
+const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
   const navigate = useNavigate();
-  const {
-    isAuthenticated,
-    isLoading: isAuthLoading,
-    location,
-    setLocation,
-    locationStatus,
-  } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // --- State: Geolocation for map modal ---
+  const [geoLocation, setGeoLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   // --- State: User profile ---
   const [profile, setProfile] = useState<any>(null);
@@ -66,8 +66,30 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
 
-  // --- Effect: Fetch user profile and update location address ---
+  // Effect: fetch user profile and location info after auth
+  // --- Effect: Fetch user profile and detect location on mount ---
   useEffect(() => {
+    // Helper: retry fetch with delay (for OpenStreetMap reverse geocoding)
+    const fetchWithRetry = async (
+      url: string,
+      attempts: number,
+      delayMs: number,
+    ): Promise<any> => {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Fetch failed");
+          return await res.json();
+        } catch (err) {
+          if (i < attempts - 1) {
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+          }
+        }
+      }
+      throw new Error("All fetch attempts failed");
+    };
+
+    // Main: load profile and location
     const loadInitialData = async () => {
       // Fetch user profile if authenticated
       if (isAuthenticated) {
@@ -78,108 +100,60 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-
-      // Handle location address display
       setLocationLoading(true);
-      if (locationStatus === "allowed" && location) {
-        // Check if we have cached address data
-        const cachedAddress = localStorage.getItem(
-          `address_${location.latitude}_${location.longitude}`,
-        );
-        if (cachedAddress) {
-          try {
-            const { address, province } = JSON.parse(cachedAddress);
-            setUserAddress(address);
-            setUserProvince(province);
+      // Request geolocation from browser
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            setGeoLocation({ latitude, longitude });
+            try {
+              const data = await fetchWithRetry(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+                3, // attempts
+                1500, // delay ms
+              );
+              const province =
+                data.address.county ||
+                data.address.state ||
+                data.address.region ||
+                data.address.province ||
+                "";
+              const municipality =
+                data.address.city ||
+                data.address.town ||
+                data.address.village ||
+                "";
+              setUserProvince(province);
+              setUserAddress(municipality);
+              setLocationLoading(false);
+            } catch (err) {
+              setUserAddress("Could not determine address");
+              setUserProvince("");
+              setLocationLoading(false);
+            }
+          },
+          () => {
+            // Permission denied or error
             setLocationLoading(false);
-            return;
-          } catch {
-            // Cache is corrupted, continue with API call
-          }
-        }
-
-        // Fetch address from API
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
-          );
-          const data = await res.json();
-          if (data && data.address) {
-            const { road, suburb, city, town, village, county, state } =
-              data.address;
-            const province =
-              county ||
-              state ||
-              data.address.region ||
-              data.address.province ||
-              "";
-            const streetPart = road || "";
-            const areaPart = suburb || village || "";
-            const cityPart = city || town || "";
-            const fullAddress = [streetPart, areaPart, cityPart]
-              .filter(Boolean)
-              .join(", ");
-            const finalAddress = fullAddress || "Could not determine address";
-
-            setUserAddress(finalAddress);
-            setUserProvince(province);
-
-            // Cache the address for faster subsequent loads
-            localStorage.setItem(
-              `address_${location.latitude}_${location.longitude}`,
-              JSON.stringify({ address: finalAddress, province }),
-            );
-          } else {
-            setUserAddress("Could not determine address");
+            setUserAddress("");
             setUserProvince("");
-          }
-        } catch (error) {
-          setUserAddress("Could not determine address");
-          setUserProvince("");
-        } finally {
-          setLocationLoading(false);
-        }
+            setGeoLocation(null);
+          },
+        );
       } else {
-        // Handle cases where location is not yet known or denied
         setLocationLoading(false);
-        switch (locationStatus) {
-          case "denied":
-            setUserAddress("Location not shared");
-            break;
-          case "not_set":
-          case "unsupported":
-          default:
-            setUserAddress("Location not set");
-            break;
-        }
+        setUserAddress("");
         setUserProvince("");
+        setGeoLocation(null);
       }
     };
-
     if (!isAuthLoading) {
       loadInitialData();
     }
-  }, [isAuthenticated, isAuthLoading, location, locationStatus]);
-  const handleRequestLocation = useCallback(() => {
-    setLocationLoading(true);
-    setUserAddress("Detecting location...");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation("allowed", { latitude, longitude });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocation("denied");
-          setLocationLoading(false);
-        },
-      );
-    } else {
-      setLocation("unsupported");
-      setLocationLoading(false);
-    }
-  }, [setLocation]);
+    // Only run once after auth loads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isAuthLoading]);
 
   // --- Effect: Randomize search bar placeholder after location loads ---
   useEffect(() => {
@@ -202,14 +176,14 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- Map Modal: Shows user's detected location on a map ---
   const MapModal: React.FC = () => {
-    if (!location || !location.latitude || !location.longitude) return null;
-
+    if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
+      return null;
+    // Close modal if background is clicked
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) {
         setShowMap(false);
       }
     };
-
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
@@ -229,7 +203,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </button>
           <div className="flex-1 overflow-hidden rounded-b-lg">
             <MapContainer
-              center={[location.latitude, location.longitude]}
+              center={[geoLocation.latitude, geoLocation.longitude]}
               zoom={16}
               scrollWheelZoom={true}
               style={{ height: "100%", width: "100%" }}
@@ -238,7 +212,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <Marker position={[location.latitude, location.longitude]}>
+              <Marker position={[geoLocation.latitude, geoLocation.longitude]}>
                 <Popup>You are here</Popup>
               </Marker>
             </MapContainer>
@@ -327,10 +301,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               <span className="animate-pulse text-gray-500">
                 Detecting location...
               </span>
-            ) : locationStatus === "allowed" &&
-              location &&
-              userAddress &&
-              userProvince ? (
+            ) : userAddress && userProvince ? (
               <button
                 type="button"
                 className="text-left font-medium text-blue-900 transition-all duration-200 hover:text-lg hover:text-blue-700 focus:outline-none"
@@ -339,22 +310,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               >
                 {userAddress}, {userProvince}
               </button>
+            ) : manualLocation &&
+              manualLocation.municipality &&
+              manualLocation.province ? (
+              <span className="text-left font-medium text-blue-900">
+                {manualLocation.municipality}, {manualLocation.province}
+              </span>
             ) : (
-              <span className="text-gray-600">{userAddress}</span>
+              <span className="text-left text-gray-500">Location not set</span>
             )}
           </div>
         </div>
-        {!locationLoading &&
-          (locationStatus === "denied" ||
-            locationStatus === "not_set" ||
-            locationStatus === "unsupported") && (
-            <button
-              onClick={handleRequestLocation}
-              className="mt-2 w-full rounded-lg bg-yellow-300 p-2 text-center text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
-            >
-              Share Location
-            </button>
-          )}
         {/* --- Search Bar for Service Queries --- */}
         <form
           className="mt-4 w-full"
