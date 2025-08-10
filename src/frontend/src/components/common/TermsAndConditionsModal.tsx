@@ -12,6 +12,18 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
   onAgree,
 }) => {
   const [checked, setChecked] = useState(false);
+  const [canAgree, setCanAgree] = useState(false);
+  const termsRef = React.useRef<HTMLDivElement>(null);
+
+  // Handler to check if scrolled to bottom
+  const handleScroll = () => {
+    const el = termsRef.current;
+    if (el) {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) {
+        setCanAgree(true);
+      }
+    }
+  };
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -27,7 +39,11 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
         <h2 className="mb-4 text-xl font-bold text-gray-900">
           Terms and Conditions for SRV
         </h2>
-        <div className="mb-6 max-h-64 overflow-y-auto text-sm text-gray-700">
+        <div
+          className="mb-6 max-h-64 overflow-y-auto text-sm text-gray-700"
+          ref={termsRef}
+          onScroll={handleScroll}
+        >
           <p>
             <strong>Effective Date: August 6, 2025</strong>
             <br />
@@ -270,8 +286,12 @@ const TermsAndConditionsModal: React.FC<TermsAndConditionsModalProps> = ({
             checked={checked}
             onChange={() => setChecked(!checked)}
             className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            disabled={!canAgree}
           />
-          <label htmlFor="agree" className="text-sm text-gray-800">
+          <label
+            htmlFor="agree"
+            className={`text-sm text-gray-800 ${!canAgree ? "opacity-50" : ""}`}
+          >
             I agree with the terms and conditions
           </label>
         </div>
