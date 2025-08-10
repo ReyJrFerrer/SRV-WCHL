@@ -231,10 +231,13 @@ const ClientBookingPageComponent: React.FC = () => {
   useEffect(() => {
     let foundBarangays: string[] = [];
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
+    const provinceNorm = (displayProvince || "").trim().toLowerCase();
 
-    // Always search for Baguio City under Benguet if city is Baguio
-    const isBaguio = cityNorm === "baguio" || cityNorm === "baguio city";
-    if (isBaguio) {
+    // Special case: Baguio City in Benguet
+    if (
+      (cityNorm === "baguio" || cityNorm === "baguio city") &&
+      provinceNorm === "benguet"
+    ) {
       const benguet = phLocations.provinces.find(
         (prov: any) => prov.name.trim().toLowerCase() === "benguet",
       );
@@ -244,8 +247,60 @@ const ClientBookingPageComponent: React.FC = () => {
       if (baguio && Array.isArray(baguio.barangays)) {
         foundBarangays = baguio.barangays;
       }
-    } else if (cityNorm) {
-      // General lookup for other cities
+    }
+    // Special case: La Trinidad in Benguet
+    else if (
+      (cityNorm === "la trinidad" || cityNorm === "latrinidad") &&
+      provinceNorm === "benguet"
+    ) {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const laTrinidad = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "la trinidad",
+      );
+      if (laTrinidad && Array.isArray(laTrinidad.barangays)) {
+        foundBarangays = laTrinidad.barangays;
+      }
+    }
+    // Special case: Itogon in Benguet
+    else if (cityNorm === "itogon" && provinceNorm === "benguet") {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const itogon = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "itogon",
+      );
+      if (itogon && Array.isArray(itogon.barangays)) {
+        foundBarangays = itogon.barangays;
+      }
+    }
+    // Special case: Tuba in Benguet
+    else if (cityNorm === "tuba" && provinceNorm === "benguet") {
+      const benguet = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
+      );
+      const tuba = benguet?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "tuba",
+      );
+      if (tuba && Array.isArray(tuba.barangays)) {
+        foundBarangays = tuba.barangays;
+      }
+    }
+    // Special case: Mapandan in Pangasinan
+    else if (cityNorm === "mapandan" && provinceNorm === "pangasinan") {
+      const pangasinan = phLocations.provinces.find(
+        (prov: any) => prov.name.trim().toLowerCase() === "pangasinan",
+      );
+      const mapandan = pangasinan?.municipalities.find(
+        (muni: any) => muni.name.trim().toLowerCase() === "mapandan",
+      );
+      if (mapandan && Array.isArray(mapandan.barangays)) {
+        foundBarangays = mapandan.barangays;
+      }
+    }
+    // General lookup for other cities/municipalities
+    else if (cityNorm) {
       let matched = false;
       for (const province of phLocations.provinces) {
         for (const muni of province.municipalities) {
@@ -261,16 +316,15 @@ const ClientBookingPageComponent: React.FC = () => {
         }
         if (matched) break;
       }
-      if (!matched) {
-        // No match found, do nothing
-      }
     }
     if (foundBarangays.length > 0) {
-      setBarangayOptions(foundBarangays);
+      // Add 'Others' option for barangay selection
+      setBarangayOptions([...foundBarangays, "Others"]);
     } else if (cityNorm) {
-      setBarangayOptions(
-        Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
-      );
+      setBarangayOptions([
+        ...Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
+        "Others",
+      ]);
     } else {
       setBarangayOptions([]);
     }
@@ -870,7 +924,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   {/* Landmark input, always enabled */}
                   <input
                     type="text"
-                    placeholder="Building Name / Subdivision Name / Landmark (optional)"
+                    placeholder="Building / Subdivision / Sitio / etc. (optional)"
                     value={landmark}
                     onChange={(e) => setLandmark(e.target.value)}
                     className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
