@@ -870,7 +870,7 @@ const ClientBookingPageComponent: React.FC = () => {
                   {/* Landmark input, always enabled */}
                   <input
                     type="text"
-                    placeholder="Building/Subdivision Name (optional)"
+                    placeholder="Building Name / Subdivision Name / Landmark (optional)"
                     value={landmark}
                     onChange={(e) => setLandmark(e.target.value)}
                     className="mt-3 w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
