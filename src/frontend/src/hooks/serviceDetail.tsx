@@ -134,7 +134,7 @@ const formatServiceForDetailPage = (
     },
     media: service.imageUrls, // Default empty media array
     requirements: [], // Default empty requirements
-    isVerified: true, // Default value
+    isVerified: service.isVerifiedService, // Default value
     slug: service.id, // Using ID as slug
     heroImage:
       service.category.imageUrl || getCategoryImage(service.category.name),

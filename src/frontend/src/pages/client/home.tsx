@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import Header from "../../components/client/Header";
 import Categories from "../../components/client/Categories";
-import ServiceList from "../../components/client/ServiceListReact";
+import ServiceList from "../../components/client/ServiceListRow";
 import BottomNavigation from "../../components/client/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useBookingManagement } from "../../hooks/bookingManagement";

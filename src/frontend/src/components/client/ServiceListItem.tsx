@@ -22,7 +22,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
   ({ service, isGridItem = false, retainMobileLayout = false }) => {
     // Fetch the latest service data to get isVerified
     const { service: fetchedService } = useServiceById(service.id);
-    const isVerified = fetchedService?.isVerified === true;
+    const isVerified = fetchedService?.isVerified;
     // Use the same logic as ServiceDetailPageComponent for review count
     const { reviews = [], getAverageRating } = useServiceReviews(service.id);
     const visibleReviews = Array.isArray(reviews)
@@ -43,6 +43,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       count: totalReviews,
       loading: false,
     };
+
+    console.log("From Service List Item", fetchedService);
 
     // Define layout classes based on props
     const itemWidthClass = isGridItem
