@@ -96,7 +96,7 @@ module {
     public let DEFAULT_LOCATION : Location = {
         latitude = 16.4145;
         longitude = 120.5960;
-        address = "Session Road, Baguio City";
+        address = "Session Road";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -107,7 +107,7 @@ module {
     public let BURNHAM_PARK_LOCATION : Location = {
         latitude = 16.4167;
         longitude = 120.5933;
-        address = "Burnham Park Area, Baguio City";
+        address = "Burnham Park Area";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -117,7 +117,7 @@ module {
     public let UPPER_SESSION_LOCATION : Location = {
         latitude = 16.4088;
         longitude = 120.5968;
-        address = "Upper Session Road, Baguio City";
+        address = "Upper Session Road";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -127,7 +127,7 @@ module {
     public let MARCOS_HIGHWAY_LOCATION : Location = {
         latitude = 16.4200;
         longitude = 120.5950;
-        address = "Marcos Highway, Baguio City";
+        address = "Marcos Highway";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -137,7 +137,7 @@ module {
     public let MAGSAYSAY_LOCATION : Location = {
         latitude = 16.4110;
         longitude = 120.5980;
-        address = "Magsaysay Avenue, Baguio City";
+        address = "Magsaysay Avenue";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -147,7 +147,7 @@ module {
     public let TEACHER_CAMP_LOCATION : Location = {
         latitude = 16.3985;
         longitude = 120.5995;
-        address = "Teacher's Camp Road, Baguio City";
+        address = "Teacher's Camp Road";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -157,7 +157,7 @@ module {
     public let BAGUIO_CENTER_MALL_LOCATION : Location = {
         latitude = 16.4160;
         longitude = 120.5925;
-        address = "Baguio Center Mall Area, Magsaysay Avenue";
+        address = "Baguio Center Mall Area";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -167,7 +167,7 @@ module {
     public let CAMP_JOHN_HAY_LOCATION : Location = {
         latitude = 16.3950;
         longitude = 120.5850;
-        address = "Camp John Hay, Baguio City";
+        address = "Camp John Hay";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
