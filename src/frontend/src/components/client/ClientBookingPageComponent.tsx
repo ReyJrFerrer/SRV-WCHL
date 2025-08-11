@@ -337,12 +337,15 @@ const ClientBookingPageComponent: React.FC = () => {
       }
     }
     if (foundBarangays.length > 0) {
-      // Add 'Others' option for barangay selection
-      setBarangayOptions([...foundBarangays, "Others"]);
+      // Remove any barangay named 'Others' (case-insensitive, with possible whitespace)
+      setBarangayOptions(
+        foundBarangays.filter(
+          (b) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+        ),
+      );
     } else if (cityNorm) {
       setBarangayOptions([
         ...Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
-        "Others",
       ]);
     } else {
       setBarangayOptions([]);
@@ -905,11 +908,18 @@ const ClientBookingPageComponent: React.FC = () => {
                     <option value="" disabled>
                       Select Barangay *
                     </option>
-                    {barangayOptions.map((barangay, idx) => (
-                      <option key={idx} value={barangay}>
-                        {barangay}
-                      </option>
-                    ))}
+                    {barangayOptions
+                      .filter(
+                        (b) =>
+                          b &&
+                          b.trim().toLowerCase().replace(/\s+/g, "") !==
+                            "others",
+                      )
+                      .map((barangay, idx) => (
+                        <option key={idx} value={barangay}>
+                          {barangay}
+                        </option>
+                      ))}
                     <option value="__other__">Others</option>
                   </select>
                   {selectedBarangay === "__other__" && (
