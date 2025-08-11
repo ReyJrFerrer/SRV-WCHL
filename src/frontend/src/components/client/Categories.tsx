@@ -27,7 +27,7 @@ const getCategoryDisplayName = (name: string): string => {
     return "General Repair";
   if (lowerName.includes("photo")) return "Photography Services";
   if (lowerName.includes("tutor")) return "Tutoring";
-  if (lowerName.includes("others")) return "Others";
+  // Removed 'Others' category
 
   return name;
 };
@@ -54,7 +54,7 @@ const getImageUrlForCategory = (name: string): string => {
   if (lowerName.includes("plumbing")) return "/images/categories/plumber.svg";
   if (lowerName.includes("photo")) return "/images/categories/photographer.svg";
   if (lowerName.includes("tutor")) return "/images/categories/tutoring.svg";
-  if (lowerName.includes("others")) return "/images/categories/others.svg";
+  // Removed 'Others' category image
 
   // Fallback image if no match is found
   return "/images/default-category.svg";
@@ -83,27 +83,19 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       return () => window.removeEventListener("resize", updateMainRowCount);
     }, []);
 
-    const categoriesWithOthers = useMemo(() => {
-      const hasOthers = categories.some(
+    // Remove 'Others' category from categories
+    const categoriesWithoutOthers = useMemo(() => {
+      return categories.filter(
         (cat: ServiceCategory) =>
-          cat.name.toLowerCase().includes("others") ||
-          cat.slug.toLowerCase().includes("others"),
+          !cat.name.toLowerCase().includes("others") &&
+          !cat.slug.toLowerCase().includes("others"),
       );
-      if (hasOthers) return categories;
-      return [
-        ...categories,
-        {
-          id: "others",
-          name: "Others",
-          slug: "others",
-        } as ServiceCategory,
-      ];
     }, [categories]);
 
     const isDesktop =
       typeof window !== "undefined" && window.innerWidth >= 1024;
     const shouldShowMoreButton =
-      !isDesktop && categoriesWithOthers.length > mainRowCount;
+      !isDesktop && categoriesWithoutOthers.length > mainRowCount;
     // Reorder categories according to the specified order
     const categoryOrder = [
       "General Repair",
@@ -115,13 +107,12 @@ const Categories: React.FC<CategoriesProps> = React.memo(
       "Tutoring",
       "Delivery Services",
       "Photography Services",
-      "Others",
     ];
 
     const orderedCategories = useMemo(() => {
       // Map display names to categories
       const displayNameMap = new Map();
-      categoriesWithOthers.forEach((cat) => {
+      categoriesWithoutOthers.forEach((cat) => {
         displayNameMap.set(getCategoryDisplayName(cat.name), cat);
       });
       // Build ordered list
@@ -129,11 +120,11 @@ const Categories: React.FC<CategoriesProps> = React.memo(
         .map((name) => displayNameMap.get(name))
         .filter(Boolean);
       // Add any categories not in the order list at the end
-      const remaining = categoriesWithOthers.filter(
+      const remaining = categoriesWithoutOthers.filter(
         (cat) => !categoryOrder.includes(getCategoryDisplayName(cat.name)),
       );
       return [...ordered, ...remaining];
-    }, [categoriesWithOthers]);
+    }, [categoriesWithoutOthers]);
 
     const mainRowCategories = isDesktop
       ? orderedCategories

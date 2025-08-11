@@ -38,7 +38,7 @@ export default function MainPage({
       {/* Internet Identity Info Modal (top-level, so all buttons trigger it) */}
       {showIdentityInfoModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          className="fixed inset-0 z-50 mt-10 flex items-center justify-center bg-black/70"
           role="dialog"
           aria-modal="true"
           onClick={(e) => {
@@ -55,7 +55,11 @@ export default function MainPage({
               <span className="text-xl font-bold text-gray-700">&times;</span>
             </button>
             <div className="mb-4 flex flex-col items-center">
-              <FingerPrintIcon className="mb-2 h-12 w-12 text-blue-600 drop-shadow" />
+              <img
+                src="/images/srv characters (SVG)/tech guy.svg"
+                alt="Tech Guy"
+                className="mb-2 h-20 w-20 drop-shadow"
+              />
               <h2 className="mb-1 text-2xl font-extrabold text-blue-700">
                 Internet Identity Login
               </h2>
@@ -379,9 +383,10 @@ export default function MainPage({
           <div className="why-choose-content">
             <div className="phone-container">
               <img
-                src="phone-new.png"
+                src="/images/main page assets/phone mockup.png"
                 alt="SRV Mobile App"
                 className="phone-image"
+                style={{ width: "100%", height: "auto", maxWidth: "100%" }}
               />
             </div>
 

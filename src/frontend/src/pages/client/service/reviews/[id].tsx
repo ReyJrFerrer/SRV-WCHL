@@ -4,7 +4,6 @@ import { useUserImage } from "../../../../hooks/useMediaLoader";
 import {
   ArrowLeftIcon,
   StarIcon as StarSolid,
-  UserIcon,
   EyeSlashIcon,
   ArrowPathRoundedSquareIcon,
 } from "@heroicons/react/24/solid";
@@ -361,10 +360,18 @@ const ServiceReviewsPage: React.FC = () => {
                       <img
                         src={review.clientProfile.profilePicture.imageUrl}
                         alt={review.clientName || "Client"}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full rounded-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            "/default-client.svg";
+                        }}
                       />
                     ) : (
-                      <UserIcon className="h-7 w-7 text-blue-400" />
+                      <img
+                        src="/default-client.svg"
+                        alt="Default Client"
+                        className="h-full w-full rounded-full object-cover"
+                      />
                     )}
                   </div>
                   <div className="flex-grow">
@@ -373,12 +380,20 @@ const ServiceReviewsPage: React.FC = () => {
                         {review.clientName || "Anonymous User"}
                       </h4>
                       {review.status !== "Visible" && (
-                        <div className="mt-1 flex items-center text-xs text-blue-400 sm:mt-0">
+                        <div className="mt-1 flex items-center text-xs text-blue-900 sm:mt-0">
                           <EyeSlashIcon className="mr-1 h-4 w-4" />
                           {review.status}
                         </div>
                       )}
                     </div>
+                    {typeof review.clientReputationScore === "number" && (
+                      <span className="mt-1 flex items-center gap-1 text-xs text-blue-900">
+                        Reputation Score:{" "}
+                        <span className="font-bold">
+                          {review.clientReputationScore}
+                        </span>
+                      </span>
+                    )}
                     <div className="flex flex-wrap items-center gap-2 text-xs text-blue-700">
                       <p>{formatReviewDate(review.createdAt)}</p>
                       <span className="hidden sm:inline">•</span>

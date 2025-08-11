@@ -35,8 +35,8 @@ export interface FormattedServiceDetail {
       latitude: number;
       longitude: number;
     };
-    serviceRadius: number;
-    serviceRadiusUnit: string;
+    // serviceRadius: number;
+    // serviceRadiusUnit: string;
   };
   availability: {
     schedule: string[];
@@ -103,13 +103,13 @@ const formatServiceForDetailPage = (
       isNegotiable: false, // Default value, update if available from backend
     },
     location: {
-      address: `${service.location.city}, ${service.location.state}, ${service.location.country}`,
+      address: `${service.location.address}, ${service.location.city}, ${service.location.state}, ${service.location.country}`,
       coordinates: {
         latitude: service.location.latitude,
         longitude: service.location.longitude,
       },
-      serviceRadius: 10, // Default value, update if available from backend
-      serviceRadiusUnit: "km", // Default value, update if available from backend
+      // serviceRadius: 10, // Default value, update if available from backend
+      // serviceRadiusUnit: "km", // Default value, update if available from backend
     },
     availability: {
       schedule: service.weeklySchedule

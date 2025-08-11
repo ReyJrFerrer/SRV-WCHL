@@ -194,20 +194,6 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
     // Update form data
     setFormData((prev: any) => {
       const updated = { ...prev, [name]: value };
-
-      // Build complete address for manual mode
-      if (addressMode === "manual") {
-        const addressParts = [
-          name === "locationHouseNumber" ? value : houseNumber,
-          name === "locationStreet" ? value : street,
-          name === "locationBarangay" ? value : selectedBarangay,
-          name === "locationMunicipalityCity" ? value : selectedMunicipality,
-          name === "locationProvince" ? value : selectedProvince,
-          "Philippines",
-        ].filter((part) => part && part.trim() !== "");
-        updated.locationAddress = addressParts.join(", ");
-      }
-
       return updated;
     });
   };

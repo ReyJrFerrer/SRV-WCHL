@@ -45,6 +45,27 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
   // Use the provider notifications hook
   const { unreadCount } = useProviderNotifications();
 
+  const handleRequestLocation = useCallback(() => {
+    setLocationLoading(true);
+    setUserAddress("Detecting location...");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation("allowed", { latitude, longitude });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocation("denied");
+          setLocationLoading(false);
+        },
+      );
+    } else {
+      setLocation("unsupported");
+      setLocationLoading(false);
+    }
+  }, [setLocation]);
+
   // --- Effect: Fetch user profile and update location address ---
   useEffect(() => {
     const loadInitialData = async () => {
@@ -84,18 +105,16 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
           );
           const data = await res.json();
           if (data && data.address) {
-            const { road, suburb, city, town, village, county, state } =
-              data.address;
+            const { road, city, town, village, county, state } = data.address;
             const province =
               county ||
               state ||
               data.address.region ||
               data.address.province ||
               "";
-            const streetPart = road || "";
-            const areaPart = suburb || village || "";
+            const streetPart = road || village;
             const cityPart = city || town || "";
-            const fullAddress = [streetPart, areaPart, cityPart]
+            const fullAddress = [streetPart, cityPart]
               .filter(Boolean)
               .join(", ");
             const finalAddress = fullAddress || "Could not determine address";
@@ -128,7 +147,7 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
           case "not_set":
           case "unsupported":
           default:
-            setUserAddress("Location not set");
+            handleRequestLocation();
             break;
         }
         setUserProvince("");
@@ -139,27 +158,6 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
       loadInitialData();
     }
   }, [isAuthenticated, isAuthLoading, location, locationStatus]);
-
-  const handleRequestLocation = useCallback(() => {
-    setLocationLoading(true);
-    setUserAddress("Detecting location...");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation("allowed", { latitude, longitude });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocation("denied");
-          setLocationLoading(false);
-        },
-      );
-    } else {
-      setLocation("unsupported");
-      setLocationLoading(false);
-    }
-  }, [setLocation]);
 
   // Changed to navigate to notifications
   const handleNotificationsClick = () => {

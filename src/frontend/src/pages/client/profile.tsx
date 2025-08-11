@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Toast from "../../components/ToastNotifications";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -43,24 +44,20 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
         </h2>
         <div className="mb-4 text-sm text-gray-700">
           <p>
-            Your reputation score is a numeric value (0-100) that reflects your
-            reliability, conduct, and activity on SRV. It helps service
-            providers assess your trustworthiness as a client.
+            Your reputation score (0-100) reflects your reliability and
+            activity. It increases when you complete bookings and get positive
+            ratings, and decreases if you get flagged for suspicious activity or
+            have low activity as a new user.
           </p>
           <ul className="mt-3 list-disc pl-5 text-xs text-gray-600">
-            <li>Completing bookings increases your score.</li>
-            <li>Receiving positive ratings and reviews boosts your score.</li>
             <li>
-              Canceling bookings, negative feedback, or misconduct can lower
-              your score.
+              Completing bookings and getting good ratings increases your score.
             </li>
             <li>
-              Score ranges determine your badge level (see badge info for
-              details).
+              Flags for suspicious activity or low activity as a new user
+              decrease your score.
             </li>
-            <li>
-              Scores update automatically as you interact with the platform.
-            </li>
+            <li>Your badge level is based on your score.</li>
           </ul>
           {reputationDisplay && reputationDisplay.bookings > 0 && (
             <div className="mt-3 text-xs text-gray-500">
@@ -219,7 +216,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
             <div className="flex items-center gap-3">
               <span className="text-2xl">🆕</span>
               <span className="font-semibold text-blue-700">New User</span>
-              <span className="text-xs text-gray-500">Score: 0 - 19</span>
+              <span className="text-xs text-gray-500">Score: 50</span>
             </div>
             <span className="text-xs text-gray-700">
               Signifies: You just joined SRV. Complete your first booking to
@@ -230,7 +227,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚠️</span>
               <span className="font-semibold text-red-700">Low Trust</span>
-              <span className="text-xs text-gray-500">Score: 20 - 39</span>
+              <span className="text-xs text-gray-500">Score: 0.0 - 20.0</span>
             </div>
             <span className="text-xs text-gray-700">
               Signifies: Building trust. Focus on completing bookings and
@@ -243,7 +240,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               <span className="font-semibold text-yellow-700">
                 Medium Trust
               </span>
-              <span className="text-xs text-gray-500">Score: 40 - 59</span>
+              <span className="text-xs text-gray-500">Score: 20.01 - 50.0</span>
             </div>
             <span className="text-xs text-gray-700">
               Signifies: Reliable client. You're building a good reputation!
@@ -254,7 +251,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
             <div className="flex items-center gap-3">
               <span className="text-2xl">🏆</span>
               <span className="font-semibold text-blue-700">High Trust</span>
-              <span className="text-xs text-gray-500">Score: 60 - 79</span>
+              <span className="text-xs text-gray-500">Score: 50.01 - 80.0</span>
             </div>
             <span className="text-xs text-gray-700">
               Signifies: Trusted client. Excellent reputation! Service providers
@@ -267,7 +264,9 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               <span className="font-semibold text-green-700">
                 Very High Trust
               </span>
-              <span className="text-xs text-gray-500">Score: 80 - 100</span>
+              <span className="text-xs text-gray-500">
+                Score: 80.01 - 100.0
+              </span>
             </div>
             <span className="text-xs text-gray-700">
               Signifies: Elite client. Outstanding reputation! You're among the
@@ -519,7 +518,17 @@ const ClientProfilePage: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  // Error states for validation
+  const [nameError, setNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [editError, setEditError] = useState("");
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error";
+  } | null>(null);
 
   // State: Editing profile, switching role, modal visibility, and reputation display
   const [showAboutInfo, setShowAboutInfo] = useState(false);
@@ -552,12 +561,48 @@ const ClientProfilePage: React.FC = () => {
   };
 
   const handleSaveChanges = async () => {
+    // Validation logic
+    setNameError("");
+    setPhoneError("");
+    setEditError("");
+    let valid = true;
+    // Name: at least 2 words, each at least 2 chars
+    const nameTrimmed = name.trim();
+    const nameWords = nameTrimmed.split(/\s+/);
+    if (!nameTrimmed) {
+      setNameError("Full name is required.");
+      valid = false;
+    } else if (nameWords.length < 2) {
+      setNameError("Please enter your full name (first and last).");
+      valid = false;
+    } else if (nameWords.some((w) => w.length < 2)) {
+      setNameError("Each part of your name must be at least 2 characters.");
+      valid = false;
+    }
+    // Phone: must be exactly 11 digits and start with '09'
+    const phoneTrimmed = phone.trim();
+    const phoneDigits = phoneTrimmed.replace(/[^\d]/g, "");
+    if (!phoneTrimmed) {
+      setPhoneError("Phone number is required.");
+      valid = false;
+    } else if (phoneDigits.length !== 11) {
+      setPhoneError("Phone number must be exactly 11 digits.");
+      valid = false;
+    } else if (!phoneDigits.startsWith("09")) {
+      setPhoneError("Phone number must start with '09'.");
+      valid = false;
+    }
+    if (!valid) {
+      setEditError("Please fix the errors above before saving.");
+      return;
+    }
     const success = await updateProfile({ name, phone, imageFile });
     if (success) {
       setIsEditing(false);
       setImageFile(null);
       setPreviewImage(null);
       refetchImage();
+      setToast({ message: "Profile updated successfully!", type: "success" });
     }
   };
 
@@ -581,6 +626,13 @@ const ClientProfilePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
           <button
@@ -648,9 +700,16 @@ const ClientProfilePage: React.FC = () => {
                         type="text"
                         id="name"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (nameError) setNameError("");
+                          if (editError) setEditError("");
+                        }}
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                       />
+                      {nameError && (
+                        <p className="mt-1 text-sm text-red-500">{nameError}</p>
+                      )}
                     </div>
                     <div>
                       <label
@@ -663,9 +722,18 @@ const ClientProfilePage: React.FC = () => {
                         type="tel"
                         id="phone"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (phoneError) setPhoneError("");
+                          if (editError) setEditError("");
+                        }}
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                       />
+                      {phoneError && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {phoneError}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -837,6 +905,9 @@ const ClientProfilePage: React.FC = () => {
             </div>
           </div>
           {/* Error messages (bottom of grid) */}
+          {editError && (
+            <p className="mt-4 text-center text-red-500">{editError}</p>
+          )}
           {error && <p className="mt-4 text-center text-red-500">{error}</p>}
           {reputationError && !error && (
             <p className="mt-4 text-center text-red-500">

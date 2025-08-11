@@ -4,6 +4,8 @@ import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();
+
+  const goToReportPage = () => navigate("/client/report");
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
       <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-10 shadow-2xl">
@@ -42,7 +44,7 @@ const HelpSupportPage: React.FC = () => {
             </li>
             <li>
               <span className="font-semibold">Report a Problem:</span> Use the{" "}
-              <a href="/client/report" className="text-blue-600 underline">
+              <a className="text-blue-600 underline" onClick={goToReportPage}>
                 Report an Issue
               </a>{" "}
               page to let us know about bugs or feedback.

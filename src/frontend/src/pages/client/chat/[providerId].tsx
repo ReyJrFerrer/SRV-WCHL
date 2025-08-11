@@ -1,3 +1,4 @@
+// Chat Conversation Page (Client)
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
@@ -8,16 +9,18 @@ import authCanisterService from "../../../services/authCanisterService";
 import { ProfileImage } from "../../../components/common/ProfileImage";
 
 const ConversationPage: React.FC = () => {
+  // Default image for provider profile
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
+  // Router and context hooks
   const { providerId } = useParams<{ providerId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { identity } = useAuth();
+  // Chat state and actions
   const {
     currentConversation,
     messages,
-    backgroundLoading, // Add backgroundLoading state
     error,
     sendMessage,
     loadConversation,
@@ -25,13 +28,13 @@ const ConversationPage: React.FC = () => {
     sendingMessage,
     getUserName,
   } = useChat();
-
+  // Local state for message input and provider info
   const [messageText, setMessageText] = useState("");
   const [otherUserName, setOtherUserName] = useState<string>("");
   const [otherUserImage, setOtherUserImage] =
     useState<string>(DEFAULT_USER_IMAGE);
 
-  // Get conversation info from location state or use defaults
+  // Set provider name and image from navigation state or profile
   useEffect(() => {
     let isMounted = true;
     if (location.state?.otherUserName) {
@@ -44,27 +47,22 @@ const ConversationPage: React.FC = () => {
     const navImage = location.state?.otherUserImage;
     const isDefault = !navImage || navImage === DEFAULT_USER_IMAGE;
     setOtherUserImage(isDefault ? DEFAULT_USER_IMAGE : navImage);
-
-    // Fetch provider profile if providerId exists, is a valid Principal, and no real image in navigation state
+    // Fetch provider profile image if needed
     const principalRegex = /^[a-z0-9\-]{27,63}$/i;
-    if (isDefault && providerId) {
-      if (principalRegex.test(providerId)) {
-        authCanisterService
-          .getProfile(providerId)
-          .then((profile) => {
-            if (
-              isMounted &&
-              profile &&
-              profile.profilePicture &&
-              profile.profilePicture.imageUrl
-            ) {
-              setOtherUserImage(profile.profilePicture.imageUrl);
-            }
-          })
-          .catch(() => {
-            /* ignore errors, fallback to default already set */
-          });
-      }
+    if (isDefault && providerId && principalRegex.test(providerId)) {
+      authCanisterService
+        .getProfile(providerId)
+        .then((profile) => {
+          if (
+            isMounted &&
+            profile &&
+            profile.profilePicture &&
+            profile.profilePicture.imageUrl
+          ) {
+            setOtherUserImage(profile.profilePicture.imageUrl);
+          }
+        })
+        .catch(() => {});
     }
     return () => {
       isMounted = false;
@@ -75,12 +73,11 @@ const ConversationPage: React.FC = () => {
   useEffect(() => {
     const conversationId = location.state?.conversationId || providerId;
     if (conversationId && identity) {
-      // Use non-silent load for initial conversation loading
       loadConversation(conversationId, false);
     }
   }, [providerId, location.state?.conversationId, identity, loadConversation]);
 
-  // Update user name when conversation loads
+  // Update provider name when conversation loads
   useEffect(() => {
     if (currentConversation && identity) {
       const currentUserId = identity.getPrincipal().toString();
@@ -88,8 +85,6 @@ const ConversationPage: React.FC = () => {
         currentConversation.clientId === currentUserId
           ? currentConversation.providerId
           : currentConversation.clientId;
-
-      // Fetch the other user's name
       getUserName(otherUserId).then(setOtherUserName);
     }
   }, [currentConversation, identity, getUserName]);
@@ -106,7 +101,7 @@ const ConversationPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle sending a new message
+  // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -116,21 +111,18 @@ const ConversationPage: React.FC = () => {
       sendingMessage
     )
       return;
-
     try {
-      // Determine the receiver ID (the other participant in the conversation)
       const currentUserId = identity.getPrincipal().toString();
       const receiverId =
         currentConversation.clientId === currentUserId
           ? currentConversation.providerId
           : currentConversation.clientId;
-
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
     } catch {}
   };
 
-  // Format timestamp for display
+  // Format timestamp for display in chat bubbles
   const formatTimestamp = (date: Date): string => {
     return date.toLocaleTimeString([], {
       hour: "2-digit",
@@ -138,15 +130,17 @@ const ConversationPage: React.FC = () => {
     });
   };
 
-  // Determine if message is from current user
+  // Check if message is sent by current user
   const isFromCurrentUser = (senderId: string): boolean => {
     if (!identity) return false;
     return senderId === identity.getPrincipal().toString();
   };
 
+  // Error state UI
   if (error) {
     return (
       <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
+        {/* Header: Error */}
         <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
           <button
             onClick={() => navigate(-1)}
@@ -158,6 +152,7 @@ const ConversationPage: React.FC = () => {
             <h1 className="text-lg font-bold text-blue-900">Error</h1>
           </div>
         </header>
+        {/* Main: Error message */}
         <main className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <p className="mb-4 text-red-600">{error}</p>
@@ -169,6 +164,7 @@ const ConversationPage: React.FC = () => {
             </button>
           </div>
         </main>
+        {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 z-30 w-full">
           <BottomNavigation />
         </div>
@@ -176,9 +172,10 @@ const ConversationPage: React.FC = () => {
     );
   }
 
+  // Main chat UI
   return (
     <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
-      {/* Header */}
+      {/* Header: Provider Info */}
       <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
         <button
           onClick={() => navigate(-1)}
@@ -200,20 +197,11 @@ const ConversationPage: React.FC = () => {
           </div>
           <div className="ml-3">
             <h1 className="text-lg font-bold text-black">{otherUserName}</h1>
-            <p className="flex items-center text-xs text-gray-500">
-              {currentConversation ? "Active" : "Loading..."}
-              {backgroundLoading && (
-                <span className="ml-2 flex items-center">
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
-                  <span className="ml-1">Updating...</span>
-                </span>
-              )}
-            </p>
           </div>
         </div>
       </header>
 
-      {/* Messages Area */}
+      {/* Main: Messages Area */}
       <main className="flex-1 space-y-4 overflow-y-auto p-4 pb-32">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
@@ -229,6 +217,7 @@ const ConversationPage: React.FC = () => {
                 key={message.id}
                 className={`flex items-end gap-2 ${fromCurrentUser ? "justify-end" : "justify-start"}`}
               >
+                {/* Message sender avatar (if not current user) */}
                 {!fromCurrentUser && (
                   <div className="relative h-9 w-9 flex-shrink-0">
                     <ProfileImage
@@ -242,14 +231,18 @@ const ConversationPage: React.FC = () => {
                     />
                   </div>
                 )}
+                {/* Message bubble */}
                 <div
                   className={`max-w-xs rounded-2xl px-5 py-3 shadow-sm md:max-w-md lg:max-w-lg ${
                     fromCurrentUser
                       ? "rounded-br-none bg-blue-600 text-white"
                       : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
                   }`}
+                  style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
                 >
-                  <p className="text-base leading-snug">{message.content}</p>
+                  <p className="overflow-wrap-anywhere text-base leading-snug break-words">
+                    {message.content}
+                  </p>
                   <p
                     className={`mt-1 text-right text-xs ${
                       fromCurrentUser ? "text-blue-100" : "text-gray-400"
@@ -265,7 +258,7 @@ const ConversationPage: React.FC = () => {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* Message Input */}
+      {/* Message Input Area */}
       <footer className="fixed bottom-16 left-0 z-20 w-full border-t border-gray-200 bg-white p-3 shadow-md">
         <form
           onSubmit={handleSendMessage}
