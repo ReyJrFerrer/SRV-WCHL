@@ -32,8 +32,8 @@ export interface EnrichedService {
     address: string;
     city: string;
     state: string;
-    serviceRadius: number;
-    serviceRadiusUnit: string;
+    serviceDistance: number;
+    serviceDistanceUnit: string;
   };
   category: { name: string; id: string; slug: string };
 
@@ -91,8 +91,8 @@ const transformToEnrichedService = (
       address: service.location.address,
       city: service.location.city,
       state: service.location.state,
-      serviceRadius: 10, // Default radius - could be fetched from actual data if available
-      serviceRadiusUnit: "km",
+      serviceDistance: 10, // Default radius - could be fetched from actual data if available
+      serviceDistanceUnit: "km",
     },
 
     // Category
