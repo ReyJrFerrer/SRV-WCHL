@@ -45,6 +45,27 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
   // Use the provider notifications hook
   const { unreadCount } = useProviderNotifications();
 
+  const handleRequestLocation = useCallback(() => {
+    setLocationLoading(true);
+    setUserAddress("Detecting location...");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation("allowed", { latitude, longitude });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocation("denied");
+          setLocationLoading(false);
+        },
+      );
+    } else {
+      setLocation("unsupported");
+      setLocationLoading(false);
+    }
+  }, [setLocation]);
+
   // --- Effect: Fetch user profile and update location address ---
   useEffect(() => {
     const loadInitialData = async () => {
@@ -126,7 +147,7 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
           case "not_set":
           case "unsupported":
           default:
-            setUserAddress("Location not set");
+            handleRequestLocation();
             break;
         }
         setUserProvince("");
@@ -137,27 +158,6 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
       loadInitialData();
     }
   }, [isAuthenticated, isAuthLoading, location, locationStatus]);
-
-  const handleRequestLocation = useCallback(() => {
-    setLocationLoading(true);
-    setUserAddress("Detecting location...");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation("allowed", { latitude, longitude });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocation("denied");
-          setLocationLoading(false);
-        },
-      );
-    } else {
-      setLocation("unsupported");
-      setLocationLoading(false);
-    }
-  }, [setLocation]);
 
   // Changed to navigate to notifications
   const handleNotificationsClick = () => {

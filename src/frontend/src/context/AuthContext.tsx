@@ -92,29 +92,22 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Initialize location from localStorage on mount
+  // Initialize location from GPS location stored in localStorage on mount
   useEffect(() => {
-    const manualLocationRaw = localStorage.getItem("manualLocation");
-    let manualLocation: { municipality?: string; province?: string } | null =
-      null;
-    if (manualLocationRaw) {
+    // Check for stored GPS location first
+    const storedLocation = localStorage.getItem("userLocation");
+    const storedPermission = localStorage.getItem("locationPermission");
+
+    if (storedLocation && storedPermission === "allowed") {
       try {
-        manualLocation = JSON.parse(manualLocationRaw);
-      } catch {}
-    }
-    if (
-      manualLocation &&
-      manualLocation.municipality &&
-      manualLocation.province
-    ) {
-      setManualFields((prev) => ({
-        ...prev,
-        municipality: manualLocation.municipality,
-        province: manualLocation.province,
-      }));
-      setDisplayAddress(
-        `${manualLocation.municipality}, ${manualLocation.province}`,
-      );
+        const location = JSON.parse(storedLocation);
+        setLocationState(location);
+        setLocationStatus("allowed");
+      } catch {
+        // If parsing fails, clear invalid data
+        localStorage.removeItem("userLocation");
+        localStorage.removeItem("locationPermission");
+      }
     }
   }, []);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);

@@ -65,6 +65,25 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
+  const handleRequestLocation = useCallback(() => {
+    setLocationLoading(true);
+    setUserAddress("Detecting location...");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation("allowed", { latitude, longitude });
+        },
+        () => {
+          setLocation("denied");
+          setLocationLoading(false);
+        },
+      );
+    } else {
+      setLocation("unsupported");
+      setLocationLoading(false);
+    }
+  }, [setLocation]);
 
   // --- Effect: Fetch user profile and update location address ---
   useEffect(() => {
@@ -78,7 +97,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           /* Profile fetch failed */
         }
       }
-
       // Handle location address display
       setLocationLoading(true);
       if (locationStatus === "allowed" && location) {
@@ -118,7 +136,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               .filter(Boolean)
               .join(", ");
             const finalAddress = fullAddress || "Could not determine address";
-            console.log(finalAddress);
 
             setUserAddress(finalAddress);
             setUserProvince(province);
@@ -148,7 +165,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           case "not_set":
           case "unsupported":
           default:
-            setUserAddress("Location not set");
+            handleRequestLocation();
             break;
         }
         setUserProvince("");
@@ -159,26 +176,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       loadInitialData();
     }
   }, [isAuthenticated, isAuthLoading, location, locationStatus]);
-  const handleRequestLocation = useCallback(() => {
-    setLocationLoading(true);
-    setUserAddress("Detecting location...");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation("allowed", { latitude, longitude });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocation("denied");
-          setLocationLoading(false);
-        },
-      );
-    } else {
-      setLocation("unsupported");
-      setLocationLoading(false);
-    }
-  }, [setLocation]);
 
   // --- Effect: Randomize search bar placeholder after location loads ---
   useEffect(() => {
@@ -343,7 +340,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             )}
           </div>
         </div>
-        {!locationLoading &&
+        {/* {!locationLoading &&
           (locationStatus === "denied" ||
             locationStatus === "not_set" ||
             locationStatus === "unsupported") && (
@@ -353,7 +350,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             >
               Share Location
             </button>
-          )}
+          )} */}
         {/* --- Search Bar for Service Queries --- */}
         <form
           className="mt-4 w-full"
