@@ -28,6 +28,10 @@ export interface EnhancedReview extends Review {
 
   // Data loading status
   isProfileDataLoaded?: boolean;
+
+  // Reputation score enrichment
+  clientReputationScore?: number;
+  clientReputationLevel?: string;
 }
 
 // Review analytics interface
@@ -352,11 +356,51 @@ export const useReviewManagement = (
           loadProfile(review.providerId.toString()),
         ]);
 
+        // Fetch client reputation score
+        let clientReputationScore: number | undefined = undefined;
+        let clientReputationLevel: string | undefined = undefined;
+        try {
+          const reputationCanisterService = (
+            await import("../services/reputationCanisterService")
+          ).default;
+          const reputationData =
+            await reputationCanisterService.getReputationScore(
+              review.clientId.toString(),
+            );
+          if (reputationData) {
+            clientReputationScore = Math.round(
+              Number(reputationData.trustScore),
+            );
+            if (reputationData.trustLevel.hasOwnProperty("New"))
+              clientReputationLevel = "New";
+            else if (reputationData.trustLevel.hasOwnProperty("Low"))
+              clientReputationLevel = "Low";
+            else if (reputationData.trustLevel.hasOwnProperty("Medium"))
+              clientReputationLevel = "Medium";
+            else if (reputationData.trustLevel.hasOwnProperty("High"))
+              clientReputationLevel = "High";
+            else clientReputationLevel = "VeryHigh";
+          }
+        } catch (err) {
+          // Fallback: leave undefined
+        }
+
         // Calculate user permissions
         const currentUserId = getCurrentUserId();
         const isOwner = currentUserId === review.clientId.toString();
         const canEdit = isOwner && review.status === "Visible";
         const canDelete = isOwner;
+
+        // Always provide a valid clientAvatar URL or fallback
+        let clientAvatar = undefined;
+        if (
+          clientProfile?.profilePicture?.imageUrl &&
+          clientProfile.profilePicture.imageUrl !== ""
+        ) {
+          clientAvatar = clientProfile.profilePicture.imageUrl;
+        } else {
+          clientAvatar = "/default-client.svg";
+        }
 
         const enhancedReview: EnhancedReview = {
           ...review,
@@ -364,6 +408,9 @@ export const useReviewManagement = (
           providerProfile: providerProfile || undefined,
           clientName: clientProfile?.name || "Anonymous User",
           providerName: providerProfile?.name || "Unknown Provider",
+          clientAvatar,
+          clientReputationScore,
+          clientReputationLevel,
           isOwner,
           canEdit,
           canDelete,
@@ -381,6 +428,7 @@ export const useReviewManagement = (
           ...review,
           clientName: "Anonymous User",
           providerName: "Unknown Provider",
+          clientAvatar: "/default-client.svg",
           formattedDate: formatReviewDate(review.createdAt),
           relativeTime: getRelativeTime(review.createdAt),
           isProfileDataLoaded: false,

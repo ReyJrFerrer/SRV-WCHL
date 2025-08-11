@@ -15,7 +15,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   StarIcon,
   MapPinIcon,
-  UserCircleIcon,
   CheckBadgeIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/solid";
@@ -236,10 +235,35 @@ const ReviewsSection: React.FC<{ serviceId: string }> = ({ serviceId }) => {
               >
                 <div className="mb-3 flex items-center gap-3">
                   <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-yellow-50 shadow">
-                    <UserCircleIcon className="h-10 w-10 text-yellow-400" />
+                    <img
+                      src={
+                        review.clientAvatar ||
+                        (review.clientProfile?.profilePicture?.imageUrl &&
+                        review.clientProfile.profilePicture.imageUrl !== ""
+                          ? review.clientProfile.profilePicture.imageUrl
+                          : undefined) ||
+                        "/default-client.svg"
+                      }
+                      alt={review.clientName || "Client"}
+                      className="h-10 w-10 rounded-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          "/default-client.svg";
+                      }}
+                    />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-800">A Client</p>
+                    <p className="font-bold text-gray-800">
+                      {review.clientName ? review.clientName : "A Client"}
+                    </p>
+                    {typeof review.clientReputationScore === "number" && (
+                      <span className="mt-1 flex items-center gap-1 text-xs text-blue-600">
+                        Reputation Score:{" "}
+                        <span className="font-bold">
+                          {review.clientReputationScore}
+                        </span>
+                      </span>
+                    )}
                     <div className="flex items-center">
                       <StarRatingDisplay rating={review.rating} />
                     </div>
@@ -439,27 +463,13 @@ const CredentialsSection: React.FC<{ isVerified: boolean }> = ({
         <p
           className={`font-semibold ${isVerified ? "text-blue-700" : "text-yellow-700"}`}
         >
-          {isVerified ? "Provider Verified" : "Not Verified"}
+          {isVerified ? "Provider Verified" : "No Credentials Yet"}
         </p>
         <p className="text-sm text-gray-500">
           {isVerified
             ? "Credentials have been successfully verified."
             : "This provider has not uploaded any credentials yet. Once credentials are submitted and verified, they will be displayed here."}
         </p>
-        {!isVerified && (
-          <div className="mt-2 flex items-center gap-2">
-            <span className="inline-block rounded-full bg-yellow-200 px-3 py-1 text-xs font-semibold text-yellow-800">
-              No credentials uploaded
-            </span>
-            <button
-              disabled
-              className="cursor-not-allowed rounded bg-gray-200 px-3 py-1 text-xs text-gray-500"
-              title="Feature coming soon"
-            >
-              Upload Credentials
-            </button>
-          </div>
-        )}
       </div>
     </div>
   </div>

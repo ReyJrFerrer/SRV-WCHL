@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Toast from "../../components/ToastNotifications";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -523,6 +524,12 @@ const ClientProfilePage: React.FC = () => {
   const [editError, setEditError] = useState("");
   const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
+  // Toast notification state
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error";
+  } | null>(null);
+
   // State: Editing profile, switching role, modal visibility, and reputation display
   const [showAboutInfo, setShowAboutInfo] = useState(false);
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);
@@ -595,6 +602,7 @@ const ClientProfilePage: React.FC = () => {
       setImageFile(null);
       setPreviewImage(null);
       refetchImage();
+      setToast({ message: "Profile updated successfully!", type: "success" });
     }
   };
 
@@ -618,6 +626,13 @@ const ClientProfilePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
           <button
