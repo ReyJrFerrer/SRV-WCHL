@@ -84,18 +84,16 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
           );
           const data = await res.json();
           if (data && data.address) {
-            const { road, suburb, city, town, village, county, state } =
-              data.address;
+            const { road, city, town, village, county, state } = data.address;
             const province =
               county ||
               state ||
               data.address.region ||
               data.address.province ||
               "";
-            const streetPart = road || "";
-            const areaPart = suburb || village || "";
+            const streetPart = road || village;
             const cityPart = city || town || "";
-            const fullAddress = [streetPart, areaPart, cityPart]
+            const fullAddress = [streetPart, cityPart]
               .filter(Boolean)
               .join(", ");
             const finalAddress = fullAddress || "Could not determine address";
