@@ -22,7 +22,7 @@ const ClientHomePage: React.FC = () => {
   const [locationStatus, setLocationStatus] = useState<
     "pending" | "allowed" | "denied"
   >("pending");
-  const [geoLocation, setGeoLocation] = useState<{
+  const [, setGeoLocation] = useState<{
     province: string;
     municipality: string;
   } | null>(null);
@@ -443,12 +443,7 @@ const ClientHomePage: React.FC = () => {
       {/* Main content: header, categories, service list */}
       <div className="w-full max-w-full px-4 pt-4 pb-16">
         {/* Header: displays welcome and location */}
-        <Header
-          className="mb-6 w-full max-w-full"
-          manualLocation={
-            locationStatus === "allowed" && geoLocation ? geoLocation : null
-          }
-        />
+        <Header />
         {/* Categories section */}
         <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>
         <Categories
