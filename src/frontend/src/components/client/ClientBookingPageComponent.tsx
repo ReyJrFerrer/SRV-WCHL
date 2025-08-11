@@ -199,10 +199,14 @@ const ClientBookingPageComponent: React.FC = () => {
               region,
               province,
             } = data.address;
-            setDisplayMunicipality(
-              city || town || municipality || village || "",
-            );
-            setDisplayProvince(county || state || region || province || "");
+            let detectedCity = city || town || municipality || village || "";
+            let detectedProvince = county || state || region || province || "";
+            if (detectedCity.trim().toLowerCase() === "baguio")
+              detectedCity = "Baguio City";
+            if (detectedProvince === "Cordillera Administrative Region")
+              detectedProvince = "Benguet";
+            setDisplayMunicipality(detectedCity);
+            setDisplayProvince(detectedProvince);
           }
         })
         .catch(() => {
@@ -856,7 +860,11 @@ const ClientBookingPageComponent: React.FC = () => {
                           value={
                             locationStatus === "detecting"
                               ? "Detecting..."
-                              : displayMunicipality || ""
+                              : (displayMunicipality || "")
+                                    .trim()
+                                    .toLowerCase() === "baguio"
+                                ? "Baguio City"
+                                : displayMunicipality || ""
                           }
                           readOnly
                           className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
@@ -872,7 +880,10 @@ const ClientBookingPageComponent: React.FC = () => {
                           value={
                             locationStatus === "detecting"
                               ? "Detecting..."
-                              : displayProvince || ""
+                              : displayProvince ===
+                                  "Cordillera Administrative Region"
+                                ? "Benguet"
+                                : displayProvince || ""
                           }
                           readOnly
                           className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
