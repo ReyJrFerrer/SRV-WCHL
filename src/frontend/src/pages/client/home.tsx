@@ -443,7 +443,7 @@ const ClientHomePage: React.FC = () => {
       {/* Main content: header, categories, service list */}
       <div className="w-full max-w-full px-4 pt-4 pb-16">
         {/* Header: displays welcome and location */}
-        <Header />
+        <Header className="mb-6 w-full max-w-full" />
         {/* Categories section */}
         <h2 className="mb-2 text-left text-xl font-bold">Categories</h2>
         <Categories

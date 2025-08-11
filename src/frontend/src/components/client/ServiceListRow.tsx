@@ -31,11 +31,11 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
       })}`,
     },
     location: {
-      serviceRadius: service.location?.serviceRadius,
+      serviceDistance: service.location?.serviceDistance,
       address: service.location?.address,
       city: service.location?.city,
       state: service.location?.state,
-      serviceRadiusUnit: service.location?.serviceRadiusUnit,
+      serviceDistanceUnit: service.location?.serviceDistanceUnit,
     },
   });
 
