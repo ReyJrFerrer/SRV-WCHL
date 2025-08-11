@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useServiceManagement } from "../../hooks/serviceManagement";
 import authCanisterService from "../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -11,7 +12,6 @@ import L from "leaflet";
 // --- Props ---
 export interface HeaderProps {
   className?: string;
-  manualLocation?: { province: string; municipality: string } | null;
 }
 
 // --- Fix leaflet marker icon for proper display ---
@@ -26,7 +26,9 @@ L.Icon.Default.mergeOptions({
 });
 
 // --- Main Header Component ---
-const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
+const Header: React.FC<HeaderProps> = ({ className }) => {
+  // --- Service Management Hook ---
+  const { services } = useServiceManagement();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
@@ -41,6 +43,7 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
 
   // --- State: Search bar ---
   const [searchQuery, setSearchQuery] = useState("");
+  // Static search bar placeholders
   const searchPlaceholders = [
     "Looking for a plumber?",
     "Looking for an electrician?",
@@ -65,6 +68,32 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
+
+  // --- State: Search suggestions ---
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // --- Handler: Search input change ---
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (value.trim().length > 0) {
+      // Only use service names for suggestions, not categories
+      const serviceNames = Array.from(
+        new Set(
+          services.map((service) => service.title).filter((name) => !!name),
+        ),
+      );
+      const filtered = serviceNames.filter((suggestion) =>
+        suggestion.toLowerCase().includes(value.toLowerCase()),
+      );
+      setFilteredSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setFilteredSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
 
   // Effect: fetch user profile and location info after auth
   // --- Effect: Fetch user profile and detect location on mount ---
@@ -113,19 +142,68 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
                 3, // attempts
                 1500, // delay ms
               );
-              const province =
-                data.address.county ||
-                data.address.state ||
-                data.address.region ||
-                data.address.province ||
-                "";
-              const municipality =
-                data.address.city ||
-                data.address.town ||
-                data.address.village ||
-                "";
-              setUserProvince(province);
-              setUserAddress(municipality);
+              if (data && data.address) {
+                const {
+                  house_number,
+                  road,
+                  suburb,
+                  city,
+                  town,
+                  village,
+                  county,
+                  state,
+                  region,
+                  province,
+                  barangay,
+                } = data.address;
+                // Special case: Baguio
+                let cityPart = city || town || "";
+                let provinceVal = county || state || region || province || "";
+                if (
+                  (cityPart.toLowerCase() === "baguio" ||
+                    cityPart.toLowerCase() === "baguio city") &&
+                  [
+                    "cordillera administrative region",
+                    "car",
+                    "region",
+                  ].includes(provinceVal.toLowerCase())
+                ) {
+                  cityPart = "Baguio City";
+                  provinceVal = "Benguet";
+                }
+                const streetPart = road || "";
+                const barangayPart = barangay || suburb || village || "";
+                const houseNumPart = house_number || "";
+                const fullAddress = [
+                  houseNumPart,
+                  streetPart,
+                  barangayPart,
+                  cityPart,
+                ]
+                  .filter(Boolean)
+                  .join(", ");
+                const finalAddress =
+                  fullAddress || "Could not determine address";
+                setUserAddress(finalAddress);
+                setUserProvince(provinceVal);
+                // Cache the address for faster subsequent loads
+                if (
+                  location &&
+                  "latitude" in location &&
+                  "longitude" in location
+                ) {
+                  localStorage.setItem(
+                    `address_${location.latitude}_${location.longitude}`,
+                    JSON.stringify({
+                      address: finalAddress,
+                      province: provinceVal,
+                    }),
+                  );
+                }
+              } else {
+                setUserAddress("Could not determine address");
+                setUserProvince("");
+              }
               setLocationLoading(false);
             } catch (err) {
               setUserAddress("Could not determine address");
@@ -169,6 +247,12 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
   // --- Handler: go to profile page ---
   const handleProfileClick = () => {
     navigate("/client/profile");
+  };
+
+  // --- Handler: suggestion click for search bar ---
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
   };
 
   // --- Display name for welcome message ---
@@ -221,6 +305,9 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
       </div>
     );
   };
+
+  // --- Handler: search input change ---
+  // Only one handler should exist. The correct handler is defined above with dynamicSuggestions.
 
   // --- Render: Header layout ---
   return (
@@ -310,12 +397,6 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
               >
                 {userAddress}, {userProvince}
               </button>
-            ) : manualLocation &&
-              manualLocation.municipality &&
-              manualLocation.province ? (
-              <span className="text-left font-medium text-blue-900">
-                {manualLocation.municipality}, {manualLocation.province}
-              </span>
             ) : (
               <span className="text-left text-gray-500">Location not set</span>
             )}
@@ -333,14 +414,29 @@ const Header: React.FC<HeaderProps> = ({ className, manualLocation }) => {
             }
           }}
         >
-          <div className="flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md focus-within:ring-2 focus-within:ring-yellow-300">
+          <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-4 shadow-md focus-within:ring-2 focus-within:ring-yellow-300">
             <input
               type="text"
               className="flex-1 border-none bg-transparent p-0 text-lg text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
               placeholder={placeholder}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchInputChange}
+              onFocus={() => setShowSuggestions(filteredSuggestions.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
             />
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <ul className="absolute top-full left-0 z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                {filteredSuggestions.map((suggestion, idx) => (
+                  <li
+                    key={idx}
+                    className="cursor-pointer px-4 py-2 text-gray-700 hover:bg-blue-50"
+                    onMouseDown={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </form>
       </div>
