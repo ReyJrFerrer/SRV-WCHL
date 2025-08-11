@@ -87,6 +87,8 @@ const formatServiceForDetailPage = (
 ): FormattedServiceDetail => {
   const enriched = enrichServiceWithProvider(service, provider);
 
+  console.log(service);
+
   return {
     id: service.id,
     providerId: service.providerId.toString(),
