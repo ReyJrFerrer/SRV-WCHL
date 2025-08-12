@@ -3,11 +3,11 @@ import { Principal } from "@dfinity/principal";
 import serviceCanisterService, {
   Service,
   ServicePackage,
-  AvailableSlot,
   Location,
 } from "../services/serviceCanisterService";
 import bookingCanisterService, {
   Booking,
+  AvailableSlot,
 } from "../services/bookingCanisterService";
 import authCanisterService, {
   FrontendProfile,
@@ -150,7 +150,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         return isAvailable || false;
       } catch (err) {
-        console.error("Error checking same-day availability:", err);
+        console.log("Same-day booking not available for this service today");
         return false;
       }
     },

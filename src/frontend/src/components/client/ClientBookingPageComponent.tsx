@@ -223,6 +223,7 @@ const ClientBookingPageComponent: React.FC = () => {
     loading,
     error,
     availableSlots,
+    isSameDayAvailable,
     loadServiceData,
     getAvailableSlots,
     createBookingRequest,
@@ -673,13 +674,28 @@ const ClientBookingPageComponent: React.FC = () => {
                 <div className="mb-4 flex gap-3">
                   <button
                     className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
-                      bookingOption === "sameday"
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                      !isSameDayAvailable
+                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                        : bookingOption === "sameday"
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
                     }`}
-                    onClick={() => handleBookingOptionChange("sameday")}
+                    onClick={() =>
+                      isSameDayAvailable && handleBookingOptionChange("sameday")
+                    }
+                    disabled={!isSameDayAvailable}
+                    title={
+                      !isSameDayAvailable
+                        ? "Same-day booking not available for this service today"
+                        : ""
+                    }
                   >
                     <div className="text-base font-semibold">Same Day</div>
+                    {!isSameDayAvailable && (
+                      <div className="text-xs text-gray-400">
+                        Not Available Today
+                      </div>
+                    )}
                   </button>
                   <button
                     className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
