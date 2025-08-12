@@ -30,10 +30,7 @@ const createBookingActor = (identity?: Identity | null): BookingService => {
   return createActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,
-      host:
-        process.env.DFX_NETWORK !== "ic"
-          ? "http://localhost:4943"
-          : "https://ic0.app",
+      host: "https://ic0.app",
     },
   }) as BookingService;
 };
