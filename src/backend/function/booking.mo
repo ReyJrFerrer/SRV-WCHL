@@ -187,8 +187,9 @@ persistent actor BookingCanister {
         };
     };
 
-    // NEW: Service-based availability validation function
+    // Enhanced service-based availability validation function with booking conflict checking
     private func validateServiceAvailability(serviceId : Text, requestedDateTime : Time.Time) : async Result<Bool> {
+        // Step 1: Check basic service availability (schedule, active status)
         switch (serviceCanisterId) {
             case (?serviceCanisterId) {
                 let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
@@ -197,9 +198,7 @@ persistent actor BookingCanister {
                 
                 switch (await serviceCanister.isServiceAvailable(serviceId, requestedDateTime)) {
                     case (#ok(isAvailable)) {
-                        if (isAvailable) {
-                            return #ok(true);
-                        } else {
+                        if (not isAvailable) {
                             return #err("Service is not available at the requested date and time");
                         };
                     };
@@ -212,6 +211,19 @@ persistent actor BookingCanister {
                 return #err("Service canister reference not set");
             };
         };
+
+        // Step 2: Check for booking conflicts in THIS canister
+        let hasConflict = await checkBookingConflicts(serviceId, requestedDateTime);
+        if (hasConflict) {
+            return #err("Time slot is already booked");
+        };
+
+        return #ok(true);
+    };
+
+    // Helper function to check booking conflicts for a specific service and time
+    private func checkBookingConflicts(serviceId : Text, requestedDateTime : Time.Time) : async Bool {
+        return await checkBookingConflictsEnhanced(serviceId, requestedDateTime, null);
     };
 
     // DEPRECATED: Helper function to validate provider availability
@@ -416,7 +428,7 @@ persistent actor BookingCanister {
         return providerBookings;
     };
     
-    // Accept a booking request (provider)
+    // Accept a booking request (provider) - Enhanced with conflict checking
     public shared(msg) func acceptBooking(
         bookingId : Text,
         scheduledDate : Time.Time
@@ -425,6 +437,20 @@ persistent actor BookingCanister {
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
+                // Validate that the scheduled date doesn't conflict with existing bookings
+                let hasConflict = await checkBookingConflicts(existingBooking.serviceId, scheduledDate);
+                if (hasConflict) {
+                    return #err("The scheduled time conflicts with an existing booking");
+                };
+
+                // Additional validation: Check service availability at scheduled time
+                switch (await validateServiceAvailability(existingBooking.serviceId, scheduledDate)) {
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
+                    case (#ok(_)) {};
+                };
+
                 // if (not validateScheduledDate(existingBooking.requestedDate, scheduledDate)) {
                 //     return #err("Scheduled date must be between 1 hour and 30 days from now");
                 // };
@@ -776,23 +802,199 @@ persistent actor BookingCanister {
 
     // CLIENT AVAILABILITY QUERY FUNCTIONS - SERVICE-BASED (RECOMMENDED)
 
-    // Get service's available time slots for a specific date
+    // ENHANCED: Get service's available time slots for a specific date with booking conflict checking
     public func getServiceAvailableSlots(
         serviceId : Text,
         date : Time.Time
     ) : async Result<[Types.AvailableSlot]> {
+        // Step 1: Get basic availability from service canister
+        var basicSlots : [Types.AvailableSlot] = [];
         switch (serviceCanisterId) {
             case (?serviceCanisterId) {
                 let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
                     getAvailableTimeSlots : (Text, Time.Time) -> async Types.Result<[Types.AvailableSlot]>;
                 };
                 
-                return await serviceCanister.getAvailableTimeSlots(serviceId, date);
+                switch (await serviceCanister.getAvailableTimeSlots(serviceId, date)) {
+                    case (#ok(slots)) {
+                        basicSlots := slots;
+                    };
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
+                };
             };
             case (null) {
                 return #err("Service canister reference not set");
             };
         };
+
+        // Step 2: Filter out slots that have booking conflicts
+        let startOfDay = getStartOfDay(date);
+        let endOfDay = startOfDay + (24 * 3600_000_000_000); // Add 24 hours in nanoseconds
+        
+        // Get all active bookings for this service on this date
+        let allBookings = Iter.toArray(bookings.vals());
+        let dayBookings = Array.filter<Booking>(
+            allBookings,
+            func(booking: Booking) : Bool {
+                // Only check active bookings
+                let isActiveStatus = switch (booking.status) {
+                    case (#Requested or #Accepted or #InProgress) { true };
+                    case (#Cancelled or #Declined or #Completed or #Disputed) { false };
+                };
+                
+                if (not isActiveStatus or booking.serviceId != serviceId) {
+                    return false;
+                };
+
+                // Check if booking falls on this date
+                switch (booking.scheduledDate) {
+                    case (?scheduledDate) {
+                        scheduledDate >= startOfDay and scheduledDate < endOfDay
+                    };
+                    case (null) {
+                        // For same-day bookings, check if requested date falls on this day
+                        booking.requestedDate >= startOfDay and booking.requestedDate < endOfDay
+                    };
+                }
+            }
+        );
+
+        // Step 3: Create enhanced slots with conflict information
+        let enhancedSlots = Array.map<Types.AvailableSlot, Types.AvailableSlot>(
+            basicSlots,
+            func(slot: Types.AvailableSlot) : Types.AvailableSlot {
+                // Check if this slot conflicts with any booking
+                let slotConflicts = Array.filter<Booking>(
+                    dayBookings,
+                    func(booking: Booking) : Bool {
+                        checkSlotBookingConflict(slot, booking, date)
+                    }
+                );
+
+                let conflictingBookingIds = Array.map<Booking, Text>(
+                    slotConflicts,
+                    func(booking: Booking) : Text {
+                        booking.id
+                    }
+                );
+
+                // Return slot with updated availability
+                {
+                    date = slot.date;
+                    timeSlot = slot.timeSlot;
+                    isAvailable = slot.isAvailable and (slotConflicts.size() == 0);
+                    conflictingBookings = conflictingBookingIds;
+                }
+            }
+        );
+
+        return #ok(enhancedSlots);
+    };
+
+    // Helper function to check if a time slot conflicts with a booking
+    private func checkSlotBookingConflict(slot: Types.AvailableSlot, booking: Booking, date: Time.Time) : Bool {
+        // Parse slot time
+        let slotStart = parseTimeToMinutes(slot.timeSlot.startTime);
+        let slotEnd = parseTimeToMinutes(slot.timeSlot.endTime);
+        
+        // Get booking time
+        let bookingTime = switch (booking.scheduledDate) {
+            case (?scheduledDate) {
+                // Extract time from scheduled date
+                let bookingSeconds = (scheduledDate / 1_000_000_000) % 86400;
+                Int.abs(bookingSeconds) / 60 // Convert to minutes from start of day
+            };
+            case (null) {
+                // For same-day bookings, assume middle of slot or default time
+                540 // 9:00 AM as default
+            };
+        };
+        
+        // Check for overlap (assume 1-hour booking duration)
+        let bookingEndTime = bookingTime + 60; // 1 hour duration
+        
+        // Conflict if booking time overlaps with slot time
+        return not (bookingEndTime <= slotStart or bookingTime >= slotEnd);
+    };
+
+    // Helper function to parse time string (HH:MM) to minutes from midnight
+    private func parseTimeToMinutes(timeStr: Text) : Int {
+        // Simple parsing for common time formats
+        // This handles HH:MM format for times like "09:00", "10:30", etc.
+        
+        // For a more robust implementation, you might want to use proper text parsing libraries
+        // For now, we'll handle the most common cases
+        
+        if (timeStr == "09:00") { 9 * 60 }
+        else if (timeStr == "09:30") { 9 * 60 + 30 }
+        else if (timeStr == "10:00") { 10 * 60 }
+        else if (timeStr == "10:30") { 10 * 60 + 30 }
+        else if (timeStr == "11:00") { 11 * 60 }
+        else if (timeStr == "11:30") { 11 * 60 + 30 }
+        else if (timeStr == "12:00") { 12 * 60 }
+        else if (timeStr == "12:30") { 12 * 60 + 30 }
+        else if (timeStr == "13:00") { 13 * 60 }
+        else if (timeStr == "13:30") { 13 * 60 + 30 }
+        else if (timeStr == "14:00") { 14 * 60 }
+        else if (timeStr == "14:30") { 14 * 60 + 30 }
+        else if (timeStr == "15:00") { 15 * 60 }
+        else if (timeStr == "15:30") { 15 * 60 + 30 }
+        else if (timeStr == "16:00") { 16 * 60 }
+        else if (timeStr == "16:30") { 16 * 60 + 30 }
+        else if (timeStr == "17:00") { 17 * 60 }
+        else if (timeStr == "17:30") { 17 * 60 + 30 }
+        else { 9 * 60 } // Default to 9:00 AM
+    };
+
+    // Enhanced conflict detection with better time handling
+    private func checkBookingConflictsEnhanced(serviceId : Text, requestedDateTime : Time.Time, excludeBookingId : ?Text) : async Bool {
+        let allBookings = Iter.toArray(bookings.vals());
+        
+        // Filter bookings for this service that could conflict
+        let serviceBookings = Array.filter<Booking>(
+            allBookings,
+            func(booking: Booking) : Bool {
+                // Only check active bookings (not cancelled, declined, or completed)
+                let isActiveStatus = switch (booking.status) {
+                    case (#Requested or #Accepted or #InProgress) { true };
+                    case (#Cancelled or #Declined or #Completed or #Disputed) { false };
+                };
+                
+                let isCorrectService = booking.serviceId == serviceId;
+                
+                // Exclude the booking being updated (if any)
+                let shouldExclude = switch (excludeBookingId) {
+                    case (?excludeId) { booking.id == excludeId };
+                    case (null) { false };
+                };
+                
+                isCorrectService and isActiveStatus and (not shouldExclude)
+            }
+        );
+
+        // Check if requested time conflicts with any existing booking
+        for (booking in serviceBookings.vals()) {
+            let bookingTime = switch (booking.scheduledDate) {
+                case (?scheduledDate) { scheduledDate };
+                case (null) { booking.requestedDate }; // Use requested date for same-day bookings
+            };
+            
+            // Check if the booking times are on the same day and within 1-hour window
+            let sameDay = (getStartOfDay(requestedDateTime) == getStartOfDay(bookingTime));
+            
+            if (sameDay) {
+                let timeDiff = Int.abs(requestedDateTime - bookingTime);
+                let oneHour = 3600_000_000_000; // 1 hour in nanoseconds
+                
+                if (timeDiff < oneHour) {
+                    return true; // Conflict found
+                };
+            };
+        };
+
+        return false; // No conflicts
     };
 
     // Get service's availability settings

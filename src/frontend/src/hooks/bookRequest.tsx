@@ -144,7 +144,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           return false;
         }
 
-        // Check current time availability using booking canister
+        // IMPORTANT: Using booking canister for availability check (with conflict checking)
         const isAvailable =
           await bookingCanisterService.checkServiceAvailability(serviceId, now);
 
@@ -161,6 +161,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
   const getAvailableSlots = useCallback(
     async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
       try {
+        // IMPORTANT: Now using booking canister for availability (with conflict checking)
         const slots = await bookingCanisterService.getServiceAvailableSlots(
           serviceId,
           date,
@@ -208,6 +209,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
         const requestedDateTime = new Date(date);
         requestedDateTime.setHours(hours, minutes, 0, 0);
 
+        // IMPORTANT: Using booking canister for availability check (with conflict checking)
         const isAvailable =
           await bookingCanisterService.checkServiceAvailability(
             serviceId,
