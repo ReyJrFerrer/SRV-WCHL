@@ -860,12 +860,39 @@ export const bookingCanisterService = {
       const actor = getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
 
+      // DEBUG: Log the values being sent
+      console.log("DEBUG getServiceAvailableSlots:", {
+        serviceId,
+        inputDate: date.toISOString(),
+        dayOfWeek: date.getDay(),
+        dayName: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ][date.getDay()],
+        timestamp: dateTimestamp.toString(),
+        millisTimestamp: date.getTime(),
+      });
+
       const result = await actor.getServiceAvailableSlots(
         serviceId,
         dateTimestamp,
       );
 
       if ("ok" in result) {
+        console.log("DEBUG result:", {
+          slotsCount: result.ok.length,
+          slots: result.ok.map((slot) => ({
+            date: slot.date,
+            isAvailable: slot.isAvailable,
+            timeSlot: slot.timeSlot,
+            conflictingBookings: slot.conflictingBookings,
+          })),
+        });
         return result.ok.map(convertCanisterAvailableSlot);
       } else {
         console.error("Error fetching service available slots:", result.err);

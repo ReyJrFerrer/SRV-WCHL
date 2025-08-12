@@ -405,7 +405,36 @@ const ClientBookingPageComponent: React.FC = () => {
   };
   // --- Date selection handler ---
   const handleDateChange = (date: Date | null) => {
-    setSelectedDate(date);
+    if (date) {
+      // Create a new date object to avoid timezone issues
+      const adjustedDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        12,
+        0,
+        0,
+        0,
+      );
+      console.log("DatePicker selected:", {
+        original: date.toISOString(),
+        originalDay: date.getDay(),
+        adjusted: adjustedDate.toISOString(),
+        adjustedDay: adjustedDate.getDay(),
+        dayName: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ][adjustedDate.getDay()],
+      });
+      setSelectedDate(adjustedDate);
+    } else {
+      setSelectedDate(null);
+    }
     setSelectedTime("");
     setFormError(null);
   };

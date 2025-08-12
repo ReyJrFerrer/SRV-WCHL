@@ -144,6 +144,49 @@ export const useBookRequest = (): UseBookRequestReturn => {
           return false;
         }
 
+        // Check if service is available today based on weekly schedule
+        if (serviceData?.weeklySchedule) {
+          const dayNames = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ];
+          const todayName = dayNames[now.getDay()];
+
+          const todaySchedule = serviceData.weeklySchedule.find(
+            (schedule) => schedule.day === todayName,
+          );
+
+          // If today is not in the schedule or not available, return false
+          if (!todaySchedule || !todaySchedule.availability.isAvailable) {
+            return false;
+          }
+
+          // Check if current time is within service hours
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          const currentTimeStr = `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+
+          // Check if current time falls within any available time slot
+          const isWithinServiceHours = todaySchedule.availability.slots.some(
+            (slot) => {
+              const startTime = slot.startTime;
+              const endTime = slot.endTime;
+
+              // Simple time comparison (assumes HH:MM format)
+              return currentTimeStr >= startTime && currentTimeStr <= endTime;
+            },
+          );
+
+          if (!isWithinServiceHours) {
+            return false;
+          }
+        }
+
         // IMPORTANT: Using booking canister for availability check (with conflict checking)
         const isAvailable =
           await bookingCanisterService.checkServiceAvailability(serviceId, now);
