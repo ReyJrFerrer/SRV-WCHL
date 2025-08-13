@@ -1016,7 +1016,7 @@ persistent actor BookingCanister {
     };
 
     // Check if service is available for booking at specific date/time
-    public func xAvailability(
+    public func checkServiceAvailability(
         serviceId : Text,
         requestedDateTime : Time.Time
     ) : async Result<Bool> {
