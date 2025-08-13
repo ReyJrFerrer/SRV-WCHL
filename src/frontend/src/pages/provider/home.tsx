@@ -8,13 +8,20 @@ import BottomNavigationNextjs from "../../components/provider/BottomNavigation";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 
-interface ProviderHomePageProps {
-  // Props if needed
-}
+// Add location permission state
+type LocationStatus = "pending" | "allowed" | "denied";
 
-const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
+const ProviderHomePage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
+
+  // --- Location permission state ---
+  const [locationStatus, setLocationStatus] =
+    useState<LocationStatus>("pending");
+  const [, setGeoLocation] = useState<{
+    province: string;
+    municipality: string;
+  } | null>(null);
 
   // Use the service management hook
   const {
@@ -57,6 +64,32 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
       isActive: true,
     };
   }, [userProfile]);
+
+  // --- Location permission effect (reference: client home.tsx) ---
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      setLocationStatus("denied");
+      return;
+    }
+    setLocationStatus("pending");
+    navigator.geolocation.getCurrentPosition(
+      (_position) => {
+        setLocationStatus("allowed");
+        setGeoLocation({
+          province: "",
+          municipality: "",
+        });
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationStatus("denied");
+        } else {
+          setLocationStatus("pending");
+        }
+      },
+      { timeout: 5000 },
+    );
+  }, []);
 
   useEffect(() => {
     const loadProviderData = async () => {
@@ -140,6 +173,58 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
           >
             Retry
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Show location blocked message if denied (reference: client home.tsx) ---
+  if (locationStatus === "denied") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
+        <div className="relative max-w-lg rounded-2xl bg-white p-8 shadow-xl">
+          {/* Computer guy character at the top */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <img
+              src="/images/srv characters (SVG)/tech guy.svg"
+              alt="SRV Computer Guy Character"
+              className="h-24 w-24 rounded-full border-4 border-white bg-blue-100 shadow-lg"
+              style={{ objectFit: "cover" }}
+            />
+          </div>
+          <div className="mt-14">
+            <h2 className="mb-4 text-center text-2xl font-bold text-red-600">
+              Please enable location to use provider services
+            </h2>
+            <p className="mb-4 text-center text-gray-700">
+              Location access is required to use the provider dashboard. Please
+              enable location services in your browser settings.
+            </p>
+            <ul className="mb-6 list-disc pl-6 text-left text-gray-600">
+              <li>
+                <b>Chrome:</b> Click the lock icon in the address bar &gt; Site
+                settings &gt; Location: Allow
+              </li>
+              <li>
+                <b>Firefox:</b> Click the lock icon in the address bar &gt;
+                Permissions &gt; Allow Location Access
+              </li>
+              <li>
+                <b>Safari:</b> Preferences &gt; Websites &gt; Location &gt;
+                Allow
+              </li>
+              <li>
+                <b>Mobile:</b> Enable location in your device settings and
+                browser app permissions
+              </li>
+            </ul>
+            <button
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
