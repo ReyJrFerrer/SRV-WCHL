@@ -754,99 +754,6 @@ export const bookingCanisterService = {
     }
   },
 
-  /**
-   * @deprecated Use getServiceAvailableSlots instead for service-based availability
-   * This function is maintained for backward compatibility
-   * Get provider's available time slots for a specific date
-   */
-  async getProviderAvailableSlots(
-    providerId: Principal,
-    date: Date,
-  ): Promise<AvailableSlot[] | null> {
-    console.warn(
-      "getProviderAvailableSlots is deprecated. Use getServiceAvailableSlots instead for service-based availability.",
-    );
-    try {
-      const actor = getBookingActor();
-      const dateTimestamp = BigInt(date.getTime() * 1000000);
-
-      const result = await actor.getProviderAvailableSlots(
-        providerId,
-        dateTimestamp,
-      );
-
-      if ("ok" in result) {
-        return result.ok.map(convertCanisterAvailableSlot);
-      } else {
-        console.error("Error fetching available slots:", result.err);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching available slots:", error);
-      throw new Error(`Failed to fetch available slots: ${error}`);
-    }
-  },
-
-  /**
-   * @deprecated Use getServiceAvailabilitySettings instead for service-based availability
-   * This function is maintained for backward compatibility
-   * Get provider's availability settings
-   */
-  async getProviderAvailabilitySettings(
-    providerId: Principal,
-  ): Promise<ProviderAvailability | null> {
-    console.warn(
-      "getProviderAvailabilitySettings is deprecated. Use getServiceAvailabilitySettings instead for service-based availability.",
-    );
-    try {
-      const actor = getBookingActor();
-      const result = await actor.getProviderAvailabilitySettings(providerId);
-
-      if ("ok" in result) {
-        return convertCanisterProviderAvailability(result.ok);
-      } else {
-        console.error("Error fetching availability settings:", result.err);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching availability settings:", error);
-      throw new Error(`Failed to fetch availability settings: ${error}`);
-    }
-  },
-
-  /**
-   * @deprecated Use checkServiceAvailability instead for service-based availability
-   * This function is maintained for backward compatibility
-   * Check if provider is available for booking at specific date/time
-   */
-  async checkProviderAvailability(
-    providerId: Principal,
-    requestedDateTime: Date,
-  ): Promise<boolean | null> {
-    console.warn(
-      "checkProviderAvailability is deprecated. Use checkServiceAvailability instead for service-based availability.",
-    );
-    try {
-      const actor = getBookingActor();
-      const timestamp = BigInt(requestedDateTime.getTime() * 1000000);
-
-      const result = await actor.checkProviderAvailability(
-        providerId,
-        timestamp,
-      );
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        console.error("Error checking provider availability:", result.err);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error checking provider availability:", error);
-      throw new Error(`Failed to check provider availability: ${error}`);
-    }
-  },
-
   // NEW SERVICE-BASED AVAILABILITY FUNCTIONS (RECOMMENDED)
 
   /**
@@ -1000,31 +907,6 @@ export const bookingCanisterService = {
     } catch (error) {
       console.error("Error fetching service daily booking count:", error);
       throw new Error(`Failed to fetch service daily booking count: ${error}`);
-    }
-  },
-
-  /**
-   * Get provider's booking conflicts for a date range
-   */
-  async getProviderBookingConflicts(
-    providerId: Principal,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Booking[]> {
-    try {
-      const actor = getBookingActor();
-      const startTimestamp = BigInt(startDate.getTime() * 1000000);
-      const endTimestamp = BigInt(endDate.getTime() * 1000000);
-
-      const bookings = await actor.getProviderBookingConflicts(
-        providerId,
-        startTimestamp,
-        endTimestamp,
-      );
-      return bookings.map(convertCanisterBooking);
-    } catch (error) {
-      console.error("Error fetching provider booking conflicts:", error);
-      throw new Error(`Failed to fetch provider booking conflicts: ${error}`);
     }
   },
 

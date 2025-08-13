@@ -1542,25 +1542,22 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
                     return #ok([]);
                 };
 
-                // Get conflicting bookings for this date
                 let serviceObj = switch (services.get(serviceId)) {
                     case (?service) service;
                     case (null) {
                         return #err("Service not found");
                     };
                 };
-                let conflictingBookings = await getBookingsForDate(serviceObj.providerId, date);
 
-                // Create available slots
+                // Create available slots (conflict checking is handled in booking canister)
                 let availableSlots = Array.map<TimeSlot, AvailableSlot>(
                     dayAvail.slots,
                     func (slot : TimeSlot) : AvailableSlot {
-                        let conflicts = getConflictingBookingIds(slot, conflictingBookings);
                         {
                             date = date;
                             timeSlot = slot;
-                            isAvailable = conflicts.size() == 0;
-                            conflictingBookings = conflicts;
+                            isAvailable = true; // Service canister only provides schedule availability
+                            conflictingBookings = []; // Conflict checking handled in booking canister
                         }
                     }
                 );
@@ -1613,29 +1610,6 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
         // Just check if service is active - trust that frontend only shows valid slots
         return #ok(availability.isActive);
     };
-
-
-    // Check if provider is available at specific date and time (backward compatibility - deprecated)
-    public func isProviderAvailable(
-        providerId : Principal,
-        requestedDateTime : Time.Time
-    ) : async Result<Bool> {
-        // Find first service by this provider
-        let providerServices = Array.filter<Service>(
-            Iter.toArray(services.vals()),
-            func (service : Service) : Bool {
-                return service.providerId == providerId;
-            }
-        );
-        
-        if (providerServices.size() == 0) {
-            return #err("No services found for this provider");
-        };
-        
-        // Check first service's availability (for backward compatibility)
-        return await isServiceAvailable(providerServices[0].id, requestedDateTime);
-    };
-
     // HELPER FUNCTIONS FOR AVAILABILITY
 
     // Convert timestamp to day of week
@@ -1661,59 +1635,6 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
         }
     };
 
-    // Extract time of day from timestamp (format: "HH:MM")
-    private func getTimeOfDayFromTimestamp(timestamp : Time.Time) : Text {
-        let secondsSinceEpoch = timestamp / 1_000_000_000;
-        let secondsInDay = secondsSinceEpoch % 86400;
-        let hours = secondsInDay / 3600;
-        let minutes = (secondsInDay % 3600) / 60;
-        
-        let hoursNat = Int.abs(hours);
-        let minutesNat = Int.abs(minutes);
-        
-        let hoursStr = if (hoursNat < 10) "0" # Nat.toText(hoursNat) else Nat.toText(hoursNat);
-        let minutesStr = if (minutesNat < 10) "0" # Nat.toText(minutesNat) else Nat.toText(minutesNat);
-        
-        hoursStr # ":" # minutesStr
-    };
-
-    // Check if a time is within a time slot
-    private func isTimeWithinSlot(timeStr : Text, slot : TimeSlot) : Bool {
-        // Compare time strings directly (assuming HH:MM format)
-        timeStr >= slot.startTime and timeStr <= slot.endTime
-    };
-
-    // Get bookings for a specific date and provider
-    private func getBookingsForDate(providerId : Principal, date : Time.Time) : async [Text] {
-        // Call booking canister to get conflicting bookings
-        switch (bookingCanisterId) {
-            case (?bookingId) {
-                let bookingCanister = actor(Principal.toText(bookingId)) : actor {
-                    getProviderBookingConflicts : (Principal, Time.Time, Time.Time) -> async [Types.Booking];
-                };
-                
-                let startOfDay = getStartOfDay(date);
-                let endOfDay = startOfDay + (24 * 3600_000_000_000); // Add 24 hours in nanoseconds
-                
-                let conflicts = await bookingCanister.getProviderBookingConflicts(providerId, startOfDay, endOfDay);
-                Array.map<Types.Booking, Text>(conflicts, func (booking : Types.Booking) : Text { booking.id });
-            };
-            case (null) {
-                []
-            };
-        }
-    };
-
-    // Get conflicting booking IDs for a time slot
-    private func getConflictingBookingIds(slot : TimeSlot, bookings : [Text]) : [Text] {
-        // For now, if there are any bookings on the date, consider the slot as having conflicts
-        // In a more sophisticated implementation, you would check actual time overlaps
-        if (bookings.size() > 0) {
-            bookings
-        } else {
-            []
-        }
-    };
 
     // Get daily booking count for a provider and date
     private func getDailyBookingCount(providerId : Principal, date : Time.Time) : async Nat {

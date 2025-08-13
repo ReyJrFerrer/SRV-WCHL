@@ -740,58 +740,6 @@ export const serviceCanisterService = {
   },
 
   /**
-   * Check if provider is available at specific date and time
-   */
-  async isProviderAvailable(
-    providerId: string,
-    requestedDateTime: Date,
-  ): Promise<boolean> {
-    try {
-      const actor = await getServiceActor(false);
-      const result = await actor.isProviderAvailable(
-        Principal.fromText(providerId),
-        BigInt(requestedDateTime.getTime() * 1000000), // Convert to nanoseconds
-      );
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        console.error("Error checking provider availability:", result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      console.error("Error checking provider availability:", error);
-      throw new Error(`Failed to check provider availability: ${error}`);
-    }
-  },
-
-  /**
-   * Check if service is available at specific date and time
-   */
-  async isServiceAvailable(
-    serviceId: string,
-    requestedDateTime: Date,
-  ): Promise<boolean> {
-    try {
-      const actor = await getServiceActor(false);
-      const result = await actor.isServiceAvailable(
-        serviceId,
-        BigInt(requestedDateTime.getTime() * 1000000), // Convert to nanoseconds
-      );
-
-      if ("ok" in result) {
-        return result.ok;
-      } else {
-        console.error("Error checking service availability:", result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      console.error("Error checking service availability:", error);
-      throw new Error(`Failed to check service availability: ${error}`);
-    }
-  },
-
-  /**
    * Set canister references
    */
   async setCanisterReferences(): Promise<string | null> {
