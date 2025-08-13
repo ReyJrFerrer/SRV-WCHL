@@ -131,6 +131,11 @@ const ClientBookingPageComponent: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  // --- Slot availability checking state ---
+  const [slotAvailability, setSlotAvailability] = useState<
+    Record<string, boolean>
+  >({});
+  const [checkingSlots, setCheckingSlots] = useState(false);
   // --- Address and notes state ---
   const [street, setStreet] = useState<string>("");
   const [houseNumber, setHouseNumber] = useState<string>("");
@@ -226,6 +231,7 @@ const ClientBookingPageComponent: React.FC = () => {
     isSameDayAvailable,
     loadServiceData,
     getAvailableSlots,
+    checkTimeSlotAvailability,
     createBookingRequest,
     calculateTotalPrice,
   } = useBookRequest();
@@ -363,10 +369,73 @@ const ClientBookingPageComponent: React.FC = () => {
       setPackages(hookPackages.map((pkg: any) => ({ ...pkg, checked: false })));
     }
   }, [hookPackages]);
-  // --- Load available slots when date changes ---
+  // --- Load available slots when date changes or booking option changes ---
   useEffect(() => {
-    if (service && selectedDate) getAvailableSlots(service.id, selectedDate);
-  }, [service, selectedDate, getAvailableSlots]);
+    if (service) {
+      if (bookingOption === "scheduled" && selectedDate) {
+        getAvailableSlots(service.id, selectedDate);
+      } else if (bookingOption === "sameday") {
+        // Load slots for today
+        const today = new Date();
+        getAvailableSlots(service.id, today);
+      }
+    }
+  }, [service, selectedDate, bookingOption, getAvailableSlots]);
+
+  // --- Check availability for all time slots when availableSlots change ---
+  useEffect(() => {
+    const checkAllSlotAvailability = async () => {
+      if (!service || availableSlots.length === 0) return;
+
+      setCheckingSlots(true);
+      const availabilityMap: Record<string, boolean> = {};
+
+      // Determine the date to check (either selected date for scheduled or today for same-day)
+      const dateToCheck =
+        bookingOption === "sameday" ? new Date() : selectedDate;
+
+      if (!dateToCheck) {
+        setCheckingSlots(false);
+        return;
+      }
+
+      // Check availability for each slot
+      for (const slot of availableSlots) {
+        const timeSlotKey = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
+        try {
+          const isAvailable = await checkTimeSlotAvailability(
+            service.id,
+            dateToCheck,
+            timeSlotKey,
+          );
+          availabilityMap[timeSlotKey] = isAvailable;
+        } catch (error) {
+          console.error(
+            `Error checking availability for slot ${timeSlotKey}:`,
+            error,
+          );
+          availabilityMap[timeSlotKey] = false; // Default to unavailable on error
+        }
+      }
+
+      setSlotAvailability(availabilityMap);
+      setCheckingSlots(false);
+    };
+
+    if (
+      availableSlots.length > 0 &&
+      ((bookingOption === "scheduled" && selectedDate) ||
+        bookingOption === "sameday")
+    ) {
+      checkAllSlotAvailability();
+    }
+  }, [
+    availableSlots,
+    selectedDate,
+    bookingOption,
+    service,
+    checkTimeSlotAvailability,
+  ]);
 
   // --- Calculate total price for selected packages ---
   const totalPrice = useMemo(() => {
@@ -401,6 +470,8 @@ const ClientBookingPageComponent: React.FC = () => {
   // --- Booking option handler ---
   const handleBookingOptionChange = (option: "sameday" | "scheduled") => {
     setBookingOption(option);
+    setSelectedTime(""); // Clear selected time when switching booking options
+    setSlotAvailability({}); // Clear slot availability cache
     setFormError(null);
   };
   // --- Date selection handler ---
@@ -517,6 +588,16 @@ const ClientBookingPageComponent: React.FC = () => {
         setIsSubmitting(false);
         return;
       }
+
+      // Validate time selection for both same-day and scheduled bookings
+      if (!selectedTime) {
+        const timeLabel =
+          bookingOption === "sameday" ? "time for today" : "time slot";
+        setFormError(`Please select a ${timeLabel} before proceeding.`);
+        setIsSubmitting(false);
+        return;
+      }
+
       let finalScheduledDate: Date | undefined = undefined;
       if (bookingOption === "sameday") {
         finalScheduledDate = new Date();
@@ -544,7 +625,7 @@ const ClientBookingPageComponent: React.FC = () => {
         totalPrice,
         bookingType: bookingOption as "sameday" | "scheduled",
         scheduledDate: finalScheduledDate,
-        scheduledTime: bookingOption === "scheduled" ? selectedTime : undefined,
+        scheduledTime: selectedTime, // Include selectedTime for both same-day and scheduled bookings
         location: finalAddress,
         notes: notes,
       };
@@ -737,6 +818,75 @@ const ClientBookingPageComponent: React.FC = () => {
                     <div className="text-base font-semibold">Scheduled</div>
                   </button>
                 </div>
+
+                {/* --- Same Day Time Selection --- */}
+                {bookingOption === "sameday" && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Select a time for today:
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {checkingSlots ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                            Checking availability...
+                          </div>
+                        ) : availableSlots.length > 0 ? (
+                          availableSlots
+                            .filter((slot: any) => slot.isAvailable)
+                            .map((slot: any, index: number) => {
+                              const to12Hour = (t: string) => {
+                                const [h, m] = t.split(":").map(Number);
+                                const hour = h % 12 || 12;
+                                const ampm = h < 12 ? "AM" : "PM";
+                                return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`;
+                              };
+                              const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
+                              const [start, end] = time.split("-");
+                              const formatted = `${to12Hour(start)} - ${to12Hour(end)}`;
+                              const isSlotAvailable =
+                                slotAvailability[time] !== false;
+
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() =>
+                                    isSlotAvailable && setSelectedTime(time)
+                                  }
+                                  disabled={!isSlotAvailable}
+                                  className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
+                                    !isSlotAvailable
+                                      ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                      : selectedTime === time
+                                        ? "border-blue-600 bg-blue-600 text-white"
+                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                  }`}
+                                  title={
+                                    !isSlotAvailable
+                                      ? "This time slot is already booked"
+                                      : ""
+                                  }
+                                >
+                                  {formatted}
+                                  {!isSlotAvailable && (
+                                    <span className="ml-1 text-xs">
+                                      (Booked)
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No available slots for today.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {bookingOption === "scheduled" && (
                   <div className="space-y-4">
                     <div className="booking-calendar-wrapper">
@@ -847,7 +997,12 @@ const ClientBookingPageComponent: React.FC = () => {
                           Select a time:
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {availableSlots.length > 0 ? (
+                          {checkingSlots ? (
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                              Checking availability...
+                            </div>
+                          ) : availableSlots.length > 0 ? (
                             availableSlots
                               .filter((slot: any) => slot.isAvailable)
                               .map((slot: any, index: number) => {
@@ -860,17 +1015,35 @@ const ClientBookingPageComponent: React.FC = () => {
                                 const time = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
                                 const [start, end] = time.split("-");
                                 const formatted = `${to12Hour(start)} - ${to12Hour(end)}`;
+                                const isSlotAvailable =
+                                  slotAvailability[time] !== false;
+
                                 return (
                                   <button
                                     key={index}
-                                    onClick={() => setSelectedTime(time)}
+                                    onClick={() =>
+                                      isSlotAvailable && setSelectedTime(time)
+                                    }
+                                    disabled={!isSlotAvailable}
                                     className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
-                                      selectedTime === time
-                                        ? "border-blue-600 bg-blue-600 text-white"
-                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                      !isSlotAvailable
+                                        ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                        : selectedTime === time
+                                          ? "border-blue-600 bg-blue-600 text-white"
+                                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                     }`}
+                                    title={
+                                      !isSlotAvailable
+                                        ? "This time slot is already booked"
+                                        : ""
+                                    }
                                   >
                                     {formatted}
+                                    {!isSlotAvailable && (
+                                      <span className="ml-1 text-xs">
+                                        (Booked)
+                                      </span>
+                                    )}
                                   </button>
                                 );
                               })
