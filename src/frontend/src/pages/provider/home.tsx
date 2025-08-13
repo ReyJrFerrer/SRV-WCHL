@@ -147,12 +147,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
 
   return (
     <>
-      {/* If you want to set the page title, use React Helmet here */}
-      {/* <Helmet>
-        <title>Provider Dashboard | SRV-ICP</title>
-        <meta name="description" content="Manage your services, bookings, and earnings" />
-      </Helmet> */}
-
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Use userProfile directly for SPHeaderNextjs */}
         <SPHeaderNextjs />

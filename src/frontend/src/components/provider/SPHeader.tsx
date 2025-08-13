@@ -1,12 +1,13 @@
 // --- Imports ---
 import React, { useState, useEffect } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import authCanisterService from "../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { useProviderNotifications } from "../../hooks/useProviderNotifications";
 
 // --- Props ---
 export interface HeaderProps {
@@ -29,6 +30,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // --- Service Management Hook ---
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // Notification count from custom hook
+  const { unreadCount } = useProviderNotifications();
 
   // --- State: Geolocation for map modal ---
   const [geoLocation, setGeoLocation] = useState<{
@@ -206,12 +210,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     );
   };
 
+  // --- Notification button handler ---
+  const handleNotificationsClick = () => {
+    navigate("/provider/notifications");
+  };
+
   // --- Render: Header layout ---
   return (
     <header
       className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
     >
-      {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
+      {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-6">
           <Link to="/client/home">
@@ -231,17 +240,24 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             </span>
           </div>
         </div>
+        {/* Notification Button with badge */}
         {isAuthenticated && (
           <button
-            onClick={() => navigate("/provider/profile")}
+            onClick={handleNotificationsClick}
             className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+            aria-label="Notifications"
           >
-            <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+            <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                {unreadCount}
+              </span>
+            )}
           </button>
         )}
       </div>
 
-      {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
+      {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
       <div className="md:hidden">
         <div className="flex items-center justify-between">
           <Link to="/client/home">
@@ -253,10 +269,16 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </Link>
           {isAuthenticated && (
             <button
-              onClick={() => navigate("/client/profile")}
+              onClick={handleNotificationsClick}
               className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+              aria-label="Notifications"
             >
-              <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           )}
         </div>

@@ -1,6 +1,6 @@
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { useProviderReviews } from "../../hooks/reviewManagement";
+import { useProviderReviews } from "../../../hooks/reviewManagement";
 
 const CustomerRatingStars: React.FC = () => {
   const { analytics, loading } = useProviderReviews();

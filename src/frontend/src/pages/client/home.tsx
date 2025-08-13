@@ -90,50 +90,61 @@ const ClientHomePage: React.FC = () => {
       {/* Feedback popup after first completed booking */}
       {showFeedbackPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-            <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
-              We value your feedback!
-            </h2>
-            <p className="mb-4 text-center text-gray-700">
-              You just completed your first booking. Please let us know about
-              your experience.
-            </p>
-            {/* Star rating input */}
-            <div className="mb-4 flex items-center justify-center">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                  className={
-                    `mx-1 text-3xl transition-colors ` +
-                    (feedbackRating >= star
-                      ? "text-yellow-400"
-                      : "text-gray-300 hover:text-yellow-400")
-                  }
-                  onClick={() => setFeedbackRating(star)}
-                >
-                  ★
-                </button>
-              ))}
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+            {/* Girl character at the top */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <img
+                src="/images/srv characters (SVG)/girl.svg"
+                alt="SRV Girl Character"
+                className="h-24 w-24 rounded-full border-4 border-white bg-yellow-100 shadow-lg"
+                style={{ objectFit: "cover" }}
+              />
             </div>
-            <textarea
-              className="mb-4 w-full rounded-lg border border-gray-300 p-3"
-              rows={4}
-              placeholder="Share your thoughts..."
-            />
-            <button
-              className="btn-primary w-full"
-              onClick={() => setShowFeedbackPopup(false)}
-            >
-              Submit Feedback
-            </button>
-            <button
-              className="mt-2 w-full text-sm text-gray-500 hover:text-blue-700"
-              onClick={() => setShowFeedbackPopup(false)}
-            >
-              Skip
-            </button>
+            <div className="mt-14">
+              <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
+                We value your feedback!
+              </h2>
+              <p className="mb-4 text-center text-gray-700">
+                You just completed your first booking. Please let us know about
+                your experience.
+              </p>
+              {/* Star rating input */}
+              <div className="mb-4 flex items-center justify-center">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                    className={
+                      `mx-1 text-3xl transition-colors ` +
+                      (feedbackRating >= star
+                        ? "text-yellow-400"
+                        : "text-gray-300 hover:text-yellow-400")
+                    }
+                    onClick={() => setFeedbackRating(star)}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <textarea
+                className="mb-4 w-full rounded-lg border border-gray-300 p-3"
+                rows={4}
+                placeholder="Share your thoughts..."
+              />
+              <button
+                className="btn-primary w-full"
+                onClick={() => setShowFeedbackPopup(false)}
+              >
+                Submit Feedback
+              </button>
+              <button
+                className="mt-2 w-full text-sm text-gray-500 hover:text-blue-700"
+                onClick={() => setShowFeedbackPopup(false)}
+              >
+                Skip
+              </button>
+            </div>
           </div>
         </div>
       )}

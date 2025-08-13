@@ -7,7 +7,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
+import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 
 const COLORS = [
   "#0088FE",
