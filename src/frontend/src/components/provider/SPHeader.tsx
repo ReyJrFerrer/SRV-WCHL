@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid"; // Import BellIcon
+// --- Imports ---
+import React, { useState, useEffect } from "react";
+import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import authCanisterService, {
-  FrontendProfile,
-} from "../../services/authCanisterService";
-import { useProviderNotifications } from "../../hooks/useProviderNotifications"; // Import the hook
+import authCanisterService from "../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+
+// --- Props ---
+export interface HeaderProps {
+  className?: string;
+}
 
 // --- Fix leaflet marker icon for proper display ---
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -21,161 +24,150 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-interface SPHeaderProps {
-  className?: string;
-}
-
-const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
+// --- Main Header Component ---
+const Header: React.FC<HeaderProps> = ({ className }) => {
+  // --- Service Management Hook ---
   const navigate = useNavigate();
-  const {
-    isAuthenticated,
-    location,
-    locationStatus,
-    setLocation,
-    isLoading: isAuthLoading,
-  } = useAuth();
-  const [profile, setProfile] = useState<FrontendProfile | null>(null);
-  const [userAddress, setUserAddress] = useState<string>("Unknown");
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // --- State: Geolocation for map modal ---
+  const [geoLocation, setGeoLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  // --- State: User profile ---
+  const [profile, setProfile] = useState<any>(null);
+
+  // --- State: Location display ---
+  const [userAddress, setUserAddress] = useState<string>("");
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);
+
+  // --- State: Modal for denied location permission ---
+  const [showDeniedModal, setShowDeniedModal] = useState(false);
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
 
-  // Use the provider notifications hook
-  const { unreadCount } = useProviderNotifications();
+  // --- Display name for welcome message ---
+  const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
 
-  const handleRequestLocation = useCallback(() => {
-    setLocationLoading(true);
-    setUserAddress("Detecting location...");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation("allowed", { latitude, longitude });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocation("denied");
-          setLocationLoading(false);
-        },
-      );
-    } else {
-      setLocation("unsupported");
-      setLocationLoading(false);
-    }
-  }, [setLocation]);
-
-  // --- Effect: Fetch user profile and update location address ---
+  // --- Effect: Fetch user profile ---
   useEffect(() => {
-    const loadInitialData = async () => {
-      // Fetch user profile if authenticated
-      if (isAuthenticated) {
-        try {
-          const userProfile = await authCanisterService.getMyProfile();
-          setProfile(userProfile);
-        } catch (error) {
-          /* Profile fetch failed */
-        }
-      }
+    if (isAuthenticated) {
+      authCanisterService
+        .getMyProfile()
+        .then(setProfile)
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
-      // Handle location address display
-      setLocationLoading(true);
-      if (locationStatus === "allowed" && location) {
-        // Check if we have cached address data
-        const cachedAddress = localStorage.getItem(
-          `address_${location.latitude}_${location.longitude}`,
-        );
-        if (cachedAddress) {
+  // --- Effect: Detect and set location ---
+  useEffect(() => {
+    setLocationLoading(true);
+    if (!navigator.geolocation) {
+      setUserAddress("Geolocation not supported");
+      setLocationLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setGeoLocation({ latitude, longitude });
+        // Try to get cached address
+        const cacheKey = `address_${latitude}_${longitude}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
           try {
-            const { address, province } = JSON.parse(cachedAddress);
+            let { address, province } = JSON.parse(cached);
+            // --- Baguio/Benguet normalization ---
+            if (
+              (address === "Baguio" || address === "Baguio City") &&
+              (province === "Cordillera Administrative Region" ||
+                province === "Cordillera Administrative region")
+            ) {
+              address = "Baguio City";
+              province = "Benguet";
+            }
             setUserAddress(address);
             setUserProvince(province);
             setLocationLoading(false);
             return;
-          } catch {
-            // Cache is corrupted, continue with API call
-          }
+          } catch {}
         }
-
-        // Fetch address from API
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`,
-          );
-          const data = await res.json();
-          if (data && data.address) {
-            const { road, city, town, village, county, state } = data.address;
-            const province =
-              county ||
-              state ||
-              data.address.region ||
-              data.address.province ||
-              "";
-            const streetPart = road || village;
-            const cityPart = city || town || "";
-            const fullAddress = [streetPart, cityPart]
-              .filter(Boolean)
-              .join(", ");
-            const finalAddress = fullAddress || "Could not determine address";
-
-            setUserAddress(finalAddress);
-            setUserProvince(province);
-
-            // Cache the address for faster subsequent loads
-            localStorage.setItem(
-              `address_${location.latitude}_${location.longitude}`,
-              JSON.stringify({ address: finalAddress, province }),
-            );
-          } else {
+        // Fetch address from OpenStreetMap
+        fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && data.address) {
+              const { road, city, town, village, county, state, municipality } =
+                data.address;
+              // --- Normalize Baguio/Benguet ---
+              let province =
+                county ||
+                state ||
+                data.address.region ||
+                data.address.province ||
+                "";
+              let streetPart = road || village;
+              let cityPart = city || town || municipality || "";
+              // If Baguio, normalize as in Header.tsx
+              if (
+                (cityPart === "Baguio" || cityPart === "Baguio City") &&
+                (province === "Cordillera Administrative Region" ||
+                  province === "Cordillera Administrative region")
+              ) {
+                cityPart = "Baguio City";
+                province = "Benguet";
+              }
+              const fullAddress = [streetPart, cityPart]
+                .filter(Boolean)
+                .join(", ");
+              const finalAddress =
+                fullAddress || cityPart || "Could not determine address";
+              setUserAddress(finalAddress);
+              setUserProvince(province);
+              localStorage.setItem(
+                cacheKey,
+                JSON.stringify({ address: finalAddress, province }),
+              );
+            } else {
+              setUserAddress("Could not determine address");
+              setUserProvince("");
+            }
+          })
+          .catch(() => {
             setUserAddress("Could not determine address");
             setUserProvince("");
-          }
-        } catch (error) {
-          setUserAddress("Could not determine address");
-          setUserProvince("");
-        } finally {
-          setLocationLoading(false);
+          })
+          .finally(() => setLocationLoading(false));
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setShowDeniedModal(true);
+          setUserAddress("Location not shared");
+        } else {
+          setUserAddress("Could not determine location");
         }
-      } else {
-        // Handle cases where location is not yet known or denied
         setLocationLoading(false);
-        switch (locationStatus) {
-          case "denied":
-            setUserAddress("Location not shared");
-            break;
-          case "not_set":
-          case "unsupported":
-          default:
-            handleRequestLocation();
-            break;
-        }
-        setUserProvince("");
-      }
-    };
-
-    if (!isAuthLoading) {
-      loadInitialData();
-    }
-  }, [isAuthenticated, isAuthLoading, location, locationStatus]);
-
-  // Changed to navigate to notifications
-  const handleNotificationsClick = () => {
-    navigate("/provider/notifications");
-  };
-
-  const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- Map Modal: Shows user's detected location on a map ---
   const MapModal: React.FC = () => {
-    if (!location || !location.latitude || !location.longitude) return null;
-
+    if (!geoLocation || !geoLocation.latitude || !geoLocation.longitude)
+      return null;
+    // Close modal if background is clicked
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) {
         setShowMap(false);
       }
     };
-
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
@@ -195,7 +187,7 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
           </button>
           <div className="flex-1 overflow-hidden rounded-b-lg">
             <MapContainer
-              center={[location.latitude, location.longitude]}
+              center={[geoLocation.latitude, geoLocation.longitude]}
               zoom={16}
               scrollWheelZoom={true}
               style={{ height: "100%", width: "100%" }}
@@ -204,7 +196,7 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
                 attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <Marker position={[location.latitude, location.longitude]}>
+              <Marker position={[geoLocation.latitude, geoLocation.longitude]}>
                 <Popup>You are here</Popup>
               </Marker>
             </MapContainer>
@@ -214,85 +206,86 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
     );
   };
 
+  // --- Render: Header layout ---
   return (
     <header
-      className={`space-y-4 rounded-lg bg-white p-4 shadow-sm ${className}`}
+      className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
     >
-      {/* --- Desktop Header --- */}
+      {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
       <div className="hidden items-center justify-between md:flex">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-6">
           <Link to="/client/home">
-            <img src="/logo.svg" alt="SRV Logo" className="h-25 w-auto" />
+            <img
+              src="/logo.svg"
+              alt="SRV Logo"
+              className="h-20 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
+            />
           </Link>
-          <div className="h-8 border-l border-gray-300"></div>
-          <div className="text-2xl text-gray-700">
-            <span className="font-bold">Welcome Back,</span> {displayName}
+          <div className="h-10 border-l-2 border-blue-100"></div>
+          <div className="flex flex-col">
+            <span className="text-2xl font-semibold tracking-wide text-blue-700">
+              Welcome Back,{" "}
+              <span className="text-2xl font-bold text-gray-800">
+                {displayName}
+              </span>
+            </span>
           </div>
         </div>
         {isAuthenticated && (
-          // Changed button to point to notifications
           <button
-            onClick={handleNotificationsClick}
-            className="group relative rounded-full bg-gray-100 p-3 hover:bg-yellow-100"
+            onClick={() => navigate("/provider/profile")}
+            className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
           >
-            <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
-            {(unreadCount ?? 0) > 0 && (
-              <span className="absolute -top-0 -right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                {unreadCount}
-              </span>
-            )}
+            <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
           </button>
         )}
       </div>
 
-      {/* --- Mobile Header --- */}
+      {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
       <div className="md:hidden">
         <div className="flex items-center justify-between">
           <Link to="/client/home">
-            <img src="/logo.svg" alt="SRV Logo" className="h-10 w-auto" />
+            <img
+              src="/logo.svg"
+              alt="SRV Logo"
+              className="h-16 w-auto drop-shadow-md transition-all duration-300 hover:scale-110"
+            />
           </Link>
           {isAuthenticated && (
-            // Changed button to point to notifications
             <button
-              onClick={handleNotificationsClick}
-              className="group relative rounded-full bg-gray-100 p-3 hover:bg-yellow-100"
+              onClick={() => navigate("/client/profile")}
+              className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
             >
-              <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
-              {(unreadCount ?? 0) > 0 && (
-                <span className="absolute -top-0 -right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                  {unreadCount}
-                </span>
-              )}
+              <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
             </button>
           )}
         </div>
-        <hr className="my-4 border-gray-200" />
-        <div className="text-2xl text-gray-700">
-          <span className="font-bold">Welcome Back,</span> {displayName}
+        <hr className="my-4 border-blue-100" />
+        <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
+          <span className="text-xl font-semibold tracking-wide text-blue-700">
+            Welcome Back,
+          </span>
+          <span className="text-xl font-bold text-gray-800">{displayName}</span>
         </div>
       </div>
 
-      {/* --- Location Section --- */}
-      <div className="rounded-lg bg-yellow-200 p-4">
-        <div className="flex items-center">
-          {" "}
-          {/* New container for the icon and text */}
-          <MapPinIcon className="h-6 w-6 text-blue-600" />
-          <p className="ml-2 text-base font-bold text-gray-800">
-            My Location
-          </p>{" "}
-          {/* Added ml-2 for spacing */}
+      {/* --- Location Section (search bar removed, location detection restored) --- */}
+      <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <MapPinIcon className="h-6 w-6 text-blue-600" />
+            <span className="text-base font-bold text-gray-800">
+              My Location
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col">
-          <div className="mb-1 flex items-center">
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex w-full items-center justify-start">
             {locationLoading || isAuthLoading ? (
               <span className="animate-pulse text-gray-500">
                 Detecting location...
               </span>
-            ) : locationStatus === "allowed" &&
-              location &&
-              userAddress &&
-              userProvince ? (
+            ) : userAddress && userProvince ? (
               <button
                 type="button"
                 className="text-left font-medium text-blue-900 transition-all duration-200 hover:text-lg hover:text-blue-700 focus:outline-none"
@@ -302,28 +295,73 @@ const SPHeader: React.FC<SPHeaderProps> = ({ className = "" }) => {
                 {userAddress}, {userProvince}
               </button>
             ) : (
-              <span className="text-gray-600">{userAddress}</span>
+              <span className="text-left text-gray-500">
+                {userAddress || "Location not set"}
+              </span>
             )}
           </div>
         </div>
-
-        {!locationLoading &&
-          (locationStatus === "denied" ||
-            locationStatus === "not_set" ||
-            locationStatus === "unsupported") && (
-            <button
-              onClick={handleRequestLocation}
-              className="mt-2 w-full rounded-lg bg-yellow-300 p-2 text-center text-sm font-semibold text-blue-700 transition-colors hover:bg-yellow-400"
-            >
-              Share Location
-            </button>
-          )}
       </div>
 
       {/* --- Map Modal for Location Display --- */}
       {showMap && <MapModal />}
+
+      {/* --- Modal: Location Permission Denied Instructions --- */}
+      {showDeniedModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDeniedModal(false);
+          }}
+        >
+          <div className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
+            <button
+              className="absolute top-3 right-3 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
+              onClick={() => setShowDeniedModal(false)}
+              aria-label="Close"
+              tabIndex={0}
+            >
+              <span className="text-xl font-bold text-gray-700">&times;</span>
+            </button>
+            <h2 className="mb-4 text-xl font-bold text-blue-700">
+              Location Permission Blocked
+            </h2>
+            <p className="mb-2 text-gray-700">
+              You have previously blocked location access for this site. To
+              share your location, please enable location permissions in your
+              browser settings and reload the page.
+            </p>
+            <ul className="mb-4 list-disc pl-5 text-sm text-gray-600">
+              <li>
+                Chrome: Click the lock icon in the address bar &gt; Site
+                settings &gt; Allow Location
+              </li>
+              <li>
+                Brave: Click the lion icon in the address bar &gt; Shields &gt;
+                Allow Location, or use Site settings via the lock icon
+              </li>
+              <li>
+                Safari: Go to Preferences &gt; Websites &gt; Location &gt; Allow
+                for this site
+              </li>
+              <li>
+                Firefox: Click the lock icon &gt; Permissions &gt; Allow
+                Location
+              </li>
+            </ul>
+            <button
+              className="mt-2 w-full rounded bg-blue-600 py-2 font-bold text-white hover:bg-blue-700"
+              onClick={() => setShowDeniedModal(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
 
-export default SPHeader;
+export default Header;
