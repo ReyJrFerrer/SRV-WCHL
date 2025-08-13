@@ -10,38 +10,85 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 
 const DailyBookingsBarChart: React.FC = () => {
   const { getBookingCountByDay, loading } = useProviderBookingManagement();
   const data = getBookingCountByDay();
-
-  if (loading) {
-    return <div>Loading chart...</div>;
-  }
 
   // Custom formatter for the X-Axis ticks to shorten day names
   const formatDayName = (name: string) => {
     return name.substring(0, 3); // Shortens "Sunday" to "Sun", "Monday" to "Mon", etc.
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-[275px] w-full items-center justify-center rounded-2xl bg-white shadow-inner">
+        <span className="animate-pulse text-lg font-semibold text-blue-400">
+          Loading chart...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ width: "100%", height: 300 }}>
-      <h3 className="text-lg font-semibold text-gray-800">
-        Bookings by Day of the Week
-      </h3>
-      <ResponsiveContainer>
-        <BarChart
-          data={data}
-          margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" tickFormatter={formatDayName} />
-          <YAxis allowDecimals={false} />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="value" fill="#82ca9d" name="Number of Bookings" />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="relative flex h-[275px] w-full flex-col rounded-2xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-4 shadow-inner">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-blue-900">
+          <CalendarDaysIcon className="h-6 w-6 text-blue-400" />
+          Bookings by Day of the Week
+        </h3>
+        <span className="text-xs text-gray-400">Last 30 days</span>
+      </div>
+      <div className="flex flex-1 items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="name"
+              tickFormatter={formatDayName}
+              tick={{ fontSize: 13, fill: "#334155" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fontSize: 13, fill: "#334155" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              contentStyle={{
+                borderRadius: "0.5rem",
+                background: "#fff",
+                border: "1px solid #e5e7eb",
+                color: "#1e293b",
+                fontSize: "0.95rem",
+              }}
+              formatter={(value: number) => [value, "Bookings"]}
+            />
+            <Legend
+              verticalAlign="top"
+              iconType="circle"
+              wrapperStyle={{
+                paddingBottom: "10px",
+                fontSize: "0.95rem",
+                color: "#334155",
+              }}
+            />
+            <Bar
+              dataKey="value"
+              fill="#2563eb"
+              name="Number of Bookings"
+              radius={[8, 8, 0, 0]}
+              barSize={32}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };
