@@ -13,7 +13,7 @@ import {
   ExclamationTriangleIcon,
   ArrowPathIcon,
   StarIcon,
-  ChatBubbleLeftRightIcon, // Imported ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
@@ -46,7 +46,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       >
         <strong className="font-bold">Error!</strong>
         <span className="block sm:inline">
-          {" "}
           Nawawala ang impormasyon sa booking na ito.
         </span>
       </div>
@@ -64,25 +63,28 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           <strong className="font-bold">Data Issue!</strong>
         </div>
         <span className="block sm:inline">
-          {" "}
           Details about this bookings is missing. (missing ID).
         </span>
       </div>
     );
   }
 
-  // Extract booking data
+  const clientName = booking.clientName || "Unknown Client";
   const packageTitle = booking.packageName || "No Package Name";
   const serviceTitle =
     booking.serviceDetails?.description || booking.packageName || "Service";
-  const serviceImage = "/default-client.svg";
+  const serviceImage =
+    typeof booking.clientProfile?.profilePicture === "string"
+      ? booking.clientProfile?.profilePicture
+      : (booking.clientProfile?.profilePicture?.imageUrl ?? undefined);
+  // If profilePicture is an object, use its imageUrl property
   const duration = booking.serviceDuration || "N/A";
   const price = booking.price;
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
   const notes = booking.notes;
 
-  // Format date function
+  // --- Date formatting helper ---
   const formatDate = (date: Date | string | number) => {
     try {
       const dateObj = new Date(date);
@@ -98,7 +100,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // Status color mapping (enhanced version)
+  // --- Status color mapping ---
   const getEnhancedStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case "REQUESTED":
@@ -123,7 +125,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // Action handlers
+  // --- Action handlers ---
   const handleAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -169,14 +171,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // Chat handler: check for existing conversation, else create, then navigate
+  // --- Chat handler: check for existing conversation, else create, then navigate ---
   const handleChatClient = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (!booking.clientId || !identity) return;
     try {
       const currentUserId = identity.getPrincipal().toString();
-
       // Check if there's an existing conversation with this client
       const existingConversation = conversations.find(
         (conv) =>
@@ -192,7 +193,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: booking.clientName || "Client",
-            otherUserImage: booking.clientProfile?.profilePicture,
+            otherUserImage: booking.clientProfile?.profilePicture?.imageUrl,
           },
         });
       } else {
@@ -201,9 +202,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           currentUserId,
           booking.clientId.toString(),
         );
-
         if (newConversation) {
-          // Navigate to new conversation, use clientId as route param
           navigate(`/provider/chat/${booking.clientId}`, {
             state: {
               conversationId: newConversation.id,
@@ -222,7 +221,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // Check booking states
+  // --- Booking state checks for button logic ---
   const canAcceptOrDecline = booking.canAccept && booking.canDecline;
   const canStart = booking.canStart;
   const canComplete = booking.canComplete;
@@ -230,156 +229,298 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const isInProgress = status === "InProgress";
 
   // --- Card Layout ---
-  const CardContent = (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 shadow-lg transition-shadow duration-300 hover:shadow-xl md:flex-row">
-      {/* Service Image */}
-      <div className="flex h-48 w-full items-center justify-center bg-blue-100 md:w-48 md:flex-shrink-0">
-        <img
-          src={serviceImage}
-          alt={packageTitle}
-          className="h-full w-full rounded-t-2xl object-cover md:rounded-t-none md:rounded-l-2xl"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/default-client.svg";
-          }}
-        />
-      </div>
-      {/* Details */}
-      <div className="flex flex-grow flex-col justify-between p-5">
-        <div>
-          <div className="flex items-center justify-between">
-            {/* Package name at the left, booking status at the right */}
-            <h3
-              className="truncate text-xl font-bold text-blue-900"
-              title={packageTitle}
-            >
-              {packageTitle}
-            </h3>
-            <span
-              className={`ml-3 rounded-full px-3 py-1 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
-            >
-              {status}
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-blue-700">{serviceTitle}</p>
-
-          <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
-            <div className="flex items-center">
-              <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-blue-400" />
-              {formatDate(booking.requestedDate)}
-            </div>
-            <div className="flex items-center">
-              <MapPinIcon className="mr-1.5 h-4 w-4 text-blue-400" />
-              {locationAddress}
-            </div>
-            {price !== undefined && (
-              <div className="flex items-center">
-                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
-                <span className="font-semibold text-green-700">
-                  ₱{price.toFixed(2)}
-                </span>
-              </div>
-            )}
-            {duration !== "N/A" && (
-              <div className="flex items-center">
-                <ClockIcon className="mr-1.5 h-4 w-4 text-yellow-500" />
-                Duration: {duration}
-              </div>
-            )}
-          </div>
-          {notes && (
-            <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-              <strong>Booking Notes:</strong> {notes}
-            </div>
-          )}
+  return isInProgress ? (
+    <div className="mb-6">
+      {/* Booking Card */}
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 shadow-lg transition-shadow duration-300 hover:shadow-xl md:flex-row">
+        {/* Provider Profile Image */}
+        <div className="flex h-48 w-full items-center justify-center bg-blue-100 md:w-48 md:flex-shrink-0">
+          <img
+            src={serviceImage ?? undefined}
+            alt={clientName}
+            className="h-full w-full rounded-t-2xl object-cover md:rounded-t-none md:rounded-l-2xl"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/default-client.svg";
+            }}
+          />
         </div>
-        {/* Action buttons */}
-        <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
-          {canAcceptOrDecline && (
-            <div className="flex w-full flex-wrap gap-2">
-              <button
-                onClick={handleReject}
-                disabled={isBookingActionInProgress(booking.id, "decline")}
-                className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
+        {/* Booking Details */}
+        <div className="flex flex-grow flex-col justify-between p-5">
+          <div>
+            <div className="flex items-center justify-between">
+              {/* Client name */}
+              <h3
+                className="truncate text-xl font-bold text-blue-900"
+                title={clientName}
               >
-                <XCircleIcon className="mr-1 h-4 w-4" />
-                {isBookingActionInProgress(booking.id, "decline")
-                  ? "Declining..."
-                  : "Decline"}
-              </button>
-              <button
-                onClick={handleAccept}
-                disabled={isBookingActionInProgress(booking.id, "accept")}
-                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+                {clientName}
+              </h3>
+              {/* Booking status badge */}
+              <span
+                className={`ml-3 rounded-full px-3 py-1 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
               >
-                <CheckCircleIcon className="mr-1 h-4 w-4" />
-                {isBookingActionInProgress(booking.id, "accept")
-                  ? "Accepting..."
-                  : "Accept"}
-              </button>
+                {status}
+              </span>
             </div>
-          )}
-          {(canStart || canComplete || isCompleted) && (
-            <div className="flex w-full flex-wrap gap-2">
-              <button
-                onClick={handleChatClient}
-                className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
-              >
-                <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />{" "}
-                {/* Changed icon */}
-                Chat {booking.clientName?.split(" ")[0] || "Client"}
-              </button>
-              {canStart && (
-                <button
-                  onClick={handleStartService}
-                  disabled={isBookingActionInProgress(booking.id, "start")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
-                >
-                  <ArrowPathIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "start")
-                    ? "Starting..."
-                    : "Start Service"}
-                </button>
+            <p className="mt-1 text-sm text-blue-700">{serviceTitle}</p>
+            {/* Package name below service name */}
+            <p className="text-xs text-gray-500">{packageTitle}</p>
+            {/* Booking meta info */}
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+              <div className="flex items-center">
+                <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-blue-400" />
+                {formatDate(booking.requestedDate)}
+              </div>
+              <div className="flex items-center">
+                <MapPinIcon className="mr-1.5 h-4 w-4 text-blue-400" />
+                {locationAddress}
+              </div>
+              {price !== undefined && (
+                <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    ₱{price.toFixed(2)}
+                  </span>
+                </div>
               )}
-              {canComplete && (
+              {duration !== "N/A" && (
+                <div className="flex items-center">
+                  <ClockIcon className="mr-1.5 h-4 w-4 text-yellow-500" />
+                  Duration: {duration}
+                </div>
+              )}
+            </div>
+            {notes && (
+              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                <strong>Booking Notes:</strong> {notes}
+              </div>
+            )}
+          </div>
+          {/* Action Buttons Section */}
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+            {canAcceptOrDecline && (
+              <div className="flex w-full flex-wrap gap-2">
                 <button
-                  onClick={handleMarkAsCompleted}
-                  disabled={isBookingActionInProgress(booking.id, "complete")}
-                  className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
+                  onClick={handleReject}
+                  disabled={isBookingActionInProgress(booking.id, "decline")}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
+                >
+                  <XCircleIcon className="mr-1 h-4 w-4" />
+                  {isBookingActionInProgress(booking.id, "decline")
+                    ? "Declining..."
+                    : "Decline"}
+                </button>
+                <button
+                  onClick={handleAccept}
+                  disabled={isBookingActionInProgress(booking.id, "accept")}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
                 >
                   <CheckCircleIcon className="mr-1 h-4 w-4" />
-                  {isBookingActionInProgress(booking.id, "complete")
-                    ? "Completing..."
-                    : "Mark Completed"}
+                  {isBookingActionInProgress(booking.id, "accept")
+                    ? "Accepting..."
+                    : "Accept"}
                 </button>
-              )}
-              {isCompleted && (
-                <>
-                  <Link
-                    to={`/provider/review/${booking?.id}`}
-                    onClick={(e) => e.stopPropagation()}
+              </div>
+            )}
+            {(canStart || canComplete || isCompleted) && (
+              <div className="flex w-full flex-wrap gap-2">
+                <button
+                  onClick={handleChatClient}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+                >
+                  <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
+                  Chat {booking.clientName?.split(" ")[0] || "Client"}
+                </button>
+                {canStart && (
+                  <button
+                    onClick={handleStartService}
+                    disabled={isBookingActionInProgress(booking.id, "start")}
+                    className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
+                  >
+                    <ArrowPathIcon className="mr-1 h-4 w-4" />
+                    {isBookingActionInProgress(booking.id, "start")
+                      ? "Starting..."
+                      : "Start Service"}
+                  </button>
+                )}
+                {canComplete && (
+                  <button
+                    onClick={handleMarkAsCompleted}
+                    disabled={isBookingActionInProgress(booking.id, "complete")}
+                    className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
+                  >
+                    <CheckCircleIcon className="mr-1 h-4 w-4" />
+                    {isBookingActionInProgress(booking.id, "complete")
+                      ? "Completing..."
+                      : "Mark Completed"}
+                  </button>
+                )}
+                {isCompleted && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/provider/review/${booking?.id}`);
+                    }}
                     className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
                   >
                     <StarIcon className="mr-1 h-4 w-4" />
                     View My Reviews
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  );
-
-  // Render as Link for non-in-progress, as div for in-progress
-  return isInProgress ? (
-    <div className="mb-6">{CardContent}</div>
   ) : (
     <Link
       to={`/provider/booking/${booking.id}`}
       className="focus:ring-opacity-50 mb-6 block focus:ring-2 focus:ring-blue-500 focus:outline-none"
     >
-      {CardContent}
+      {/* Booking Card */}
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 shadow-lg transition-shadow duration-300 hover:shadow-xl md:flex-row">
+        {/* Provider Profile Image */}
+        <div className="flex h-48 w-full items-center justify-center bg-blue-100 md:w-48 md:flex-shrink-0">
+          <img
+            src={serviceImage ?? undefined}
+            alt={clientName}
+            className="h-full w-full rounded-t-2xl object-cover md:rounded-t-none md:rounded-l-2xl"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/default-client.svg";
+            }}
+          />
+        </div>
+        {/* Booking Details */}
+        <div className="flex flex-grow flex-col justify-between p-5">
+          <div>
+            <div className="flex items-center justify-between">
+              {/* Client name */}
+              <h3
+                className="truncate text-xl font-bold text-blue-900"
+                title={clientName}
+              >
+                {clientName}
+              </h3>
+              {/* Booking status badge */}
+              <span
+                className={`ml-3 rounded-full px-3 py-1 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
+              >
+                {status}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-blue-700">{serviceTitle}</p>
+            {/* Package name below service name */}
+            <p className="text-xs text-gray-500">{packageTitle}</p>
+            {/* Booking meta info */}
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+              <div className="flex items-center">
+                <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-blue-400" />
+                {formatDate(booking.requestedDate)}
+              </div>
+              <div className="flex items-center">
+                <MapPinIcon className="mr-1.5 h-4 w-4 text-blue-400" />
+                {locationAddress}
+              </div>
+              {price !== undefined && (
+                <div className="flex items-center">
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                  <span className="font-semibold text-green-700">
+                    ₱{price.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {duration !== "N/A" && (
+                <div className="flex items-center">
+                  <ClockIcon className="mr-1.5 h-4 w-4 text-yellow-500" />
+                  Duration: {duration}
+                </div>
+              )}
+            </div>
+            {notes && (
+              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+                <strong>Booking Notes:</strong> {notes}
+              </div>
+            )}
+          </div>
+          {/* Action Buttons Section */}
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+            {canAcceptOrDecline && (
+              <div className="flex w-full flex-wrap gap-2">
+                <button
+                  onClick={handleReject}
+                  disabled={isBookingActionInProgress(booking.id, "decline")}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
+                >
+                  <XCircleIcon className="mr-1 h-4 w-4" />
+                  {isBookingActionInProgress(booking.id, "decline")
+                    ? "Declining..."
+                    : "Decline"}
+                </button>
+                <button
+                  onClick={handleAccept}
+                  disabled={isBookingActionInProgress(booking.id, "accept")}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+                >
+                  <CheckCircleIcon className="mr-1 h-4 w-4" />
+                  {isBookingActionInProgress(booking.id, "accept")
+                    ? "Accepting..."
+                    : "Accept"}
+                </button>
+              </div>
+            )}
+            {(canStart || canComplete || isCompleted) && (
+              <div className="flex w-full flex-wrap gap-2">
+                <button
+                  onClick={handleChatClient}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+                >
+                  <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />
+                  Chat {booking.clientName?.split(" ")[0] || "Client"}
+                </button>
+                {canStart && (
+                  <button
+                    onClick={handleStartService}
+                    disabled={isBookingActionInProgress(booking.id, "start")}
+                    className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
+                  >
+                    <ArrowPathIcon className="mr-1 h-4 w-4" />
+                    {isBookingActionInProgress(booking.id, "start")
+                      ? "Starting..."
+                      : "Start Service"}
+                  </button>
+                )}
+                {canComplete && (
+                  <button
+                    onClick={handleMarkAsCompleted}
+                    disabled={isBookingActionInProgress(booking.id, "complete")}
+                    className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
+                  >
+                    <CheckCircleIcon className="mr-1 h-4 w-4" />
+                    {isBookingActionInProgress(booking.id, "complete")
+                      ? "Completing..."
+                      : "Mark Completed"}
+                  </button>
+                )}
+                {isCompleted && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/provider/review/${booking?.id}`);
+                    }}
+                    className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
+                  >
+                    <StarIcon className="mr-1 h-4 w-4" />
+                    View My Reviews
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </Link>
   );
 };

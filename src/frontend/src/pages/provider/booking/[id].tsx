@@ -8,16 +8,238 @@ import {
   XCircleIcon,
   ArrowPathIcon,
   ClockIcon,
-  InformationCircleIcon,
   StarIcon,
   CheckCircleIcon,
   PhoneIcon,
+  BriefcaseIcon,
+  ClipboardDocumentListIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/solid";
+import useChat from "../../../hooks/useChat";
+import { useAuth } from "../../../context/AuthContext";
 import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
+import { useReputation } from "../../../hooks/useReputation";
+
+// --- Client Reputation Score Section (patterned after ServiceDetailPageComponent) ---
+const ClientReputationScore: React.FC<{ clientId: string }> = ({
+  clientId,
+}) => {
+  const { fetchUserReputation } = useReputation();
+  const [reputationScore, setReputationScore] = useState<number>(50); // Default score
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const loadReputation = async () => {
+      try {
+        setLoading(true);
+        const reputation = await fetchUserReputation(clientId);
+        if (reputation && typeof reputation.trustScore === "number") {
+          setReputationScore(Math.round(reputation.trustScore));
+        } else {
+          setReputationScore(50); // Fallback to default
+        }
+      } catch (error) {
+        setReputationScore(50); // Fallback to default on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (clientId) {
+      loadReputation();
+    }
+  }, [clientId, fetchUserReputation]);
+
+  const score = reputationScore;
+  let iconColor = "text-blue-500";
+  let textColor = "text-blue-700";
+  if (score >= 80) {
+    iconColor = "text-blue-500";
+    textColor = "text-blue-700";
+  } else if (score >= 60) {
+    iconColor = "text-blue-400";
+    textColor = "text-blue-700";
+  } else if (score >= 40) {
+    iconColor = "text-yellow-400";
+    textColor = "text-yellow-700";
+  } else {
+    iconColor = "text-yellow-600";
+    textColor = "text-yellow-700";
+  }
+
+  if (loading) {
+    return (
+      <span
+        className="flex items-center rounded-lg bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600"
+        style={{ minWidth: 0 }}
+      >
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600"></div>
+        <span>Loading reputation...</span>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`flex items-center rounded-lg px-3 py-1 text-sm font-medium ${textColor}`}
+      style={{ minWidth: 0 }}
+    >
+      <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
+      <span className="mr-1">Reputation:</span>
+      <span className="font-bold">{score}</span>
+    </span>
+  );
+};
+
+// Progress tracker section component
+const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
+  const steps = [
+    { key: "requested", label: "Requested" },
+    { key: "accepted", label: "Accepted" },
+    { key: "in_progress", label: "Current" },
+    { key: "completed", label: "Completed" },
+  ];
+
+  const normalizedStatus = (status || "").toLowerCase().replace(/ /g, "_");
+  let currentStep = 0;
+  switch (normalizedStatus) {
+    case "requested":
+    case "pending":
+      currentStep = 0;
+      break;
+    case "accepted":
+    case "confirmed":
+      currentStep = 1;
+      break;
+    case "in_progress":
+    case "inprogress":
+      currentStep = 2;
+      break;
+    case "completed":
+      currentStep = 3;
+      break;
+    case "declined":
+    case "cancelled":
+      currentStep = -1;
+      break;
+    default:
+      currentStep = 0;
+  }
+
+  if (currentStep === -1) {
+    return (
+      <section className="my-4 flex flex-col rounded-2xl bg-white p-4 shadow">
+        <h3 className="mr-10 mb-3 w-full text-left text-lg font-bold text-blue-700">
+          Progress Tracker
+        </h3>
+        <div className="flex items-center justify-center rounded-lg bg-red-50 px-4 py-3 font-semibold text-red-700">
+          Booking {status}
+        </div>
+      </section>
+    );
+  }
+
+  // Helper to determine color classes for steps and lines
+  const getStepCircle = (idx: number) => {
+    // Completed (for completed status, all are checked blue)
+    if (normalizedStatus === "completed") {
+      return {
+        bg: "bg-blue-500 border-blue-500 text-white",
+        icon: (
+          <CheckCircleIcon className="h-7 w-7 text-white md:h-10 md:w-10" />
+        ),
+      };
+    }
+    // Steps before current: blue
+    if (idx < currentStep) {
+      return {
+        bg: "bg-blue-500 border-blue-500 text-white",
+        icon: (
+          <CheckCircleIcon className="h-7 w-7 text-white md:h-10 md:w-10" />
+        ),
+      };
+    }
+    // Current step: yellow
+    if (idx === currentStep) {
+      return {
+        bg: "bg-yellow-400 border-yellow-400 text-white",
+        icon: (
+          <span className="text-lg font-bold text-white md:text-2xl">
+            {idx + 1}
+          </span>
+        ),
+      };
+    }
+    // Untouched: yellow outline, white bg, yellow text
+    return {
+      bg: "bg-white border-yellow-300 text-yellow-400",
+      icon: (
+        <span className="text-lg font-bold text-yellow-400 md:text-2xl">
+          {idx + 1}
+        </span>
+      ),
+    };
+  };
+
+  const getLineColor = (idx: number) => {
+    // Completed: all blue
+    if (normalizedStatus === "completed") return "bg-blue-500";
+    // Before current: blue
+    if (idx < currentStep) return "bg-blue-500";
+    // Untouched: yellow
+    return "bg-yellow-300";
+  };
+
+  const getLabelColor = (idx: number) => {
+    // Completed: all blue
+    if (normalizedStatus === "completed") return "text-blue-700";
+    // Before current: blue
+    if (idx < currentStep) return "text-blue-700";
+    // Current: yellow
+    if (idx === currentStep) return "text-yellow-600";
+    // Untouched: yellow
+    return "text-yellow-400";
+  };
+
+  return (
+    <section className="my-4 flex flex-col items-center rounded-2xl bg-white p-4 shadow">
+      <h3 className="mt-1 mb-3 ml-5 w-full text-left text-lg font-bold text-blue-700">
+        Progress Tracker
+      </h3>
+      <div className="flex w-full max-w-xl items-center justify-center gap-0 sm:gap-4 md:max-w-3xl">
+        {steps.map((step, idx) => {
+          const { bg, icon } = getStepCircle(idx);
+          const labelColor = getLabelColor(idx);
+          return (
+            <React.Fragment key={step.key}>
+              <div className="flex flex-col items-center">
+                <div
+                  className={`flex items-center justify-center rounded-full border-2 ${bg} h-10 w-10 transition-colors duration-200 md:h-14 md:w-14`}
+                >
+                  {icon}
+                </div>
+                <span
+                  className={`mt-1 text-xs font-medium md:text-base ${labelColor} transition-colors duration-200`}
+                >
+                  {step.label}
+                </span>
+              </div>
+              {idx < steps.length - 1 && (
+                <div
+                  className={`h-1 w-8 sm:w-16 md:w-32 ${getLineColor(idx)} transition-colors duration-200`}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
 
 const ProviderBookingDetailsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +248,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
     useState<ProviderEnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const { identity } = useAuth();
+  const { conversations, createConversation } = useChat();
 
   // Set document title
   useEffect(() => {
@@ -59,7 +283,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
       setLocalLoading(true);
       setLocalError(null);
 
-      // Wait for bookings to load from the hook
       if (!hookLoading && bookings.length >= 0) {
         const foundBooking = bookings.find((booking) => booking.id === id);
 
@@ -80,8 +303,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
     clearError();
     try {
       await refreshBookings();
-    } catch (error) {
-      console.error("❌ Failed to retry loading bookings:", error);
+    } catch {
+      // silent
     }
   };
 
@@ -91,7 +314,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     const success = await acceptBookingById(specificBooking.id);
     if (success) {
       await refreshBookings();
-      // Update local state
       const updatedBooking = bookings.find(
         (booking) => booking.id === specificBooking.id,
       );
@@ -109,7 +331,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     );
     if (success) {
       await refreshBookings();
-      // Update local state
       const updatedBooking = bookings.find(
         (booking) => booking.id === specificBooking.id,
       );
@@ -135,7 +356,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     const success = await completeBookingById(specificBooking.id);
     if (success) {
       await refreshBookings();
-      // Update local state
       const updatedBooking = bookings.find(
         (booking) => booking.id === specificBooking.id,
       );
@@ -145,20 +365,60 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
-  // Changed to messaging
-  const handleContactClient = () => {
-    if (!specificBooking) return;
-    const clientContact =
-      specificBooking.clientPhone || specificBooking.clientProfile?.phone;
-
-    if (clientContact && clientContact !== "Contact not available") {
-      window.location.href = `tel:${clientContact}`;
-    } else {
-      alert("Client contact information not available.");
+  // Chat button handler (ProviderBookingItemCard logic)
+  const handleChatClient = async () => {
+    if (!specificBooking || !identity) return;
+    const clientId =
+      specificBooking.clientProfile?.id?.toString() ||
+      specificBooking.clientId?.toString();
+    if (!clientId) {
+      alert("Client chat unavailable.");
+      return;
+    }
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+      // Check for existing conversation
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === clientId) ||
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === clientId),
+      );
+      if (existingConversation) {
+        navigate(`/provider/chat/${clientId}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: specificBooking.clientName || "Client",
+            otherUserImage:
+              specificBooking.clientProfile?.profilePicture?.imageUrl,
+          },
+        });
+      } else {
+        // Create new conversation
+        const newConversation = await createConversation(
+          currentUserId,
+          clientId,
+        );
+        if (newConversation) {
+          navigate(`/provider/chat/${clientId}`, {
+            state: {
+              conversationId: newConversation.id,
+              otherUserName: specificBooking.clientName || "Client",
+              otherUserImage: specificBooking.clientProfile?.profilePicture,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Could not start conversation. Please try again.",
+      );
     }
   };
 
-  // Utility functions
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return "N/A";
     try {
@@ -174,40 +434,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
-  const getStatusPillStyle = (status: string) => {
-    switch (status?.toUpperCase()) {
-      case "REQUESTED":
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-700";
-      case "ACCEPTED":
-      case "CONFIRMED":
-        return "bg-green-100 text-green-700";
-      case "INPROGRESS":
-      case "IN_PROGRESS":
-        return "bg-blue-100 text-blue-700";
-      case "COMPLETED":
-        return "bg-indigo-100 text-indigo-700";
-      case "CANCELLED":
-        return "bg-red-100 text-red-700";
-      case "DECLINED":
-        return "bg-gray-100 text-gray-700";
-      case "DISPUTED":
-        return "bg-orange-100 text-orange-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
   // Determine loading state
   const isLoading = hookLoading || localLoading;
-
-  // Determine error state
   const displayError = localError || hookError;
 
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
           <p className="text-gray-600">Loading booking details...</p>
@@ -216,10 +450,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     );
   }
 
-  // Error state - show if there's an error and no booking found
+  // Error state
   if (displayError && !specificBooking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
         <div className="text-center">
           <h1 className="mb-2 text-2xl font-bold text-gray-900">
             {localError === "Booking not found"
@@ -252,7 +486,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
   // No booking found (after loading completed)
   if (!specificBooking && !isLoading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50 p-4">
         <h1 className="mb-4 text-xl font-semibold text-red-600">
           Booking Not Found
         </h1>
@@ -271,33 +505,64 @@ const ProviderBookingDetailsPage: React.FC = () => {
     specificBooking?.serviceDetails?.description ||
     specificBooking?.packageName ||
     "Service";
-  const packageName = specificBooking?.packageName;
   const clientName = specificBooking?.clientName || "Unknown Client";
   const clientContact =
     specificBooking?.clientPhone ||
     specificBooking?.clientProfile?.phone ||
     "Contact not available";
-  const bookingLocation =
-    specificBooking?.formattedLocation || "Location not specified";
-  const price = specificBooking?.price;
-  const duration = specificBooking?.serviceDuration || "N/A";
 
-  // Check booking states
-  const canAcceptOrDecline =
-    specificBooking?.canAccept && specificBooking?.canDecline;
-  const canStart = specificBooking?.canStart;
-  const canComplete = specificBooking?.canComplete;
-  const isCompleted = specificBooking?.status === "Completed";
-  const isDeclined = specificBooking?.status === "Declined";
+  const getAbsoluteUrl = (url: string) => {
+    if (!url) return "/default-client.svg";
+    if (url.startsWith("http")) return url;
+    // Adjust the base URL as needed for your deployment
+    return `${window.location.origin}${url}`;
+  };
 
-  // Show booking details
+  const providerImage =
+    typeof specificBooking?.clientProfile?.profilePicture === "string"
+      ? getAbsoluteUrl(specificBooking.clientProfile.profilePicture)
+      : getAbsoluteUrl(
+          specificBooking?.clientProfile?.profilePicture?.imageUrl || "",
+        );
+  const clientId =
+    specificBooking?.clientProfile?.id?.toString() ||
+    specificBooking?.clientId?.toString();
+
+  // Format location string
+  let bookingLocation = "Location not specified";
+  if (
+    typeof specificBooking?.location === "string" &&
+    (specificBooking.location as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.location as string;
+  } else if (
+    typeof specificBooking?.serviceDetails?.location === "string" &&
+    (specificBooking.serviceDetails.location as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.serviceDetails.location as string;
+  } else if (
+    typeof specificBooking?.formattedLocation === "string" &&
+    (specificBooking.formattedLocation as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.formattedLocation as string;
+  }
+
+  const price =
+    specificBooking?.price ??
+    specificBooking?.packageDetails?.price ??
+    specificBooking?.serviceDetails?.price;
+  const duration = specificBooking?.duration ?? "N/A";
+
+  // --- Main Page Layout ---
   return (
-    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white/80 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 rounded-full p-2 hover:bg-gray-100"
+            aria-label="Back"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
@@ -308,108 +573,129 @@ const ProviderBookingDetailsPage: React.FC = () => {
       </header>
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
-        <div className="mt-5 rounded-xl bg-white p-6 shadow-lg">
-          <div className="mb-4 flex items-start justify-between">
-            <h2 className="text-2xl font-bold text-slate-800">{clientName}</h2>
-            <span
-              className={`rounded-full px-3 py-1 text-sm font-semibold ${getStatusPillStyle(specificBooking?.status || "")}`}
-            >
-              {specificBooking?.status === "InProgress"
-                ? "In Progress"
-                : specificBooking?.status?.replace("_", " ") || "Unknown"}
-            </span>
+        {/* Side by side layout for provider and service details */}
+        <div className="flex flex-col gap-6 md:flex-row">
+          {/* Provider (client) info card - left */}
+          <div className="relative max-w-md min-w-[320px] flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
+            <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 px-6 py-8">
+              {/* Client image */}
+              <img
+                src={providerImage}
+                alt="Client"
+                className="h-24 w-24 rounded-full border-4 border-white bg-gray-100 object-cover shadow-md"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/default-client.svg";
+                }}
+              />
+              {/* Name at the top, centered */}
+              <h2 className="w-full text-center text-2xl font-bold text-slate-800">
+                {clientName}
+              </h2>
+              {/* Bottom row: reputation score left, phone right */}
+              <div className="flex w-full flex-col gap-2 sm:mt-2 sm:flex-row sm:items-center sm:justify-between">
+                {clientId ? (
+                  <div className="flex w-full justify-center sm:w-auto sm:justify-start">
+                    <ClientReputationScore clientId={clientId} />
+                  </div>
+                ) : (
+                  <div />
+                )}
+                {clientContact && clientContact !== "Contact not available" && (
+                  <div className="flex w-full items-center justify-center text-sm font-medium text-gray-600 sm:w-auto sm:justify-end">
+                    <PhoneIcon className="mr-2 h-5 w-5 text-blue-500" />
+                    <span>{clientContact}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {packageName && (
-            <h3 className="mb-2 text-xl font-semibold text-slate-700">
-              {clientContact}
+          {/* Service and package details - right */}
+          <div className="min-w-[320px] flex-1 rounded-2xl bg-white p-6 shadow-lg">
+            <h3 className="mb-3 text-lg font-bold text-blue-700">
+              Service Section
             </h3>
-          )}
-
-          <p className="mb-1 flex items-center text-sm text-gray-500">
-            Service:{" "}
-            <span className="ml-1 font-medium text-gray-700">
-              {serviceName}
-            </span>
-          </p>
-
-          {clientContact && clientContact !== "Contact not available" && (
-            <p className="mb-4 text-sm text-gray-500">Package: {packageName}</p>
-          )}
-
-          <div className="space-y-3 border-t border-gray-200 pt-4 text-sm">
-            <div className="flex items-start">
-              <CalendarDaysIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-500" />
-              <span>
-                <strong className="font-medium text-gray-700">
-                  Requested:
-                </strong>{" "}
-                {formatDate(
-                  specificBooking?.requestedDate || specificBooking?.createdAt,
-                )}
+            <div className="mb-2 flex items-center gap-2">
+              <BriefcaseIcon className="h-5 w-5 text-blue-500" />
+              <span className="font-medium text-gray-700">
+                Service:{" "}
+                <span className="font-semibold text-blue-900">
+                  {serviceName}
+                </span>
               </span>
             </div>
-
-            <div className="flex items-start">
-              <MapPinIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-blue-500" />
-              <span>
-                <strong className="font-medium text-gray-700">Location:</strong>{" "}
-                {bookingLocation}
+            {specificBooking?.packageDetails?.title && (
+              <div className="mb-2 flex items-center gap-2">
+                <ClipboardDocumentListIcon className="h-5 w-5 text-blue-500" />
+                <span className="font-medium text-gray-700">
+                  Package:{" "}
+                  <span className="font-normal text-gray-700">
+                    {specificBooking.packageDetails.title}
+                  </span>
+                </span>
+              </div>
+            )}
+            {/* Booking date */}
+            <div className="mb-2 flex items-center gap-2">
+              <CalendarDaysIcon className="h-5 w-5 text-blue-500" />
+              <span className="font-medium text-gray-700">
+                Date:{" "}
+                <span className="font-normal text-gray-700">
+                  {formatDate(
+                    specificBooking?.requestedDate ||
+                      specificBooking?.createdAt,
+                  )}
+                </span>
               </span>
             </div>
-
+            {/* Booking location */}
+            <div className="mb-2 flex items-center gap-2">
+              <MapPinIcon className="h-5 w-5 text-blue-500" />
+              <span className="font-medium text-gray-700">
+                Location:{" "}
+                <span className="font-normal text-gray-700">
+                  {bookingLocation}
+                </span>
+              </span>
+            </div>
+            {/* Booking price */}
             {price !== undefined && (
-              <div className="flex items-start">
-                <CurrencyDollarIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-green-500" />
-                <span>
-                  <strong className="font-medium text-gray-700">
-                    Payment:
-                  </strong>{" "}
-                  ₱{price.toFixed(2)}
+              <div className="mb-2 flex items-center gap-2">
+                <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
+                <span className="font-medium text-gray-700">
+                  Price:{" "}
+                  <span className="font-semibold text-green-700">
+                    ₱{price.toFixed(2)}
+                  </span>
                 </span>
               </div>
             )}
-
+            {/* Booking duration */}
             {duration !== "N/A" && (
-              <div className="flex items-start">
-                <ClockIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-purple-500" />
-                <span>
-                  <strong className="font-medium text-gray-700">
-                    Duration:
-                  </strong>{" "}
-                  {duration}
-                </span>
-              </div>
-            )}
-
-            {specificBooking?.packageDetails?.description && (
-              <div className="flex items-start">
-                <InformationCircleIcon className="mt-0.5 mr-2 h-5 w-5 flex-shrink-0 text-indigo-500" />
-                <span>
-                  <strong className="font-medium text-gray-700">
-                    Package Details:
-                  </strong>{" "}
-                  {specificBooking.packageDetails.description}
+              <div className="mb-2 flex items-center gap-2">
+                <ClockIcon className="h-5 w-5 text-blue-500" />
+                <span className="font-medium text-gray-700">
+                  Duration:{" "}
+                  <span className="font-normal text-gray-700">{duration}</span>
                 </span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3 rounded-xl bg-white p-4 shadow-lg sm:flex sm:space-y-0 sm:space-x-3">
-          {/* Contact Client - Always available for non-declined bookings */}
-          {!isDeclined && (
-            <button
-              onClick={handleContactClient}
-              className="flex w-full items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-black transition-colors hover:bg-slate-200 sm:flex-1"
-            >
-              <PhoneIcon className="mr-2 h-5 w-5" /> Contact Client
-            </button>
-          )}
+        {/* Booking Progress Section */}
+        <BookingProgressSection status={specificBooking?.status} />
 
-          {/* Accept/Decline buttons for pending bookings */}
-          {canAcceptOrDecline && (
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-lg sm:flex-row sm:gap-4">
+          <button
+            onClick={handleChatClient}
+            className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+          >
+            <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat
+          </button>
+
+          {specificBooking?.canAccept && specificBooking?.canDecline && (
             <>
               <button
                 onClick={handleDeclineBooking}
@@ -417,7 +703,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   specificBooking?.id || "",
                   "decline",
                 )}
-                className="flex w-full items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-slate-200 disabled:opacity-50 sm:flex-1"
+                className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
               >
                 <XCircleIcon className="mr-2 h-5 w-5" />
                 {isBookingActionInProgress(specificBooking?.id || "", "decline")
@@ -430,7 +716,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   specificBooking?.id || "",
                   "accept",
                 )}
-                className="flex w-full items-center justify-center rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-green-500 transition-colors hover:bg-slate-100 disabled:opacity-50 sm:flex-1"
+                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
               >
                 <CheckCircleIcon className="mr-2 h-5 w-5" />
                 {isBookingActionInProgress(specificBooking?.id || "", "accept")
@@ -440,15 +726,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
             </>
           )}
 
-          {/* Start Service button for accepted bookings */}
-          {canStart && (
+          {specificBooking?.canStart && (
             <button
               onClick={handleStartService}
               disabled={isBookingActionInProgress(
                 specificBooking?.id || "",
                 "start",
               )}
-              className="flex w-full items-center justify-center rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:opacity-50 sm:flex-1"
+              className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
             >
               <ArrowPathIcon className="mr-2 h-5 w-5" />
               {isBookingActionInProgress(specificBooking?.id || "", "start")
@@ -457,15 +742,14 @@ const ProviderBookingDetailsPage: React.FC = () => {
             </button>
           )}
 
-          {/* Complete Service button for in-progress bookings */}
-          {canComplete && (
+          {specificBooking?.canComplete && (
             <button
               onClick={handleCompleteService}
               disabled={isBookingActionInProgress(
                 specificBooking?.id || "",
                 "complete",
               )}
-              className="flex w-full items-center justify-center rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-teal-600 disabled:opacity-50 sm:flex-1"
+              className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-medium text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
             >
               <CheckCircleIcon className="mr-2 h-5 w-5" />
               {isBookingActionInProgress(specificBooking?.id || "", "complete")
@@ -474,11 +758,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
             </button>
           )}
 
-          {/* View Reviews for completed bookings */}
-          {isCompleted && (
+          {specificBooking?.status === "Completed" && (
             <Link
               to={`/provider/review/${specificBooking?.id}`}
-              className="flex w-full items-center justify-center rounded-lg bg-yellow-500 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-yellow-600 sm:flex-1"
+              className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2.5 text-center text-sm font-medium text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
             >
               <StarIcon className="mr-2 h-5 w-5" /> View Review
             </Link>
