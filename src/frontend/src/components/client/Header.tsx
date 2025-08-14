@@ -63,9 +63,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const [userProvince, setUserProvince] = useState<string>("");
   const [locationLoading, setLocationLoading] = useState(true);
 
-  // --- State: Modal for denied location permission ---
-  const [showDeniedModal, setShowDeniedModal] = useState(false);
-
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
 
@@ -443,61 +440,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
       {/* --- Map Modal for Location Display --- */}
       {showMap && <MapModal />}
-
-      {/* --- Modal: Location Permission Denied Instructions --- */}
-      {showDeniedModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowDeniedModal(false);
-          }}
-        >
-          <div className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-            <button
-              className="absolute top-3 right-3 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-              onClick={() => setShowDeniedModal(false)}
-              aria-label="Close"
-              tabIndex={0}
-            >
-              <span className="text-xl font-bold text-gray-700">&times;</span>
-            </button>
-            <h2 className="mb-4 text-xl font-bold text-blue-700">
-              Location Permission Blocked
-            </h2>
-            <p className="mb-2 text-gray-700">
-              You have previously blocked location access for this site. To
-              share your location, please enable location permissions in your
-              browser settings and reload the page.
-            </p>
-            <ul className="mb-4 list-disc pl-5 text-sm text-gray-600">
-              <li>
-                Chrome: Click the lock icon in the address bar &gt; Site
-                settings &gt; Allow Location
-              </li>
-              <li>
-                Brave: Click the lion icon in the address bar &gt; Shields &gt;
-                Allow Location, or use Site settings via the lock icon
-              </li>
-              <li>
-                Safari: Go to Preferences &gt; Websites &gt; Location &gt; Allow
-                for this site
-              </li>
-              <li>
-                Firefox: Click the lock icon &gt; Permissions &gt; Allow
-                Location
-              </li>
-            </ul>
-            <button
-              className="mt-2 w-full rounded bg-blue-600 py-2 font-bold text-white hover:bg-blue-700"
-              onClick={() => setShowDeniedModal(false)}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

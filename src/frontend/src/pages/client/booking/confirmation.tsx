@@ -42,7 +42,7 @@ const BookingConfirmationPage: React.FC = () => {
             <div className="relative mx-auto mb-4 h-24 w-24">
               {/* Use standard <img> tag instead of Next.js <Image> */}
               <img
-                src="/images/external logo/ConfirmationPageLogo.svg"
+                src="/images/srv characters (SVG)/girl.svg"
                 alt="Success"
                 className="h-full w-full object-cover"
               />

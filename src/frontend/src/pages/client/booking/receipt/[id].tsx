@@ -91,9 +91,9 @@ const ReceiptPage: React.FC = () => {
         {/* Receipt Header */}
         <div className="mb-8 text-center">
           <img
-            src="/images/external logo/ConfirmationPageLogo.svg"
+            src="/images/srv characters (SVG)/girl.svg"
             alt="Confirmation"
-            className="mx-auto mb-4 h-20 w-20"
+            className="mx-auto mb-4 h-24 w-24"
           />
           <h1 className="text-3xl font-bold text-gray-800">
             Service is complete!

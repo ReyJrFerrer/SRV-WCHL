@@ -114,17 +114,16 @@ export const useProfileImage = (
   profilePictureUrl: string | null | undefined,
   options: UseImageLoaderOptions = {},
 ) => {
-  const defaultAvatar = "/default-client.svg"; // Assuming you have a default avatar
-
   const { imageDataUrl, isLoading, error, isError, refetch, isSuccess } =
     useImageLoader(profilePictureUrl, {
-      placeholder: defaultAvatar,
+      placeholder: "/default-client.svg",
       ...options,
     });
 
   return {
     /** The profile image URL (with fallback to default avatar) */
-    profileImageUrl: isSuccess && imageDataUrl ? imageDataUrl : defaultAvatar,
+    profileImageUrl:
+      isSuccess && imageDataUrl ? imageDataUrl : "/default-client.svg",
     /** Whether the profile image is loading */
     isLoading: isLoading && !!profilePictureUrl,
     /** Whether to show the default avatar */

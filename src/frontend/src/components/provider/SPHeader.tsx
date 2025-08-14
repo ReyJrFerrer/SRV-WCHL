@@ -1,12 +1,13 @@
 // --- Imports ---
 import React, { useState, useEffect } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import authCanisterService from "../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { useProviderNotifications } from "../../hooks/useProviderNotifications";
 
 // --- Props ---
 export interface HeaderProps {
@@ -30,6 +31,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
+  // Notification count from custom hook
+  const { unreadCount } = useProviderNotifications();
+
   // --- State: Geolocation for map modal ---
   const [geoLocation, setGeoLocation] = useState<{
     latitude: number;
@@ -45,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const [locationLoading, setLocationLoading] = useState(true);
 
   // --- State: Modal for denied location permission ---
-  const [showDeniedModal, setShowDeniedModal] = useState(false);
+  const [, setShowDeniedModal] = useState(false);
 
   // --- State: Show/hide map modal ---
   const [showMap, setShowMap] = useState(false);
@@ -206,12 +210,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     );
   };
 
+  // --- Notification button handler ---
+  const handleNotificationsClick = () => {
+    navigate("/provider/notifications");
+  };
+
   // --- Render: Header layout ---
   return (
     <header
       className={`w-full max-w-full space-y-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-lg ${className}`}
     >
-      {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
+      {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
       <div className="hidden items-center justify-between md:flex">
         <div className="flex items-center space-x-6">
           <Link to="/client/home">
@@ -231,17 +240,24 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             </span>
           </div>
         </div>
+        {/* Notification Button with badge */}
         {isAuthenticated && (
           <button
-            onClick={() => navigate("/provider/profile")}
+            onClick={handleNotificationsClick}
             className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+            aria-label="Notifications"
           >
-            <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+            <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
+                {unreadCount}
+              </span>
+            )}
           </button>
         )}
       </div>
 
-      {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
+      {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
       <div className="md:hidden">
         <div className="flex items-center justify-between">
           <Link to="/client/home">
@@ -253,10 +269,16 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </Link>
           {isAuthenticated && (
             <button
-              onClick={() => navigate("/client/profile")}
+              onClick={handleNotificationsClick}
               className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+              aria-label="Notifications"
             >
-              <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           )}
         </div>
@@ -305,61 +327,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
       {/* --- Map Modal for Location Display --- */}
       {showMap && <MapModal />}
-
-      {/* --- Modal: Location Permission Denied Instructions --- */}
-      {showDeniedModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowDeniedModal(false);
-          }}
-        >
-          <div className="relative w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-            <button
-              className="absolute top-3 right-3 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-              onClick={() => setShowDeniedModal(false)}
-              aria-label="Close"
-              tabIndex={0}
-            >
-              <span className="text-xl font-bold text-gray-700">&times;</span>
-            </button>
-            <h2 className="mb-4 text-xl font-bold text-blue-700">
-              Location Permission Blocked
-            </h2>
-            <p className="mb-2 text-gray-700">
-              You have previously blocked location access for this site. To
-              share your location, please enable location permissions in your
-              browser settings and reload the page.
-            </p>
-            <ul className="mb-4 list-disc pl-5 text-sm text-gray-600">
-              <li>
-                Chrome: Click the lock icon in the address bar &gt; Site
-                settings &gt; Allow Location
-              </li>
-              <li>
-                Brave: Click the lion icon in the address bar &gt; Shields &gt;
-                Allow Location, or use Site settings via the lock icon
-              </li>
-              <li>
-                Safari: Go to Preferences &gt; Websites &gt; Location &gt; Allow
-                for this site
-              </li>
-              <li>
-                Firefox: Click the lock icon &gt; Permissions &gt; Allow
-                Location
-              </li>
-            </ul>
-            <button
-              className="mt-2 w-full rounded bg-blue-600 py-2 font-bold text-white hover:bg-blue-700"
-              onClick={() => setShowDeniedModal(false)}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

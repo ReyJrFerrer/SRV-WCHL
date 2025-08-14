@@ -4,8 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { EnhancedBooking } from "../../hooks/bookingManagement";
 import { reviewCanisterService } from "../../services/reviewCanisterService";
 import { authCanisterService } from "../../services/authCanisterService";
-import { resolveAssetPath } from "../../utils/assetResolver";
-import { useProfileImage } from "../../hooks/useMediaLoader";
 import {
   CalendarDaysIcon,
   MapPinIcon,
@@ -65,18 +63,14 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   // --- Extract booking data with fallbacks ---
   const serviceTitle = booking.serviceName;
-  // Use useProfileImage for provider profile picture
-  const { profileImageUrl: providerImage } = useProfileImage(
-    booking.providerProfile?.profilePicture?.imageUrl,
-    { placeholder: "/default-provider.svg" },
-  );
-  // Fallback to service category slug if profile image is missing or default
-  let fallbackImage = providerImage;
+
+  // Use provider profile image directly, do not use useMediaLoader for booking image
+  let fallbackImage = booking.providerProfile?.profilePicture?.imageUrl;
   if (
-    !providerImage ||
-    providerImage === "/default-provider.svg" ||
-    providerImage === "" ||
-    providerImage === undefined
+    !fallbackImage ||
+    fallbackImage === "/default-provider.svg" ||
+    fallbackImage === "" ||
+    fallbackImage === undefined
   ) {
     let rawSlug = booking.serviceDetails?.category?.slug;
     if (rawSlug && typeof rawSlug !== "string") {
@@ -86,9 +80,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       rawSlug = booking.serviceDetails.title.toLowerCase().replace(/\s+/g, "-");
     }
     if (rawSlug) {
-      fallbackImage =
-        resolveAssetPath(`images/ai-sp/${rawSlug}.svg`) ||
-        "/default-provider.svg";
+      fallbackImage = `/images/ai-sp/${rawSlug}.svg` || "/default-provider.svg";
     } else {
       fallbackImage = "/default-provider.svg";
     }

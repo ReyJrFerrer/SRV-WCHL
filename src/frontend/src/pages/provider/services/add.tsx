@@ -640,7 +640,7 @@ const AddServicePage: React.FC = () => {
       // Create service
       const serviceRequest: ServiceCreateRequest = {
         title: formData.serviceOfferingTitle.trim(),
-        description: `Service offering: ${formData.serviceOfferingTitle.trim()}`,
+        description: `${formData.serviceOfferingTitle.trim()}`,
         categoryId: formData.categoryId,
         price: Math.min(
           ...formData.servicePackages.map((pkg) => Number(pkg.price)),
