@@ -35,7 +35,7 @@
     },
     "remittance": {
       "type": "motoko",
-      "main": "srv/backend/function/remittance.mo"
+      "main": "src/backend/function/remittance.mo"
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",

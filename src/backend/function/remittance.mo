@@ -314,8 +314,18 @@ persistent actor RemittanceCanister {
             case (?rule) {
                 let baseCommission = calculateCommission(amount, rule);
                 let finalCommission = applyCommissionCaps(baseCommission, rule);
-                let netProceeds = if (amount > finalCommission) { amount - finalCommission } else { 0 };
-                let effectiveRate = if (amount > 0) { Float.fromInt(finalCommission * 10000 / amount) / 100.0 } else { 0.0 };
+                let netProceeds = if (amount >= finalCommission) { amount - finalCommission } else { 0 };
+                let effectiveRate = if (amount > 0) { 
+                    let commissionInt = Int.abs(finalCommission);
+                    let amountInt = Int.abs(amount);
+                    if (amountInt > 0) {
+                        Float.fromInt(commissionInt * 10000 / amountInt) / 100.0
+                    } else {
+                        0.0
+                    }
+                } else { 
+                    0.0 
+                };
 
                 #ok({
                     rule_id = rule.id;
