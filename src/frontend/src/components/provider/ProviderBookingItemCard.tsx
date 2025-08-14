@@ -1,24 +1,22 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../hooks/useProviderBookingManagement";
 import {
   MapPinIcon,
-  CalendarIcon,
   ClockIcon,
   CurrencyDollarIcon,
-  PhoneIcon,
-  InformationCircleIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
   ArrowPathIcon,
   StarIcon,
+  ChatBubbleLeftRightIcon, // Imported ChatBubbleLeftRightIcon
 } from "@heroicons/react/24/outline";
+import useChat from "../../hooks/useChat";
+import { useAuth } from "../../context/AuthContext";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -27,7 +25,7 @@ interface ProviderBookingItemCardProps {
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   booking,
 }) => {
-  const [showDetails] = useState(false);
+  const { identity } = useAuth();
   const navigate = useNavigate();
   const {
     acceptBookingById,
@@ -35,16 +33,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     startBookingById,
     completeBookingById,
     isBookingActionInProgress,
-    formatBookingDate,
-    formatBookingTime,
     refreshBookings,
   } = useProviderBookingManagement();
 
-  // Debug validation
+  const { conversations, createConversation } = useChat();
+
   if (!booking) {
-    console.error(
-      "CRITICAL: ProviderBookingItemCard received an undefined 'booking' prop!",
-    );
     return (
       <div
         className="rounded-xl border border-red-400 bg-red-100 px-4 py-3 text-red-700 shadow-lg"
@@ -60,10 +54,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   }
 
   if (!booking.id) {
-    console.error(
-      "CRITICAL: Booking object is missing 'id'. Booking data:",
-      JSON.stringify(booking, null, 2),
-    );
     return (
       <div
         className="rounded-xl border border-orange-400 bg-orange-100 px-4 py-3 text-orange-700 shadow-lg"
@@ -81,16 +71,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     );
   }
 
-  // Extract booking data with proper property names for ProviderEnhancedBooking
-  const clientName = booking.clientName || "Unknown Client";
-  const clientContact =
-    booking.clientPhone ||
-    booking.clientProfile?.phone ||
-    "Contact not available";
+  // Extract booking data
+  const packageTitle = booking.packageName || "No Package Name";
   const serviceTitle =
     booking.serviceDetails?.description || booking.packageName || "Service";
-  const serviceImage = "/images/Tutoring-LanguageTutor1.jpg";
-  const packageTitle = booking.packageName;
+  const serviceImage = "/default-client.svg";
   const duration = booking.serviceDuration || "N/A";
   const price = booking.price;
   const locationAddress = booking.formattedLocation || "Location not specified";
@@ -118,43 +103,39 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     switch (status.toUpperCase()) {
       case "REQUESTED":
       case "PENDING":
-        return "text-yellow-600 bg-yellow-100";
+        return "text-yellow-700 bg-yellow-100";
       case "ACCEPTED":
       case "CONFIRMED":
-        return "text-green-600 bg-green-100";
+        return "text-green-700 bg-green-100";
       case "INPROGRESS":
       case "IN_PROGRESS":
-        return "text-blue-600 bg-blue-100";
+        return "text-blue-700 bg-blue-100";
       case "COMPLETED":
-        return "text-indigo-600 bg-indigo-100";
+        return "text-indigo-700 bg-indigo-100";
       case "CANCELLED":
-        return "text-red-600 bg-red-100";
+        return "text-red-700 bg-red-100";
       case "DECLINED":
-        return "text-gray-600 bg-gray-100";
+        return "text-gray-700 bg-gray-100";
       case "DISPUTED":
-        return "text-orange-600 bg-orange-100";
+        return "text-orange-700 bg-orange-100";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-gray-700 bg-gray-100";
     }
   };
 
-  // Action handlers using the hook's functions
+  // Action handlers
   const handleAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     const success = await acceptBookingById(booking.id);
     if (success) {
       navigate(`../../provider/booking/${booking.id}`);
-    } else {
-      console.error(`❌ Failed to accept booking ${booking.id}`);
     }
   };
 
   const handleReject = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (window.confirm("Sigurado ka bang gusto mong idecline?")) {
       const success = await declineBookingById(
         booking.id,
@@ -162,20 +143,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       );
       if (success) {
         navigate(`../../provider/home`);
-      } else {
-        console.error(`❌ Failed to decline booking ${booking.id}`);
       }
-    }
-  };
-
-  const handleContactClient = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (clientContact && clientContact !== "Contact not available") {
-      window.location.href = `tel:${clientContact}`;
-    } else {
-      alert("Contact information not available");
     }
   };
 
@@ -184,13 +152,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (window.confirm("Mark this booking as completed?")) {
       const success = await completeBookingById(booking.id);
       if (success) {
         await refreshBookings();
-      } else {
-        console.error(`❌ Failed to complete booking ${booking.id}`);
       }
     }
   };
@@ -198,12 +163,62 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const handleStartService = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     const success = await startBookingById(booking.id);
     if (success) {
       navigate(`/provider/active-service/${booking.id}`);
-    } else {
-      console.error(`❌ Failed to start service for booking ${booking.id}`);
+    }
+  };
+
+  // Chat handler: check for existing conversation, else create, then navigate
+  const handleChatClient = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!booking.clientId || !identity) return;
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+
+      // Check if there's an existing conversation with this client
+      const existingConversation = conversations.find(
+        (conv) =>
+          (conv.conversation.providerId === currentUserId &&
+            conv.conversation.clientId === booking.clientId.toString()) ||
+          (conv.conversation.clientId === currentUserId &&
+            conv.conversation.providerId === booking.clientId.toString()),
+      );
+
+      if (existingConversation) {
+        // Navigate to existing conversation, use clientId as route param
+        navigate(`/provider/chat/${booking.clientId}`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: booking.clientName || "Client",
+            otherUserImage: booking.clientProfile?.profilePicture,
+          },
+        });
+      } else {
+        // Create new conversation
+        const newConversation = await createConversation(
+          currentUserId,
+          booking.clientId.toString(),
+        );
+
+        if (newConversation) {
+          // Navigate to new conversation, use clientId as route param
+          navigate(`/provider/chat/${booking.clientId}`, {
+            state: {
+              conversationId: newConversation.id,
+              otherUserName: booking.clientName || "Client",
+              otherUserImage: booking.clientProfile?.profilePicture,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Could not start conversation. Please try again.",
+      );
     }
   };
 
@@ -212,459 +227,160 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const canStart = booking.canStart;
   const canComplete = booking.canComplete;
   const isCompleted = status === "Completed";
-  const isInProgress = status === "InProgress"; // ✅ Add this check
+  const isInProgress = status === "InProgress";
 
-  return (
-    <>
-      {/* ✅ Conditionally render Link only for non-InProgress bookings */}
-      {!isInProgress ? (
-        <Link
-          to={`/provider/booking/${booking.id}`}
-          className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <div className="md:flex">
-            {serviceImage && (
-              <div className="md:flex-shrink-0">
-                <div className="relative h-48 w-full object-cover md:w-48">
-                  <img
-                    src={serviceImage}
-                    alt={serviceTitle}
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        "/default-provider.svg";
-                    }}
-                  />
-                </div>
+  // --- Card Layout ---
+  const CardContent = (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 shadow-lg transition-shadow duration-300 hover:shadow-xl md:flex-row">
+      {/* Service Image */}
+      <div className="flex h-48 w-full items-center justify-center bg-blue-100 md:w-48 md:flex-shrink-0">
+        <img
+          src={serviceImage}
+          alt={packageTitle}
+          className="h-full w-full rounded-t-2xl object-cover md:rounded-t-none md:rounded-l-2xl"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/default-client.svg";
+          }}
+        />
+      </div>
+      {/* Details */}
+      <div className="flex flex-grow flex-col justify-between p-5">
+        <div>
+          <div className="flex items-center justify-between">
+            {/* Package name at the left, booking status at the right */}
+            <h3
+              className="truncate text-xl font-bold text-blue-900"
+              title={packageTitle}
+            >
+              {packageTitle}
+            </h3>
+            <span
+              className={`ml-3 rounded-full px-3 py-1 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
+            >
+              {status}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-blue-700">{serviceTitle}</p>
+
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+            <div className="flex items-center">
+              <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-blue-400" />
+              {formatDate(booking.requestedDate)}
+            </div>
+            <div className="flex items-center">
+              <MapPinIcon className="mr-1.5 h-4 w-4 text-blue-400" />
+              {locationAddress}
+            </div>
+            {price !== undefined && (
+              <div className="flex items-center">
+                <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-green-500" />
+                <span className="font-semibold text-green-700">
+                  ₱{price.toFixed(2)}
+                </span>
               </div>
             )}
-
-            <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
-              <div>
-                <div className="flex items-start justify-between">
-                  <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
-                    {clientContact}
-                  </p>
-                </div>
-
-                <h3
-                  className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
-                  title={clientName}
-                >
-                  {clientName}
-                </h3>
-
-                <p className="mt-1 text-xs text-gray-500">{serviceTitle}</p>
-
-                {packageTitle && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Package: {packageTitle}
-                  </p>
-                )}
-
-                <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-                  <p className="flex items-center">
-                    <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {formatDate(booking.requestedDate)}
-                  </p>
-
-                  <p className="flex items-center">
-                    <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {locationAddress}
-                  </p>
-
-                  {price !== undefined && (
-                    <p className="flex items-center">
-                      <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                      ₱{price.toFixed(2)}
-                    </p>
-                  )}
-
-                  {duration !== "N/A" && (
-                    <p className="flex items-center">
-                      <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                      Duration: {duration}
-                    </p>
-                  )}
-                </div>
-                {/* Add notes section if notes exist */}
-                {notes && (
-                  <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-                    <strong>Booking Notes:</strong> {notes}
-                  </div>
-                )}
-                {/* Expandable details section - HIDDEN ON SMALL SCREENS */}
-                <div
-                  className={`hidden overflow-hidden transition-all duration-300 sm:block`}
-                  style={{
-                    maxHeight: showDetails ? 200 : 0,
-                    opacity: showDetails ? 1 : 0,
-                    marginTop: showDetails ? 8 : 0,
-                  }}
-                >
-                  <div className="space-y-2 border-t border-gray-200 pt-2 text-xs text-gray-700">
-                    <div className="flex items-center">
-                      <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0 text-gray-400" />
-                      <span>
-                        Scheduled Date:{" "}
-                        <span className="font-medium">
-                          {formatBookingDate(booking.requestedDate)}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <ClockIcon className="mr-2 h-4 w-4 flex-shrink-0 text-gray-400" />
-                      <span>
-                        Scheduled Time:{" "}
-                        <span className="font-medium">
-                          {formatBookingTime(booking.requestedDate)}
-                        </span>
-                      </span>
-                    </div>
-                    {booking.packageDetails?.description && (
-                      <div className="flex items-start">
-                        <InformationCircleIcon className="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-gray-400" />
-                        <span>
-                          Package Description:{" "}
-                          <span className="font-medium">
-                            {booking.packageDetails.description}
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
-                {/* Show accept/reject buttons for pending bookings */}
-                {canAcceptOrDecline && (
-                  <>
-                    <button
-                      onClick={handleReject}
-                      disabled={isBookingActionInProgress(
-                        booking.id,
-                        "decline",
-                      )}
-                      className="flex w-full items-center justify-center rounded-md bg-white px-3 py-2 text-xs font-medium text-red-500 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <XCircleIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "decline")
-                        ? "Declining..."
-                        : "Decline"}
-                    </button>
-                    <button
-                      onClick={handleAccept}
-                      disabled={isBookingActionInProgress(booking.id, "accept")}
-                      className="flex w-full items-center justify-center rounded-md bg-white px-3 py-2 text-xs font-medium text-green-500 transition-colors hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <CheckCircleIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "accept")
-                        ? "Accepting..."
-                        : "Accept"}
-                    </button>
-                  </>
-                )}
-
-                {/* Show contact and start service buttons for accepted bookings */}
-                {canStart && (
-                  <>
-                    <button
-                      onClick={handleContactClient}
-                      className="flex w-full items-center justify-center rounded-md bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:w-auto"
-                    >
-                      <PhoneIcon className="mr-1.5 h-4 w-4" />
-                      Contact Client
-                    </button>
-                    <button
-                      onClick={handleStartService}
-                      disabled={isBookingActionInProgress(booking.id, "start")}
-                      className="flex w-full items-center justify-center rounded-md bg-indigo-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <ArrowPathIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "start")
-                        ? "Starting..."
-                        : "Start Service"}
-                    </button>
-                  </>
-                )}
-
-                {/* Show contact and complete buttons for in-progress bookings */}
-                {canComplete && (
-                  <>
-                    <button
-                      onClick={handleContactClient}
-                      className="flex w-full items-center justify-center rounded-md bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:w-auto"
-                    >
-                      <PhoneIcon className="mr-1.5 h-4 w-4" />
-                      Contact Client
-                    </button>
-                    <button
-                      onClick={handleMarkAsCompleted}
-                      disabled={isBookingActionInProgress(
-                        booking.id,
-                        "complete",
-                      )}
-                      className="flex w-full items-center justify-center rounded-md bg-teal-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <CheckCircleIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "complete")
-                        ? "Completing..."
-                        : "Mark Completed"}
-                    </button>
-                  </>
-                )}
-
-                {/* Show contact and view reviews buttons for completed bookings */}
-                {isCompleted && (
-                  <>
-                    <button
-                      onClick={handleContactClient}
-                      className="flex w-full items-center justify-center rounded-md bg-slate-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-slate-700 sm:w-auto"
-                    >
-                      <PhoneIcon className="mr-1.5 h-4 w-4" />
-                      Contact Client
-                    </button>
-                    <Link
-                      to={`/provider/review/${booking?.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex w-full items-center justify-center rounded-md bg-yellow-500 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-yellow-600 sm:w-auto"
-                    >
-                      <StarIcon className="mr-1.5 h-4 w-4" />
-                      View My Reviews
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </Link>
-      ) : (
-        // ✅ For InProgress bookings, render without Link wrapper
-        <div className="focus:ring-opacity-50 block overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
-          <div className="md:flex">
-            {serviceImage && (
-              <div className="md:flex-shrink-0">
-                <div className="relative h-48 w-full object-cover md:w-48">
-                  <img
-                    src={serviceImage}
-                    alt={serviceTitle}
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        "/images/default-provider.svg";
-                    }}
-                  />
-                </div>
+            {duration !== "N/A" && (
+              <div className="flex items-center">
+                <ClockIcon className="mr-1.5 h-4 w-4 text-yellow-500" />
+                Duration: {duration}
               </div>
             )}
-
-            <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
-              <div>
-                <div className="flex items-start justify-between">
-                  <p className="text-xs font-semibold tracking-wider text-indigo-500 uppercase">
-                    {clientContact}
-                  </p>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEnhancedStatusColor(status)}`}
-                  >
-                    {status === "InProgress"}
-                  </span>
-                </div>
-
-                <h3
-                  className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
-                  title={clientName}
-                >
-                  {clientName}
-                </h3>
-
-                <p className="mt-1 text-xs text-gray-500">
-                  Service: {serviceTitle}
-                </p>
-
-                {packageTitle && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Package: {packageTitle}
-                  </p>
-                )}
-
-                <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-                  <p className="flex items-center">
-                    <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {formatDate(booking.requestedDate)}
-                  </p>
-
-                  <p className="flex items-center">
-                    <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {locationAddress}
-                  </p>
-
-                  {price !== undefined && (
-                    <p className="flex items-center">
-                      <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                      ₱{price.toFixed(2)}
-                    </p>
-                  )}
-
-                  {duration !== "N/A" && (
-                    <p className="flex items-center">
-                      <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                      Duration: {duration}
-                    </p>
-                  )}
-                </div>
-
-                {/* Expandable details section - HIDDEN ON SMALL SCREENS */}
-                <div
-                  className={`hidden overflow-hidden transition-all duration-300 sm:block`}
-                  style={{
-                    maxHeight: showDetails ? 200 : 0,
-                    opacity: showDetails ? 1 : 0,
-                    marginTop: showDetails ? 8 : 0,
-                  }}
-                >
-                  <div className="space-y-2 border-t border-gray-200 pt-2 text-xs text-gray-700">
-                    <div className="flex items-center">
-                      <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0 text-gray-400" />
-                      <span>
-                        Scheduled Date:{" "}
-                        <span className="font-medium">
-                          {formatBookingDate(booking.requestedDate)}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <ClockIcon className="mr-2 h-4 w-4 flex-shrink-0 text-gray-400" />
-                      <span>
-                        Scheduled Time:{" "}
-                        <span className="font-medium">
-                          {formatBookingTime(booking.requestedDate)}
-                        </span>
-                      </span>
-                    </div>
-                    {booking.packageDetails?.description && (
-                      <div className="flex items-start">
-                        <InformationCircleIcon className="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-gray-400" />
-                        <span>
-                          Package Description:{" "}
-                          <span className="font-medium">
-                            {booking.packageDetails.description}
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
-                {/* Show accept/reject buttons for pending bookings */}
-                {canAcceptOrDecline && (
-                  <>
-                    <button
-                      onClick={handleReject}
-                      disabled={isBookingActionInProgress(
-                        booking.id,
-                        "decline",
-                      )}
-                      className="flex w-full items-center justify-center rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <XCircleIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "decline")
-                        ? "Declining..."
-                        : "Decline"}
-                    </button>
-                    <button
-                      onClick={handleAccept}
-                      disabled={isBookingActionInProgress(booking.id, "accept")}
-                      className="flex w-full items-center justify-center rounded-md bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <CheckCircleIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "accept")
-                        ? "Accepting..."
-                        : "Accept"}
-                    </button>
-                  </>
-                )}
-
-                {/* Show contact and start service buttons for accepted bookings */}
-                {canStart && (
-                  <>
-                    <button
-                      onClick={handleContactClient}
-                      className="flex w-full items-center justify-center rounded-md bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:w-auto"
-                    >
-                      <PhoneIcon className="mr-1.5 h-4 w-4" />
-                      Contact Client
-                    </button>
-                    <button
-                      onClick={handleStartService}
-                      disabled={isBookingActionInProgress(booking.id, "start")}
-                      className="flex w-full items-center justify-center rounded-md bg-indigo-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <ArrowPathIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "start")
-                        ? "Starting..."
-                        : "Start Service"}
-                    </button>
-                  </>
-                )}
-
-                {/* Show contact and complete buttons for in-progress bookings */}
-                {canComplete && (
-                  <>
-                    <button
-                      onClick={handleContactClient}
-                      className="flex w-full items-center justify-center rounded-md bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 sm:w-auto"
-                    >
-                      <PhoneIcon className="mr-1.5 h-4 w-4" />
-                      Contact Client
-                    </button>
-                    <button
-                      onClick={handleMarkAsCompleted}
-                      disabled={isBookingActionInProgress(
-                        booking.id,
-                        "complete",
-                      )}
-                      className="flex w-full items-center justify-center rounded-md bg-teal-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                    >
-                      <CheckCircleIcon className="mr-1.5 h-4 w-4" />
-                      {isBookingActionInProgress(booking.id, "complete")
-                        ? "Completing..."
-                        : "Mark Completed"}
-                    </button>
-                  </>
-                )}
-
-                {/* Show contact and view reviews buttons for completed bookings */}
-                {isCompleted && (
-                  <>
-                    <button
-                      onClick={handleContactClient}
-                      className="flex w-full items-center justify-center rounded-md bg-slate-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-slate-700 sm:w-auto"
-                    >
-                      <PhoneIcon className="mr-1.5 h-4 w-4" />
-                      Contact Client
-                    </button>
-                    <Link
-                      to={`/provider/review/${booking?.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex w-full items-center justify-center rounded-md bg-yellow-500 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-yellow-600 sm:w-auto"
-                    >
-                      <StarIcon className="mr-1.5 h-4 w-4" />
-                      View My Reviews
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
+          {notes && (
+            <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+              <strong>Booking Notes:</strong> {notes}
+            </div>
+          )}
         </div>
-      )}
-    </>
+        {/* Action buttons */}
+        <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+          {canAcceptOrDecline && (
+            <div className="flex w-full flex-wrap gap-2">
+              <button
+                onClick={handleReject}
+                disabled={isBookingActionInProgress(booking.id, "decline")}
+                className="flex flex-1 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100 hover:text-red-800 disabled:opacity-50"
+              >
+                <XCircleIcon className="mr-1 h-4 w-4" />
+                {isBookingActionInProgress(booking.id, "decline")
+                  ? "Declining..."
+                  : "Decline"}
+              </button>
+              <button
+                onClick={handleAccept}
+                disabled={isBookingActionInProgress(booking.id, "accept")}
+                className="flex flex-1 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 shadow-sm transition hover:bg-green-100 hover:text-green-800 disabled:opacity-50"
+              >
+                <CheckCircleIcon className="mr-1 h-4 w-4" />
+                {isBookingActionInProgress(booking.id, "accept")
+                  ? "Accepting..."
+                  : "Accept"}
+              </button>
+            </div>
+          )}
+          {(canStart || canComplete || isCompleted) && (
+            <div className="flex w-full flex-wrap gap-2">
+              <button
+                onClick={handleChatClient}
+                className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+              >
+                <ChatBubbleLeftRightIcon className="mr-1 h-4 w-4" />{" "}
+                {/* Changed icon */}
+                Chat {booking.clientName?.split(" ")[0] || "Client"}
+              </button>
+              {canStart && (
+                <button
+                  onClick={handleStartService}
+                  disabled={isBookingActionInProgress(booking.id, "start")}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:text-indigo-900 disabled:opacity-50"
+                >
+                  <ArrowPathIcon className="mr-1 h-4 w-4" />
+                  {isBookingActionInProgress(booking.id, "start")
+                    ? "Starting..."
+                    : "Start Service"}
+                </button>
+              )}
+              {canComplete && (
+                <button
+                  onClick={handleMarkAsCompleted}
+                  disabled={isBookingActionInProgress(booking.id, "complete")}
+                  className="flex flex-1 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 shadow-sm transition hover:bg-teal-100 hover:text-teal-900 disabled:opacity-50"
+                >
+                  <CheckCircleIcon className="mr-1 h-4 w-4" />
+                  {isBookingActionInProgress(booking.id, "complete")
+                    ? "Completing..."
+                    : "Mark Completed"}
+                </button>
+              )}
+              {isCompleted && (
+                <>
+                  <Link
+                    to={`/provider/review/${booking?.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex flex-1 items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
+                  >
+                    <StarIcon className="mr-1 h-4 w-4" />
+                    View My Reviews
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render as Link for non-in-progress, as div for in-progress
+  return isInProgress ? (
+    <div className="mb-6">{CardContent}</div>
+  ) : (
+    <Link
+      to={`/provider/booking/${booking.id}`}
+      className="focus:ring-opacity-50 mb-6 block focus:ring-2 focus:ring-blue-500 focus:outline-none"
+    >
+      {CardContent}
+    </Link>
   );
 };
 

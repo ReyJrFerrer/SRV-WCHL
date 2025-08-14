@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 
 const DailyBookingsBarChart: React.FC = () => {

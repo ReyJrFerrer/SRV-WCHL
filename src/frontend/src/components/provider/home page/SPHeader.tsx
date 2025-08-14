@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import authCanisterService from "../../services/authCanisterService";
+import { useAuth } from "../../../context/AuthContext";
+import authCanisterService from "../../../services/authCanisterService";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { useProviderNotifications } from "../../hooks/useProviderNotifications";
+import { useProviderNotifications } from "../../../hooks/useProviderNotifications";
 
 // --- Props ---
 export interface HeaderProps {

@@ -1,4 +1,7 @@
-import { FingerPrintIcon } from "@heroicons/react/24/solid";
+import {
+  FingerPrintIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/24/solid";
 import { useState } from "react";
 import "./shared/styles.css";
 
@@ -15,6 +18,7 @@ export default function MainPage({
 }: MainPageProps) {
   // Modal for Internet Identity info
   const [showIdentityInfoModal, setShowIdentityInfoModal] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   // Handler for login button click
   const handleLoginClick = () => {
@@ -45,7 +49,14 @@ export default function MainPage({
             if (e.target === e.currentTarget) setShowIdentityInfoModal(false);
           }}
         >
-          <div className="relative w-full max-w-md rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-8 shadow-2xl">
+          <div
+            className={`relative w-full max-w-md rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-8 shadow-2xl ${
+              showHowItWorks ? "max-h-[90vh] overflow-y-auto" : ""
+            }`}
+            style={
+              showHowItWorks ? { maxHeight: "90vh", overflowY: "auto" } : {}
+            }
+          >
             <button
               className="absolute top-3 right-3 rounded-full border border-gray-300 bg-gray-100 p-2 hover:bg-gray-200"
               onClick={() => setShowIdentityInfoModal(false)}
@@ -85,6 +96,63 @@ export default function MainPage({
                   interactions on the platform.
                 </span>
               </div>
+              <button
+                className="mt-2 flex items-center gap-1 text-blue-700 hover:underline"
+                onClick={() => setShowHowItWorks((v) => !v)}
+                aria-expanded={showHowItWorks}
+                aria-controls="how-ii-works-section"
+                type="button"
+              >
+                <InformationCircleIcon className="h-5 w-5" />
+                <span>How does Internet Identity login work?</span>
+              </button>
+              {/* How It Works Section (hidden by default) */}
+              {showHowItWorks && (
+                <div
+                  id="how-ii-works-section"
+                  className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-left text-sm text-gray-700"
+                >
+                  <h3 className="mb-2 text-base font-bold text-blue-700">
+                    How Internet Identity Works
+                  </h3>
+                  <ul className="list-disc space-y-2 pl-5">
+                    <li>
+                      <b>Imagine you have a magic key</b> that you don't need to
+                      remember, and it automatically creates a new, private
+                      "you" every time you visit a different website. That's
+                      basically how Internet Identity on ICP works.
+                    </li>
+                    <li>
+                      <b>No password needed:</b> Instead of a password, you use
+                      something you physically have, like your phone or a
+                      special security key, and something you are, like your
+                      fingerprint or face. This is called a <b>passkey</b>. This
+                      passkey is like your master key.
+                    </li>
+                    <li>
+                      <b>Logging in:</b> When you want to log in, a website
+                      shows you a QR code. You scan this code with your phone.
+                      Your phone then uses a passkey to verify it's you. This
+                      can be your biometrics (like Face ID or your fingerprint),
+                      or even a security key you plug in.
+                    </li>
+                    <li>
+                      <b>Private & secure:</b> This process proves to the
+                      website that it's really you without ever sending a
+                      password. The system then creates a completely new, unique
+                      "you" (a digital identity) just for that app.
+                    </li>
+                    <li>
+                      <b>Privacy by design:</b> Because each app gets a
+                      different "you," none of them can talk to each other to
+                      figure out who you are or what you've been doing on other
+                      apps. This keeps your online life private. It's a way to
+                      log in that's more secure than passwords and keeps your
+                      information from being tracked.
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
             <button
               className="mt-2 w-full rounded-lg bg-blue-600 py-3 text-lg font-bold text-white shadow transition hover:bg-blue-700"

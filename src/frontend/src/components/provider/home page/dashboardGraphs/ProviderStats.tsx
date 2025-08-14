@@ -7,15 +7,15 @@ import {
   BanknotesIcon,
   ChartPieIcon,
 } from "@heroicons/react/24/solid";
-import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
-import { useProviderReviews } from "../../hooks/reviewManagement";
+import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
+import { useProviderReviews } from "../../../../hooks/reviewManagement";
 import { useNavigate } from "react-router-dom";
 
 // Import your new chart components
-import BookingStatusPieChart from "./dashboardGraphs/BookingStatusPieChart";
-import MonthlyRevenueLineChart from "./dashboardGraphs/MonthlyRevenueLineChart";
-import DailyBookingsBarChart from "./dashboardGraphs/DailyBookingsBarChart";
-import CustomerRatingStars from "./dashboardGraphs/CustomerRatingStars";
+import BookingStatusPieChart from "./BookingStatusPieChart";
+import MonthlyRevenueLineChart from "./MonthlyRevenueLineChart";
+import DailyBookingsBarChart from "./DailyBookingsBarChart";
+import CustomerRatingStars from "./CustomerRatingStars";
 
 interface ProviderStatsProps {
   className?: string;
