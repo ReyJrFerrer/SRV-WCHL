@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add GPS-based service distance calculation using Haversine formula with real-time location detection
 - Add service-level certificate verification system with PDF and image certificate uploads replacing user-level verification
 - Add frontend service image management hooks and utilities with support for galleries
+- Add separate reputation scoring system for service providers with completion-based rewards
 - Integrate image processing utilities in service creation workflow with support for optional image uploads
 
 ### Fixed

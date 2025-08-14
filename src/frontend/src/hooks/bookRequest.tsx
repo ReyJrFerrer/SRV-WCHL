@@ -131,7 +131,17 @@ export const useBookRequest = (): UseBookRequestReturn => {
   const checkSameDayAvailability = useCallback(
     async (serviceId: string): Promise<boolean> => {
       try {
-        const now = new Date();
+        const date = new Date();
+        // Create a new date object to avoid timezone issues
+        const now = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          12,
+          0,
+          0,
+          0,
+        );
 
         // Get service data if not already loaded
         let serviceData = service;

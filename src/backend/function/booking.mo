@@ -547,12 +547,10 @@ persistent actor BookingCanister {
                         switch (reputationCanisterId) {
                             case (?repId) {
                                 let reputationCanister = actor(Principal.toText(repId)) : actor {
-                                    updateUserReputation : (Principal) -> async Result<ReputationScore>;
+                                    updateProviderReputation : (Principal) -> async Result<ReputationScore>;
                                 };
-                                // Update provider reputation
-                                ignore await reputationCanister.updateUserReputation(updatedBooking.providerId);
-                                // Update client reputation
-                                ignore await reputationCanister.updateUserReputation(updatedBooking.clientId);
+                                // Update provider reputation using provider-specific function
+                                ignore await reputationCanister.updateProviderReputation(updatedBooking.providerId);
                             };
                             case (null) {
                                 // Reputation canister not set, continue without updating reputation
@@ -833,18 +831,19 @@ persistent actor BookingCanister {
         let startOfDay = getStartOfDay(date);
         let endOfDay = startOfDay + (24 * 3600_000_000_000); // Add 24 hours in nanoseconds
         
-        // Get all active bookings for this service on this date
+        // Get all confirmed bookings for this service on this date
         let allBookings = Iter.toArray(bookings.vals());
         let dayBookings = Array.filter<Booking>(
             allBookings,
             func(booking: Booking) : Bool {
-                // Only check active bookings
-                let isActiveStatus = switch (booking.status) {
-                    case (#Requested or #Accepted or #InProgress) { true };
-                    case (#Cancelled or #Declined or #Completed or #Disputed) { false };
+                // Only check confirmed bookings that actually block time slots
+                // #Requested bookings don't block slots until they're accepted
+                let isConfirmedStatus = switch (booking.status) {
+                    case (#Accepted or #InProgress) { true };
+                    case (#Requested or #Cancelled or #Declined or #Completed or #Disputed) { false };
                 };
                 
-                if (not isActiveStatus or booking.serviceId != serviceId) {
+                if (not isConfirmedStatus or booking.serviceId != serviceId) {
                     return false;
                 };
 
@@ -956,10 +955,11 @@ persistent actor BookingCanister {
         let serviceBookings = Array.filter<Booking>(
             allBookings,
             func(booking: Booking) : Bool {
-                // Only check active bookings (not cancelled, declined, or completed)
-                let isActiveStatus = switch (booking.status) {
-                    case (#Requested or #Accepted or #InProgress) { true };
-                    case (#Cancelled or #Declined or #Completed or #Disputed) { false };
+                // Only check confirmed bookings that actually block time slots
+                // #Requested bookings don't block slots until they're accepted
+                let isConfirmedStatus = switch (booking.status) {
+                    case (#Accepted or #InProgress) { true };
+                    case (#Requested or #Cancelled or #Declined or #Completed or #Disputed) { false };
                 };
                 
                 let isCorrectService = booking.serviceId == serviceId;
@@ -970,7 +970,7 @@ persistent actor BookingCanister {
                     case (null) { false };
                 };
                 
-                isCorrectService and isActiveStatus and (not shouldExclude)
+                isCorrectService and isConfirmedStatus and (not shouldExclude)
             }
         );
 
@@ -1061,80 +1061,6 @@ persistent actor BookingCanister {
         return dailyBookings.size();
     };
 
-    // CLIENT AVAILABILITY QUERY FUNCTIONS - PROVIDER-BASED (DEPRECATED)
-    // NOTE: These functions are maintained for backward compatibility.
-    // New implementations should use service-based functions above.
-
-    // DEPRECATED: Get provider's available time slots for a specific date
-    // Use getServiceAvailableSlots instead
-    public func getProviderAvailableSlots(
-        providerId : Principal,
-        date : Time.Time
-    ) : async Result<[Types.AvailableSlot]> {
-        switch (serviceCanisterId) {
-            case (?serviceId) {
-                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
-                    getAvailableTimeSlots : (Principal, Time.Time) -> async Types.Result<[Types.AvailableSlot]>;
-                };
-                
-                return await serviceCanister.getAvailableTimeSlots(providerId, date);
-            };
-            case (null) {
-                return #err("Service canister reference not set");
-            };
-        };
-    };
-
-    // DEPRECATED: Get provider's availability settings
-    // Use getServiceAvailabilitySettings instead
-    public func getProviderAvailabilitySettings(providerId : Principal) : async Result<Types.ProviderAvailability> {
-        switch (serviceCanisterId) {
-            case (?serviceId) {
-                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
-                    getProviderAvailability : (Principal) -> async Types.Result<Types.ProviderAvailability>;
-                };
-                
-                return await serviceCanister.getProviderAvailability(providerId);
-            };
-            case (null) {
-                return #err("Service canister reference not set");
-            };
-        };
-    };
-
-    // DEPRECATED: Check if provider is available for booking at specific date/time
-    // Use checkServiceAvailability instead
-    public func checkProviderAvailability(
-        providerId : Principal,
-        requestedDateTime : Time.Time
-    ) : async Result<Bool> {
-        return await validateProviderAvailability(providerId, requestedDateTime);
-    };
-
-    // Get provider's booking conflicts for a date range
-    public func getProviderBookingConflicts(
-        providerId : Principal,
-        startDate : Time.Time,
-        endDate : Time.Time
-    ) : async [Booking] {
-        let providerBookings = Array.filter<Booking>(
-            Iter.toArray(bookings.vals()),
-            func (booking : Booking) : Bool {
-                return booking.providerId == providerId and 
-                       (booking.status == #Accepted or booking.status == #InProgress) and
-                       (switch (booking.scheduledDate) {
-                           case (?scheduled) {
-                               scheduled >= startDate and scheduled <= endDate
-                           };
-                           case (null) {
-                               booking.requestedDate >= startDate and booking.requestedDate <= endDate
-                           };
-                       });
-            }
-        );
-        
-        return providerBookings;
-    };
 
     // Get daily booking count for a provider on a specific date
     public query func getDailyBookingCount(
