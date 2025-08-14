@@ -193,7 +193,7 @@ persistent actor RemittanceCanister {
                 let validations = Array.map<Text, MediaValidationSummary>(mediaIds, func(mediaId: Text) : MediaValidationSummary {
                     {
                         media_id = mediaId;
-                        sha256 = ?"simulated_hash_" # mediaId;
+                        sha256 = ?mediaId;
                         mime_type = "image/jpeg";
                         size_bytes = 450000; // Simulated file size
                         uploaded_at = Time.now();
