@@ -143,7 +143,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    const success = await acceptBookingById(booking.id);
+    const requestedDate = new Date(booking.requestedDate);
+
+    const success = await acceptBookingById(booking.id, requestedDate);
     if (success) {
       navigate(`../../provider/booking/${booking.id}`);
     } else {
