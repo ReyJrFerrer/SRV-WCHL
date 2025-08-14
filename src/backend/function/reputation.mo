@@ -169,6 +169,129 @@ persistent actor ReputationCanister {
         return Float.max(MIN_TRUST_SCORE, Float.min(MAX_TRUST_SCORE, score));
     };
 
+    // Provider-specific trust score calculation that rewards service completion
+    private func calculateProviderTrustScore(
+        completedBookings : Nat,
+        averageRating : ?Float,
+        accountAge : Time.Time,
+        flags : [DetectionFlag]
+    ) : Float {
+        var score : Float = BASE_SCORE;
+        
+        // 1. Booking Completion Score (max 25 points) - Higher reward for providers
+        let completionPoints = Float.min(25.0, Float.fromInt(completedBookings) * 1.25);
+        score += completionPoints;
+        
+        // 2. Service Quality Score based on ratings (max 25 points)
+        switch (averageRating) {
+            case (null) {
+                // No penalty for new providers without ratings
+                score += 5.0; // Small bonus for new providers
+            };
+            case (?rating) {
+                if (rating >= 4.5) {
+                    score += 25.0; // Excellent service
+                } else if (rating >= 4.0) {
+                    score += 20.0; // Very good service
+                } else if (rating >= 3.5) {
+                    score += 15.0; // Good service
+                } else if (rating >= 3.0) {
+                    score += 10.0; // Average service
+                } else {
+                    score += 5.0; // Below average but still positive
+                };
+            };
+        };
+        
+        // 3. Account Age Score (max 10 points) - Same as client scoring
+        let ageInDays = Float.fromInt(Time.now() - accountAge) / (24.0 * 60.0 * 60.0 * 1_000_000_000.0);
+        let agePoints = Float.min(MAX_AGE_POINTS, ageInDays / 36.5); // Max points after ~1 year
+        score += agePoints;
+        
+        // 4. Provider Consistency Bonus (up to 10 points) - Higher than client bonus
+        if (completedBookings >= 5) {
+            switch (averageRating) {
+                case (?rating) {
+                    if (rating >= 4.5) {
+                        score += 10.0; // Maximum consistency bonus
+                    } else if (rating >= 4.0) {
+                        score += 7.5; // High consistency bonus
+                    } else if (rating >= 3.5) {
+                        score += 5.0; // Moderate consistency bonus
+                    };
+                };
+                case (null) {
+                    // Bonus for consistent bookings even without ratings
+                    if (completedBookings >= 10) {
+                        score += 5.0;
+                    };
+                };
+            };
+        };
+        
+        // 5. Service Activity Recency (up to 15 points)
+        let recencyScore = calculateRecencyScore(completedBookings, accountAge);
+        score += recencyScore * RECENCY_WEIGHT;
+        
+        // 6. Provider Activity Frequency (up to 10 points)  
+        let frequencyScore = calculateActivityFrequency(completedBookings, accountAge);
+        score += frequencyScore * ACTIVITY_FREQUENCY_WEIGHT;
+        
+        // 7. Experience Bonus - Additional points for highly active providers
+        if (completedBookings >= 50) {
+            score += 5.0; // Veteran provider bonus
+        } else if (completedBookings >= 25) {
+            score += 3.0; // Experienced provider bonus
+        } else if (completedBookings >= 10) {
+            score += 1.0; // Active provider bonus
+        };
+        
+        // 8. Penalties for Suspicious Activity (same as client scoring)
+        var penaltyPoints : Float = 0.0;
+        for (flag in flags.vals()) {
+            switch (flag) {
+                case (#ReviewBomb) { 
+                    penaltyPoints += 15.0;
+                    if (flags.size() > 1) {
+                        penaltyPoints += 5.0;
+                    };
+                };
+                case (#CompetitiveManipulation) { 
+                    penaltyPoints += 15.0;
+                    if (flags.size() > 1) {
+                        penaltyPoints += 5.0;
+                    };
+                };
+                case (#FakeEvidence) { 
+                    penaltyPoints += 10.0;
+                    if (flags.size() > 1) {
+                        penaltyPoints += 3.0;
+                    };
+                };
+                case (#IdentityFraud) { 
+                    penaltyPoints += 15.0;
+                    if (flags.size() > 1) {
+                        penaltyPoints += 10.0;
+                    };
+                };
+                case (#Other) { 
+                    penaltyPoints += 5.0;
+                };
+            };
+        };
+        
+        // Apply penalties with a cap (slightly more lenient for providers)
+        score -= Float.min(penaltyPoints, score * 0.4);
+        
+        // 9. New Provider Support - Less penalty for new providers
+        if (completedBookings < 3 and ageInDays < 30.0) {
+            score *= 0.9; // Less harsh penalty than for clients
+        };
+        
+        // Ensure final score is between 0 and 100
+        return Float.max(MIN_TRUST_SCORE, Float.min(MAX_TRUST_SCORE, score));
+    };
+
     // New helper functions for enhanced scoring
     private func calculateRecencyScore(completedBookings : Nat, accountAge : Time.Time) : Float {
         if (completedBookings == 0) return 0.0;
@@ -357,6 +480,64 @@ persistent actor ReputationCanister {
                 
                 reputations.put(userId, updatedScore);
                 updateReputationHistory(userId, newTrustScore);
+                
+                return #ok(updatedScore);
+            };
+        };
+    };
+
+    // Enhanced reputation update specifically for service providers
+    public func updateProviderReputation(providerId : Principal) : async Result<ReputationScore> {
+        switch (reputations.get(providerId)) {
+            case (null) {
+                return #err("Provider reputation not found");
+            };
+            case (?existingScore) {
+                // Get completed bookings from booking canister
+                let bookingCanister = actor(Principal.toText(Option.unwrap(bookingCanisterId))) : actor {
+                    getProviderCompletedBookings : (Principal) -> async [Booking];
+                };
+                let completedBookings = await bookingCanister.getProviderCompletedBookings(providerId);
+                
+                // Get ratings from review canister
+                let reviewCanister = actor(Principal.toText(Option.unwrap(reviewCanisterId))) : actor {
+                    calculateUserAverageRating : (Principal) -> async Result<Float>;
+                };
+                let averageRating = switch (await reviewCanister.calculateUserAverageRating(providerId)) {
+                    case (#ok(rating)) ?rating;
+                    case (#err(_)) null;
+                };
+                
+                // Get account age from auth canister
+                let authCanister = actor(Principal.toText(Option.unwrap(authCanisterId))) : actor {
+                    getProfile : (Principal) -> async Result<{ createdAt : Time.Time }>;
+                };
+                let accountAge = switch (await authCanister.getProfile(providerId)) {
+                    case (#ok(profile)) profile.createdAt;
+                    case (#err(_)) existingScore.lastUpdated;
+                };
+                
+                let newTrustScore = calculateProviderTrustScore(
+                    completedBookings.size(),
+                    averageRating,
+                    accountAge,
+                    existingScore.detectionFlags
+                );
+                
+                let newTrustLevel = determineTrustLevel(newTrustScore);
+                
+                let updatedScore : ReputationScore = {
+                    userId = existingScore.userId;
+                    trustScore = newTrustScore;
+                    trustLevel = newTrustLevel;
+                    completedBookings = completedBookings.size();
+                    averageRating = averageRating;
+                    detectionFlags = existingScore.detectionFlags;
+                    lastUpdated = Time.now();
+                };
+                
+                reputations.put(providerId, updatedScore);
+                updateReputationHistory(providerId, newTrustScore);
                 
                 return #ok(updatedScore);
             };

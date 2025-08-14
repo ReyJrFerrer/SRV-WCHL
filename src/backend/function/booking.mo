@@ -547,12 +547,10 @@ persistent actor BookingCanister {
                         switch (reputationCanisterId) {
                             case (?repId) {
                                 let reputationCanister = actor(Principal.toText(repId)) : actor {
-                                    updateUserReputation : (Principal) -> async Result<ReputationScore>;
+                                    updateProviderReputation : (Principal) -> async Result<ReputationScore>;
                                 };
-                                // Update provider reputation
-                                ignore await reputationCanister.updateUserReputation(updatedBooking.providerId);
-                                // Update client reputation
-                                ignore await reputationCanister.updateUserReputation(updatedBooking.clientId);
+                                // Update provider reputation using provider-specific function
+                                ignore await reputationCanister.updateProviderReputation(updatedBooking.providerId);
                             };
                             case (null) {
                                 // Reputation canister not set, continue without updating reputation
