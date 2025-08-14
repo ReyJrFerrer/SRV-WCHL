@@ -10,8 +10,11 @@ import {
   ArrowLeftIcon,
   CurrencyDollarIcon,
   CheckCircleIcon,
+  UserIcon,
 } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+
+const MAX_CASH_RECEIVED = 1000000; // Set a reasonable upper limit for cash received
 
 const CompleteServicePage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +26,6 @@ const CompleteServicePage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Use the enhanced hook instead of mock data
   const {
     getBookingById,
     completeBookingById,
@@ -31,7 +33,6 @@ const CompleteServicePage: React.FC = () => {
     isProviderAuthenticated,
   } = useProviderBookingManagement();
 
-  // Get booking data from hook
   const booking = useMemo(() => {
     if (bookingId && typeof bookingId === "string") {
       return getBookingById(bookingId);
@@ -39,7 +40,6 @@ const CompleteServicePage: React.FC = () => {
     return null;
   }, [bookingId, getBookingById]);
 
-  // Set document title
   useEffect(() => {
     if (booking) {
       document.title = `Complete Service: ${booking.serviceName || "Service"} | SRV Provider`;
@@ -50,7 +50,6 @@ const CompleteServicePage: React.FC = () => {
 
   useEffect(() => {
     if (booking) {
-      // Use the booking price as the service price
       setServicePrice(booking.price);
     }
   }, [booking]);
@@ -69,7 +68,14 @@ const CompleteServicePage: React.FC = () => {
     const value = e.target.value;
     // Allow only numbers and a single decimal point
     if (/^\d*\.?\d*$/.test(value)) {
-      setCashReceived(value);
+      // Prevent unreasonably large numbers
+      if (value && parseFloat(value) > MAX_CASH_RECEIVED) {
+        setCashReceived(MAX_CASH_RECEIVED.toString());
+      } else {
+        setCashReceived(value);
+      }
+      // Remove error message as soon as user changes input
+      if (error) setError(null);
     }
   };
 
@@ -99,6 +105,7 @@ const CompleteServicePage: React.FC = () => {
       const success = await completeBookingById(booking.id, finalPrice);
 
       if (success) {
+        setError(null); // <-- Remove error messages after successful action
         // Navigate to the receipt page with query parameters
         const searchParams = new URLSearchParams({
           price: servicePrice.toFixed(2),
@@ -146,31 +153,40 @@ const CompleteServicePage: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100">
-      <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50">
+      <header className="sticky top-0 z-20 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
         <div className="container mx-auto flex items-center">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 rounded-full p-2 transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5 text-blue-600" />
           </button>
-          <h1 className="truncate text-xl font-semibold text-gray-800">
+          <h1 className="truncate text-xl font-extrabold text-black sm:text-2xl">
             Complete Service
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto flex flex-grow items-start justify-center p-4 sm:items-center sm:p-6">
-        <div className="w-full max-w-md space-y-6 rounded-xl bg-white p-6 shadow-lg sm:p-8">
-          <div>
-            <h2 className="mb-1 text-center text-2xl font-bold text-gray-800">
+      <main className="container mx-auto flex flex-grow items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+          <div className="flex flex-col items-center">
+            <CheckCircleIcon className="mb-2 h-12 w-12 text-green-500" />
+            <h2 className="mb-1 text-center text-2xl font-bold text-blue-900">
               Payment Collection
             </h2>
-            <p className="mb-6 text-center text-sm text-gray-500">
-              Finalize service for "{booking.serviceName}" with{" "}
-              {booking.clientName}.
+            <p className="mb-4 text-center text-sm text-gray-500">
+              Finalize service for{" "}
+              <span className="font-semibold text-blue-700">
+                "{booking.packageName}"
+              </span>{" "}
+              with{" "}
+              <span className="inline-flex items-center gap-1 font-semibold text-blue-700">
+                <UserIcon className="h-4 w-4" />
+                {booking.clientName}
+              </span>
+              .
             </p>
           </div>
 
@@ -197,16 +213,20 @@ const CompleteServicePage: React.FC = () => {
                     <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    type="text" // Use text to allow decimal input more easily, parse to float
+                    type="text"
                     id="cashReceived"
                     name="cashReceived"
                     value={cashReceived}
                     onChange={handleCashReceivedChange}
                     className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     placeholder="0.00"
-                    inputMode="decimal" // Helps mobile keyboards
+                    inputMode="decimal"
                     required
+                    maxLength={10}
                   />
+                  <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400">
+                    Max: ₱{MAX_CASH_RECEIVED.toLocaleString()}
+                  </span>
                 </div>
               </div>
 

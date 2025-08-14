@@ -178,7 +178,7 @@ const ConversationPage: React.FC = () => {
               {currentConversation ? "Active" : "Loading..."}
               {backgroundLoading && (
                 <span className="ml-2 flex items-center">
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-blue-500"></span>
                   <span className="ml-1">Updating...</span>
                 </span>
               )}

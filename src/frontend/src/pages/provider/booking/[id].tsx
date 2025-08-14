@@ -21,7 +21,6 @@ import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
-import BottomNavigationNextjs from "../../../components/provider/BottomNavigation";
 import { useReputation } from "../../../hooks/useReputation";
 
 // --- Client Reputation Score Section (patterned after ServiceDetailPageComponent) ---
@@ -176,9 +175,9 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
     }
     // Untouched: yellow outline, white bg, yellow text
     return {
-      bg: "bg-white border-yellow-300 text-yellow-400",
+      bg: "bg-white border-yellow-500 text-yellow-500",
       icon: (
-        <span className="text-lg font-bold text-yellow-400 md:text-2xl">
+        <span className="text-lg font-bold text-yellow-500 md:text-2xl">
           {idx + 1}
         </span>
       ),
@@ -434,6 +433,20 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
+  // Contact client handler
+  const handleContactClient = () => {
+    if (!specificBooking) return;
+    const phone =
+      specificBooking.clientPhone || specificBooking.clientProfile?.phone || "";
+    if (phone) {
+      window.open(`tel:${phone}`, "_self");
+    } else {
+      alert(
+        `Contact client: ${specificBooking.clientName || "Unknown Client"}`,
+      );
+    }
+  };
+
   // Determine loading state
   const isLoading = hookLoading || localLoading;
   const displayError = localError || hookError;
@@ -574,7 +587,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {/* Side by side layout for provider and service details */}
-        <div className="flex flex-col gap-6 md:flex-row">
+        <div className="mt-4 flex flex-col gap-6 md:flex-row">
           {/* Provider (client) info card - left */}
           <div className="relative max-w-md min-w-[320px] flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 px-6 py-8">
@@ -692,8 +705,42 @@ const ProviderBookingDetailsPage: React.FC = () => {
             onClick={handleChatClient}
             className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
           >
-            <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat
+            <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" /> Chat{" "}
+            {specificBooking?.clientName?.split(" ")[0] || "Client"}
           </button>
+
+          <button
+            onClick={handleContactClient}
+            className="flex flex-1 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 hover:text-blue-900"
+          >
+            <PhoneIcon className="mr-2 h-5 w-5" /> Contact{" "}
+            {specificBooking?.clientName?.split(" ")[0] || "Client"}
+          </button>
+
+          {/* Show "Go to Active Service" button if status is InProgress */}
+          {specificBooking?.status === "InProgress" && (
+            <button
+              onClick={() => {
+                // Try to get the stored start time
+                const storedStartTime = localStorage.getItem(
+                  `activeServiceStartTime:${specificBooking.id}`,
+                );
+                // Fallback to requestedDate if not found
+                const startTime =
+                  storedStartTime ||
+                  specificBooking.scheduledDate ||
+                  specificBooking.requestedDate ||
+                  new Date().toISOString();
+                navigate(
+                  `/provider/active-service/${specificBooking.id}?startTime=${encodeURIComponent(startTime)}`,
+                );
+              }}
+              className="flex flex-1 items-center justify-center rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-700 shadow-sm transition hover:bg-yellow-100 hover:text-yellow-900"
+            >
+              <ArrowPathIcon className="mr-2 h-5 w-5" />
+              Go to Active Service
+            </button>
+          )}
 
           {specificBooking?.canAccept && specificBooking?.canDecline && (
             <>
@@ -769,9 +816,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         </div>
       </main>
 
-      <div>
-        <BottomNavigationNextjs />
-      </div>
+      <div></div>
     </div>
   );
 };

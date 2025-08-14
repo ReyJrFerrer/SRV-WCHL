@@ -129,13 +129,7 @@ export default function MainPage({
                       fingerprint or face. This is called a <b>passkey</b>. This
                       passkey is like your master key.
                     </li>
-                    <li>
-                      <b>Logging in:</b> When you want to log in, a website
-                      shows you a QR code. You scan this code with your phone.
-                      Your phone then uses a passkey to verify it's you. This
-                      can be your biometrics (like Face ID or your fingerprint),
-                      or even a security key you plug in.
-                    </li>
+
                     <li>
                       <b>Private & secure:</b> This process proves to the
                       website that it's really you without ever sending a
