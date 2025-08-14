@@ -7,7 +7,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const COLORS = [

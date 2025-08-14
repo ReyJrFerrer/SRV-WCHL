@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 
 const MonthlyRevenueLineChart: React.FC = () => {
