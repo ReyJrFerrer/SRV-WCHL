@@ -65,13 +65,23 @@ persistent actor RemittanceCanister {
 
     private func generateDepositRef(branchId: ?Text, orderId: Text) : Text {
         let branch = switch (branchId) {
-            case (?id) Text.take(id, 3); // Take first 3 chars
+            case (?id) {
+                // Take first 3 chars or full text if shorter
+                let chars = Text.toArray(id);
+                let takeCount = Nat.min(chars.size(), 3);
+                Text.fromArray(Array.tabulate<Char>(takeCount, func(i: Nat): Char { chars[i] }))
+            };
             case null "SRV"; // Default branch code
         };
         
         let now = Time.now() / 1_000_000_000; // Convert to seconds
         let date = Int.abs(now) % 100000000; // Get last 8 digits for date
-        let orderSuffix = Text.take(orderId, 4); // Take first 4 chars of order ID
+        
+        // Take first 4 chars of order ID or full text if shorter
+        let orderChars = Text.toArray(orderId);
+        let takeCount = Nat.min(orderChars.size(), 4);
+        let orderSuffix = Text.fromArray(Array.tabulate<Char>(takeCount, func(i: Nat): Char { orderChars[i] }));
+        
         let checksum = (Int.abs(now) % 97) + 1; // Simple checksum
         
         Text.toUppercase(branch) # Int.toText(date) # orderSuffix # Int.toText(checksum)
@@ -94,9 +104,11 @@ persistent actor RemittanceCanister {
                     };
                 };
                 // If no tier found, use last tier rate
-                switch (Array.get(tiers, tiers.size() - 1)) {
-                    case (?(_, rateBps)) (amount * rateBps) / 10000;
-                    case null DEFAULT_COMMISSION_RATE * amount / 10000;
+                if (tiers.size() > 0) {
+                    let lastTier = tiers[tiers.size() - 1];
+                    (amount * lastTier.1) / 10000
+                } else {
+                    DEFAULT_COMMISSION_RATE * amount / 10000
                 }
             };
             case (#Hybrid({base; rate_bps})) {
@@ -162,7 +174,11 @@ persistent actor RemittanceCanister {
             else #equal
         });
 
-        Array.get(sortedRules, 0)
+        if (sortedRules.size() > 0) {
+            ?sortedRules[0]
+        } else {
+            null
+        }
     };
 
     private func validateMediaProofs(mediaIds: [Text]) : async Result<[MediaValidationSummary]> {

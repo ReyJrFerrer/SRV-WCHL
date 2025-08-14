@@ -86,9 +86,9 @@ APIs (trimmed Candid signatures)
 
   - quote_commission(amount: nat64, service_type: text, payment_method: text, ts: nat64) -> variant { ok: { rule_id: text; rule_version: nat32; commission: nat64; net: nat64; }; err: text }
   - create_order(input: { customer_id: text; amount: nat64; service_type: text; collector_id: principal; branch_id: text }) -> variant { ok: Order; err: text }
-  - confirm_cash_received(order_id: text, proofs: vec text /_ media_ids _/) -> variant { ok: Order; err: text }
+  - confirm*cash_received(order_id: text, proofs: vec text /* media*ids */) -> variant { ok: Order; err: text }
   - generate_settlement_instruction(order_id: text) -> variant { ok: { deposit_ref: text; expires_at: nat64 }; err: text }
-  - mark_settled(order_id: text, gcash_ref: text, amount: nat64, proofs: vec text /_ media_ids _/) -> variant { ok: Order; err: text }
+  - mark*settled(order_id: text, gcash_ref: text, amount: nat64, proofs: vec text /* media*ids */) -> variant { ok: Order; err: text }
   - get_order(order_id: text) -> opt Order
   - query_orders(filter: { status: opt vec text; collector_id: opt principal; branch_id: opt text; from: opt nat64; to: opt nat64 }, page: { cursor: opt text; size: nat32 }) -> { items: vec Order; next_cursor: opt text }
 
