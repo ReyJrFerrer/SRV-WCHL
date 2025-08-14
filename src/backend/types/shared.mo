@@ -349,4 +349,113 @@ module {
         headers: [HeaderField];
         body: Blob;
     };
+
+    // Remittance system types
+    public type RemittanceOrderStatus = {
+        #AwaitingCash;
+        #CashConfirmed;
+        #AwaitingSettlement;
+        #Settled;
+        #Cancelled;
+    };
+
+    public type PaymentMethod = {
+        #CashOnHand;
+    };
+
+    public type CommissionFormula = {
+        #Flat: Nat; // Fixed amount in centavos
+        #Percentage: Nat; // Rate in basis points (1/100 of 1%)
+        #Tiered: [(Nat, Nat)]; // (up_to_amount, rate_bps) pairs
+        #Hybrid: { base: Nat; rate_bps: Nat }; // Base amount + percentage
+    };
+
+    public type CommissionRule = {
+        id: Text;
+        version: Nat32;
+        service_types: [Text]; // ServiceCategory IDs
+        payment_methods: [PaymentMethod];
+        formula: CommissionFormula;
+        min_commission: ?Nat; // Optional minimum commission in centavos
+        max_commission: ?Nat; // Optional maximum commission in centavos
+        priority: Nat;
+        effective_from: Time.Time;
+        effective_to: ?Time.Time;
+        is_active: Bool;
+        created_at: Time.Time;
+        updated_at: Time.Time;
+    };
+
+    public type RemittanceOrder = {
+        id: Text;
+        customer_id: Principal; // References auth system
+        amount_php_centavos: Nat; // Amount in centavos (100 centavos = 1 PHP)
+        service_type: Text; // ServiceCategory ID
+        service_id: ?Text; // Optional reference to specific service
+        booking_id: ?Text; // Optional reference to related booking
+        payment_method: PaymentMethod;
+        collector_id: Principal; // Service provider collecting payment
+        branch_id: ?Text; // Optional branch identifier
+        status: RemittanceOrderStatus;
+        commission_rule_id: Text;
+        commission_version: Nat32;
+        commission_amount: Nat; // Commission in centavos
+        net_proceeds: Nat; // Amount - commission in centavos
+        deposit_ref: ?Text; // Reference for GCash deposit
+        gcash_ref: ?Text; // Reference from GCash settlement proof
+        proof_cash_media_ids: [Text]; // Media IDs for cash receipt proofs
+        proof_settlement_media_ids: [Text]; // Media IDs for settlement proofs
+        created_at: Time.Time;
+        cash_confirmed_at: ?Time.Time;
+        settled_at: ?Time.Time;
+        updated_at: Time.Time;
+    };
+
+    public type CommissionQuote = {
+        rule_id: Text;
+        rule_version: Nat32;
+        commission: Nat; // Commission amount in centavos
+        net: Nat; // Net proceeds in centavos
+        effective_rate: Float; // Actual commission rate as percentage
+    };
+
+    public type SettlementInstruction = {
+        deposit_ref: Text;
+        expires_at: Time.Time;
+        amount: Nat;
+        corporate_gcash_account: Text;
+        instructions: Text;
+    };
+
+    public type RemittanceOrderFilter = {
+        status: ?[RemittanceOrderStatus];
+        collector_id: ?Principal;
+        branch_id: ?Text;
+        from_date: ?Time.Time;
+        to_date: ?Time.Time;
+    };
+
+    public type PageRequest = {
+        cursor: ?Text;
+        size: Nat32;
+    };
+
+    public type RemittanceOrderPage = {
+        items: [RemittanceOrder];
+        next_cursor: ?Text;
+        total_count: ?Nat;
+    };
+
+    public type MediaValidationSummary = {
+        media_id: Text;
+        sha256: ?Text;
+        mime_type: Text;
+        size_bytes: Nat;
+        uploaded_at: Time.Time;
+        extracted_timestamp: ?Time.Time;
+        is_valid_type: Bool;
+        is_within_size_limit: Bool;
+        has_text_content: ?Bool;
+        validation_flags: [Text];
+    };
 }

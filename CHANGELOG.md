@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add remittance system for service provider cash collection and settlement management
 - Add GPS-based service distance calculation using Haversine formula with real-time location detection
 - Add service-level certificate verification system with PDF and image certificate uploads replacing user-level verification
 - Add frontend service image management hooks and utilities with support for galleries
