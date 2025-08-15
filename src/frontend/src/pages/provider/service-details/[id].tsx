@@ -31,7 +31,6 @@ import {
   useServiceCertificates,
   useServiceCertificateUpload,
 } from "../../../hooks/useMediaLoader";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
   ServicePackage,
   Location,
@@ -375,7 +374,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     deleteService,
     updateServiceStatus,
     updateService,
-    getStatusColor,
     getServicePackages,
     createPackage,
     updatePackage,
@@ -521,7 +519,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           await serviceCanisterService.getAllCategories();
         setCategories(fetchedCategories);
       } catch (error) {
-        console.error("Failed to load categories:", error);
         // Set empty array as fallback
         setCategories([]);
       } finally {
@@ -586,7 +583,6 @@ const ProviderServiceDetailPage: React.FC = () => {
             const servicePackages = await getServicePackages(id);
             setPackages(servicePackages || []);
           } catch (packageError) {
-            console.warn("Failed to load packages:", packageError);
             setPackages([]);
           }
           setError(null);
@@ -594,7 +590,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           throw new Error("Service not found");
         }
       } catch (err) {
-        console.error("Error loading service:", err);
         setError(err instanceof Error ? err.message : "Failed to load service");
       } finally {
         setLoading(false);
@@ -612,7 +607,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       await deleteService(service.id);
       navigate("/provider/services");
     } catch (error) {
-      console.error("Failed to delete service:", error);
       alert("Failed to delete service. Please try again.");
     } finally {
       setIsDeleting(false);
@@ -629,7 +623,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       await updateServiceStatus(service.id, newStatus);
       setService((prev) => (prev ? { ...prev, status: newStatus } : prev));
     } catch (error) {
-      console.error("Failed to update service status:", error);
       alert("Failed to update service status. Please try again.");
     } finally {
       setIsUpdatingStatus(false);
@@ -643,7 +636,6 @@ const ProviderServiceDetailPage: React.FC = () => {
   };
 
   // --- Edit Section Handlers ---
-
   const handleEditTitleCategory = useCallback(() => {
     setEditTitleCategory((prev) => !prev);
     if (service && !editTitleCategory) {
@@ -691,7 +683,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       );
       setEditTitleCategory(false);
     } catch (err) {
-      console.error("Failed to update title/category:", err);
       alert("Failed to update title or category. Please try again.");
     }
   };
@@ -786,7 +777,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       setService(updatedService);
       setEditLocationAvailability(false);
     } catch (err) {
-      console.error("Failed to update location/availability:", err);
       alert("Failed to update location or availability. Please try again.");
     }
   };
@@ -853,7 +843,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingUploads((prev) => [...prev, ...files]);
       setUploadError(null);
     } catch (error) {
-      console.error("Failed to validate images:", error);
       setUploadError(
         error instanceof Error
           ? error.message
@@ -934,7 +923,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       // Reload the page to get fresh data
       window.location.reload();
     } catch (error) {
-      console.error("Failed to save image changes:", error);
       setUploadError(
         error instanceof Error
           ? error.message
@@ -1036,9 +1024,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               reader.readAsDataURL(file);
             });
           }
-        } catch (error) {
-          console.warn("Failed to create preview for", file.name);
-        }
+        } catch (error) {}
 
         return {
           url: tempUrl,
@@ -1140,7 +1126,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       // Reload the page to get fresh data
       window.location.reload();
     } catch (error) {
-      console.error("Failed to save certificate changes:", error);
       setCertificateUploadError(
         error instanceof Error
           ? error.message
@@ -1240,7 +1225,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       }
       handleCancelPackageEdit(); // Close the form
     } catch (err) {
-      console.error("Failed to save package:", err);
       alert("Failed to save package. Please try again.");
     } finally {
       setPackageFormLoading(false);
@@ -1263,7 +1247,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       await deletePackage(packageId);
       setPackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
     } catch (err) {
-      console.error("Failed to delete package:", err);
       alert("Failed to delete package. Please try again.");
     } finally {
       setLoading(false);
@@ -1354,15 +1337,15 @@ const ProviderServiceDetailPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-6 py-5">
+        <div className="container mx-auto flex items-center justify-between px-6 py-8">
           <button
-            onClick={() => navigate("/provider/home")}
+            onClick={() => navigate("/provider/services")}
             className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"
           >
             <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
           </button>
-          <h1 className="truncate text-2xl font-bold tracking-tight text-blue-900 drop-shadow-sm">
+          <h1 className="truncate text-3xl font-bold tracking-tight text-black drop-shadow-sm">
             Service Details
           </h1>
           <div className="w-8"></div>
@@ -1398,18 +1381,37 @@ const ProviderServiceDetailPage: React.FC = () => {
           </div>
         )}
 
+        {/* Add space above hero section */}
+        <div className="h-8" />
+
         {/* Hero Card */}
         <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
           {/* Hero Image */}
           <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
-            {serviceImages && serviceImages.length > 0 ? (
+            {serviceImages &&
+            serviceImages.length > 0 &&
+            serviceImages[0].dataUrl ? (
               <img
-                src={serviceImages[0].dataUrl ?? undefined}
+                src={serviceImages[0].dataUrl}
                 alt="Service Hero"
                 className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
               />
+            ) : service.category?.slug ? (
+              <img
+                src={`/images/ai-sp/${service.category?.slug || "default-provider"}.svg`}
+                alt={service.category.name}
+                className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
+              />
             ) : (
-              <PhotoIcon className="h-24 w-24 text-blue-200" />
+              <img
+                src={`/images/ai-sp/${service.category?.slug || "default-provider"}.svg`}
+                alt={service.category?.name || "Category"}
+                className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    "/images/ai-sp/default.jpg";
+                }}
+              />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent"></div>
           </div>
@@ -1417,13 +1419,71 @@ const ProviderServiceDetailPage: React.FC = () => {
           <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
             {/* Service Info */}
             <div className="min-w-0 flex-1">
-              <div className="mb-2 flex items-center gap-2">
+              {/* Mobile: Green dot next to name, pencil after */}
+              <div className="mb-2 block md:hidden">
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex w-full flex-wrap items-center gap-2">
+                    <h2
+                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
+                      title={service.title}
+                      style={{ wordBreak: "break-word" }}
+                    >
+                      {service.title}
+                    </h2>
+                    {/* Green dot for availability */}
+                    {service.status === "Available" && (
+                      <span
+                        className="inline-block h-3 w-3 rounded-full bg-green-500"
+                        title="Available"
+                      ></span>
+                    )}
+                    <Tooltip
+                      content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                      disabled={hasActiveBookings}
+                    >
+                      <button
+                        onClick={
+                          hasActiveBookings
+                            ? undefined
+                            : handleEditTitleCategory
+                        }
+                        className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                          hasActiveBookings
+                            ? "cursor-not-allowed opacity-50"
+                            : ""
+                        }`}
+                        aria-label="Edit title and category"
+                        disabled={hasActiveBookings}
+                      >
+                        <PencilIcon className="h-5 w-5 text-blue-500" />
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+              {/* Desktop: Name, availability note, pencil */}
+              <div className="mb-2 hidden items-center gap-2 md:flex">
                 <h2
                   className="truncate text-3xl font-extrabold text-blue-900 drop-shadow-sm"
                   title={service.title}
                 >
                   {service.title}
                 </h2>
+                {/* Availability note */}
+                <span
+                  className={`ml-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                    service.status === "Available"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
+                  title={
+                    service.status === "Available"
+                      ? "Service is available"
+                      : "Service is unavailable"
+                  }
+                >
+                  {service.status === "Available" ? "Available" : "Unavailable"}
+                </span>
                 <Tooltip
                   content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
                   disabled={hasActiveBookings}
@@ -1446,15 +1506,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <TagIcon className="h-5 w-5 text-blue-400" />
                 {service.category.name}
               </div>
-              <div className="mt-2">
-                <span
-                  className={`inline-block rounded-full px-3 py-1 text-xs font-semibold bg-${getStatusColor(
-                    service.status,
-                  )}-100 text-${getStatusColor(service.status)}-700 shadow`}
-                >
-                  {service.status}
-                </span>
-              </div>
+              {/* Remove availability note/label */}
               {editTitleCategory && (
                 <div className="mt-4 flex flex-col gap-2">
                   <input
@@ -1558,7 +1610,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         type="text"
                         value={editedAddress}
                         onChange={(e) => setEditedAddress(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="Street Address, Building, etc."
                       />
                     </div>
@@ -1570,7 +1622,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         type="text"
                         value={editedCity}
                         onChange={(e) => setEditedCity(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="City"
                       />
                     </div>
@@ -1582,7 +1634,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         type="text"
                         value={editedState}
                         onChange={(e) => setEditedState(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="State/Province"
                       />
                     </div>
@@ -1594,7 +1646,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         type="text"
                         value={editedPostalCode}
                         onChange={(e) => setEditedPostalCode(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="Postal Code"
                       />
                     </div>
@@ -1606,7 +1658,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                         type="text"
                         value={editedCountry}
                         onChange={(e) => setEditedCountry(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900"
+                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900"
                         placeholder="Country"
                       />
                     </div>
@@ -1662,28 +1714,33 @@ const ProviderServiceDetailPage: React.FC = () => {
                       <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
                       Availability
                     </label>
-                    <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
-                      {service.weeklySchedule
-                        ?.filter((entry) => entry.availability.isAvailable)
-                        .map((entry) => (
-                          <div
-                            key={entry.day}
-                            className="flex min-w-[120px] flex-col items-start"
-                          >
-                            <span className="mb-1 rounded-full bg-blue-200 px-3 py-0.5 text-xs font-bold text-blue-800 shadow-sm">
-                              {entry.day}
-                            </span>
-                            <span className="text-sm font-medium text-blue-900">
+                    <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
+                      {service.weeklySchedule?.filter(
+                        (entry) => entry.availability.isAvailable,
+                      ).length ? (
+                        service.weeklySchedule
+                          .filter((entry) => entry.availability.isAvailable)
+                          .map((entry) => (
+                            <div
+                              key={entry.day}
+                              className="flex min-w-[140px] flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow"
+                            >
+                              <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
+                                <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                                {entry.day}
+                              </span>
                               {entry.availability.slots &&
                               entry.availability.slots.length > 0 ? (
-                                <ul className="ml-4 list-disc space-y-0.5">
+                                <ul className="ml-1 space-y-1">
                                   {entry.availability.slots.map((slot, idx) => (
                                     <li
                                       key={idx}
-                                      className="text-xs text-blue-800"
+                                      className="flex items-center gap-2 text-xs text-blue-900"
                                     >
-                                      {formatTime(slot.startTime)} -{" "}
-                                      {formatTime(slot.endTime)}
+                                      <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
+                                        {formatTime(slot.startTime)} -{" "}
+                                        {formatTime(slot.endTime)}
+                                      </span>
                                     </li>
                                   ))}
                                 </ul>
@@ -1692,12 +1749,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                                   No slots
                                 </span>
                               )}
-                            </span>
-                          </div>
-                        ))}
-                      {service.weeklySchedule?.filter(
-                        (entry) => entry.availability.isAvailable,
-                      ).length === 0 && (
+                            </div>
+                          ))
+                      ) : (
                         <span className="text-blue-400">Not specified</span>
                       )}
                     </div>
@@ -1820,97 +1874,102 @@ const ProviderServiceDetailPage: React.FC = () => {
                   </div>
                 )}
 
-                {packages.length > 0
-                  ? packages.map((pkg) => (
-                      <div
-                        key={pkg.id}
-                        className="flex flex-col justify-between gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4 md:flex-row md:items-center"
-                      >
-                        <div>
-                          <h4 className="text-lg font-semibold text-blue-900">
-                            {pkg.title}
-                          </h4>
-                          <p className="mt-1 text-sm text-blue-700">
+                {/* Redesigned package cards */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {packages.length > 0
+                    ? packages.map((pkg) => (
+                        <div
+                          key={pkg.id}
+                          className="flex flex-col justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50 p-4 shadow transition-shadow hover:shadow-lg"
+                        >
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-semibold break-words text-blue-900">
+                              {pkg.title}
+                            </h4>
+                            <span className="text-lg font-bold text-green-600">
+                              ₱{pkg.price.toFixed(2)}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm break-words text-blue-700">
                             {pkg.description}
                           </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2 md:flex-row md:items-center md:gap-4">
-                          <span className="text-lg font-bold text-green-600">
-                            ₱{pkg.price.toFixed(2)}
-                          </span>
-                          <div className="flex gap-1">
-                            <Tooltip
-                              content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                              disabled={hasActiveBookings}
-                            >
-                              <button
-                                onClick={
-                                  hasActiveBookings
-                                    ? undefined
-                                    : () => handleEditPackage(pkg)
-                                }
-                                className={`rounded-full p-2 text-blue-500 hover:bg-blue-100 ${
-                                  hasActiveBookings
-                                    ? "cursor-not-allowed opacity-50"
-                                    : ""
-                                }`}
-                                aria-label={`Edit ${pkg.title}`}
-                                disabled={
-                                  hasActiveBookings || isAddingOrEditingPackage
-                                }
+                          <div className="mt-2 flex items-center justify-between">
+                            <div className="flex gap-1">
+                              <Tooltip
+                                content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                                disabled={hasActiveBookings}
                               >
-                                <PencilIcon className="h-5 w-5" />
-                              </button>
-                            </Tooltip>
-                            <Tooltip
-                              content={`Cannot delete with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                              disabled={hasActiveBookings}
-                            >
-                              <button
-                                onClick={
-                                  hasActiveBookings
-                                    ? undefined
-                                    : () => handleDeletePackage(pkg.id)
-                                }
-                                className={`rounded-full p-2 text-red-500 hover:bg-red-100 ${
-                                  hasActiveBookings
-                                    ? "cursor-not-allowed opacity-50"
-                                    : ""
-                                }`}
-                                aria-label={`Delete ${pkg.title}`}
-                                disabled={
-                                  hasActiveBookings || isAddingOrEditingPackage
-                                }
+                                <button
+                                  onClick={
+                                    hasActiveBookings
+                                      ? undefined
+                                      : () => handleEditPackage(pkg)
+                                  }
+                                  className={`rounded-full p-2 text-blue-500 hover:bg-blue-100 ${
+                                    hasActiveBookings
+                                      ? "cursor-not-allowed opacity-50"
+                                      : ""
+                                  }`}
+                                  aria-label={`Edit ${pkg.title}`}
+                                  disabled={
+                                    hasActiveBookings ||
+                                    isAddingOrEditingPackage
+                                  }
+                                >
+                                  <PencilIcon className="h-5 w-5" />
+                                </button>
+                              </Tooltip>
+                              <Tooltip
+                                content={`Cannot delete with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                                disabled={hasActiveBookings}
                               >
-                                <TrashIcon className="h-5 w-5" />
-                              </button>
-                            </Tooltip>
-                          </div>
-                          <div className="flex flex-col text-xs text-blue-500">
-                            <span>
-                              Created:{" "}
-                              {new Date(pkg.createdAt).toLocaleDateString()}
-                            </span>
-                            <span>
-                              Updated:{" "}
-                              {new Date(pkg.updatedAt).toLocaleDateString()}
-                            </span>
+                                <button
+                                  onClick={
+                                    hasActiveBookings
+                                      ? undefined
+                                      : () => handleDeletePackage(pkg.id)
+                                  }
+                                  className={`rounded-full p-2 text-red-500 hover:bg-red-100 ${
+                                    hasActiveBookings
+                                      ? "cursor-not-allowed opacity-50"
+                                      : ""
+                                  }`}
+                                  aria-label={`Delete ${pkg.title}`}
+                                  disabled={
+                                    hasActiveBookings ||
+                                    isAddingOrEditingPackage
+                                  }
+                                >
+                                  <TrashIcon className="h-5 w-5" />
+                                </button>
+                              </Tooltip>
+                            </div>
+                            <div className="flex flex-col text-right text-xs text-blue-500">
+                              <span>
+                                Created:{" "}
+                                {new Date(pkg.createdAt).toLocaleDateString()}
+                              </span>
+                              <span>
+                                Updated:{" "}
+                                {new Date(pkg.updatedAt).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  : !isAddingOrEditingPackage && (
-                      <div className="py-8 text-center text-blue-300">
-                        <BriefcaseIcon className="mx-auto mb-4 h-12 w-12" />
-                        <p className="mb-2 text-blue-400">
-                          No packages available for this service
-                        </p>
-                        <p className="text-sm">
-                          Packages help customers choose specific service
-                          options with different pricing
-                        </p>
-                      </div>
-                    )}
+                      ))
+                    : !isAddingOrEditingPackage && (
+                        <div className="col-span-full py-8 text-center text-blue-300">
+                          <BriefcaseIcon className="mx-auto mb-4 h-12 w-12" />
+                          <p className="mb-2 text-blue-400">
+                            No packages available for this service
+                          </p>
+                          <p className="text-sm">
+                            Packages help customers choose specific service
+                            options with different pricing
+                          </p>
+                        </div>
+                      )}
+                </div>
               </div>
             </section>
           </div>
@@ -2284,12 +2343,10 @@ const ProviderServiceDetailPage: React.FC = () => {
             </button>
           </Tooltip>
         </div>
-      </main>
 
-      {/* Bottom Navigation for Mobile */}
-      <div className="fixed right-0 bottom-0 left-0 z-50 md:hidden">
-        <BottomNavigation />
-      </div>
+        {/* Add space below the buttons */}
+        <div className="h-8" />
+      </main>
     </div>
   );
 };
