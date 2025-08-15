@@ -24,6 +24,7 @@ module {
         #UserProfile;
         #ServiceImage;
         #ServiceCertificate;
+        #RemittancePaymentProof; // New type for GCash payment screenshots
     };
 
     public type MediaItem = {

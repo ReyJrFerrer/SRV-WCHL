@@ -32,7 +32,8 @@ persistent actor MediaCanister {
     private var idCounter : Nat = 0;
 
     // Constants
-    private transient let MAX_FILE_SIZE : Nat = 450_000; // 450KB in bytes
+    private transient let MAX_FILE_SIZE : Nat = 450_000; // 450KB in bytes for regular files
+    private transient let MAX_REMITTANCE_FILE_SIZE : Nat = 1_048_576; // 1MB in bytes for remittance proofs
     private transient let SUPPORTED_CONTENT_TYPES : [Text] = [
         "image/jpeg",
         "image/jpg", 
@@ -59,8 +60,14 @@ persistent actor MediaCanister {
         }) != null
     };
 
-    private func validateFileSize(fileSize : Nat) : Bool {
-        fileSize > 0 and fileSize <= MAX_FILE_SIZE
+    private func validateFileSize(fileSize : Nat, mediaType : MediaType) : Bool {
+        let maxSize = switch (mediaType) {
+            case (#RemittancePaymentProof) MAX_REMITTANCE_FILE_SIZE;
+            case (#UserProfile) MAX_FILE_SIZE;
+            case (#ServiceImage) MAX_FILE_SIZE;
+            case (#ServiceCertificate) MAX_FILE_SIZE;
+        };
+        fileSize > 0 and fileSize <= maxSize
     };
 
     private func generateFilePath(ownerId : Principal, mediaType : MediaType, fileName : Text) : Text {
@@ -69,6 +76,7 @@ persistent actor MediaCanister {
             case (#UserProfile) "users";
             case (#ServiceImage) "services";
             case (#ServiceCertificate) "certificates";
+            case (#RemittancePaymentProof) "remittance";
         };
         mediaTypeText # "/" # ownerText # "/" # fileName
     };
@@ -137,8 +145,12 @@ persistent actor MediaCanister {
 
         // Validate file size
         let fileSize = fileData.size();
-        if (not validateFileSize(fileSize)) {
-            return #err("File size must be between 1 byte and " # Nat.toText(MAX_FILE_SIZE) # " bytes (450KB)");
+        if (not validateFileSize(fileSize, mediaType)) {
+            let maxSizeText = switch (mediaType) {
+                case (#RemittancePaymentProof) "1MB";
+                case (_) "450KB";
+            };
+            return #err("File size must be between 1 byte and " # maxSizeText # " for this media type");
         };
 
         // Validate content type
@@ -339,12 +351,14 @@ persistent actor MediaCanister {
         var userProfileCount : Nat = 0;
         var serviceImageCount : Nat = 0;
         var serviceCertificateCount : Nat = 0;
+        var remittancePaymentProofCount : Nat = 0;
         
         for (item in allItems.vals()) {
             switch (item.mediaType) {
                 case (#UserProfile) userProfileCount += 1;
                 case (#ServiceImage) serviceImageCount += 1;
                 case (#ServiceCertificate) serviceCertificateCount += 1;
+                case (#RemittancePaymentProof) remittancePaymentProofCount += 1;
             };
         };
 
@@ -355,14 +369,89 @@ persistent actor MediaCanister {
             typeBreakdown = [
                 (#UserProfile, userProfileCount),
                 (#ServiceImage, serviceImageCount),
-                (#ServiceCertificate, serviceCertificateCount)
+                (#ServiceCertificate, serviceCertificateCount),
+                (#RemittancePaymentProof, remittancePaymentProofCount)
             ];
         }
     };
 
+    // Validate media items (used by remittance canister)
+    public shared(msg) func validateMediaItems(mediaIds: [Text]) : async Result<[Types.MediaValidationSummary]> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        let validations = Buffer.Buffer<Types.MediaValidationSummary>(mediaIds.size());
+        
+        for (mediaId in mediaIds.vals()) {
+            switch (mediaItems.get(mediaId)) {
+                case (?item) {
+                    let validation : Types.MediaValidationSummary = {
+                        media_id = mediaId;
+                        sha256 = null; // Could implement SHA256 calculation later
+                        mime_type = item.contentType;
+                        size_bytes = item.fileSize;
+                        uploaded_at = item.createdAt;
+                        extracted_timestamp = null; // Could extract from EXIF data later
+                        is_valid_type = validateContentType(item.contentType);
+                        is_within_size_limit = validateFileSize(item.fileSize, item.mediaType);
+                        has_text_content = null; // Could implement OCR later
+                        validation_flags = []; // Could add validation flags later
+                    };
+                    validations.add(validation);
+                };
+                case null {
+                    // Return validation for missing media
+                    let validation : Types.MediaValidationSummary = {
+                        media_id = mediaId;
+                        sha256 = null;
+                        mime_type = "unknown";
+                        size_bytes = 0;
+                        uploaded_at = Time.now();
+                        extracted_timestamp = null;
+                        is_valid_type = false;
+                        is_within_size_limit = false;
+                        has_text_content = null;
+                        validation_flags = ["MEDIA_NOT_FOUND"];
+                    };
+                    validations.add(validation);
+                };
+            };
+        };
+
+        #ok(Buffer.toArray(validations))
+    };
+
+    // Get media items for remittance validation (admin only)
+    public shared(msg) func getRemittanceMediaItems(mediaIds: [Text]) : async Result<[MediaItem]> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // In production, should verify caller is admin or remittance canister
+        let items = Buffer.Buffer<MediaItem>(mediaIds.size());
+        
+        for (mediaId in mediaIds.vals()) {
+            switch (mediaItems.get(mediaId)) {
+                case (?item) {
+                    if (item.mediaType == #RemittancePaymentProof) {
+                        items.add(item);
+                    };
+                };
+                case null {};
+            };
+        };
+
+        #ok(Buffer.toArray(items))
+    };
+
     // HTTP interface for serving images
     public query func http_request(request : HttpRequest) : async HttpResponse {
-        let { method; url; headers; body } = request;
+        let { method; url; headers = _; body = _ } = request;
 
         // Add CORS headers for all responses
         let corsHeaders : [HeaderField] = [

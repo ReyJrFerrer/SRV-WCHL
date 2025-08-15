@@ -74,6 +74,7 @@ persistent actor AdminCanister {
 
     // Canister references for intercanister calls
     private var remittanceCanisterId : ?Principal = null;
+    private var mediaCanisterId : ?Principal = null;
 
     // Constants
     private transient let SETTINGS_KEY : Text = "system_settings";
@@ -654,7 +655,7 @@ persistent actor AdminCanister {
     // Canister Management
 
     // Set canister references for intercanister calls
-    public shared(msg) func setCanisterReferences(remittance: ?Principal) : async Result<Text> {
+    public shared(msg) func setCanisterReferences(remittance: ?Principal, media: ?Principal) : async Result<Text> {
         let caller = msg.caller;
 
         if (Principal.isAnonymous(caller)) {
@@ -666,6 +667,7 @@ persistent actor AdminCanister {
         };
 
         remittanceCanisterId := remittance;
+        mediaCanisterId := media;
         #ok("Canister references updated successfully")
     };
 
@@ -728,6 +730,99 @@ persistent actor AdminCanister {
             };
             case null {
                 #err("Remittance canister not configured")
+            };
+        }
+    };
+
+    // Get remittance media items for validation
+    public shared(msg) func getRemittanceMediaItems(mediaIds: [Text]) : async Result<[Types.MediaItem]> {
+        let caller = msg.caller;
+
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        if (not isAuthorized(caller, #ADMIN)) {
+            return #err("Only ADMIN users can access remittance media items");
+        };
+
+        switch (mediaCanisterId) {
+            case (?canisterId) {
+                let mediaActor = actor(Principal.toText(canisterId)) : actor {
+                    getRemittanceMediaItems: ([Text]) -> async Types.Result<[Types.MediaItem]>;
+                };
+                
+                try {
+                    await mediaActor.getRemittanceMediaItems(mediaIds)
+                } catch (_) {
+                    #err("Failed to communicate with media canister")
+                }
+            };
+            case null {
+                #err("Media canister not configured")
+            };
+        }
+    };
+
+    // Get remittance order with media items for admin validation
+    public shared(msg) func getRemittanceOrderWithMedia(orderId: Text) : async Result<{
+        order: Types.RemittanceOrder;
+        mediaItems: [Types.MediaItem];
+    }> {
+        let caller = msg.caller;
+
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        if (not isAuthorized(caller, #ADMIN)) {
+            return #err("Only ADMIN users can access remittance order details");
+        };
+
+        switch (remittanceCanisterId, mediaCanisterId) {
+            case (?remittanceId, ?mediaId) {
+                let remittanceActor = actor(Principal.toText(remittanceId)) : actor {
+                    getOrder: (Text) -> async ?Types.RemittanceOrder;
+                };
+                
+                let mediaActor = actor(Principal.toText(mediaId)) : actor {
+                    getRemittanceMediaItems: ([Text]) -> async Types.Result<[Types.MediaItem]>;
+                };
+                
+                try {
+                    // Get the remittance order
+                    let orderOpt = await remittanceActor.getOrder(orderId);
+                    
+                    switch (orderOpt) {
+                        case (?order) {
+                            // Get the media items for the payment proofs
+                            let mediaResult = await mediaActor.getRemittanceMediaItems(order.payment_proof_media_ids);
+                            
+                            switch (mediaResult) {
+                                case (#ok(mediaItems)) {
+                                    #ok({
+                                        order = order;
+                                        mediaItems = mediaItems;
+                                    })
+                                };
+                                case (#err(msg)) {
+                                    #err("Failed to get media items: " # msg)
+                                };
+                            };
+                        };
+                        case null {
+                            #err("Remittance order not found: " # orderId)
+                        };
+                    };
+                } catch (_) {
+                    #err("Failed to communicate with remittance or media canister")
+                }
+            };
+            case (null, _) {
+                #err("Remittance canister not configured")
+            };
+            case (_, null) {
+                #err("Media canister not configured")
             };
         }
     };
