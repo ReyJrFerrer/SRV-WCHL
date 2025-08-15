@@ -12,7 +12,6 @@ const ProviderChatPage: React.FC = () => {
   const navigate = useNavigate();
   const { conversations, loading, error, markAsRead } = useChat();
 
-  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Messages | SRV";
   }, []);
@@ -23,10 +22,7 @@ const ProviderChatPage: React.FC = () => {
     otherUserImageUrl?: string,
   ) => {
     try {
-      // Mark conversation as read when clicked
       await markAsRead(conversationId);
-
-      // Navigate to the specific chat page and pass conversation info in the state
       navigate(`/provider/chat/${conversationId}`, {
         state: {
           conversationId,
@@ -39,67 +35,71 @@ const ProviderChatPage: React.FC = () => {
     }
   };
 
+  // Helper for timestamp formatting
+  const formatTimestamp = (date?: Date) => {
+    if (!date) return "";
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = diffHours / 24;
+
+    if (diffHours < 1) return "Just now";
+    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
+    if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
+    return date.toLocaleDateString();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-xl font-bold text-gray-900">Messages</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50 pb-24">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl items-center justify-center px-4 py-4">
+          <h1 className="w-full text-center text-2xl font-extrabold tracking-tight text-black">
+            Messages
+          </h1>
+          {/* Add a button for starting a new chat in the future */}
+          {/* <button className="rounded-full bg-blue-600 px-3 py-1 text-white font-semibold shadow hover:bg-blue-700 transition-colors text-sm">
+            New Chat
+          </button> */}
         </div>
       </header>
 
-      <div className="mx-auto mt-4 max-w-5xl">
+      <main className="mx-auto mt-6 max-w-3xl px-2">
         {isAuthenticated ? (
           loading ? (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
-              <p className="text-lg text-gray-600">Loading conversations...</p>
+            <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+              <p className="text-lg font-medium text-blue-700">
+                Loading conversations...
+              </p>
             </div>
           ) : error ? (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
+            <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
               <p className="mb-4 text-lg text-red-600">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+                className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white shadow transition-colors hover:bg-blue-700"
               >
                 Retry
               </button>
             </div>
           ) : conversations.length > 0 ? (
-            <div className="bg-white">
-              <ul className="divide-y divide-gray-200">
+            <section className="rounded-2xl bg-white/90 shadow-lg ring-1 ring-blue-100">
+              <ul className="divide-y divide-blue-50">
                 {conversations.map((conversationSummary) => {
                   const conversation = conversationSummary.conversation;
                   const lastMessage = conversationSummary.lastMessage;
-
-                  // Use the enhanced data from useChat hook
                   const currentUserId =
                     identity?.getPrincipal().toString() || "";
                   const otherUserId = conversationSummary.otherUserId;
                   const otherUserName =
                     conversationSummary.otherUserName ||
                     `User ${otherUserId.slice(0, 8)}...`;
-                  // Use otherUserImageUrl (profile image) if available
                   const otherUserImageUrl =
                     conversationSummary.otherUserImageUrl;
-
-                  // Get unread count for current user
                   const unreadEntry = conversation.unreadCount.find(
                     (entry) => entry.userId === currentUserId,
                   );
                   const unreadCount = unreadEntry?.count || 0;
-
-                  // Format timestamp
-                  const formatTimestamp = (date?: Date) => {
-                    if (!date) return "";
-                    const now = new Date();
-                    const diffMs = now.getTime() - date.getTime();
-                    const diffHours = diffMs / (1000 * 60 * 60);
-                    const diffDays = diffHours / 24;
-
-                    if (diffHours < 1) return "Just now";
-                    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
-                    if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
-                    return date.toLocaleDateString();
-                  };
 
                   return (
                     <li
@@ -111,46 +111,59 @@ const ProviderChatPage: React.FC = () => {
                           otherUserImageUrl,
                         )
                       }
-                      className="flex cursor-pointer items-center space-x-4 p-4 transition-colors hover:bg-gray-50"
+                      className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${
+                        unreadCount > 0 ? "bg-blue-50/60" : ""
+                      }`}
                     >
-                      <div className="relative h-12 w-12 flex-shrink-0">
+                      <div className="relative h-14 w-14 flex-shrink-0">
                         <ProfileImage
                           profilePictureUrl={otherUserImageUrl}
                           userName={otherUserName}
-                          size="h-12 w-12"
-                          className=""
+                          size="h-14 w-14"
+                          className="ring-2 ring-blue-200 transition group-hover:ring-blue-400"
                         />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
+                            {unreadCount}
+                          </span>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="truncate text-sm font-semibold text-gray-900">
+                          <p
+                            className={`truncate text-base font-semibold ${unreadCount > 0 ? "text-blue-900" : "text-gray-900"}`}
+                          >
                             {otherUserName}
                           </p>
                           <p
-                            className={`text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-500"}`}
+                            className={`ml-2 text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
                           >
                             {formatTimestamp(lastMessage?.createdAt)}
                           </p>
                         </div>
                         <div className="mt-1 flex items-start justify-between">
-                          <p className="truncate text-sm text-gray-500">
-                            {lastMessage?.content || "No messages yet"}
+                          <p
+                            className={`truncate text-sm ${unreadCount > 0 ? "font-medium text-blue-800" : "text-gray-500"}`}
+                          >
+                            {lastMessage?.content || (
+                              <span className="text-gray-400 italic">
+                                No messages yet
+                              </span>
+                            )}
                           </p>
-                          {unreadCount > 0 && (
-                            <span className="ml-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
-                              {unreadCount}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </li>
                   );
                 })}
               </ul>
-            </div>
+            </section>
           ) : (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
-              <p className="mb-4 text-lg text-gray-600">No conversations yet</p>
+            <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
+              <div className="mb-3 text-4xl">💬</div>
+              <p className="mb-2 text-lg font-semibold text-blue-900">
+                No conversations yet
+              </p>
               <p className="text-sm text-gray-500">
                 Your conversations with service providers will appear here after
                 booking a service.
@@ -158,19 +171,20 @@ const ProviderChatPage: React.FC = () => {
             </div>
           )
         ) : (
-          <div className="m-4 rounded-xl bg-white p-6 text-center shadow">
-            <p className="mb-4 text-lg text-red-600">
+          <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
+            <div className="mb-3 text-4xl">🔒</div>
+            <p className="mb-2 text-lg font-semibold text-red-600">
               Please log in to access your messages
             </p>
             <button
-              onClick={() => navigate("/login")} // Navigate to a login page
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              onClick={() => navigate("/login")}
+              className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white shadow transition-colors hover:bg-blue-700"
             >
               Log In
             </button>
           </div>
         )}
-      </div>
+      </main>
 
       <BottomNavigation />
     </div>

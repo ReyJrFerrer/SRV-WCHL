@@ -31,7 +31,6 @@ import {
   useServiceCertificates,
   useServiceCertificateUpload,
 } from "../../../hooks/useMediaLoader";
-import BottomNavigation from "../../../components/provider/BottomNavigation";
 import {
   ServicePackage,
   Location,
@@ -2348,11 +2347,6 @@ const ProviderServiceDetailPage: React.FC = () => {
         {/* Add space below the buttons */}
         <div className="h-8" />
       </main>
-
-      {/* Bottom Navigation for Mobile */}
-      <div className="fixed right-0 bottom-0 left-0 z-50 md:hidden">
-        <BottomNavigation />
-      </div>
     </div>
   );
 };
