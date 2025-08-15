@@ -673,7 +673,7 @@ persistent actor AdminCanister {
 
     // Payment Validation Functions
 
-    // Validate remittance payment (called by service providers or admins)
+    // Validate remittance payment (called by admins)
     public shared(msg) func validatePayment(orderId: Text, approved: Bool, reason: ?Text) : async Result<Text> {
         let caller = msg.caller;
 

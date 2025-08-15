@@ -34,6 +34,7 @@ persistent actor BookingCanister {
     private transient var serviceCanisterId : ?Principal = null;
     private transient var reviewCanisterId : ?Principal = null;
     private transient var reputationCanisterId : ?Principal = null;
+    private transient var remittanceCanisterId : ?Principal = null;
 
     // Constants
     private transient let MIN_PRICE : Nat = 5;
@@ -146,17 +147,19 @@ persistent actor BookingCanister {
     };
 
     // Set canister references
-    public shared(msg) func setCanisterReferences(
+    public shared(_msg) func setCanisterReferences(
         auth : ?Principal,
         service : ?Principal,
         review : ?Principal,
-        reputation : ?Principal
+        reputation : ?Principal,
+        remittance : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
         serviceCanisterId := service;
         reviewCanisterId := review;
         reputationCanisterId := reputation;
+        remittanceCanisterId := remittance;
         return #ok("Canister references set successfully");
     };
 
@@ -533,7 +536,60 @@ persistent actor BookingCanister {
         };
     };
     
-    // Complete a booking (provider)
+    // Helper function to create remittance order after booking completion
+    private func createRemittanceOrder(booking: Booking) : async Result<Text> {
+        switch (remittanceCanisterId, serviceCanisterId) {
+            case (?remittanceId, ?serviceId) {
+                // Get service details to determine service type
+                let serviceActor = actor(Principal.toText(serviceId)) : actor {
+                    getService: (Text) -> async Result<Types.Service>;
+                };
+                
+                try {
+                    switch (await serviceActor.getService(booking.serviceId)) {
+                        case (#ok(service)) {
+                            let remittanceActor = actor(Principal.toText(remittanceId)) : actor {
+                                createOrder: ({
+                                    service_provider_id: Principal;
+                                    amount: Nat;
+                                    service_type: Text;
+                                    service_id: ?Text;
+                                    booking_id: ?Text;
+                                }) -> async Result<Types.RemittanceOrder>;
+                            };
+                            
+                            let createOrderInput = {
+                                service_provider_id = booking.providerId;
+                                amount = booking.price;
+                                service_type = service.category.id;
+                                service_id = ?booking.serviceId;
+                                booking_id = ?booking.id;
+                            };
+                            
+                            switch (await remittanceActor.createOrder(createOrderInput)) {
+                                case (#ok(remittanceOrder)) {
+                                    #ok("Remittance order created: " # remittanceOrder.id)
+                                };
+                                case (#err(msg)) {
+                                    #err("Failed to create remittance order: " # msg)
+                                };
+                            }
+                        };
+                        case (#err(msg)) {
+                            #err("Failed to get service details: " # msg)
+                        };
+                    }
+                } catch (_) {
+                    #err("Error communicating with service canister")
+                }
+            };
+            case (_, _) {
+                #err("Remittance or Service canister not configured")
+            };
+        }
+    };
+
+    // Complete a booking (provider) - Enhanced with remittance integration
     public shared(msg) func completeBooking(bookingId : Text) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -556,8 +612,20 @@ persistent actor BookingCanister {
                                 // Reputation canister not set, continue without updating reputation
                             };
                         };
-                        
-                        return #ok(updatedBooking);
+
+                        // Create remittance order for commission payment
+                        switch (await createRemittanceOrder(updatedBooking)) {
+                            case (#ok(_)) {
+                                // Remittance order created successfully
+                                return #ok(updatedBooking);
+                            };
+                            case (#err(remittanceError)) {
+                                // Log the error but don't fail the booking completion
+                                // In a real system, you might want to queue this for retry
+                                Debug.print("Warning: Failed to create remittance order: " # remittanceError);
+                                return #ok(updatedBooking);
+                            };
+                        };
                     };
                     case (#err(msg)) {
                         return #err(msg);
@@ -569,7 +637,105 @@ persistent actor BookingCanister {
             };
         };
     };
-    
+
+    // Manually create remittance order for a completed booking (admin or provider)
+    public shared(msg) func createRemittanceOrderForBooking(bookingId: Text) : async Result<Text> {
+        let caller = msg.caller;
+        
+        switch (bookings.get(bookingId)) {
+            case (?booking) {
+                // Check if caller is the provider or an admin
+                if (booking.providerId != caller) {
+                    return #err("Only the service provider can create remittance order for their booking");
+                };
+
+                // Check if booking is completed
+                if (booking.status != #Completed) {
+                    return #err("Remittance order can only be created for completed bookings");
+                };
+
+                await createRemittanceOrder(booking)
+            };
+            case null {
+                #err("Booking not found: " # bookingId)
+            };
+        }
+    };
+
+    // Get booking remittance status
+    public shared(msg) func getBookingRemittanceStatus(bookingId: Text) : async Result<{
+        booking_exists: Bool;
+        booking_completed: Bool;
+        has_remittance_order: Bool;
+        remittance_orders: [Types.RemittanceOrder];
+    }> {
+        let caller = msg.caller;
+        
+        switch (bookings.get(bookingId)) {
+            case (?booking) {
+                // Check if caller is authorized (client or provider)
+                if (booking.clientId != caller and booking.providerId != caller) {
+                    return #err("Not authorized to view this booking's remittance status");
+                };
+
+                // Get remittance orders for this booking
+                var remittanceOrders: [Types.RemittanceOrder] = [];
+                
+                switch (remittanceCanisterId) {
+                    case (?remittanceId) {
+                        let remittanceActor = actor(Principal.toText(remittanceId)) : actor {
+                            queryOrders: (Types.RemittanceOrderFilter, Types.PageRequest) -> async Types.RemittanceOrderPage;
+                        };
+                        
+                        try {
+                            let filter : Types.RemittanceOrderFilter = {
+                                status = null;
+                                service_provider_id = ?booking.providerId;
+                                from_date = null;
+                                to_date = null;
+                            };
+                            
+                            let page : Types.PageRequest = {
+                                cursor = null;
+                                size = 100;
+                            };
+                            
+                            let result = await remittanceActor.queryOrders(filter, page);
+                            
+                            // Filter orders that match this booking ID
+                            remittanceOrders := Array.filter<Types.RemittanceOrder>(result.items, func(order: Types.RemittanceOrder) : Bool {
+                                switch (order.booking_id) {
+                                    case (?bookingIdFromOrder) bookingIdFromOrder == bookingId;
+                                    case null false;
+                                }
+                            });
+                        } catch (_) {
+                            // Continue with empty array if remittance query fails
+                        };
+                    };
+                    case null {
+                        // Remittance canister not configured
+                    };
+                };
+
+                #ok({
+                    booking_exists = true;
+                    booking_completed = booking.status == #Completed;
+                    has_remittance_order = remittanceOrders.size() > 0;
+                    remittance_orders = remittanceOrders;
+                })
+            };
+            case null {
+                #ok({
+                    booking_exists = false;
+                    booking_completed = false;
+                    has_remittance_order = false;
+                    remittance_orders = [];
+                })
+            };
+        }
+    };
+
     // Cancel a booking (client)
     public shared(msg) func cancelBooking(bookingId : Text) : async Result<Booking> {
         let caller = msg.caller;
