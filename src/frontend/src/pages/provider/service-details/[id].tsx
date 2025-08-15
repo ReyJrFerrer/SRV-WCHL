@@ -1420,10 +1420,24 @@ const ProviderServiceDetailPage: React.FC = () => {
           <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
             {/* Service Info */}
             <div className="min-w-0 flex-1">
-              {/* Mobile: Pencil icon above name, name smaller, green dot for availability */}
+              {/* Mobile: Green dot next to name, pencil after */}
               <div className="mb-2 block md:hidden">
                 <div className="flex flex-col items-start gap-1">
-                  <div className="flex w-full items-center justify-between">
+                  <div className="flex w-full flex-wrap items-center gap-2">
+                    <h2
+                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
+                      title={service.title}
+                      style={{ wordBreak: "break-word" }}
+                    >
+                      {service.title}
+                    </h2>
+                    {/* Green dot for availability */}
+                    {service.status === "Available" && (
+                      <span
+                        className="inline-block h-3 w-3 rounded-full bg-green-500"
+                        title="Available"
+                      ></span>
+                    )}
                     <Tooltip
                       content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
                       disabled={hasActiveBookings}
@@ -1446,25 +1460,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                       </button>
                     </Tooltip>
                   </div>
-                  <div className="flex w-full flex-wrap items-center gap-2">
-                    <h2
-                      className="flex-1 text-xl font-bold break-words text-blue-900 drop-shadow-sm"
-                      title={service.title}
-                      style={{ wordBreak: "break-word" }}
-                    >
-                      {service.title}
-                    </h2>
-                    {/* Green dot for availability */}
-                    {service.status === "Available" && (
-                      <span
-                        className="inline-block h-3 w-3 rounded-full bg-green-500"
-                        title="Available"
-                      ></span>
-                    )}
-                  </div>
                 </div>
               </div>
-              {/* Desktop: Name, pencil, green dot inline */}
+              {/* Desktop: Name, availability note, pencil */}
               <div className="mb-2 hidden items-center gap-2 md:flex">
                 <h2
                   className="truncate text-3xl font-extrabold text-blue-900 drop-shadow-sm"
@@ -1472,6 +1470,21 @@ const ProviderServiceDetailPage: React.FC = () => {
                 >
                   {service.title}
                 </h2>
+                {/* Availability note */}
+                <span
+                  className={`ml-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                    service.status === "Available"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
+                  title={
+                    service.status === "Available"
+                      ? "Service is available"
+                      : "Service is unavailable"
+                  }
+                >
+                  {service.status === "Available" ? "Available" : "Unavailable"}
+                </span>
                 <Tooltip
                   content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
                   disabled={hasActiveBookings}
@@ -1489,12 +1502,6 @@ const ProviderServiceDetailPage: React.FC = () => {
                     <PencilIcon className="h-5 w-5 text-blue-500" />
                   </button>
                 </Tooltip>
-                {service.status === "Available" && (
-                  <span
-                    className="inline-block h-3 w-3 rounded-full bg-green-500"
-                    title="Available"
-                  ></span>
-                )}
               </div>
               <div className="mt-2 flex items-center gap-2 text-lg font-medium text-blue-700">
                 <TagIcon className="h-5 w-5 text-blue-400" />
