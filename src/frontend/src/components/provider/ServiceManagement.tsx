@@ -37,7 +37,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case "Available":
-        return { text: "Active", className: "bg-green-100 text-green-700" }; // Show badge for active
+        return { text: "Active", className: "bg-green-100 text-green-700" };
       case "Suspended":
         return {
           text: "Suspended",
@@ -104,9 +104,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           <span className="ml-1 hidden sm:inline">Add new service</span>
         </Link>
       </div>
-      <div
-        className={`rounded-2xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg ${className} mt-2`}
-      >
+      <div className={`rounded-2xl bg-white p-6 shadow-lg ${className} mt-2`}>
         {displayedServices.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {displayedServices.map((service) => {
@@ -119,7 +117,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 <Link
                   key={service.id}
                   to={`/provider/service-details/${service.id}`}
-                  className="group relative flex flex-col rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
                   {/* Category image */}
                   <div className="absolute -top-8 left-1/2 z-10 -translate-x-1/2">
@@ -142,31 +140,24 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                       Active
                     </span>
                   )}
-                  <div className="mt-10 flex flex-grow flex-col">
-                    <div className="flex items-center justify-between">
-                      <h4 className="mb-1 truncate text-lg font-bold text-blue-900">
-                        {service.title}
-                      </h4>
-                      {/* Status badge always shown, but only "Active" for available */}
-                      {!isActive && (
-                        <span
-                          className={`ml-2 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className}`}
-                        >
-                          {getStatusDisplay(service.status).text}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-blue-700">
-                      {service.category?.name || "Service"}
-                    </p>
-                    {/* Hide price, location, description */}
-                    <div className="mt-3 flex items-center gap-3">
+                  {!isActive && (
+                    <span
+                      className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className}`}
+                    >
+                      {getStatusDisplay(service.status).text}
+                    </span>
+                  )}
+                  <div className="mt-10 flex flex-grow flex-col items-center">
+                    <h4 className="mb-0 w-full truncate text-center text-lg font-bold text-blue-900">
+                      {service.title}
+                    </h4>
+                    <div className="mt-1 flex items-center justify-center gap-2">
                       <StarIcon className="h-5 w-5 text-yellow-400" />
                       <span className="font-semibold text-blue-900">
-                        {service.averageRating || "N/A"}
-                      </span>
-                      <span className="text-gray-500">
-                        ({service.totalReviews || 0} reviews)
+                        {service.averageRating || "0"} / 5{" "}
+                        <span className="text-gray-500">
+                          ({service.reviewCount})
+                        </span>
                       </span>
                     </div>
                   </div>
