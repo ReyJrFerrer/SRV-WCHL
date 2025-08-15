@@ -7,11 +7,9 @@ import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Int "mo:base/Int";
-import Option "mo:base/Option";
 import Result "mo:base/Result";
 
 import Types "../types/shared";
-import StaticData "../utils/staticData";
 
 persistent actor AdminCanister {
     // Type definitions
@@ -20,11 +18,9 @@ persistent actor AdminCanister {
     type PaymentMethod = Types.PaymentMethod;
     type Result<T> = Types.Result<T>;
 
-    // Role types
+    // Role types - Simplified to only ADMIN
     public type UserRole = {
         #ADMIN;
-        #FINOPS;
-        #COLLECTOR;
     };
 
     public type UserRoleAssignment = {
@@ -76,6 +72,9 @@ persistent actor AdminCanister {
     // Counter for rule IDs
     private var ruleIdCounter : Nat = 0;
 
+    // Canister references for intercanister calls
+    private var remittanceCanisterId : ?Principal = null;
+
     // Constants
     private transient let SETTINGS_KEY : Text = "system_settings";
     private transient let DEFAULT_SETTLEMENT_HOURS : Nat32 = 24;
@@ -94,17 +93,8 @@ persistent actor AdminCanister {
     private func isAuthorized(caller: Principal, requiredRole: UserRole) : Bool {
         switch (userRoles.get(caller)) {
             case (?assignment) {
-                // ADMIN can do everything
-                if (assignment.role == #ADMIN) {
-                    return true;
-                };
-                
-                // Check specific role match
-                switch (requiredRole, assignment.role) {
+                switch (assignment.role, requiredRole) {
                     case (#ADMIN, #ADMIN) true;
-                    case (#FINOPS, #FINOPS) true;
-                    case (#COLLECTOR, #COLLECTOR) true;
-                    case (_, _) false;
                 }
             };
             case null false;
@@ -145,7 +135,7 @@ persistent actor AdminCanister {
                     };
                 };
             };
-            case (#Hybrid({base; rate_bps})) {
+            case (#Hybrid({base = _; rate_bps})) {
                 if (rate_bps > MAX_COMMISSION_BPS) {
                     return #err("Hybrid commission rate exceeds maximum allowed");
                 };
@@ -223,6 +213,8 @@ persistent actor AdminCanister {
         roleEntries := [];
 
         systemSettings := HashMap.fromIter<Text, SystemSettings>(settingsEntries.vals(), 1, Text.equal, Text.hash);
+        settingsEntries := [];
+        settingsEntries := [];
         settingsEntries := [];
 
         // Initialize defaults
@@ -452,8 +444,6 @@ persistent actor AdminCanister {
         
         let roleText = switch (role) {
             case (#ADMIN) "ADMIN";
-            case (#FINOPS) "FINOPS";
-            case (#COLLECTOR) "COLLECTOR";
         };
 
         #ok("Role " # roleText # " assigned to user " # Principal.toText(userId))
@@ -628,8 +618,6 @@ persistent actor AdminCanister {
         active_commission_rules: Nat;
         total_users_with_roles: Nat;
         admin_users: Nat;
-        finops_users: Nat;
-        collector_users: Nat;
     }> {
         let caller = msg.caller;
 
@@ -648,14 +636,10 @@ persistent actor AdminCanister {
 
         let allAssignments = Iter.toArray(userRoles.vals());
         var adminCount = 0;
-        var finopsCount = 0;
-        var collectorCount = 0;
 
         for (assignment in allAssignments.vals()) {
             switch (assignment.role) {
                 case (#ADMIN) adminCount += 1;
-                case (#FINOPS) finopsCount += 1;
-                case (#COLLECTOR) collectorCount += 1;
             };
         };
 
@@ -664,9 +648,88 @@ persistent actor AdminCanister {
             active_commission_rules = activeRules.size();
             total_users_with_roles = allAssignments.size();
             admin_users = adminCount;
-            finops_users = finopsCount;
-            collector_users = collectorCount;
         })
+    };
+
+    // Canister Management
+
+    // Set canister references for intercanister calls
+    public shared(msg) func setCanisterReferences(remittance: ?Principal) : async Result<Text> {
+        let caller = msg.caller;
+
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        if (not isAuthorized(caller, #ADMIN)) {
+            return #err("Only ADMIN users can set canister references");
+        };
+
+        remittanceCanisterId := remittance;
+        #ok("Canister references updated successfully")
+    };
+
+    // Payment Validation Functions
+
+    // Validate remittance payment (called by service providers or admins)
+    public shared(msg) func validatePayment(orderId: Text, approved: Bool, reason: ?Text) : async Result<Text> {
+        let caller = msg.caller;
+
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        if (not isAuthorized(caller, #ADMIN)) {
+            return #err("Only ADMIN users can validate payments");
+        };
+
+        switch (remittanceCanisterId) {
+            case (?canisterId) {
+                let remittanceActor = actor(Principal.toText(canisterId)) : actor {
+                    validatePaymentByAdmin: (Text, Bool, ?Text, Principal) -> async Result<Text>;
+                };
+                
+                try {
+                    await remittanceActor.validatePaymentByAdmin(orderId, approved, reason, caller)
+                } catch (_) {
+                    #err("Failed to communicate with remittance canister")
+                }
+            };
+            case null {
+                #err("Remittance canister not configured")
+            };
+        }
+    };
+
+    // Get pending payment validations
+    public shared(msg) func getPendingValidations() : async Result<[Types.RemittanceOrder]> {
+        let caller = msg.caller;
+
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        if (not isAuthorized(caller, #ADMIN)) {
+            return #err("Only ADMIN users can view pending validations");
+        };
+
+        switch (remittanceCanisterId) {
+            case (?canisterId) {
+                let remittanceActor = actor(Principal.toText(canisterId)) : actor {
+                    getOrdersByStatus: (Types.RemittanceOrderStatus) -> async [Types.RemittanceOrder];
+                };
+                
+                try {
+                    let pendingOrders = await remittanceActor.getOrdersByStatus(#PaymentSubmitted);
+                    #ok(pendingOrders)
+                } catch (_) {
+                    #err("Failed to communicate with remittance canister")
+                }
+            };
+            case null {
+                #err("Remittance canister not configured")
+            };
+        }
     };
 
     // Initialize on first deployment
