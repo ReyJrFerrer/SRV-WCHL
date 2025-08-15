@@ -388,23 +388,19 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [service, setService] = useState<EnhancedService | null>(null);
 
   // Load service images using the useServiceImages hook
-  const {
-    images: serviceImages,
-    isLoading: isLoadingImages,
-    isError: isImageError,
-    refetch: refetchImages,
-  } = useServiceImages(service?.id, service?.imageUrls || []);
+  const { images: serviceImages } = useServiceImages(
+    service?.id,
+    service?.imageUrls || [],
+  );
 
   // Image upload hook
   const { uploadImages, removeImage } = useServiceImageUpload(service?.id);
 
   // Load service certificates using the useServiceCertificates hook
-  const {
-    certificates: serviceCertificates,
-    isLoading: isLoadingCertificates,
-    isError: isCertificateError,
-    refetch: refetchCertificates,
-  } = useServiceCertificates(service?.id, service?.certificateUrls || []);
+  const { certificates: serviceCertificates } = useServiceCertificates(
+    service?.id,
+    service?.certificateUrls || [],
+  );
 
   // Certificate upload hook
   const { uploadCertificates, removeCertificate } = useServiceCertificateUpload(
@@ -649,12 +645,12 @@ const ProviderServiceDetailPage: React.FC = () => {
   // --- Edit Section Handlers ---
 
   const handleEditTitleCategory = useCallback(() => {
-    setEditTitleCategory(true);
-    if (service) {
+    setEditTitleCategory((prev) => !prev);
+    if (service && !editTitleCategory) {
       setEditedTitle(service.title);
       setEditedCategory(service.category.id);
     }
-  }, [service]);
+  }, [service, editTitleCategory]);
 
   const handleSaveTitleCategory = async () => {
     if (!service) return;
@@ -709,25 +705,16 @@ const ProviderServiceDetailPage: React.FC = () => {
   }, [service]);
 
   const handleEditLocationAvailability = useCallback(() => {
-    setEditLocationAvailability(true);
-    if (service) {
+    setEditLocationAvailability((prev) => !prev);
+    if (service && !editLocationAvailability) {
       setEditedAddress(service.location.address || "");
-      setEditedCity(service.location.city);
+      setEditedCity(service.location.city || "");
       setEditedState(service.location.state || "");
       setEditedPostalCode(service.location.postalCode || "");
       setEditedCountry(service.location.country || "");
-      // Revert to original service's weekly schedule, ensuring slots exist
-      const originalSchedule =
-        service.weeklySchedule?.map((day) => ({
-          ...day,
-          availability: {
-            ...day.availability,
-            slots: day.availability.slots || [],
-          },
-        })) || [];
-      setEditedWeeklySchedule(originalSchedule);
+      setEditedWeeklySchedule(service.weeklySchedule || []);
     }
-  }, [service]);
+  }, [service, editLocationAvailability]);
 
   const handleSaveLocationAvailability = async () => {
     if (!service) return;
@@ -812,32 +799,17 @@ const ProviderServiceDetailPage: React.FC = () => {
       setEditedState(service.location.state || "");
       setEditedPostalCode(service.location.postalCode || "");
       setEditedCountry(service.location.country || "");
-      // Revert to original service's weekly schedule, ensuring slots exist
-      const originalSchedule =
-        service.weeklySchedule?.map((day) => ({
-          ...day,
-          availability: {
-            ...day.availability,
-            slots: day.availability.slots || [],
-          },
-        })) || [];
-      setEditedWeeklySchedule(originalSchedule);
+      setEditedWeeklySchedule(service.weeklySchedule || []);
     }
   }, [service]);
 
   // --- Image Upload Handlers ---
   const handleEditImages = useCallback(() => {
-    setEditImages(true);
-    setUploadError(null);
-    // Reset pending operations
-    setPendingUploads([]);
-    setPendingRemovals([]);
-
-    // Initialize temporary display with current service images
-    if (serviceImages) {
+    setEditImages((prev) => !prev);
+    if (!editImages && serviceImages) {
       setTempDisplayImages([...serviceImages]);
     }
-  }, [service, serviceImages]);
+  }, [editImages, serviceImages]);
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -992,13 +964,12 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   // --- Certification Upload Handlers ---
   const handleEditCertifications = useCallback(() => {
-    setEditCertifications(true);
-    // Initialize temp display with current certificates
-    if (serviceCertificates) {
+    setEditCertifications((prev) => !prev);
+    if (!editCertifications && serviceCertificates) {
       setTempDisplayCertificates([...serviceCertificates]);
     }
     setCertificateUploadError(null);
-  }, [serviceCertificates]);
+  }, [serviceCertificates, editCertifications]);
 
   const handleCertificationUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -1380,121 +1351,144 @@ const ProviderServiceDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center justify-between px-6 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
+        <div className="container mx-auto flex items-center justify-between px-6 py-5">
           <button
             onClick={() => navigate("/provider/home")}
-            className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            className="rounded-full p-2 transition-colors hover:bg-blue-100"
             aria-label="Go to home"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            <ArrowLeftIcon className="h-6 w-6 text-blue-600" />
           </button>
-          <h1 className="truncate text-2xl font-semibold text-gray-800">
+          <h1 className="truncate text-2xl font-bold tracking-tight text-blue-900 drop-shadow-sm">
             Service Details
           </h1>
           <div className="w-8"></div>
         </div>
       </header>
 
-      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+      {/* Main Content */}
+      <main className="container mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8">
         {/* Active Bookings Warning */}
         {hasActiveBookings && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-amber-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-amber-800">
-                  Service has active bookings
-                </h3>
-                <div className="mt-2 text-sm text-amber-700">
-                  <p>
-                    This service has {activeBookingsCount} active booking
-                    {activeBookingsCount !== 1 ? "s" : ""} and cannot be edited
-                    or deleted until all bookings are completed or cancelled.
-                  </p>
-                </div>
-              </div>
+          <div className="flex items-center gap-4 rounded-xl border-l-8 border-amber-400 bg-amber-50 p-5 shadow">
+            <svg
+              className="h-8 w-8 text-amber-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div>
+              <h3 className="text-base font-semibold text-amber-900">
+                Service has active bookings
+              </h3>
+              <p className="mt-1 text-sm text-amber-800">
+                This service has <b>{activeBookingsCount}</b> active booking
+                {activeBookingsCount !== 1 ? "s" : ""} and cannot be edited or
+                deleted until all bookings are completed or cancelled.
+              </p>
             </div>
           </div>
         )}
 
-        {/* Hero Image and Basic Info Card */}
-        <div className="mt-8 overflow-hidden rounded-xl bg-white shadow-lg">
-          <div className="p-6">
-            <div className="mb-2 flex items-start justify-between">
-              <div className="min-w-0 flex-1">
-                {editTitleCategory ? (
-                  <div className="flex flex-col gap-2">
-                    <input
-                      type="text"
-                      value={editedTitle}
-                      onChange={(e) => setEditedTitle(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-2xl font-bold text-gray-800 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Service Title"
-                    />
-                    <select
-                      value={editedCategory}
-                      onChange={(e) => setEditedCategory(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-500 focus:border-blue-500 focus:ring-blue-500"
-                      disabled={categoriesLoading}
-                    >
-                      <option value="">
-                        {categoriesLoading
-                          ? "Loading categories..."
-                          : "Select Category"}
-                      </option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <>
-                    <h2
-                      className="truncate text-2xl font-bold text-gray-800"
-                      title={service.title}
-                    >
-                      {service.title}
-                    </h2>
-                    <p className="mt-1 flex items-center text-sm text-gray-500">
-                      <TagIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-                      {service.category.name}
-                    </p>
-                  </>
-                )}
+        {/* Hero Card */}
+        <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl">
+          {/* Hero Image */}
+          <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
+            {serviceImages && serviceImages.length > 0 ? (
+              <img
+                src={serviceImages[0].dataUrl ?? undefined}
+                alt="Service Hero"
+                className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
+              />
+            ) : (
+              <PhotoIcon className="h-24 w-24 text-blue-200" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent"></div>
+          </div>
+          {/* Card Content */}
+          <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
+            {/* Service Info */}
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 flex items-center gap-2">
+                <h2
+                  className="truncate text-3xl font-extrabold text-blue-900 drop-shadow-sm"
+                  title={service.title}
+                >
+                  {service.title}
+                </h2>
+                <Tooltip
+                  content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                  disabled={hasActiveBookings}
+                >
+                  <button
+                    onClick={
+                      hasActiveBookings ? undefined : handleEditTitleCategory
+                    }
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                      hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                    }`}
+                    aria-label="Edit title and category"
+                    disabled={hasActiveBookings}
+                  >
+                    <PencilIcon className="h-5 w-5 text-blue-500" />
+                  </button>
+                </Tooltip>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2 text-lg font-medium text-blue-700">
+                <TagIcon className="h-5 w-5 text-blue-400" />
+                {service.category.name}
+              </div>
+              <div className="mt-2">
                 <span
-                  className={`ml-2 flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold bg-${getStatusColor(
+                  className={`inline-block rounded-full px-3 py-1 text-xs font-semibold bg-${getStatusColor(
                     service.status,
-                  )}-100 text-${getStatusColor(service.status)}-700`}
+                  )}-100 text-${getStatusColor(service.status)}-700 shadow`}
                 >
                   {service.status}
                 </span>
-                {editTitleCategory ? (
-                  <>
+              </div>
+              {editTitleCategory && (
+                <div className="mt-4 flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    className="w-full rounded-lg border border-blue-200 bg-white/80 px-4 py-2 text-2xl font-bold text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Service Title"
+                  />
+                  <select
+                    value={editedCategory}
+                    onChange={(e) => setEditedCategory(e.target.value)}
+                    className="w-full rounded-lg border border-blue-200 bg-white/80 px-4 py-2 text-base text-blue-700 focus:border-blue-500 focus:ring-blue-500"
+                    disabled={categoriesLoading}
+                  >
+                    <option value="">
+                      {categoriesLoading
+                        ? "Loading categories..."
+                        : "Select Category"}
+                    </option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="mt-2 flex gap-2">
                     <button
                       onClick={handleSaveTitleCategory}
-                      className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:opacity-50"
+                      className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
                       disabled={loading || hasActiveBookings}
                       aria-label="Save title and category"
                     >
-                      <CheckIcon className="h-4 w-4" />
+                      <CheckIcon className="h-5 w-5" />
                     </button>
                     <button
                       onClick={handleCancelTitleCategory}
@@ -1502,81 +1496,38 @@ const ProviderServiceDetailPage: React.FC = () => {
                       disabled={loading}
                       aria-label="Cancel editing title and category"
                     >
-                      <XMarkIcon className="h-4 w-4" />
+                      <XMarkIcon className="h-5 w-5" />
                     </button>
-                  </>
-                ) : (
-                  <Tooltip
-                    content={`Cannot edit with ${activeBookingsCount} active booking${
-                      activeBookingsCount !== 1 ? "s" : ""
-                    }`}
-                    disabled={hasActiveBookings}
-                  >
-                    <button
-                      onClick={
-                        hasActiveBookings ? undefined : handleEditTitleCategory
-                      }
-                      className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${
-                        hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
-                      }`}
-                      aria-label="Edit title and category"
-                      disabled={hasActiveBookings}
-                    >
-                      <PencilIcon className="h-5 w-5 text-gray-500" />
-                    </button>
-                  </Tooltip>
-                )}
-              </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Ratings */}
+            <div className="flex min-w-[180px] flex-col items-center justify-center gap-2">
+              <ViewReviewsButton
+                serviceId={service.id}
+                averageRating={service.averageRating!}
+                totalReviews={service.totalReviews!}
+                variant="card"
+                className="mt-1"
+              />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Detailed Information Sections */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="space-y-3 rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="mb-3 border-b pb-2 text-lg font-semibold text-gray-700">
-              Ratings
-            </h3>
-            <ViewReviewsButton
-              serviceId={service.id}
-              averageRating={service.averageRating!}
-              totalReviews={service.totalReviews!}
-              variant="card"
-              className="mt-2"
-            />
-          </div>
-
-          {/* Location & provider details */}
-          <div className="space-y-5 rounded-xl bg-white p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between border-b pb-2">
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-                <MapPinIcon className="h-6 w-6 text-blue-500" />
-                Location & Availability
-              </h3>
-              {editLocationAvailability ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleSaveLocationAvailability}
-                    className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:opacity-50"
-                    disabled={loading || hasActiveBookings}
-                    aria-label="Save location and availability"
-                  >
-                    <CheckIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={handleCancelLocationAvailability}
-                    className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300"
-                    disabled={loading}
-                    aria-label="Cancel editing location and availability"
-                  >
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {/* Left: Location & Packages */}
+          <div className="flex flex-col gap-8">
+            {/* Location & Availability */}
+            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
+                  <MapPinIcon className="h-6 w-6 text-blue-400" />
+                  Location & Availability
+                </h3>
                 <Tooltip
-                  content={`Cannot edit with ${activeBookingsCount} active booking${
-                    activeBookingsCount !== 1 ? "s" : ""
-                  }`}
+                  content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
                   disabled={hasActiveBookings}
                 >
                   <button
@@ -1585,862 +1536,728 @@ const ProviderServiceDetailPage: React.FC = () => {
                         ? undefined
                         : handleEditLocationAvailability
                     }
-                    className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
                       hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
                     }`}
                     aria-label="Edit location and availability"
                     disabled={hasActiveBookings}
                   >
-                    <PencilIcon className="h-5 w-5 text-gray-500" />
+                    <PencilIcon className="h-5 w-5 text-blue-500" />
                   </button>
                 </Tooltip>
-              )}
-            </div>
-            {editLocationAvailability ? (
-              <div className="space-y-4">
-                <div>
-                  <dt className="mb-1 text-xs font-semibold text-gray-500">
-                    Address Line
-                  </dt>
-                  <input
-                    type="text"
-                    value={editedAddress}
-                    onChange={(e) => setEditedAddress(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Street Address, Building, etc."
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <dt className="mb-1 text-xs font-semibold text-gray-500">
-                      City
-                    </dt>
-                    <input
-                      type="text"
-                      value={editedCity}
-                      onChange={(e) => setEditedCity(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="City"
-                    />
-                  </div>
-                  <div>
-                    <dt className="mb-1 text-xs font-semibold text-gray-500">
-                      State/Province
-                    </dt>
-                    <input
-                      type="text"
-                      value={editedState}
-                      onChange={(e) => setEditedState(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="State/Province"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <dt className="mb-1 text-xs font-semibold text-gray-500">
-                      Postal Code
-                    </dt>
-                    <input
-                      type="text"
-                      value={editedPostalCode}
-                      onChange={(e) => setEditedPostalCode(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Postal Code"
-                    />
-                  </div>
-                  <div>
-                    <dt className="mb-1 text-xs font-semibold text-gray-500">
-                      Country
-                    </dt>
-                    <input
-                      type="text"
-                      value={editedCountry}
-                      onChange={(e) => setEditedCountry(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800"
-                      placeholder="Country"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <dt className="mb-1 flex items-center gap-2 text-xs font-semibold text-gray-500">
-                    <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
-                    Availability
-                  </dt>
-                  <AvailabilityEditor
-                    weeklySchedule={editedWeeklySchedule}
-                    setWeeklySchedule={setEditedWeeklySchedule}
-                  />
-                </div>
               </div>
-            ) : (
-              <>
-                <div className="col-span-1 sm:col-span-2">
-                  <dt className="mb-1 text-xs font-semibold text-gray-500">
-                    Full Address
-                  </dt>
-                  <dd className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800">
-                    <span className="items-center gap-2 break-words">
-                      <span>
-                        {service.location.address && (
-                          <span>{service.location.address}, </span>
-                        )}
-                        {service.location.city}
-                        {service.location.state &&
-                          `, ${service.location.state}`}
-                        {service.location.postalCode &&
-                          ` ${service.location.postalCode}`}
-                        {service.location.country && (
-                          <span className="text-gray-500">
-                            , {service.location.country}
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                  </dd>
-                </div>
 
-                {service.weeklySchedule &&
-                  service.weeklySchedule.length > 0 && (
-                    <div className="mt-4 flex flex-col gap-4">
-                      {/* Availability Section */}
-                      <div className="col-span-1 sm:col-span-2">
-                        <dt className="mb-1 flex items-center gap-2 text-xs font-semibold text-gray-500">
-                          <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
-                          Availability
-                        </dt>
-                        <dd className="flex flex-wrap gap-4 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800">
-                          {service.weeklySchedule
-                            .filter((entry) => entry.availability.isAvailable)
-                            .map((entry) => (
-                              <div
-                                key={entry.day}
-                                className="flex min-w-[120px] flex-col items-start"
-                              >
-                                <span className="mb-1 rounded-full bg-blue-100 px-3 py-0.5 text-xs font-bold text-blue-700 shadow-sm">
-                                  {entry.day}
+              {editLocationAvailability ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-blue-700">
+                        Address Line
+                      </label>
+                      <input
+                        type="text"
+                        value={editedAddress}
+                        onChange={(e) => setEditedAddress(e.target.value)}
+                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Street Address, Building, etc."
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-blue-700">
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        value={editedCity}
+                        onChange={(e) => setEditedCity(e.target.value)}
+                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="City"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-blue-700">
+                        State/Province
+                      </label>
+                      <input
+                        type="text"
+                        value={editedState}
+                        onChange={(e) => setEditedState(e.target.value)}
+                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="State/Province"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-blue-700">
+                        Postal Code
+                      </label>
+                      <input
+                        type="text"
+                        value={editedPostalCode}
+                        onChange={(e) => setEditedPostalCode(e.target.value)}
+                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Postal Code"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-blue-700">
+                        Country
+                      </label>
+                      <input
+                        type="text"
+                        value={editedCountry}
+                        onChange={(e) => setEditedCountry(e.target.value)}
+                        className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm text-blue-900"
+                        placeholder="Country"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-700">
+                      <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                      Availability
+                    </label>
+                    <AvailabilityEditor
+                      weeklySchedule={editedWeeklySchedule}
+                      setWeeklySchedule={setEditedWeeklySchedule}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={handleCancelLocationAvailability}
+                      className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveLocationAvailability}
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold text-blue-700">
+                      Full Address
+                    </label>
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
+                      {service.location.address && (
+                        <span>{service.location.address}, </span>
+                      )}
+                      {service.location.city}
+                      {service.location.state && `, ${service.location.state}`}
+                      {service.location.postalCode &&
+                        ` ${service.location.postalCode}`}
+                      {service.location.country && (
+                        <span className="text-blue-500">
+                          , {service.location.country}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-700">
+                      <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                      Availability
+                    </label>
+                    <div className="flex flex-wrap gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
+                      {service.weeklySchedule
+                        ?.filter((entry) => entry.availability.isAvailable)
+                        .map((entry) => (
+                          <div
+                            key={entry.day}
+                            className="flex min-w-[120px] flex-col items-start"
+                          >
+                            <span className="mb-1 rounded-full bg-blue-200 px-3 py-0.5 text-xs font-bold text-blue-800 shadow-sm">
+                              {entry.day}
+                            </span>
+                            <span className="text-sm font-medium text-blue-900">
+                              {entry.availability.slots &&
+                              entry.availability.slots.length > 0 ? (
+                                <ul className="ml-4 list-disc space-y-0.5">
+                                  {entry.availability.slots.map((slot, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="text-xs text-blue-800"
+                                    >
+                                      {formatTime(slot.startTime)} -{" "}
+                                      {formatTime(slot.endTime)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-xs text-blue-400">
+                                  No slots
                                 </span>
-                                <span className="text-sm font-medium text-blue-900">
-                                  {entry.availability.slots &&
-                                  entry.availability.slots.length > 0 ? (
-                                    <ul className="ml-4 list-disc space-y-0.5">
-                                      {entry.availability.slots.map(
-                                        (slot, idx) => (
-                                          <li
-                                            key={idx}
-                                            className="text-xs text-blue-800"
-                                          >
-                                            {formatTime(slot.startTime)} -{" "}
-                                            {formatTime(slot.endTime)}
-                                          </li>
-                                        ),
-                                      )}
-                                    </ul>
-                                  ) : (
-                                    <span className="text-xs text-gray-400">
-                                      No slots
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                            ))}
-                          {service.weeklySchedule.filter(
-                            (entry) => entry.availability.isAvailable,
-                          ).length === 0 && (
-                            <span className="text-gray-400">Not specified</span>
-                          )}
-                        </dd>
+                              )}
+                            </span>
+                          </div>
+                        ))}
+                      {service.weeklySchedule?.filter(
+                        (entry) => entry.availability.isAvailable,
+                      ).length === 0 && (
+                        <span className="text-blue-400">Not specified</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Service Packages */}
+            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
+                  <BriefcaseIcon className="h-6 w-6 text-blue-400" />
+                  Service Packages ({packages.length})
+                </h3>
+                {!isAddingOrEditingPackage && (
+                  <Tooltip
+                    content={`Cannot add/edit packages with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                    disabled={hasActiveBookings}
+                  >
+                    <button
+                      onClick={hasActiveBookings ? undefined : handleAddPackage}
+                      className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${
+                        hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                      }`}
+                      disabled={hasActiveBookings}
+                    >
+                      <PlusIcon className="mr-1 h-4 w-4" />
+                      <span className="hidden sm:inline">Add Package</span>
+                    </button>
+                  </Tooltip>
+                )}
+              </div>
+              <div className="space-y-4">
+                {isAddingOrEditingPackage && (
+                  <div className="rounded-lg border border-blue-300 bg-blue-50 p-4 shadow-inner">
+                    <h4 className="mb-3 text-lg font-semibold text-blue-800">
+                      {currentPackageId ? "Edit Package" : "Add New Package"}
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label
+                          htmlFor="packageTitle"
+                          className="mb-1 block text-sm font-medium text-blue-700"
+                        >
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          id="packageTitle"
+                          value={packageFormTitle}
+                          onChange={(e) => setPackageFormTitle(e.target.value)}
+                          className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="e.g., Basic Cleaning, Premium Tune-up"
+                          required
+                          disabled={packageFormLoading}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="packageDescription"
+                          className="mb-1 block text-sm font-medium text-blue-700"
+                        >
+                          Description
+                        </label>
+                        <textarea
+                          id="packageDescription"
+                          value={packageFormDescription}
+                          onChange={(e) =>
+                            setPackageFormDescription(e.target.value)
+                          }
+                          rows={3}
+                          className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="Brief description of what's included in this package"
+                          required
+                          disabled={packageFormLoading}
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="packagePrice"
+                          className="mb-1 block text-sm font-medium text-blue-700"
+                        >
+                          Price (₱)
+                        </label>
+                        <input
+                          type="number"
+                          id="packagePrice"
+                          value={packageFormPrice}
+                          onChange={(e) => setPackageFormPrice(e.target.value)}
+                          min="0.01"
+                          step="0.01"
+                          className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="e.g., 500.00"
+                          required
+                          disabled={packageFormLoading}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={handleCancelPackageEdit}
+                          className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                          disabled={packageFormLoading}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSavePackage}
+                          className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                          disabled={packageFormLoading}
+                        >
+                          {packageFormLoading
+                            ? "Saving..."
+                            : currentPackageId
+                              ? "Update Package"
+                              : "Create Package"}
+                        </button>
                       </div>
                     </div>
-                  )}
-              </>
-            )}
-          </div>
-        </div>
+                  </div>
+                )}
 
-        {/* Service Images Section */}
-        <div className="mb-6 rounded-xl bg-white p-6 shadow-lg">
-          <div className="mb-4 flex items-center justify-between border-b pb-2">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-              <PhotoIcon className="h-6 w-6 text-gray-500" />
-              Service Images
-            </h3>
-            {editImages ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSaveImages}
-                  className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:opacity-50"
-                  disabled={uploadingImages}
-                  aria-label="Save images"
-                >
-                  {uploadingImages ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
-                  ) : (
-                    <CheckIcon className="h-4 w-4" />
-                  )}
-                </button>
-                <button
-                  onClick={handleCancelImages}
-                  className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
-                  disabled={uploadingImages}
-                  aria-label="Cancel editing images"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
+                {packages.length > 0
+                  ? packages.map((pkg) => (
+                      <div
+                        key={pkg.id}
+                        className="flex flex-col justify-between gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4 md:flex-row md:items-center"
+                      >
+                        <div>
+                          <h4 className="text-lg font-semibold text-blue-900">
+                            {pkg.title}
+                          </h4>
+                          <p className="mt-1 text-sm text-blue-700">
+                            {pkg.description}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 md:flex-row md:items-center md:gap-4">
+                          <span className="text-lg font-bold text-green-600">
+                            ₱{pkg.price.toFixed(2)}
+                          </span>
+                          <div className="flex gap-1">
+                            <Tooltip
+                              content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                              disabled={hasActiveBookings}
+                            >
+                              <button
+                                onClick={
+                                  hasActiveBookings
+                                    ? undefined
+                                    : () => handleEditPackage(pkg)
+                                }
+                                className={`rounded-full p-2 text-blue-500 hover:bg-blue-100 ${
+                                  hasActiveBookings
+                                    ? "cursor-not-allowed opacity-50"
+                                    : ""
+                                }`}
+                                aria-label={`Edit ${pkg.title}`}
+                                disabled={
+                                  hasActiveBookings || isAddingOrEditingPackage
+                                }
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </button>
+                            </Tooltip>
+                            <Tooltip
+                              content={`Cannot delete with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                              disabled={hasActiveBookings}
+                            >
+                              <button
+                                onClick={
+                                  hasActiveBookings
+                                    ? undefined
+                                    : () => handleDeletePackage(pkg.id)
+                                }
+                                className={`rounded-full p-2 text-red-500 hover:bg-red-100 ${
+                                  hasActiveBookings
+                                    ? "cursor-not-allowed opacity-50"
+                                    : ""
+                                }`}
+                                aria-label={`Delete ${pkg.title}`}
+                                disabled={
+                                  hasActiveBookings || isAddingOrEditingPackage
+                                }
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            </Tooltip>
+                          </div>
+                          <div className="flex flex-col text-xs text-blue-500">
+                            <span>
+                              Created:{" "}
+                              {new Date(pkg.createdAt).toLocaleDateString()}
+                            </span>
+                            <span>
+                              Updated:{" "}
+                              {new Date(pkg.updatedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  : !isAddingOrEditingPackage && (
+                      <div className="py-8 text-center text-blue-300">
+                        <BriefcaseIcon className="mx-auto mb-4 h-12 w-12" />
+                        <p className="mb-2 text-blue-400">
+                          No packages available for this service
+                        </p>
+                        <p className="text-sm">
+                          Packages help customers choose specific service
+                          options with different pricing
+                        </p>
+                      </div>
+                    )}
               </div>
-            ) : (
-              <Tooltip
-                content={`Cannot edit with ${activeBookingsCount} active booking${
-                  activeBookingsCount !== 1 ? "s" : ""
-                }`}
-                disabled={hasActiveBookings}
-              >
-                <button
-                  onClick={hasActiveBookings ? undefined : handleEditImages}
-                  className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${
-                    hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
-                  }`}
-                  aria-label="Edit images"
+            </section>
+          </div>
+
+          {/* Right: Certifications & Service Images */}
+          <div className="flex flex-col gap-8">
+            {/* Certifications */}
+            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
+                  <AcademicCapIcon className="h-6 w-6 text-blue-400" />
+                  Certifications
+                </h3>
+                <Tooltip
+                  content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
                   disabled={hasActiveBookings}
                 >
-                  <PencilIcon className="h-5 w-5 text-gray-500" />
-                </button>
-              </Tooltip>
-            )}
-          </div>
-
-          {editImages ? (
-            <div className="space-y-4">
-              {/* Upload Error Display */}
-              {uploadError && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-3">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <XMarkIcon className="h-5 w-5 text-red-400" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-red-800">{uploadError}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Upload Controls */}
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <label
-                    className={`cursor-pointer rounded-lg px-4 py-2 text-white transition-colors ${
-                      uploadingImages || tempDisplayImages.length >= 5
-                        ? "cursor-not-allowed bg-gray-400"
-                        : "bg-blue-500 hover:bg-blue-600"
+                  <button
+                    onClick={
+                      hasActiveBookings ? undefined : handleEditCertifications
+                    }
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                      hasActiveBookings ? "opaWcity-50 cursor-not-allowed" : ""
                     }`}
+                    aria-label="Edit certifications"
+                    disabled={hasActiveBookings}
                   >
-                    {uploadingImages ? "Saving Changes..." : "Upload Images"}
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                      disabled={
-                        uploadingImages || tempDisplayImages.length >= 5
-                      }
-                    />
-                  </label>
-                  {uploadingImages && (
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-                      <span className="text-sm text-gray-600">
-                        Saving changes...
+                    <PencilIcon className="h-5 w-5 text-blue-500" />
+                  </button>
+                </Tooltip>
+              </div>
+              {/* Editable Certificate Grid */}
+              {editCertifications ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                    {tempDisplayCertificates.length > 0 ? (
+                      tempDisplayCertificates.map((certificate, index) => (
+                        <div
+                          key={index}
+                          className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm"
+                        >
+                          {certificate.error ? (
+                            <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                              <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
+                              <p className="mt-1">Failed to load</p>
+                            </div>
+                          ) : certificate.dataUrl ? (
+                            <img
+                              src={certificate.dataUrl}
+                              alt={`Certificate ${index + 1}`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : certificate.fileName
+                              ?.toLowerCase()
+                              .endsWith(".pdf") ? (
+                            <div className="flex h-full w-full items-center justify-center bg-red-50">
+                              <div className="text-center">
+                                <AcademicCapIcon className="mx-auto h-8 w-8 text-red-500" />
+                                <p className="mt-1 text-xs text-red-700">
+                                  {certificate.fileName}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => handleRemoveCertificate(index)}
+                            className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                            aria-label="Remove certificate"
+                            type="button"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                          {certificate.isNew && (
+                            <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                              NEW
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full flex flex-col items-center justify-center py-8 text-blue-300">
+                        <AcademicCapIcon className="mb-2 h-12 w-12" />
+                        <span className="text-base">
+                          No certificates uploaded yet.
+                        </span>
+                      </div>
+                    )}
+                    {/* Add Certificate Button */}
+                    {tempDisplayCertificates.length < 10 && (
+                      <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 text-blue-400 transition-colors hover:border-blue-400 hover:bg-blue-100">
+                        <AcademicCapIcon className="mb-1 h-8 w-8" />
+                        <span className="text-xs">Add Certificate</span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          multiple
+                          className="hidden"
+                          onChange={handleCertificationUpload}
+                          disabled={uploadingCertificates}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  {certificateUploadError && (
+                    <div className="mt-2 rounded bg-red-100 px-3 py-2 text-sm text-red-700">
+                      {certificateUploadError}
+                    </div>
+                  )}
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button
+                      onClick={handleCancelCertifications}
+                      className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                      disabled={uploadingCertificates}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveCertifications}
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      disabled={uploadingCertificates}
+                    >
+                      {uploadingCertificates ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                  {serviceCertificates && serviceCertificates.length > 0 ? (
+                    serviceCertificates.map(
+                      (certificate: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm"
+                        >
+                          {certificate.error ? (
+                            <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                              <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
+                              <p className="mt-1">Failed to load</p>
+                            </div>
+                          ) : certificate.dataUrl ? (
+                            <img
+                              src={certificate.dataUrl}
+                              alt={`Certificate ${index + 1}`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : certificate.fileName
+                              ?.toLowerCase()
+                              .endsWith(".pdf") ? (
+                            <div className="flex h-full w-full items-center justify-center bg-red-50">
+                              <div className="text-center">
+                                <AcademicCapIcon className="mx-auto h-8 w-8 text-red-500" />
+                                <p className="mt-1 text-xs text-red-700">
+                                  {certificate.fileName}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
+                            </div>
+                          )}
+                        </div>
+                      ),
+                    )
+                  ) : (
+                    <div className="col-span-full flex flex-col items-center justify-center py-8 text-blue-300">
+                      <AcademicCapIcon className="mb-2 h-12 w-12" />
+                      <span className="text-base">
+                        No certificates uploaded yet.
                       </span>
                     </div>
                   )}
                 </div>
+              )}
+            </section>
 
-                {/* Image Count and Limit Info */}
-                <div className="text-sm text-gray-600">
-                  <span
-                    className={`${tempDisplayImages.length >= 5 ? "font-semibold text-amber-600" : ""}`}
+            {/* Service Images */}
+            <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="flex items-center gap-2 text-xl font-bold text-blue-800">
+                  <PhotoIcon className="h-6 w-6 text-blue-400" />
+                  Service Images
+                </h3>
+                <Tooltip
+                  content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                  disabled={hasActiveBookings}
+                >
+                  <button
+                    onClick={hasActiveBookings ? undefined : handleEditImages}
+                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${
+                      hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
+                    }`}
+                    aria-label="Edit images"
+                    disabled={hasActiveBookings}
                   >
-                    {tempDisplayImages.length}/5 images
-                  </span>
-                  {tempDisplayImages.length >= 5 && (
-                    <span className="ml-2 text-amber-600">
-                      Maximum limit reached
-                    </span>
-                  )}
-                  {(pendingUploads.length > 0 ||
-                    pendingRemovals.length > 0) && (
-                    <div className="mt-1 text-xs text-blue-600">
-                      {pendingUploads.length > 0 &&
-                        `${pendingUploads.length} pending upload(s)`}
-                      {pendingUploads.length > 0 &&
-                        pendingRemovals.length > 0 &&
-                        ", "}
-                      {pendingRemovals.length > 0 &&
-                        `${pendingRemovals.length} pending removal(s)`}
+                    <PencilIcon className="h-5 w-5 text-blue-500" />
+                  </button>
+                </Tooltip>
+              </div>
+              {/* Editable Image Grid */}
+              {editImages ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                    {tempDisplayImages.length > 0 ? (
+                      tempDisplayImages.map((image, index) => (
+                        <div
+                          key={index}
+                          className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm"
+                        >
+                          {image.error ? (
+                            <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                              <PhotoIcon className="mx-auto h-8 w-8 text-blue-200" />
+                              <p className="mt-1">Failed to load</p>
+                            </div>
+                          ) : image.dataUrl ? (
+                            <img
+                              src={image.dataUrl}
+                              alt={`Service image ${index + 1}`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => handleRemoveImage(index)}
+                            className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                            aria-label="Remove image"
+                            type="button"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                          {image.isNew && (
+                            <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
+                              NEW
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full flex flex-col items-center justify-center py-8 text-blue-300">
+                        <PhotoIcon className="mb-2 h-12 w-12" />
+                        <span className="text-base">
+                          No images uploaded yet.
+                        </span>
+                      </div>
+                    )}
+                    {/* Add Image Button */}
+                    {tempDisplayImages.length < 5 && (
+                      <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 text-blue-400 transition-colors hover:border-blue-400 hover:bg-blue-100">
+                        <PhotoIcon className="mb-1 h-8 w-8" />
+                        <span className="text-xs">Add Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImages}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  {uploadError && (
+                    <div className="mt-2 rounded bg-red-100 px-3 py-2 text-sm text-red-700">
+                      {uploadError}
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* Image Grid */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                {tempDisplayImages.length > 0 ? (
-                  tempDisplayImages.map((image, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button
+                      onClick={handleCancelImages}
+                      className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                      disabled={uploadingImages}
                     >
-                      {image.error ? (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
-                          <div className="text-center">
-                            <PhotoIcon className="mx-auto h-8 w-8 text-gray-300" />
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveImages}
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      disabled={uploadingImages}
+                    >
+                      {uploadingImages ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                  {serviceImages && serviceImages.length > 0 ? (
+                    serviceImages.map((image: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm"
+                      >
+                        {image.error ? (
+                          <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                            <PhotoIcon className="mx-auto h-8 w-8 text-blue-200" />
                             <p className="mt-1">Failed to load</p>
                           </div>
-                        </div>
-                      ) : image.dataUrl ? (
-                        <>
+                        ) : image.dataUrl ? (
                           <img
                             src={image.dataUrl}
                             alt={`Service image ${index + 1}`}
                             className="h-full w-full object-cover"
                             loading="lazy"
                           />
-                          <button
-                            onClick={() => handleRemoveImage(index)}
-                            disabled={uploadingImages}
-                            className={`absolute top-1 right-1 rounded-full p-1 text-white transition-colors ${
-                              uploadingImages
-                                ? "cursor-not-allowed bg-gray-400"
-                                : "bg-red-500 hover:bg-red-600"
-                            }`}
-                            aria-label="Remove image"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                          <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="col-span-full py-4 text-center text-gray-400">
-                    No images uploaded yet.
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="py-4">
-              {isLoadingImages ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-                  <span className="ml-3 text-gray-600">Loading images...</span>
-                </div>
-              ) : isImageError ? (
-                <div className="py-8 text-center text-red-500">
-                  <p>Failed to load service images</p>
-                  <button
-                    onClick={() => refetchImages()}
-                    className="mt-2 text-sm text-blue-600 underline hover:text-blue-800"
-                  >
-                    Try again
-                  </button>
-                </div>
-              ) : serviceImages && serviceImages.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                  {serviceImages.map((image: any, index: number) => (
-                    <div
-                      key={index}
-                      className="aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
-                    >
-                      {image.error ? (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
-                          <div className="text-center">
-                            <PhotoIcon className="mx-auto h-8 w-8 text-gray-300" />
-                            <p className="mt-1">Failed to load</p>
-                          </div>
-                        </div>
-                      ) : image.dataUrl ? (
-                        <img
-                          src={image.dataUrl}
-                          alt={`Service image ${index + 1}`}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                          <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-gray-400">
-                  <PhotoIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-                  <p>No service images available.</p>
-                  <p className="mt-2 text-sm">
-                    Images help customers see what your service offers.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Certifications Section */}
-        <div className="rounded-xl bg-white p-6 shadow-lg">
-          <div className="mb-4 flex items-center justify-between border-b pb-2">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-              <AcademicCapIcon className="h-6 w-6 text-gray-500" />
-              Certifications
-            </h3>
-            {editCertifications ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSaveCertifications}
-                  className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:opacity-50"
-                  disabled={uploadingCertificates}
-                  aria-label="Save certifications"
-                >
-                  {uploadingCertificates ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
-                  ) : (
-                    <CheckIcon className="h-4 w-4" />
-                  )}
-                </button>
-                <button
-                  onClick={handleCancelCertifications}
-                  className="rounded-full bg-gray-200 p-2 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
-                  disabled={uploadingCertificates}
-                  aria-label="Cancel editing certifications"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <Tooltip
-                content={`Cannot edit with ${activeBookingsCount} active booking${
-                  activeBookingsCount !== 1 ? "s" : ""
-                }`}
-                disabled={hasActiveBookings}
-              >
-                <button
-                  onClick={
-                    hasActiveBookings ? undefined : handleEditCertifications
-                  }
-                  className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${
-                    hasActiveBookings ? "cursor-not-allowed opacity-50" : ""
-                  }`}
-                  aria-label="Edit certifications"
-                  disabled={hasActiveBookings}
-                >
-                  <PencilIcon className="h-5 w-5 text-gray-500" />
-                </button>
-              </Tooltip>
-            )}
-          </div>
-
-          {editCertifications ? (
-            <div className="space-y-4">
-              {/* Upload Error Display */}
-              {certificateUploadError && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-3">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <XMarkIcon className="h-5 w-5 text-red-400" />
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">
-                        Certificate Upload Error
-                      </h3>
-                      <div className="mt-2 text-sm text-red-700">
-                        <p>{certificateUploadError}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-                  Upload Certificates
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp"
-                    className="hidden"
-                    onChange={handleCertificationUpload}
-                  />
-                </label>
-                <span className="text-sm text-gray-600">
-                  (PDF files and images up to 450KB, max 10 certificates)
-                </span>
-              </div>
-
-              {/* Certificate Grid */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                {tempDisplayCertificates.length > 0 ? (
-                  tempDisplayCertificates.map((certificate, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
-                    >
-                      {certificate.error ? (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
-                          <div className="text-center">
-                            <AcademicCapIcon className="mx-auto h-8 w-8 text-gray-300" />
-                            <p className="mt-1">Failed to load</p>
-                          </div>
-                        </div>
-                      ) : certificate.dataUrl ? (
-                        // Image certificate preview
-                        <img
-                          src={certificate.dataUrl}
-                          alt={`Certificate ${index + 1}`}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : certificate.fileName
-                          ?.toLowerCase()
-                          .endsWith(".pdf") ? (
-                        // PDF certificate placeholder
-                        <div className="flex h-full w-full items-center justify-center bg-red-50">
-                          <div className="text-center">
-                            <AcademicCapIcon className="mx-auto h-8 w-8 text-red-500" />
-                            <p className="mt-1 text-xs text-red-700">
-                              {certificate.fileName}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                          <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-                        </div>
-                      )}
-
-                      {/* Remove button */}
-                      <>
-                        {certificate.isNew && (
-                          <div className="absolute top-1 left-1 rounded-full bg-green-500 px-2 py-0.5 text-xs font-bold text-white">
-                            NEW
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleRemoveCertificate(index)}
-                          className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-                          aria-label="Remove certificate"
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      </>
-                    </div>
-                  ))
-                ) : (
-                  <p className="col-span-full py-4 text-center text-gray-400">
-                    No certificates uploaded yet.
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="py-4">
-              {isLoadingCertificates ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-                  <span className="ml-3 text-gray-600">
-                    Loading certificates...
-                  </span>
-                </div>
-              ) : isCertificateError ? (
-                <div className="py-8 text-center text-red-500">
-                  <p>Failed to load service certificates</p>
-                  <button
-                    onClick={() => refetchCertificates()}
-                    className="mt-2 text-sm text-blue-600 underline hover:text-blue-800"
-                  >
-                    Try again
-                  </button>
-                </div>
-              ) : serviceCertificates && serviceCertificates.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                  {serviceCertificates.map(
-                    (certificate: any, index: number) => (
-                      <div
-                        key={index}
-                        className="aspect-video overflow-hidden rounded-lg border border-gray-200 shadow-sm"
-                      >
-                        {certificate.error ? (
-                          <div className="flex h-full w-full items-center justify-center bg-gray-100 text-sm text-red-500">
-                            <div className="text-center">
-                              <AcademicCapIcon className="mx-auto h-8 w-8 text-gray-300" />
-                              <p className="mt-1">Failed to load</p>
-                            </div>
-                          </div>
-                        ) : certificate.dataUrl ? (
-                          <img
-                            src={certificate.dataUrl}
-                            alt={`Certificate ${index + 1}`}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                            <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+                          <div className="flex h-full w-full items-center justify-center">
+                            <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
                           </div>
                         )}
                       </div>
-                    ),
+                    ))
+                  ) : (
+                    <div className="col-span-full flex flex-col items-center justify-center py-8 text-blue-300">
+                      <PhotoIcon className="mb-2 h-12 w-12" />
+                      <span className="text-base">No images uploaded yet.</span>
+                    </div>
                   )}
                 </div>
-              ) : (
-                <div className="py-8 text-center text-gray-400">
-                  <AcademicCapIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-                  <p>No certificates available.</p>
-                  <p className="mt-2 text-sm">
-                    Upload certificates to verify your professional
-                    qualifications.
-                  </p>
-                </div>
               )}
-            </div>
-          )}
-        </div>
-
-        {/* Service Packages Section */}
-        <div className="rounded-xl bg-white p-6 shadow-lg">
-          <div className="mb-4 flex items-center justify-between border-b pb-2">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-              <BriefcaseIcon className="h-6 w-6 text-gray-500" />
-              Service Packages ({packages.length})
-            </h3>
-            {!isAddingOrEditingPackage && (
-              <Tooltip
-                content={`Cannot add/edit packages with ${activeBookingsCount} active booking${
-                  activeBookingsCount !== 1 ? "s" : ""
-                }`}
-                disabled={hasActiveBookings}
-              >
-                <button
-                  onClick={hasActiveBookings ? undefined : handleAddPackage}
-                  className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 ${
-                    hasActiveBookings ? "cursor-not-allowed" : ""
-                  }`}
-                  disabled={hasActiveBookings}
-                >
-                  <PlusIcon className="mr-1 h-4 w-4" />{" "}
-                  <span className="hidden sm:inline">Add Package</span>
-                </button>
-              </Tooltip>
-            )}
-          </div>
-          <div className="space-y-4">
-            {isAddingOrEditingPackage && (
-              <div className="rounded-lg border border-blue-300 bg-blue-50 p-4 shadow-inner">
-                <h4 className="mb-3 text-lg font-semibold text-blue-800">
-                  {currentPackageId ? "Edit Package" : "Add New Package"}
-                </h4>
-                <div className="space-y-3">
-                  <div>
-                    <label
-                      htmlFor="packageTitle"
-                      className="mb-1 block text-sm font-medium text-gray-700"
-                    >
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      id="packageTitle"
-                      value={packageFormTitle}
-                      onChange={(e) => setPackageFormTitle(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="e.g., Basic Cleaning, Premium Tune-up"
-                      required
-                      disabled={packageFormLoading}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="packageDescription"
-                      className="mb-1 block text-sm font-medium text-gray-700"
-                    >
-                      Description
-                    </label>
-                    <textarea
-                      id="packageDescription"
-                      value={packageFormDescription}
-                      onChange={(e) =>
-                        setPackageFormDescription(e.target.value)
-                      }
-                      rows={3}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Brief description of what's included in this package"
-                      required
-                      disabled={packageFormLoading}
-                    ></textarea>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="packagePrice"
-                      className="mb-1 block text-sm font-medium text-gray-700"
-                    >
-                      Price (₱)
-                    </label>
-                    <input
-                      type="number"
-                      id="packagePrice"
-                      value={packageFormPrice}
-                      onChange={(e) => setPackageFormPrice(e.target.value)}
-                      min="0.01"
-                      step="0.01"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="e.g., 500.00"
-                      required
-                      disabled={packageFormLoading}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={handleCancelPackageEdit}
-                      className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
-                      disabled={packageFormLoading}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSavePackage}
-                      className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
-                      disabled={packageFormLoading}
-                    >
-                      {packageFormLoading
-                        ? "Saving..."
-                        : currentPackageId
-                          ? "Update Package"
-                          : "Create Package"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {packages.length > 0
-              ? packages.map((pkg) => (
-                  <div
-                    key={pkg.id}
-                    className="rounded-lg border border-gray-200 bg-gray-50 p-4"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800">
-                          {pkg.title}
-                        </h4>
-                        <p className="mt-1 text-sm text-gray-600">
-                          {pkg.description}
-                        </p>
-                      </div>
-                      <div className="flex flex-shrink-0 items-center gap-2">
-                        <span className="text-md font-semibold text-green-600">
-                          ₱{pkg.price.toFixed(2)}
-                        </span>
-                        <Tooltip
-                          content={`Cannot edit with ${activeBookingsCount} active booking${
-                            activeBookingsCount !== 1 ? "s" : ""
-                          }`}
-                          disabled={hasActiveBookings}
-                        >
-                          <button
-                            onClick={
-                              hasActiveBookings
-                                ? undefined
-                                : () => handleEditPackage(pkg)
-                            }
-                            className={`rounded-full p-1 text-gray-500 hover:bg-gray-200 ${
-                              hasActiveBookings
-                                ? "cursor-not-allowed opacity-50"
-                                : ""
-                            }`}
-                            aria-label={`Edit ${pkg.title}`}
-                            disabled={
-                              hasActiveBookings || isAddingOrEditingPackage
-                            } // Disable if another package is being edited/added
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip
-                          content={`Cannot delete with ${activeBookingsCount} active booking${
-                            activeBookingsCount !== 1 ? "s" : ""
-                          }`}
-                          disabled={hasActiveBookings}
-                        >
-                          <button
-                            onClick={
-                              hasActiveBookings
-                                ? undefined
-                                : () => handleDeletePackage(pkg.id)
-                            }
-                            className={`rounded-full p-1 text-red-600 hover:bg-red-100 ${
-                              hasActiveBookings
-                                ? "cursor-not-allowed opacity-50"
-                                : ""
-                            }`}
-                            aria-label={`Delete ${pkg.title}`}
-                            disabled={
-                              hasActiveBookings || isAddingOrEditingPackage
-                            } // Disable if another package is being edited/added
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                      <span>
-                        Created: {new Date(pkg.createdAt).toLocaleDateString()}
-                      </span>
-                      <span>
-                        Updated: {new Date(pkg.updatedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              : !isAddingOrEditingPackage && ( // Only show placeholder if no packages and not adding
-                  <div className="py-8 text-center">
-                    <BriefcaseIcon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-                    <p className="mb-4 text-gray-500">
-                      No packages available for this service
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Packages help customers choose specific service options
-                      with different pricing
-                    </p>
-                  </div>
-                )}
+            </section>
           </div>
         </div>
 
-        {/* Action Buttons Card */}
-        <div className="mb-18 flex flex-col gap-2 rounded-xl bg-white p-4 shadow-lg sm:flex-row sm:gap-3">
-          {/* Deactivate/Activate Button */}
+        {/* Action Buttons */}
+        <div className="mt-8 flex flex-col gap-4 md:flex-row">
           <button
             onClick={handleStatusToggle}
             disabled={isUpdatingStatus}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-yellow-400 bg-yellow-50 px-6 py-3 text-lg font-semibold shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
               service.status === "Available"
-                ? "text-yellow-600 hover:bg-yellow-500 hover:text-white"
-                : "text-green-600 hover:bg-green-500 hover:text-white"
+                ? "text-yellow-700 hover:bg-yellow-400 hover:text-white"
+                : "text-green-700 hover:bg-green-400 hover:text-white"
             }`}
           >
             {service.status === "Available" ? (
-              <LockClosedIcon className="h-5 w-5" />
+              <LockClosedIcon className="h-6 w-6" />
             ) : (
-              <LockOpenIcon className="h-5 w-5" />
+              <LockOpenIcon className="h-6 w-6" />
             )}
             {isUpdatingStatus
               ? "Updating..."
@@ -2448,32 +2265,29 @@ const ProviderServiceDetailPage: React.FC = () => {
                 ? "Deactivate"
                 : "Activate"}
           </button>
-
-          {/* Delete Service Button */}
           <Tooltip
-            content={`Cannot delete service with ${activeBookingsCount} active booking${
-              activeBookingsCount !== 1 ? "s" : ""
-            }`}
+            content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
             disabled={hasActiveBookings}
           >
             <button
               onClick={hasActiveBookings ? undefined : handleDeleteService}
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-500 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-6 py-3 text-lg font-semibold text-red-700 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
                 hasActiveBookings
                   ? "cursor-not-allowed opacity-60"
-                  : "hover:bg-red-500 hover:text-white"
+                  : "hover:bg-red-400 hover:text-white"
               }`}
               tabIndex={hasActiveBookings ? -1 : 0}
             >
-              <TrashIcon className="h-5 w-5" />
+              <TrashIcon className="h-6 w-6" />
               {isDeleting ? "Deleting..." : "Delete Service"}
             </button>
           </Tooltip>
         </div>
       </main>
 
-      <div className="md:hidden">
+      {/* Bottom Navigation for Mobile */}
+      <div className="fixed right-0 bottom-0 left-0 z-50 md:hidden">
         <BottomNavigation />
       </div>
     </div>
