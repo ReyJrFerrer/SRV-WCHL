@@ -39,10 +39,9 @@ const ViewReviewsButton: React.FC<ViewReviewsButtonProps> = ({
               <span className="text-gray-600">({totalReviews} reviews)</span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Tignan lahat ng ratings and reviews
+              View All Ratings and Reviews
             </p>
           </div>
-          <EyeIcon className="h-5 w-5 text-gray-400" />
         </div>
       </div>
     );
