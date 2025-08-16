@@ -41,10 +41,6 @@ persistent actor RemittanceCanister {
     private var serviceCanisterId : ?Principal = null;
     private var adminCanisterId : ?Principal = null;
 
-    // Settings
-    private var corporateGCashAccount : Text = "09123456789";
-    private var settlementDeadlineHours : Nat32 = 24;
-
     // Counter for ensuring unique IDs
     private var idCounter : Nat = 0;
 
@@ -203,6 +199,41 @@ persistent actor RemittanceCanister {
                 });
                 #ok(mockSummaries)
             };
+        }
+    };
+
+    // Helper function to get admin settings
+    private func getAdminSettings() : async ?Types.SystemSettings {
+        switch (adminCanisterId) {
+            case (?canisterId) {
+                let adminActor = actor(Principal.toText(canisterId)) : actor {
+                    getSettings: () -> async Types.SystemSettings;
+                };
+                
+                try {
+                    let settings = await adminActor.getSettings();
+                    ?settings
+                } catch (_) {
+                    null // Return null if can't get settings, will use defaults
+                }
+            };
+            case null null;
+        }
+    };
+
+    // Helper function to get GCash account (with fallback to default)
+    private func getGCashAccount() : async Text {
+        switch (await getAdminSettings()) {
+            case (?settings) settings.corporate_gcash_account;
+            case null "09123456789"; // Default fallback
+        }
+    };
+
+    // Helper function to get settlement deadline hours (with fallback to default)
+    private func getSettlementDeadlineHours() : async Nat32 {
+        switch (await getAdminSettings()) {
+            case (?settings) settings.settlement_deadline_hours;
+            case null 24; // Default 24 hours
         }
     };
 
@@ -450,27 +481,32 @@ persistent actor RemittanceCanister {
         }
     };
 
-    // Generate settlement instruction for service provider
-    public query func generateSettlementInstruction(orderId: Text) : async Result<SettlementInstruction> {
+        // Generate settlement instruction for service provider
+    public func generateSettlementInstruction(orderId: Text) : async Result<SettlementInstruction> {
         switch (orders.get(orderId)) {
             case (?order) {
                 if (order.status != #AwaitingPayment) {
-                    return #err("Settlement instruction only available for orders awaiting payment");
+                    return #err("Order is not awaiting payment");
                 };
 
                 let referenceNumber = generateReferenceNumber(orderId);
-                let expiresAt = Time.now() + (Int.abs(Nat32.toNat(settlementDeadlineHours)) * 3600_000_000_000);
+                
+                // Get settings from admin canister
+                let gcashAccount = await getGCashAccount();
+                let deadlineHours = await getSettlementDeadlineHours();
+                
+                let expiresAt = Time.now() + (Int.abs(Nat32.toNat(deadlineHours)) * 3600_000_000_000);
                 
                 #ok({
-                    corporate_gcash_account = corporateGCashAccount;
+                    corporate_gcash_account = gcashAccount;
                     commission_amount = order.commission_amount;
                     reference_number = referenceNumber;
-                    instructions = "Please send " # Nat.toText(order.commission_amount / 100) # " PHP to GCash account " # corporateGCashAccount # " with reference: " # referenceNumber # ". Then upload the payment screenshot.";
+                    instructions = "Please send " # Nat.toText(order.commission_amount / 100) # " PHP to GCash account " # gcashAccount # " with reference: " # referenceNumber # ". Then upload the payment screenshot.";
                     expires_at = expiresAt;
                 })
             };
             case null {
-                #err("Order not found: " # orderId)
+                #err("Order not found")
             };
         }
     };
@@ -660,7 +696,7 @@ persistent actor RemittanceCanister {
     };
 
     // Get provider dashboard with balance and deadline info
-    public query func getProviderDashboard(providerId: Principal) : async {
+    public func getProviderDashboard(providerId: Principal) : async {
         outstanding_balance: Nat;
         pending_orders: Nat;
         overdue_orders: Nat;
@@ -698,7 +734,8 @@ persistent actor RemittanceCanister {
 
         // Find overdue orders (created more than settlementDeadlineHours ago)
         let currentTime = Time.now();
-        let deadlineNanos = Int.abs(Nat32.toNat(settlementDeadlineHours)) * 3600_000_000_000;
+        let deadlineHours = await getSettlementDeadlineHours();
+        let deadlineNanos = Int.abs(Nat32.toNat(deadlineHours)) * 3600_000_000_000;
         
         let overdueOrders = Array.filter<RemittanceOrder>(awaitingPaymentOrders, func(order: RemittanceOrder) : Bool {
             (currentTime - order.created_at) > deadlineNanos
