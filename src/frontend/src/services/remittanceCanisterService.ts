@@ -1,11 +1,11 @@
 // Remittance Canister Service
 import { Principal } from "@dfinity/principal";
 import { createActor, canisterId } from "../../../declarations/remittance";
-// import { canisterId as authCanisterId } from "../../../declarations/auth";
-// import { canisterId as bookingCanisterId } from "../../../declarations/booking";
-// import { canisterId as mediaCanisterId } from "../../../declarations/media";
-// import { canisterId as serviceCanisterId } from "../../../declarations/service";
-// import { canisterId as adminCanisterId } from "../../../declarations/admin";
+import { canisterId as authCanisterId } from "../../../declarations/auth";
+import { canisterId as mediaCanisterId } from "../../../declarations/media";
+import { canisterId as bookingCanisterId } from "../../../declarations/booking";
+import { canisterId as serviceCanisterId } from "../../../declarations/service";
+import { canisterId as adminCanisterId } from "../../../declarations/admin";
 import { Identity } from "@dfinity/agent";
 import type {
   _SERVICE as RemittanceService,
@@ -42,7 +42,7 @@ let currentIdentity: Identity | null = null;
  * Updates the remittance actor with a new identity
  * This should be called when the user's authentication state changes
  */
-const updateRemittanceActor = (identity: Identity | null) => {
+export const updateRemittanceActor = (identity: Identity | null) => {
   if (currentIdentity !== identity) {
     remittanceActor = createRemittanceActor(identity);
     currentIdentity = identity;
@@ -250,6 +250,30 @@ export const getProviderDashboard = async (
     console.error("Failed to get provider dashboard:", error);
     throw new Error(
       `Failed to get provider dashboard: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+};
+
+export const setCanisterReferences = async (): Promise<string | null> => {
+  try {
+    const actor = getRemittanceActor(true);
+    const result = await actor.setCanisterReferences(
+      [Principal.fromText(authCanisterId)],
+      [Principal.fromText(bookingCanisterId)],
+      [Principal.fromText(mediaCanisterId)],
+      [Principal.fromText(serviceCanisterId)],
+      [Principal.fromText(adminCanisterId)],
+    );
+
+    if ("ok" in result) {
+      return result.ok;
+    } else {
+      throw new Error(result.err);
+    }
+  } catch (error) {
+    console.error("Failed to set canister references:", error);
+    throw new Error(
+      `Failed to set canister references: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -515,5 +539,3 @@ export const refreshRemittanceActor = async () => {
   resetRemittanceActor();
   return await getRemittanceActor();
 };
-
-export const updateRemittanceActorForAuth = updateRemittanceActor;
