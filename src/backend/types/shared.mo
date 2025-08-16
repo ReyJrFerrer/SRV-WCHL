@@ -24,6 +24,7 @@ module {
         #UserProfile;
         #ServiceImage;
         #ServiceCertificate;
+        #RemittancePaymentProof; // New type for GCash payment screenshots
     };
 
     public type MediaItem = {
@@ -352,10 +353,10 @@ module {
 
     // Remittance system types
     public type RemittanceOrderStatus = {
-        #AwaitingCash;
-        #CashConfirmed;
-        #AwaitingSettlement;
-        #Settled;
+        #AwaitingPayment; // Service provider needs to make payment
+        #PaymentSubmitted; // Service provider uploaded payment proof
+        #PaymentValidated; // Admin validated the payment
+        #Settled; // Commission confirmed and settled
         #Cancelled;
     };
 
@@ -388,25 +389,21 @@ module {
 
     public type RemittanceOrder = {
         id: Text;
-        customer_id: Principal; // References auth system
-        amount_php_centavos: Nat; // Amount in centavos (100 centavos = 1 PHP)
+        service_provider_id: Principal; // Service provider who needs to pay commission
+        amount_php_centavos: Nat; // Total service amount in centavos
         service_type: Text; // ServiceCategory ID
         service_id: ?Text; // Optional reference to specific service
         booking_id: ?Text; // Optional reference to related booking
         payment_method: PaymentMethod;
-        collector_id: Principal; // Service provider collecting payment
-        branch_id: ?Text; // Optional branch identifier
         status: RemittanceOrderStatus;
         commission_rule_id: Text;
         commission_version: Nat32;
         commission_amount: Nat; // Commission in centavos
-        net_proceeds: Nat; // Amount - commission in centavos
-        deposit_ref: ?Text; // Reference for GCash deposit
-        gcash_ref: ?Text; // Reference from GCash settlement proof
-        proof_cash_media_ids: [Text]; // Media IDs for cash receipt proofs
-        proof_settlement_media_ids: [Text]; // Media IDs for settlement proofs
+        payment_proof_media_ids: [Text]; // Media IDs for GCash payment proofs
+        validated_by: ?Principal; // Admin who validated the payment
+        validated_at: ?Time.Time;
         created_at: Time.Time;
-        cash_confirmed_at: ?Time.Time;
+        payment_submitted_at: ?Time.Time;
         settled_at: ?Time.Time;
         updated_at: Time.Time;
     };
@@ -420,17 +417,16 @@ module {
     };
 
     public type SettlementInstruction = {
-        deposit_ref: Text;
-        expires_at: Time.Time;
-        amount: Nat;
         corporate_gcash_account: Text;
+        commission_amount: Nat;
+        reference_number: Text;
         instructions: Text;
+        expires_at: Time.Time;
     };
 
     public type RemittanceOrderFilter = {
         status: ?[RemittanceOrderStatus];
-        collector_id: ?Principal;
-        branch_id: ?Text;
+        service_provider_id: ?Principal;
         from_date: ?Time.Time;
         to_date: ?Time.Time;
     };

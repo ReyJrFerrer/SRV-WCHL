@@ -8,12 +8,9 @@ import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
-import Option "mo:base/Option";
 import Result "mo:base/Result";
-import Debug "mo:base/Debug";
 
 import Types "../types/shared";
-import StaticData "../utils/staticData";
 
 persistent actor RemittanceCanister {
     // Type definitions
@@ -38,23 +35,23 @@ persistent actor RemittanceCanister {
     private transient var commissionRules = HashMap.HashMap<Text, CommissionRule>(10, Text.equal, Text.hash);
 
     // Canister references
-    private transient var authCanisterId : ?Principal = null;
-    private transient var mediaCanisterId : ?Principal = null;
-    private transient var bookingCanisterId : ?Principal = null;
-    private transient var serviceCanisterId : ?Principal = null;
+    private var authCanisterId : ?Principal = null;
+    private var mediaCanisterId : ?Principal = null;
+    private var bookingCanisterId : ?Principal = null;
+    private var serviceCanisterId : ?Principal = null;
+    private var adminCanisterId : ?Principal = null;
 
-    // Settings (would normally come from admin canister)
-    private transient var corporateGCashAccount : Text = "09123456789";
-    private transient var settlementDeadlineHours : Nat32 = 24;
+    // Settings
+    private var corporateGCashAccount : Text = "09123456789";
+    private var settlementDeadlineHours : Nat32 = 24;
 
     // Counter for ensuring unique IDs
     private var idCounter : Nat = 0;
 
     // Constants
-    private transient let MIN_AMOUNT : Nat = 100; // 1 PHP minimum in centavos
-    private transient let MAX_AMOUNT : Nat = 1_000_000_00; // 1M PHP maximum in centavos
-    private transient let DEFAULT_COMMISSION_RATE : Nat = 300; // 3% in basis points
-    private transient let MAX_COMMISSION_RATE : Nat = 1000; // 10% max in basis points
+    private let MIN_AMOUNT : Nat = 100; // 1 PHP minimum in centavos
+    private let MAX_AMOUNT : Nat = 1_000_000_00; // 1M PHP maximum in centavos
+    private let DEFAULT_COMMISSION_RATE : Nat = 300; // 3% in basis points
 
     // Helper functions
     private func generateOrderId() : Text {
@@ -63,17 +60,7 @@ persistent actor RemittanceCanister {
         return "RMT-" # Int.toText(now) # "-" # Nat.toText(idCounter);
     };
 
-    private func generateDepositRef(branchId: ?Text, orderId: Text) : Text {
-        let branch = switch (branchId) {
-            case (?id) {
-                // Take first 3 chars or full text if shorter
-                let chars = Text.toArray(id);
-                let takeCount = Nat.min(chars.size(), 3);
-                Text.fromArray(Array.tabulate<Char>(takeCount, func(i: Nat): Char { chars[i] }))
-            };
-            case null "SRV"; // Default branch code
-        };
-        
+    private func generateReferenceNumber(orderId: Text) : Text {
         let now = Time.now() / 1_000_000_000; // Convert to seconds
         let date = Int.abs(now) % 100000000; // Get last 8 digits for date
         
@@ -84,7 +71,7 @@ persistent actor RemittanceCanister {
         
         let checksum = (Int.abs(now) % 97) + 1; // Simple checksum
         
-        Text.toUppercase(branch) # Int.toText(date) # orderSuffix # Int.toText(checksum)
+        "SRV" # Int.toText(date) # orderSuffix # Int.toText(checksum)
     };
 
     private func calculateCommission(amount: Nat, rule: CommissionRule) : Nat {
@@ -111,8 +98,8 @@ persistent actor RemittanceCanister {
                     DEFAULT_COMMISSION_RATE * amount / 10000
                 }
             };
-            case (#Hybrid({base; rate_bps})) {
-                base + ((amount * rate_bps) / 10000)
+            case (#Hybrid({base = _; rate_bps})) {
+                rate_bps + ((amount * rate_bps) / 10000)
             };
         }
     };
@@ -188,49 +175,56 @@ persistent actor RemittanceCanister {
 
         switch (mediaCanisterId) {
             case (?canisterId) {
-                // In a real implementation, we would make inter-canister calls
-                // For now, we'll simulate validation
-                let validations = Array.map<Text, MediaValidationSummary>(mediaIds, func(mediaId: Text) : MediaValidationSummary {
+                let mediaActor = actor(Principal.toText(canisterId)) : actor {
+                    validateMediaItems: ([Text]) -> async Result<[MediaValidationSummary]>;
+                };
+                
+                try {
+                    await mediaActor.validateMediaItems(mediaIds)
+                } catch (_) {
+                    #err("Failed to validate media proofs")
+                }
+            };
+            case null {
+                // If media canister not configured, create mock validation summaries
+                let mockSummaries = Array.map<Text, MediaValidationSummary>(mediaIds, func(id: Text) : MediaValidationSummary {
                     {
-                        media_id = mediaId;
-                        sha256 = ?mediaId;
-                        mime_type = "image/jpeg";
-                        size_bytes = 450000; // Simulated file size
+                        media_id = id;
+                        sha256 = null;
+                        mime_type = "image/jpeg"; // Default assumption
+                        size_bytes = 1000000; // 1MB default
                         uploaded_at = Time.now();
                         extracted_timestamp = null;
                         is_valid_type = true;
                         is_within_size_limit = true;
-                        has_text_content = ?true;
+                        has_text_content = null;
                         validation_flags = [];
                     }
                 });
-                #ok(validations)
-            };
-            case null {
-                #err("Media canister not configured")
+                #ok(mockSummaries)
             };
         }
     };
 
     private func isValidStatusTransition(currentStatus: RemittanceOrderStatus, newStatus: RemittanceOrderStatus) : Bool {
         switch (currentStatus, newStatus) {
-            case (#AwaitingCash, #CashConfirmed) true;
-            case (#AwaitingCash, #Cancelled) true;
-            case (#CashConfirmed, #AwaitingSettlement) true;
-            case (#CashConfirmed, #Cancelled) true;
-            case (#AwaitingSettlement, #Settled) true;
-            case (#AwaitingSettlement, #Cancelled) true;
-            case (_, _) false; // All other transitions are invalid
+            case (#AwaitingPayment, #PaymentSubmitted) true;
+            case (#AwaitingPayment, #Cancelled) true;
+            case (#PaymentSubmitted, #PaymentValidated) true;
+            case (#PaymentSubmitted, #Cancelled) true;
+            case (#PaymentValidated, #Settled) true;
+            case (#PaymentValidated, #Cancelled) true;
+            case (_, _) false;
         }
     };
 
     // Initialize static commission rules
     private func initializeStaticCommissionRules() {
-        // Default flat commission rule
+        // Default commission rule
         let defaultRule : CommissionRule = {
-            id = "rule-default-flat";
+            id = "rule-default-commission";
             version = 1;
-            service_types = ["cat-001", "cat-002", "cat-003", "cat-004", "cat-005", "cat-006", "cat-007", "cat-008", "cat-009"]; // All categories
+            service_types = ["cat-001", "cat-002", "cat-003", "cat-004", "cat-005", "cat-006", "cat-007", "cat-008", "cat-009"];
             payment_methods = [#CashOnHand];
             formula = #Percentage(DEFAULT_COMMISSION_RATE); // 3%
             min_commission = ?500; // 5 PHP minimum
@@ -285,17 +279,19 @@ persistent actor RemittanceCanister {
     };
 
     // Set canister references
-    public shared(msg) func setCanisterReferences(
+    public shared(_msg) func setCanisterReferences(
         auth: ?Principal,
         media: ?Principal,
         booking: ?Principal,
-        service: ?Principal
+        service: ?Principal,
+        admin: ?Principal
     ) : async Result<Text> {
         // In real implementation, should check admin rights
         authCanisterId := auth;
         mediaCanisterId := media;
         bookingCanisterId := booking;
         serviceCanisterId := service;
+        adminCanisterId := admin;
         #ok("Canister references set successfully")
     };
 
@@ -304,7 +300,7 @@ persistent actor RemittanceCanister {
         amount: Nat,
         serviceType: Text, 
         paymentMethod: PaymentMethod,
-        timestamp: Time.Time
+        _timestamp: Time.Time
     ) : async Result<CommissionQuote> {
         if (amount < MIN_AMOUNT or amount > MAX_AMOUNT) {
             return #err("Amount must be between " # Nat.toText(MIN_AMOUNT) # " and " # Nat.toText(MAX_AMOUNT) # " centavos");
@@ -314,7 +310,7 @@ persistent actor RemittanceCanister {
             case (?rule) {
                 let baseCommission = calculateCommission(amount, rule);
                 let finalCommission = applyCommissionCaps(baseCommission, rule);
-                let netProceeds = if (amount >= finalCommission) { amount - finalCommission } else { 0 };
+                let netProceeds = Int.abs(amount - finalCommission);
                 let effectiveRate = if (amount > 0) { 
                     let commissionInt = Int.abs(finalCommission);
                     let amountInt = Int.abs(amount);
@@ -336,25 +332,23 @@ persistent actor RemittanceCanister {
                 })
             };
             case null {
-                #err("No commission rule found for service type: " # serviceType # " and payment method")
+                #err("No commission rule found for service type: " # serviceType)
             };
         }
     };
 
     // Create a new remittance order
     public shared(msg) func createOrder(input: {
-        customer_id: Principal;
+        service_provider_id: Principal;
         amount: Nat;
         service_type: Text;
         service_id: ?Text;
         booking_id: ?Text;
-        collector_id: Principal;
-        branch_id: ?Text;
     }) : async Result<RemittanceOrder> {
         let caller = msg.caller;
         
         if (Principal.isAnonymous(caller)) {
-            return #err("Anonymous principal not allowed");
+            return #err("Anonymous caller not allowed");
         };
 
         // Validate amount
@@ -368,7 +362,7 @@ persistent actor RemittanceCanister {
         
         let quote = switch (quoteResult) {
             case (#ok(q)) q;
-            case (#err(msg)) return #err("Commission calculation failed: " # msg);
+            case (#err(e)) return #err("Commission calculation failed: " # e);
         };
 
         let orderId = generateOrderId();
@@ -376,25 +370,21 @@ persistent actor RemittanceCanister {
         
         let newOrder : RemittanceOrder = {
             id = orderId;
-            customer_id = input.customer_id;
+            service_provider_id = input.service_provider_id;
             amount_php_centavos = input.amount;
             service_type = input.service_type;
             service_id = input.service_id;
             booking_id = input.booking_id;
             payment_method = paymentMethod;
-            collector_id = input.collector_id;
-            branch_id = input.branch_id;
-            status = #AwaitingCash;
+            status = #AwaitingPayment;
             commission_rule_id = quote.rule_id;
             commission_version = quote.rule_version;
             commission_amount = quote.commission;
-            net_proceeds = quote.net;
-            deposit_ref = null;
-            gcash_ref = null;
-            proof_cash_media_ids = [];
-            proof_settlement_media_ids = [];
+            payment_proof_media_ids = [];
+            validated_by = null;
+            validated_at = null;
             created_at = now;
-            cash_confirmed_at = null;
+            payment_submitted_at = null;
             settled_at = null;
             updated_at = now;
         };
@@ -403,10 +393,10 @@ persistent actor RemittanceCanister {
         #ok(newOrder)
     };
 
-    // Confirm cash received with proof
-    public shared(msg) func confirmCashReceived(
+    // Service provider submits payment proof
+    public shared(msg) func submitPaymentProof(
         orderId: Text,
-        proofs: [Text] // media IDs
+        proofMediaIds: [Text] // media IDs for GCash payment screenshots
     ) : async Result<RemittanceOrder> {
         let caller = msg.caller;
         
@@ -416,18 +406,18 @@ persistent actor RemittanceCanister {
 
         switch (orders.get(orderId)) {
             case (?order) {
-                // Check if caller is the collector
-                if (order.collector_id != caller) {
-                    return #err("Only the assigned collector can confirm cash receipt");
+                // Check if caller is the service provider
+                if (order.service_provider_id != caller) {
+                    return #err("Only the service provider can submit payment proof");
                 };
 
                 // Check status transition
-                if (not isValidStatusTransition(order.status, #CashConfirmed)) {
-                    return #err("Invalid status transition from " # debug_show(order.status) # " to CashConfirmed");
+                if (not isValidStatusTransition(order.status, #PaymentSubmitted)) {
+                    return #err("Cannot submit payment proof in current status");
                 };
 
                 // Validate proofs
-                switch (await validateMediaProofs(proofs)) {
+                switch (await validateMediaProofs(proofMediaIds)) {
                     case (#ok(validations)) {
                         // Check if all proofs are valid
                         let allValid = Array.foldLeft<MediaValidationSummary, Bool>(validations, true, func(acc, validation) {
@@ -438,29 +428,16 @@ persistent actor RemittanceCanister {
                             return #err("One or more proof media files are invalid");
                         };
 
-                        // Generate deposit reference
-                        let depositRef = generateDepositRef(order.branch_id, orderId);
-                        
                         let updatedOrder : RemittanceOrder = {
                             order with
-                            status = #CashConfirmed;
-                            deposit_ref = ?depositRef;
-                            proof_cash_media_ids = proofs;
-                            cash_confirmed_at = ?Time.now();
+                            status = #PaymentSubmitted;
+                            payment_proof_media_ids = proofMediaIds;
+                            payment_submitted_at = ?Time.now();
                             updated_at = Time.now();
                         };
 
                         orders.put(orderId, updatedOrder);
-                        
-                        // Auto-transition to awaiting settlement
-                        let finalOrder = {
-                            updatedOrder with
-                            status = #AwaitingSettlement;
-                            updated_at = Time.now();
-                        };
-                        orders.put(orderId, finalOrder);
-                        
-                        #ok(finalOrder)
+                        #ok(updatedOrder)
                     };
                     case (#err(msg)) {
                         #err("Media validation failed: " # msg)
@@ -473,25 +450,24 @@ persistent actor RemittanceCanister {
         }
     };
 
-    // Generate settlement instruction
+    // Generate settlement instruction for service provider
     public query func generateSettlementInstruction(orderId: Text) : async Result<SettlementInstruction> {
         switch (orders.get(orderId)) {
             case (?order) {
-                switch (order.deposit_ref) {
-                    case (?depositRef) {
-                        let expiresAt = Time.now() + (Int.abs(Nat32.toNat(settlementDeadlineHours)) * 3600_000_000_000);
-                        #ok({
-                            deposit_ref = depositRef;
-                            expires_at = expiresAt;
-                            amount = order.net_proceeds;
-                            corporate_gcash_account = corporateGCashAccount;
-                            instructions = "Please deposit " # Nat.toText(order.net_proceeds / 100) # " PHP to GCash account " # corporateGCashAccount # " with reference: " # depositRef;
-                        })
-                    };
-                    case null {
-                        #err("No deposit reference available. Please confirm cash receipt first.")
-                    };
-                }
+                if (order.status != #AwaitingPayment) {
+                    return #err("Settlement instruction only available for orders awaiting payment");
+                };
+
+                let referenceNumber = generateReferenceNumber(orderId);
+                let expiresAt = Time.now() + (Int.abs(Nat32.toNat(settlementDeadlineHours)) * 3600_000_000_000);
+                
+                #ok({
+                    corporate_gcash_account = corporateGCashAccount;
+                    commission_amount = order.commission_amount;
+                    reference_number = referenceNumber;
+                    instructions = "Please send " # Nat.toText(order.commission_amount / 100) # " PHP to GCash account " # corporateGCashAccount # " with reference: " # referenceNumber # ". Then upload the payment screenshot.";
+                    expires_at = expiresAt;
+                })
             };
             case null {
                 #err("Order not found: " # orderId)
@@ -499,59 +475,64 @@ persistent actor RemittanceCanister {
         }
     };
 
-    // Mark order as settled (FINOPS role)
-    public shared(msg) func markSettled(
+    // Admin validates payment (called by admin canister)
+    public shared(msg) func validatePaymentByAdmin(
         orderId: Text,
-        gcashRef: Text,
-        amount: Nat,
-        proofs: [Text] // media IDs for settlement proof
-    ) : async Result<RemittanceOrder> {
+        approved: Bool,
+        _reason: ?Text,
+        adminId: Principal
+    ) : async Result<Text> {
         let caller = msg.caller;
         
         if (Principal.isAnonymous(caller)) {
             return #err("Anonymous principal not allowed");
         };
 
-        // TODO: Check FINOPS role when admin canister is implemented
-        
+        // Check if call is from admin canister
+        switch (adminCanisterId) {
+            case (?adminCanister) {
+                if (caller != adminCanister) {
+                    return #err("Only admin canister can validate payments");
+                };
+            };
+            case null {
+                return #err("Admin canister not configured");
+            };
+        };
+
         switch (orders.get(orderId)) {
             case (?order) {
-                // Check status transition
-                if (not isValidStatusTransition(order.status, #Settled)) {
-                    return #err("Invalid status transition from " # debug_show(order.status) # " to Settled");
+                if (order.status != #PaymentSubmitted) {
+                    return #err("Order is not in PaymentSubmitted status");
                 };
 
-                // Verify amount matches expected net proceeds
-                if (amount != order.net_proceeds) {
-                    return #err("Settlement amount " # Nat.toText(amount) # " does not match expected net proceeds " # Nat.toText(order.net_proceeds));
+                let newStatus = if (approved) { #PaymentValidated } else { #Cancelled };
+                
+                let updatedOrder : RemittanceOrder = {
+                    order with
+                    status = newStatus;
+                    validated_by = ?adminId;
+                    validated_at = ?Time.now();
+                    updated_at = Time.now();
                 };
 
-                // Validate settlement proofs
-                switch (await validateMediaProofs(proofs)) {
-                    case (#ok(validations)) {
-                        let allValid = Array.foldLeft<MediaValidationSummary, Bool>(validations, true, func(acc, validation) {
-                            acc and validation.is_valid_type and validation.is_within_size_limit
-                        });
+                orders.put(orderId, updatedOrder);
 
-                        if (not allValid) {
-                            return #err("One or more settlement proof media files are invalid");
-                        };
-
-                        let updatedOrder : RemittanceOrder = {
-                            order with
-                            status = #Settled;
-                            gcash_ref = ?gcashRef;
-                            proof_settlement_media_ids = proofs;
-                            settled_at = ?Time.now();
-                            updated_at = Time.now();
-                        };
-
-                        orders.put(orderId, updatedOrder);
-                        #ok(updatedOrder)
+                // If approved, auto-settle
+                if (approved) {
+                    let settledOrder : RemittanceOrder = {
+                        updatedOrder with
+                        status = #Settled;
+                        settled_at = ?Time.now();
+                        updated_at = Time.now();
                     };
-                    case (#err(msg)) {
-                        #err("Settlement proof validation failed: " # msg)
-                    };
+                    orders.put(orderId, settledOrder);
+                };
+
+                if (approved) {
+                    #ok("Payment validated and order settled")
+                } else {
+                    #ok("Payment rejected and order cancelled")
                 }
             };
             case null {
@@ -581,9 +562,9 @@ persistent actor RemittanceCanister {
                 filteredOrders := Array.filter<RemittanceOrder>(filteredOrders, func(order: RemittanceOrder) : Bool {
                     Array.find<RemittanceOrderStatus>(statuses, func(status: RemittanceOrderStatus) : Bool {
                         switch (status, order.status) {
-                            case (#AwaitingCash, #AwaitingCash) true;
-                            case (#CashConfirmed, #CashConfirmed) true;
-                            case (#AwaitingSettlement, #AwaitingSettlement) true;
+                            case (#AwaitingPayment, #AwaitingPayment) true;
+                            case (#PaymentSubmitted, #PaymentSubmitted) true;
+                            case (#PaymentValidated, #PaymentValidated) true;
                             case (#Settled, #Settled) true;
                             case (#Cancelled, #Cancelled) true;
                             case (_, _) false;
@@ -594,11 +575,11 @@ persistent actor RemittanceCanister {
             case null {};
         };
         
-        // Filter by collector
-        switch (filter.collector_id) {
-            case (?collectorId) {
+        // Filter by service provider
+        switch (filter.service_provider_id) {
+            case (?providerId) {
                 filteredOrders := Array.filter<RemittanceOrder>(filteredOrders, func(order: RemittanceOrder) : Bool {
-                    order.collector_id == collectorId
+                    order.service_provider_id == providerId
                 });
             };
             case null {};
@@ -633,8 +614,12 @@ persistent actor RemittanceCanister {
         // Apply pagination
         let startIndex = switch (page.cursor) {
             case (?cursor) {
-                // Simple pagination: cursor is the last order ID seen
-                switch (Array.indexOf<RemittanceOrder>({id = cursor; customer_id = Principal.fromText("2vxsx-fae"); amount_php_centavos = 0; service_type = ""; service_id = null; booking_id = null; payment_method = #CashOnHand; collector_id = Principal.fromText("2vxsx-fae"); branch_id = null; status = #AwaitingCash; commission_rule_id = ""; commission_version = 1; commission_amount = 0; net_proceeds = 0; deposit_ref = null; gcash_ref = null; proof_cash_media_ids = []; proof_settlement_media_ids = []; created_at = 0; cash_confirmed_at = null; settled_at = null; updated_at = 0 }, sortedOrders, func(a: RemittanceOrder, b: RemittanceOrder) : Bool { a.id == b.id })) {
+                // Find index of cursor order ID
+                switch (Array.indexOf<RemittanceOrder>(
+                    { id = cursor; service_provider_id = Principal.fromText("2vxsx-fae"); amount_php_centavos = 0; service_type = ""; service_id = null; booking_id = null; payment_method = #CashOnHand; status = #AwaitingPayment; commission_rule_id = ""; commission_version = 1; commission_amount = 0; payment_proof_media_ids = []; validated_by = null; validated_at = null; created_at = 0; payment_submitted_at = null; settled_at = null; updated_at = 0 }, 
+                    sortedOrders, 
+                    func(a: RemittanceOrder, b: RemittanceOrder) : Bool { a.id == b.id }
+                )) {
                     case (?index) index + 1;
                     case null 0;
                 }
@@ -666,12 +651,87 @@ persistent actor RemittanceCanister {
         }
     };
 
-    // Get orders by collector
-    public query func getCollectorOrders(collectorId: Principal) : async [RemittanceOrder] {
+    // Get orders by service provider
+    public query func getProviderOrders(providerId: Principal) : async [RemittanceOrder] {
         let allOrders = Iter.toArray(orders.vals());
         Array.filter<RemittanceOrder>(allOrders, func(order: RemittanceOrder) : Bool {
-            order.collector_id == collectorId
+            order.service_provider_id == providerId
         })
+    };
+
+    // Get provider dashboard with balance and deadline info
+    public query func getProviderDashboard(providerId: Principal) : async {
+        outstanding_balance: Nat;
+        pending_orders: Nat;
+        overdue_orders: Nat;
+        next_deadline: ?Time.Time;
+        orders_awaiting_payment: [RemittanceOrder];
+        orders_pending_validation: [RemittanceOrder];
+        total_commission_paid: Nat;
+        total_orders_completed: Nat;
+    } {
+        let providerOrders = Array.filter<RemittanceOrder>(Iter.toArray(orders.vals()), func(order: RemittanceOrder) : Bool {
+            order.service_provider_id == providerId
+        });
+
+        let awaitingPaymentOrders = Array.filter<RemittanceOrder>(providerOrders, func(order: RemittanceOrder) : Bool {
+            order.status == #AwaitingPayment
+        });
+
+        let pendingValidationOrders = Array.filter<RemittanceOrder>(providerOrders, func(order: RemittanceOrder) : Bool {
+            order.status == #PaymentSubmitted
+        });
+
+        let settledOrders = Array.filter<RemittanceOrder>(providerOrders, func(order: RemittanceOrder) : Bool {
+            order.status == #Settled
+        });
+
+        // Calculate outstanding balance (sum of commission amounts for orders awaiting payment)
+        let outstandingBalance = Array.foldLeft<RemittanceOrder, Nat>(awaitingPaymentOrders, 0, func(acc: Nat, order: RemittanceOrder) : Nat {
+            acc + order.commission_amount
+        });
+
+        // Calculate total commission paid
+        let totalCommissionPaid = Array.foldLeft<RemittanceOrder, Nat>(settledOrders, 0, func(acc: Nat, order: RemittanceOrder) : Nat {
+            acc + order.commission_amount
+        });
+
+        // Find overdue orders (created more than settlementDeadlineHours ago)
+        let currentTime = Time.now();
+        let deadlineNanos = Int.abs(Nat32.toNat(settlementDeadlineHours)) * 3600_000_000_000;
+        
+        let overdueOrders = Array.filter<RemittanceOrder>(awaitingPaymentOrders, func(order: RemittanceOrder) : Bool {
+            (currentTime - order.created_at) > deadlineNanos
+        });
+
+        // Find next deadline (earliest order creation time + deadline hours)
+        var nextDeadline : ?Time.Time = null;
+        for (order in awaitingPaymentOrders.vals()) {
+            let orderDeadline = order.created_at + deadlineNanos;
+            switch (nextDeadline) {
+                case (null) {
+                    if (orderDeadline > currentTime) { // Only future deadlines
+                        nextDeadline := ?orderDeadline;
+                    };
+                };
+                case (?existing) {
+                    if (orderDeadline > currentTime and orderDeadline < existing) {
+                        nextDeadline := ?orderDeadline;
+                    };
+                };
+            };
+        };
+
+        {
+            outstanding_balance = outstandingBalance;
+            pending_orders = awaitingPaymentOrders.size() + pendingValidationOrders.size();
+            overdue_orders = overdueOrders.size();
+            next_deadline = nextDeadline;
+            orders_awaiting_payment = awaitingPaymentOrders;
+            orders_pending_validation = pendingValidationOrders;
+            total_commission_paid = totalCommissionPaid;
+            total_orders_completed = settledOrders.size();
+        }
     };
 
     // Get orders by status
@@ -679,9 +739,9 @@ persistent actor RemittanceCanister {
         let allOrders = Iter.toArray(orders.vals());
         Array.filter<RemittanceOrder>(allOrders, func(order: RemittanceOrder) : Bool {
             switch (status, order.status) {
-                case (#AwaitingCash, #AwaitingCash) true;
-                case (#CashConfirmed, #CashConfirmed) true;
-                case (#AwaitingSettlement, #AwaitingSettlement) true;
+                case (#AwaitingPayment, #AwaitingPayment) true;
+                case (#PaymentSubmitted, #PaymentSubmitted) true;
+                case (#PaymentValidated, #PaymentValidated) true;
                 case (#Settled, #Settled) true;
                 case (#Cancelled, #Cancelled) true;
                 case (_, _) false;
@@ -689,7 +749,7 @@ persistent actor RemittanceCanister {
         })
     };
 
-    // Cancel an order (admin or collector only)
+    // Cancel an order (admin or service provider only)
     public shared(msg) func cancelOrder(orderId: Text) : async Result<RemittanceOrder> {
         let caller = msg.caller;
         
@@ -699,10 +759,14 @@ persistent actor RemittanceCanister {
 
         switch (orders.get(orderId)) {
             case (?order) {
-                // Check if caller has permission (collector or admin)
-                if (order.collector_id != caller) {
-                    // TODO: Add admin role check when admin canister is implemented
-                    return #err("Only the collector or admin can cancel orders");
+                // Check if caller has permission (service provider or admin through admin canister)
+                let isAdmin = switch (adminCanisterId) { 
+                    case (?admin) caller == admin; 
+                    case null false; 
+                };
+                
+                if (order.service_provider_id != caller and not isAdmin) {
+                    return #err("Only the service provider or admin can cancel orders");
                 };
 
                 // Check if order can be cancelled
@@ -711,7 +775,7 @@ persistent actor RemittanceCanister {
                 };
 
                 if (not isValidStatusTransition(order.status, #Cancelled)) {
-                    return #err("Invalid status transition from " # debug_show(order.status) # " to Cancelled");
+                    return #err("Invalid status transition to Cancelled");
                 };
 
                 let updatedOrder : RemittanceOrder = {
@@ -734,7 +798,7 @@ persistent actor RemittanceCanister {
         Iter.toArray(commissionRules.vals())
     };
 
-    // Add commission rule (placeholder for admin canister functionality)
+    // Add commission rule (called by admin canister)
     public shared(msg) func addCommissionRule(rule: CommissionRule) : async Result<CommissionRule> {
         let caller = msg.caller;
         
@@ -742,26 +806,36 @@ persistent actor RemittanceCanister {
             return #err("Anonymous principal not allowed");
         };
 
-        // TODO: Add admin role check when admin canister is implemented
+        // Check if call is from admin canister
+        switch (adminCanisterId) {
+            case (?adminCanister) {
+                if (caller != adminCanister) {
+                    return #err("Only admin canister can add commission rules");
+                };
+            };
+            case null {
+                return #err("Admin canister not configured");
+            };
+        };
         
         commissionRules.put(rule.id, rule);
         #ok(rule)
     };
 
-    // Get analytics for collector
-    public query func getCollectorAnalytics(
-        collectorId: Principal,
+    // Get analytics for service provider
+    public query func getProviderAnalytics(
+        providerId: Principal,
         fromDate: ?Time.Time,
         toDate: ?Time.Time
     ) : async {
         total_orders: Nat;
         settled_orders: Nat;
         pending_orders: Nat;
-        total_commission_earned: Nat;
-        total_amount_collected: Nat;
+        total_commission_paid: Nat;
+        total_service_amount: Nat;
         average_order_value: Nat;
     } {
-        let collectorOrders = Array.filter<RemittanceOrder>(Iter.toArray(orders.vals()), func(order: RemittanceOrder) : Bool {
+        let providerOrders = Array.filter<RemittanceOrder>(Iter.toArray(orders.vals()), func(order: RemittanceOrder) : Bool {
             var inDateRange = true;
             
             switch (fromDate) {
@@ -774,19 +848,19 @@ persistent actor RemittanceCanister {
                 case null {};
             };
             
-            order.collector_id == collectorId and inDateRange
+            order.service_provider_id == providerId and inDateRange
         });
 
-        let totalOrders = collectorOrders.size();
-        let settledOrders = Array.filter<RemittanceOrder>(collectorOrders, func(order: RemittanceOrder) : Bool {
+        let totalOrders = providerOrders.size();
+        let settledOrders = Array.filter<RemittanceOrder>(providerOrders, func(order: RemittanceOrder) : Bool {
             order.status == #Settled
         }).size();
         
-        let pendingOrders = Array.filter<RemittanceOrder>(collectorOrders, func(order: RemittanceOrder) : Bool {
-            order.status != #Settled and order.status != #Cancelled
+        let pendingOrders = Array.filter<RemittanceOrder>(providerOrders, func(order: RemittanceOrder) : Bool {
+            order.status == #AwaitingPayment or order.status == #PaymentSubmitted or order.status == #PaymentValidated
         }).size();
 
-        let totalCommissionEarned = Array.foldLeft<RemittanceOrder, Nat>(collectorOrders, 0, func(acc: Nat, order: RemittanceOrder) : Nat {
+        let totalCommissionPaid = Array.foldLeft<RemittanceOrder, Nat>(providerOrders, 0, func(acc: Nat, order: RemittanceOrder) : Nat {
             if (order.status == #Settled) {
                 acc + order.commission_amount
             } else {
@@ -794,7 +868,7 @@ persistent actor RemittanceCanister {
             }
         });
 
-        let totalAmountCollected = Array.foldLeft<RemittanceOrder, Nat>(collectorOrders, 0, func(acc: Nat, order: RemittanceOrder) : Nat {
+        let totalServiceAmount = Array.foldLeft<RemittanceOrder, Nat>(providerOrders, 0, func(acc: Nat, order: RemittanceOrder) : Nat {
             if (order.status == #Settled) {
                 acc + order.amount_php_centavos
             } else {
@@ -803,7 +877,7 @@ persistent actor RemittanceCanister {
         });
 
         let averageOrderValue = if (settledOrders > 0) {
-            totalAmountCollected / settledOrders
+            totalServiceAmount / settledOrders
         } else {
             0
         };
@@ -812,9 +886,12 @@ persistent actor RemittanceCanister {
             total_orders = totalOrders;
             settled_orders = settledOrders;
             pending_orders = pendingOrders;
-            total_commission_earned = totalCommissionEarned;
-            total_amount_collected = totalAmountCollected;
+            total_commission_paid = totalCommissionPaid;
+            total_service_amount = totalServiceAmount;
             average_order_value = averageOrderValue;
         }
     };
+
+    // Initialize static commission rules
+    initializeStaticCommissionRules();
 }

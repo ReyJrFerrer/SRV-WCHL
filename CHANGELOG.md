@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Simplify remittance system by removing FINOPS/COLLECTOR roles with direct service provider to admin workflow
+- Add intercanister communication between admin and remittance canisters for commission validation
 - Add admin canister for remittance system role management and commission rule administration
 - Add remittance system for service provider cash collection and settlement management
 - Add GPS-based service distance calculation using Haversine formula with real-time location detection
