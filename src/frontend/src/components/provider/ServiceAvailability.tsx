@@ -12,6 +12,7 @@ interface TimeSlotUIData {
   endHour: string;
   endMinute: string;
   endPeriod: "AM" | "PM";
+  error?: string;
 }
 
 interface ServiceAvailabilityProps {
@@ -133,6 +134,9 @@ const TimeSlotInput: React.FC<{
     >
       <TrashIcon className="h-4 w-4" />
     </button>
+    {slot.error && (
+      <p className="col-span-full mt-1 text-sm text-red-600">{slot.error}</p>
+    )}
   </div>
 );
 
@@ -240,21 +244,46 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   ) => {
     setFormData(
       (prev: {
-        commonTimeSlots: any[];
-        perDayTimeSlots: { [x: string]: any[] };
+        commonTimeSlots: TimeSlotUIData[];
+        perDayTimeSlots: { [x: string]: TimeSlotUIData[] };
       }) => {
-        if (day === "common") {
-          const commonTimeSlots = prev.commonTimeSlots.map(
-            (slot: { id: string }) =>
-              slot.id === id ? { ...slot, [field]: value } : slot,
+        const validateTimeSlot = (slot: TimeSlotUIData): TimeSlotUIData => {
+          if (slot.id !== id) return slot;
+
+          const updatedSlot = { ...slot, [field]: value };
+
+          // Check if times are the same
+          const startTime = toDate(
+            updatedSlot.startHour,
+            updatedSlot.startMinute,
+            updatedSlot.startPeriod,
           );
+          const endTime = toDate(
+            updatedSlot.endHour,
+            updatedSlot.endMinute,
+            updatedSlot.endPeriod,
+          );
+
+          if (startTime.getTime() === endTime.getTime()) {
+            return {
+              ...updatedSlot,
+              error: "Start time and end time cannot be the same",
+            };
+          }
+
+          // Clear error if times are different
+          const { error, ...slotWithoutError } = updatedSlot;
+          return slotWithoutError;
+        };
+
+        if (day === "common") {
+          const commonTimeSlots = prev.commonTimeSlots.map(validateTimeSlot);
           return { ...prev, commonTimeSlots };
         }
+
         const perDayTimeSlots = {
           ...prev.perDayTimeSlots,
-          [day]: prev.perDayTimeSlots[day].map((slot: { id: string }) =>
-            slot.id === id ? { ...slot, [field]: value } : slot,
-          ),
+          [day]: prev.perDayTimeSlots[day].map(validateTimeSlot),
         };
         return { ...prev, perDayTimeSlots };
       },

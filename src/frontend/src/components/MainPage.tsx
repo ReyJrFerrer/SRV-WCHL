@@ -96,16 +96,18 @@ export default function MainPage({
                   interactions on the platform.
                 </span>
               </div>
-              <button
-                className="mt-2 flex items-center gap-1 text-blue-700 hover:underline"
-                onClick={() => setShowHowItWorks((v) => !v)}
-                aria-expanded={showHowItWorks}
-                aria-controls="how-ii-works-section"
-                type="button"
-              >
-                <InformationCircleIcon className="h-5 w-5" />
-                <span>How does Internet Identity login work?</span>
-              </button>
+              <div className="flex justify-center">
+                <button
+                  className="mt-2 flex items-center gap-1 text-blue-700 hover:underline"
+                  onClick={() => setShowHowItWorks((v) => !v)}
+                  aria-expanded={showHowItWorks}
+                  aria-controls="how-ii-works-section"
+                  type="button"
+                >
+                  <InformationCircleIcon className="h-5 w-5" />
+                  <span>How does Internet Identity login work?</span>
+                </button>
+              </div>
               {/* How It Works Section (hidden by default) */}
               {showHowItWorks && (
                 <div

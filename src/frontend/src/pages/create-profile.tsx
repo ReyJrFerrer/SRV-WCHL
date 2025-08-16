@@ -72,6 +72,11 @@ export default function CreateProfilePage() {
     }
   };
 
+  const validateFullName = (name: string): boolean => {
+    const words = name.trim().split(" ");
+    return words.length >= 2 && words.every((word) => word.length >= 3);
+  };
+
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -84,6 +89,11 @@ export default function CreateProfilePage() {
 
     if (!formData.name.trim() || !formData.phone.trim()) {
       setError("All fields are required.");
+      return;
+    }
+
+    if (!validateFullName(formData.name)) {
+      setError("Full given name and surname must be provided.");
       return;
     }
 

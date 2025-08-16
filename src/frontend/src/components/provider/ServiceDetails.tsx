@@ -57,6 +57,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
 }) => {
   const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [categoryRequestError, setCategoryRequestError] = useState<string>("");
+  const [priceError, setPriceError] = useState<string | null>(null);
 
   const handleCategoryRequestChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -269,14 +270,25 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                           type="number"
                           id={`pkgPrice-${pkg.id}`}
                           value={pkg.price}
-                          onChange={(e) =>
-                            handlePackageChange(index, "price", e.target.value)
-                          }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value.includes(".")) {
+                              setPriceError("Price must be a whole number.");
+                            } else {
+                              setPriceError(null);
+                              handlePackageChange(index, "price", value);
+                            }
+                          }}
                           required
                           min="0"
-                          className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                          className={`mt-1 block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${priceError ? "border-red-500" : ""}`}
                         />
                       </div>
+                      {priceError && (
+                        <p className="mt-2 text-sm text-red-600">
+                          {priceError}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
