@@ -439,6 +439,9 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // State for delete confirmation dialog
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   // --- State for Edit Modes ---
   const [editTitleCategory, setEditTitleCategory] = useState(false);
   const [editLocationAvailability, setEditLocationAvailability] =
@@ -630,16 +633,18 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   const handleDeleteService = async () => {
     if (!service) return;
-
     try {
       setIsDeleting(true);
       await deleteService(service.id);
-      toast.success("Service deleted!");
+      toast.success("Service deleted!", { position: "top-center" });
       navigate("/provider/services");
     } catch (error) {
-      toast.error("Failed to delete service. Please try again.");
+      toast.error("Failed to delete service. Please try again.", {
+        position: "top-center",
+      });
     } finally {
       setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -1365,9 +1370,51 @@ const ProviderServiceDetailPage: React.FC = () => {
     );
   }
 
+  // Helper object to order days of the week
+  const dayOrder: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-lg font-bold text-red-700">
+              Delete Service?
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Are you sure you want to delete{" "}
+              <b>{service?.title || "this service"}</b>? This action cannot be
+              undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                onClick={handleDeleteService}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
@@ -1705,8 +1752,9 @@ const ProviderServiceDetailPage: React.FC = () => {
                       {service.weeklySchedule?.filter(
                         (entry) => entry.availability.isAvailable,
                       ).length ? (
-                        service.weeklySchedule
+                        [...service.weeklySchedule]
                           .filter((entry) => entry.availability.isAvailable)
+                          .sort((a, b) => dayOrder[a.day] - dayOrder[b.day])
                           .map((entry) => (
                             <div
                               key={entry.day}
@@ -2282,11 +2330,11 @@ const ProviderServiceDetailPage: React.FC = () => {
           <button
             onClick={handleStatusToggle}
             disabled={isUpdatingStatus}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-yellow-400 bg-yellow-50 px-6 py-3 text-lg font-semibold shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-6 py-3 text-lg font-semibold shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
               service.status === "Available"
-                ? "text-yellow-700 hover:bg-yellow-400 hover:text-white"
-                : "text-green-700 hover:bg-green-400 hover:text-white"
-            }`}
+                ? "border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-400"
+                : "border-green-600 bg-green-600 text-white hover:bg-green-700 focus:ring-green-400"
+            } `}
           >
             {service.status === "Available" ? (
               <LockClosedIcon className="h-6 w-6" />
@@ -2304,9 +2352,11 @@ const ProviderServiceDetailPage: React.FC = () => {
             disabled={hasActiveBookings}
           >
             <button
-              onClick={hasActiveBookings ? undefined : handleDeleteService}
+              onClick={
+                hasActiveBookings ? undefined : () => setShowDeleteConfirm(true)
+              }
               disabled={isDeleting || hasActiveBookings}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-400 bg-red-50 px-6 py-3 text-lg font-semibold text-red-700 shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-600 bg-red-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60 ${
                 hasActiveBookings
                   ? "cursor-not-allowed opacity-60"
                   : "hover:bg-red-400 hover:text-white"
@@ -2318,7 +2368,6 @@ const ProviderServiceDetailPage: React.FC = () => {
             </button>
           </Tooltip>
         </div>
-
         {/* Add space below the buttons */}
         <div className="h-8" />
       </main>
