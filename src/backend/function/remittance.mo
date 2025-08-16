@@ -9,6 +9,8 @@ import Nat32 "mo:base/Nat32";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Result "mo:base/Result";
+import Buffer "mo:base/Buffer";
+import Blob "mo:base/Blob";
 
 import Types "../types/shared";
 
@@ -25,6 +27,8 @@ persistent actor RemittanceCanister {
     type PageRequest = Types.PageRequest;
     type RemittanceOrderPage = Types.RemittanceOrderPage;
     type MediaValidationSummary = Types.MediaValidationSummary;
+    type MediaType = Types.MediaType;
+    type MediaItem = Types.MediaItem;
     type Result<T> = Types.Result<T>;
 
     // State variables
@@ -40,10 +44,6 @@ persistent actor RemittanceCanister {
     private var bookingCanisterId : ?Principal = null;
     private var serviceCanisterId : ?Principal = null;
     private var adminCanisterId : ?Principal = null;
-
-    // Settings
-    private var corporateGCashAccount : Text = "09123456789";
-    private var settlementDeadlineHours : Nat32 = 24;
 
     // Counter for ensuring unique IDs
     private var idCounter : Nat = 0;
@@ -203,6 +203,41 @@ persistent actor RemittanceCanister {
                 });
                 #ok(mockSummaries)
             };
+        }
+    };
+
+    // Helper function to get admin settings
+    private func getAdminSettings() : async ?Types.SystemSettings {
+        switch (adminCanisterId) {
+            case (?canisterId) {
+                let adminActor = actor(Principal.toText(canisterId)) : actor {
+                    getSettings: () -> async Types.SystemSettings;
+                };
+                
+                try {
+                    let settings = await adminActor.getSettings();
+                    ?settings
+                } catch (_) {
+                    null // Return null if can't get settings, will use defaults
+                }
+            };
+            case null null;
+        }
+    };
+
+    // Helper function to get GCash account (with fallback to default)
+    private func getGCashAccount() : async Text {
+        switch (await getAdminSettings()) {
+            case (?settings) settings.corporate_gcash_account;
+            case null "09123456789"; // Default fallback
+        }
+    };
+
+    // Helper function to get settlement deadline hours (with fallback to default)
+    private func getSettlementDeadlineHours() : async Nat32 {
+        switch (await getAdminSettings()) {
+            case (?settings) settings.settlement_deadline_hours;
+            case null 24; // Default 24 hours
         }
     };
 
@@ -393,7 +428,68 @@ persistent actor RemittanceCanister {
         #ok(newOrder)
     };
 
-    // Service provider submits payment proof
+    // Upload remittance payment proof files and return media IDs
+    public shared(msg) func uploadRemittancePaymentProofs(
+        files: [{
+            fileName: Text;
+            contentType: Text;
+            fileData: Blob;
+        }]
+    ) : async Result<[Text]> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        if (files.size() == 0) {
+            return #err("At least one proof file is required");
+        };
+
+        if (files.size() > 5) {
+            return #err("Maximum 5 proof files allowed");
+        };
+
+        switch (mediaCanisterId) {
+            case (?canisterId) {
+                let mediaActor = actor(Principal.toText(canisterId)) : actor {
+                    uploadMedia: (Text, Text, MediaType, Blob) -> async Result<MediaItem>;
+                };
+                
+                let mediaIds = Buffer.Buffer<Text>(files.size());
+                
+                // Upload each file to media canister
+                for (file in files.vals()) {
+                    try {
+                        let uploadResult = await mediaActor.uploadMedia(
+                            file.fileName,
+                            file.contentType,
+                            #RemittancePaymentProof,
+                            file.fileData
+                        );
+                        
+                        switch (uploadResult) {
+                            case (#ok(mediaItem)) {
+                                mediaIds.add(mediaItem.id);
+                            };
+                            case (#err(errorMsg)) {
+                                return #err("Failed to upload file " # file.fileName # ": " # errorMsg);
+                            };
+                        }
+                    } catch (_) {
+                        return #err("Failed to upload file " # file.fileName # " to media canister");
+                    }
+                };
+                
+                #ok(Buffer.toArray(mediaIds))
+            };
+            case null {
+                #err("Media canister not configured")
+            };
+        }
+    };
+
+    // Service provider submits payment proof using pre-uploaded media IDs
     public shared(msg) func submitPaymentProof(
         orderId: Text,
         proofMediaIds: [Text] // media IDs for GCash payment screenshots
@@ -450,27 +546,75 @@ persistent actor RemittanceCanister {
         }
     };
 
-    // Generate settlement instruction for service provider
-    public query func generateSettlementInstruction(orderId: Text) : async Result<SettlementInstruction> {
+    // Combined function: Upload payment proof files and submit them for an order
+    public shared(msg) func uploadAndSubmitPaymentProof(
+        orderId: Text,
+        files: [{
+            fileName: Text;
+            contentType: Text;
+            fileData: Blob;
+        }]
+    ) : async Result<RemittanceOrder> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // First verify the order exists and caller has permission
+        switch (orders.get(orderId)) {
+            case (?order) {
+                if (order.service_provider_id != caller) {
+                    return #err("Only the service provider can submit payment proof");
+                };
+
+                if (not isValidStatusTransition(order.status, #PaymentSubmitted)) {
+                    return #err("Cannot submit payment proof in current status");
+                };
+            };
+            case null {
+                return #err("Order not found: " # orderId);
+            };
+        };
+
+        // Upload the files first
+        switch (await uploadRemittancePaymentProofs(files)) {
+            case (#ok(mediaIds)) {
+                // Then submit the proof using the uploaded media IDs
+                await submitPaymentProof(orderId, mediaIds)
+            };
+            case (#err(uploadError)) {
+                #err("Upload failed: " # uploadError)
+            };
+        }
+    };
+
+        // Generate settlement instruction for service provider
+    public func generateSettlementInstruction(orderId: Text) : async Result<SettlementInstruction> {
         switch (orders.get(orderId)) {
             case (?order) {
                 if (order.status != #AwaitingPayment) {
-                    return #err("Settlement instruction only available for orders awaiting payment");
+                    return #err("Order is not awaiting payment");
                 };
 
                 let referenceNumber = generateReferenceNumber(orderId);
-                let expiresAt = Time.now() + (Int.abs(Nat32.toNat(settlementDeadlineHours)) * 3600_000_000_000);
+                
+                // Get settings from admin canister
+                let gcashAccount = await getGCashAccount();
+                let deadlineHours = await getSettlementDeadlineHours();
+                
+                let expiresAt = Time.now() + (Int.abs(Nat32.toNat(deadlineHours)) * 3600_000_000_000);
                 
                 #ok({
-                    corporate_gcash_account = corporateGCashAccount;
+                    corporate_gcash_account = gcashAccount;
                     commission_amount = order.commission_amount;
                     reference_number = referenceNumber;
-                    instructions = "Please send " # Nat.toText(order.commission_amount / 100) # " PHP to GCash account " # corporateGCashAccount # " with reference: " # referenceNumber # ". Then upload the payment screenshot.";
+                    instructions = "Please send " # Nat.toText(order.commission_amount / 100) # " PHP to GCash account " # gcashAccount # " with reference: " # referenceNumber # ". Then upload the payment screenshot.";
                     expires_at = expiresAt;
                 })
             };
             case null {
-                #err("Order not found: " # orderId)
+                #err("Order not found")
             };
         }
     };
@@ -660,7 +804,7 @@ persistent actor RemittanceCanister {
     };
 
     // Get provider dashboard with balance and deadline info
-    public query func getProviderDashboard(providerId: Principal) : async {
+    public func getProviderDashboard(providerId: Principal) : async {
         outstanding_balance: Nat;
         pending_orders: Nat;
         overdue_orders: Nat;
@@ -698,7 +842,8 @@ persistent actor RemittanceCanister {
 
         // Find overdue orders (created more than settlementDeadlineHours ago)
         let currentTime = Time.now();
-        let deadlineNanos = Int.abs(Nat32.toNat(settlementDeadlineHours)) * 3600_000_000_000;
+        let deadlineHours = await getSettlementDeadlineHours();
+        let deadlineNanos = Int.abs(Nat32.toNat(deadlineHours)) * 3600_000_000_000;
         
         let overdueOrders = Array.filter<RemittanceOrder>(awaitingPaymentOrders, func(order: RemittanceOrder) : Bool {
             (currentTime - order.created_at) > deadlineNanos
