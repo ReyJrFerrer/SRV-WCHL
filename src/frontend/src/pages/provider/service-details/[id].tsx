@@ -40,6 +40,7 @@ import {
 import { mediaService } from "../../../services/mediaService";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
+import { Toaster, toast } from "sonner";
 
 // Simple Tooltip component for validation messages
 interface TooltipProps {
@@ -103,7 +104,9 @@ const addHoursToTime = (time: string, hoursToAdd: number): string => {
 // Availability Editor component
 interface AvailabilityEditorProps {
   weeklySchedule: WeeklyScheduleEntry[];
-  setWeeklySchedule: (schedule: WeeklyScheduleEntry[]) => void;
+  setWeeklySchedule: React.Dispatch<
+    React.SetStateAction<WeeklyScheduleEntry[]>
+  >;
 }
 
 const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
@@ -115,83 +118,62 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
     endTime: "17:00",
   });
 
-  const handleToggleDayAvailability = (index: number) => {
-    const newSchedule = [...weeklySchedule];
-    newSchedule[index] = {
-      ...newSchedule[index],
-      availability: {
-        ...newSchedule[index].availability,
-        isAvailable: !newSchedule[index].availability.isAvailable,
+  // List of all days for reference
+  const allDays: DayOfWeek[] = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const weekdays: DayOfWeek[] = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+  ];
+  const weekends: DayOfWeek[] = ["Sunday", "Saturday"];
+
+  // Find days not in the current schedule
+  const missingDays = allDays.filter(
+    (day) => !weeklySchedule.some((entry) => entry.day === day),
+  );
+
+  // Add a missing day as unavailable
+  const handleAddDay = (day: DayOfWeek) => {
+    setWeeklySchedule([
+      ...weeklySchedule,
+      {
+        day,
+        availability: { isAvailable: false, slots: [] },
       },
-    };
-    setWeeklySchedule(newSchedule);
+    ]);
   };
 
-  // **UPDATED LOGIC HERE**
-  const handleAddTimeSlot = (dayIndex: number) => {
-    const newSchedule = [...weeklySchedule];
-    const slots = newSchedule[dayIndex].availability.slots;
-
-    let newSlot: TimeSlot;
-    if (slots.length > 0) {
-      // Get the end time of the last slot
-      const lastSlotEndTime = slots[slots.length - 1].endTime;
-      // Start the new slot immediately after the last one
-      const newStartTime = lastSlotEndTime;
-      // End the new slot 2 hours after it starts
-      const newEndTime = addHoursToTime(newStartTime, 2);
-      newSlot = { startTime: newStartTime, endTime: newEndTime };
-    } else {
-      // If no slots exist yet, use the default 9-5
-      newSlot = { startTime: "09:00", endTime: "17:00" };
-    }
-
-    newSchedule[dayIndex].availability.slots.push(newSlot);
-    setWeeklySchedule(newSchedule);
-  };
-
-  const handleRemoveTimeSlot = (dayIndex: number, slotIndex: number) => {
-    const newSchedule = [...weeklySchedule];
-    newSchedule[dayIndex].availability.slots.splice(slotIndex, 1);
-    setWeeklySchedule(newSchedule);
-  };
-
-  const handleTimeChange = (
-    dayIndex: number,
-    slotIndex: number,
-    field: "startTime" | "endTime",
-    value: string,
-  ) => {
-    const newSchedule = [...weeklySchedule];
-    newSchedule[dayIndex].availability.slots[slotIndex][field] = value;
-    setWeeklySchedule(newSchedule);
-  };
-
-  const applyTemplateToDays = (days: DayOfWeek[]) => {
-    const newSchedule = [...weeklySchedule];
-    newSchedule.forEach((dayEntry, index) => {
-      if (days.includes(dayEntry.day)) {
-        // Ensure availability is ON and replace slots with the new template slot
-        newSchedule[index] = {
-          ...dayEntry,
-          availability: {
-            isAvailable: true,
-            slots: [
-              {
-                startTime: templateTimeSlot.startTime,
-                endTime: templateTimeSlot.endTime,
-              },
-            ],
-          },
-        };
-      }
-    });
-    setWeeklySchedule(newSchedule);
+  // Helper to set schedule to only the selected days, all available with template slot
+  const setScheduleToDays = (days: DayOfWeek[]) => {
+    setWeeklySchedule(
+      days.map((day) => ({
+        day,
+        availability: {
+          isAvailable: true,
+          slots: [
+            {
+              startTime: templateTimeSlot.startTime,
+              endTime: templateTimeSlot.endTime,
+            },
+          ],
+        },
+      })),
+    );
   };
 
   const deselectAllDays = () => {
-    setWeeklySchedule(
-      weeklySchedule.map((day) => ({
+    setWeeklySchedule((prev) =>
+      prev.map((day) => ({
         ...day,
         availability: {
           ...day.availability,
@@ -201,6 +183,12 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
       })),
     );
   };
+
+  // Sort days for display
+  const sortedSchedule = [...weeklySchedule].sort(
+    (a, b) =>
+      allDays.indexOf(a.day as DayOfWeek) - allDays.indexOf(b.day as DayOfWeek),
+  );
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-3">
@@ -240,53 +228,53 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
         </div>
         <div className="flex flex-wrap items-center justify-start gap-2">
           <button
-            onClick={() =>
-              applyTemplateToDays([
-                "Sunday",
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-              ])
-            }
+            onClick={() => setScheduleToDays(allDays)}
             className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
           >
             Apply to All
           </button>
           <button
-            onClick={() =>
-              applyTemplateToDays([
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-              ])
-            }
+            onClick={() => setScheduleToDays(weekdays)}
             className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
           >
             Apply to Weekdays
           </button>
           <button
-            onClick={() => applyTemplateToDays(["Sunday", "Saturday"])}
+            onClick={() => setScheduleToDays(weekends)}
             className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200"
           >
             Apply to Weekends
           </button>
           <button
             onClick={deselectAllDays}
-            className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-200"
+            className="rounded-full bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300"
           >
             Deselect All
           </button>
         </div>
+        {missingDays.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="text-xs font-semibold text-blue-700">
+              Add a day:
+            </span>
+            {missingDays.map((day) => (
+              <button
+                key={day}
+                onClick={() => handleAddDay(day)}
+                className="rounded-full bg-blue-200 px-3 py-1 text-xs font-medium text-blue-900 hover:bg-blue-300"
+                type="button"
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {weeklySchedule.map((dayEntry: WeeklyScheduleEntry, dayIndex: number) => (
+      {sortedSchedule.map((dayEntry: WeeklyScheduleEntry) => (
         <div
           key={dayEntry.day}
+          id={`availability-day-${dayEntry.day}`}
           className="mb-4 rounded-md border border-gray-100 p-3"
         >
           <div className="flex items-center justify-between">
@@ -294,14 +282,43 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
               <input
                 type="checkbox"
                 checked={dayEntry.availability.isAvailable}
-                onChange={() => handleToggleDayAvailability(dayIndex)}
+                onChange={() => {
+                  const newSchedule = [...weeklySchedule];
+                  newSchedule[
+                    weeklySchedule.findIndex((d) => d.day === dayEntry.day)
+                  ] = {
+                    ...dayEntry,
+                    availability: {
+                      ...dayEntry.availability,
+                      isAvailable: !dayEntry.availability.isAvailable,
+                    },
+                  };
+                  setWeeklySchedule(newSchedule);
+                }}
                 className="rounded text-blue-600 focus:ring-blue-500"
               />
               {dayEntry.day}
             </label>
             {dayEntry.availability.isAvailable && (
               <button
-                onClick={() => handleAddTimeSlot(dayIndex)}
+                onClick={() => {
+                  const idx = weeklySchedule.findIndex(
+                    (d) => d.day === dayEntry.day,
+                  );
+                  const newSchedule = [...weeklySchedule];
+                  const slots = newSchedule[idx].availability.slots;
+                  let newSlot: TimeSlot;
+                  if (slots.length > 0) {
+                    const lastSlotEndTime = slots[slots.length - 1].endTime;
+                    const newStartTime = lastSlotEndTime;
+                    const newEndTime = addHoursToTime(newStartTime, 2);
+                    newSlot = { startTime: newStartTime, endTime: newEndTime };
+                  } else {
+                    newSlot = { startTime: "09:00", endTime: "17:00" };
+                  }
+                  newSchedule[idx].availability.slots.push(newSlot);
+                  setWeeklySchedule(newSchedule);
+                }}
                 className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100"
                 aria-label={`Add time slot for ${dayEntry.day}`}
               >
@@ -321,32 +338,44 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                     <input
                       type="time"
                       value={slot.startTime}
-                      onChange={(e) =>
-                        handleTimeChange(
-                          dayIndex,
-                          slotIndex,
-                          "startTime",
-                          e.target.value,
-                        )
-                      }
+                      onChange={(e) => {
+                        const newSchedule = [...weeklySchedule];
+                        newSchedule[
+                          weeklySchedule.findIndex(
+                            (d) => d.day === dayEntry.day,
+                          )
+                        ].availability.slots[slotIndex].startTime =
+                          e.target.value;
+                        setWeeklySchedule(newSchedule);
+                      }}
                       className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                     />
                     <span>-</span>
                     <input
                       type="time"
                       value={slot.endTime}
-                      onChange={(e) =>
-                        handleTimeChange(
-                          dayIndex,
-                          slotIndex,
-                          "endTime",
-                          e.target.value,
-                        )
-                      }
+                      onChange={(e) => {
+                        const newSchedule = [...weeklySchedule];
+                        newSchedule[
+                          weeklySchedule.findIndex(
+                            (d) => d.day === dayEntry.day,
+                          )
+                        ].availability.slots[slotIndex].endTime =
+                          e.target.value;
+                        setWeeklySchedule(newSchedule);
+                      }}
                       className="w-full rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                     />
                     <button
-                      onClick={() => handleRemoveTimeSlot(dayIndex, slotIndex)}
+                      onClick={() => {
+                        const newSchedule = [...weeklySchedule];
+                        newSchedule[
+                          weeklySchedule.findIndex(
+                            (d) => d.day === dayEntry.day,
+                          )
+                        ].availability.slots.splice(slotIndex, 1);
+                        setWeeklySchedule(newSchedule);
+                      }}
                       className="rounded-full p-1 text-red-600 hover:bg-red-100"
                       aria-label="Remove time slot"
                     >
@@ -605,9 +634,10 @@ const ProviderServiceDetailPage: React.FC = () => {
     try {
       setIsDeleting(true);
       await deleteService(service.id);
+      toast.success("Service deleted!");
       navigate("/provider/services");
     } catch (error) {
-      alert("Failed to delete service. Please try again.");
+      toast.error("Failed to delete service. Please try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -622,8 +652,13 @@ const ProviderServiceDetailPage: React.FC = () => {
     try {
       await updateServiceStatus(service.id, newStatus);
       setService((prev) => (prev ? { ...prev, status: newStatus } : prev));
+      toast.success(
+        newStatus === "Available"
+          ? "Service activated!"
+          : "Service deactivated!",
+      );
     } catch (error) {
-      alert("Failed to update service status. Please try again.");
+      toast.error("Failed to update service status. Please try again.");
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -682,8 +717,9 @@ const ProviderServiceDetailPage: React.FC = () => {
           : prev,
       );
       setEditTitleCategory(false);
+      toast.success("Service title and category updated!");
     } catch (err) {
-      alert("Failed to update title or category. Please try again.");
+      toast.error("Failed to update title or category. Please try again.");
     }
   };
 
@@ -776,8 +812,11 @@ const ProviderServiceDetailPage: React.FC = () => {
       // Update local state with the returned service data
       setService(updatedService);
       setEditLocationAvailability(false);
+      toast.success("Location and availability updated!");
     } catch (err) {
-      alert("Failed to update location or availability. Please try again.");
+      toast.error(
+        "Failed to update location or availability. Please try again.",
+      );
     }
   };
 
@@ -919,8 +958,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingUploads([]);
       setPendingRemovals([]);
       setTempDisplayImages([]);
-
-      // Reload the page to get fresh data
+      toast.success("Service images updated!");
       window.location.reload();
     } catch (error) {
       setUploadError(
@@ -928,27 +966,11 @@ const ProviderServiceDetailPage: React.FC = () => {
           ? error.message
           : "Failed to save image changes. Please try again.",
       );
+      toast.error("Failed to update images.");
     } finally {
       setUploadingImages(false);
     }
   };
-
-  const handleCancelImages = useCallback(() => {
-    // Cleanup temporary URLs for new images to prevent memory leaks
-    tempDisplayImages.forEach((img) => {
-      if (img.isNew) {
-        URL.revokeObjectURL(img.url);
-      }
-    });
-
-    // Reset all temporary state back to original
-    setPendingUploads([]);
-    setPendingRemovals([]);
-    setTempDisplayImages(serviceImages ? [...serviceImages] : []);
-
-    setEditImages(false);
-    setUploadError(null);
-  }, [service, tempDisplayImages, serviceImages]);
 
   // --- Certification Upload Handlers ---
   const handleEditCertifications = useCallback(() => {
@@ -958,6 +980,32 @@ const ProviderServiceDetailPage: React.FC = () => {
     }
     setCertificateUploadError(null);
   }, [serviceCertificates, editCertifications]);
+
+  // --- Certification Cancel Handler ---
+  const handleCancelCertifications = useCallback(() => {
+    setEditCertifications(false);
+    if (serviceCertificates) {
+      setTempDisplayCertificates([...serviceCertificates]);
+    } else {
+      setTempDisplayCertificates([]);
+    }
+    setPendingCertificateUploads([]);
+    setPendingCertificateRemovals([]);
+    setCertificateUploadError(null);
+  }, [serviceCertificates]);
+
+  // --- Image Cancel Handler ---
+  const handleCancelImages = useCallback(() => {
+    setEditImages(false);
+    if (serviceImages) {
+      setTempDisplayImages([...serviceImages]);
+    } else {
+      setTempDisplayImages([]);
+    }
+    setPendingUploads([]);
+    setPendingRemovals([]);
+    setUploadError(null);
+  }, [serviceImages]);
 
   const handleCertificationUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -1122,8 +1170,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingCertificateUploads([]);
       setPendingCertificateRemovals([]);
       setTempDisplayCertificates([]);
-
-      // Reload the page to get fresh data
+      toast.success("Certifications updated!");
       window.location.reload();
     } catch (error) {
       setCertificateUploadError(
@@ -1131,29 +1178,11 @@ const ProviderServiceDetailPage: React.FC = () => {
           ? error.message
           : "Failed to save certificate changes. Please try again.",
       );
+      toast.error("Failed to update certifications.");
     } finally {
       setUploadingCertificates(false);
     }
   };
-
-  const handleCancelCertifications = useCallback(() => {
-    // Cleanup temporary URLs for new certificates to prevent memory leaks
-    tempDisplayCertificates.forEach((cert) => {
-      if (cert.isNew) {
-        URL.revokeObjectURL(cert.url);
-      }
-    });
-
-    // Reset all temporary state back to original
-    setPendingCertificateUploads([]);
-    setPendingCertificateRemovals([]);
-    setTempDisplayCertificates(
-      serviceCertificates ? [...serviceCertificates] : [],
-    );
-
-    setEditCertifications(false);
-    setCertificateUploadError(null);
-  }, [service, tempDisplayCertificates, serviceCertificates]);
 
   // --- Package Management Handlers ---
   const handleAddPackage = () => {
@@ -1213,6 +1242,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               : p,
           ),
         );
+        toast.success("Package updated!");
       } else {
         // Add new package
         const newPackage = await createPackage({
@@ -1222,10 +1252,11 @@ const ProviderServiceDetailPage: React.FC = () => {
           price: parsedPrice,
         });
         setPackages((prev) => [...prev, newPackage]);
+        toast.success("Package created!");
       }
       handleCancelPackageEdit(); // Close the form
     } catch (err) {
-      alert("Failed to save package. Please try again.");
+      toast.error("Failed to save package. Please try again.");
     } finally {
       setPackageFormLoading(false);
     }
@@ -1246,8 +1277,9 @@ const ProviderServiceDetailPage: React.FC = () => {
       setLoading(true); // Indicate deleting
       await deletePackage(packageId);
       setPackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
+      toast.success("Package deleted!");
     } catch (err) {
-      alert("Failed to delete package. Please try again.");
+      toast.error("Failed to delete package. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -1335,6 +1367,7 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
+      <Toaster position="top-center" richColors />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 shadow-md backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-8">
@@ -1604,62 +1637,26 @@ const ProviderServiceDetailPage: React.FC = () => {
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                       <label className="mb-1 block text-xs font-semibold text-blue-700">
-                        Address Line
-                      </label>
-                      <input
-                        type="text"
-                        value={editedAddress}
-                        onChange={(e) => setEditedAddress(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Street Address, Building, etc."
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-blue-700">
-                        City
+                        City/Municipality
                       </label>
                       <input
                         type="text"
                         value={editedCity}
                         onChange={(e) => setEditedCity(e.target.value)}
                         className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="City"
+                        placeholder="City or Municipality"
                       />
                     </div>
                     <div>
                       <label className="mb-1 block text-xs font-semibold text-blue-700">
-                        State/Province
+                        Province
                       </label>
                       <input
                         type="text"
                         value={editedState}
                         onChange={(e) => setEditedState(e.target.value)}
                         className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="State/Province"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-blue-700">
-                        Postal Code
-                      </label>
-                      <input
-                        type="text"
-                        value={editedPostalCode}
-                        onChange={(e) => setEditedPostalCode(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Postal Code"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-blue-700">
-                        Country
-                      </label>
-                      <input
-                        type="text"
-                        value={editedCountry}
-                        onChange={(e) => setEditedCountry(e.target.value)}
-                        className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900"
-                        placeholder="Country"
+                        placeholder="Province"
                       />
                     </div>
                   </div>
@@ -1695,18 +1692,8 @@ const ProviderServiceDetailPage: React.FC = () => {
                       Full Address
                     </label>
                     <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
-                      {service.location.address && (
-                        <span>{service.location.address}, </span>
-                      )}
                       {service.location.city}
                       {service.location.state && `, ${service.location.state}`}
-                      {service.location.postalCode &&
-                        ` ${service.location.postalCode}`}
-                      {service.location.country && (
-                        <span className="text-blue-500">
-                          , {service.location.country}
-                        </span>
-                      )}
                     </div>
                   </div>
                   <div>
@@ -1882,78 +1869,66 @@ const ProviderServiceDetailPage: React.FC = () => {
                           key={pkg.id}
                           className="flex flex-col justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50 p-4 shadow transition-shadow hover:shadow-lg"
                         >
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-semibold break-words text-blue-900">
-                              {pkg.title}
-                            </h4>
-                            <span className="text-lg font-bold text-green-600">
-                              ₱{pkg.price.toFixed(2)}
-                            </span>
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-lg font-semibold break-words text-blue-900">
+                                {pkg.title}
+                              </h4>
+                              <span className="text-lg font-bold text-green-600">
+                                ₱{pkg.price.toFixed(2)}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-sm break-words text-blue-700">
+                              {pkg.description}
+                            </p>
                           </div>
-                          <p className="mt-1 text-sm break-words text-blue-700">
-                            {pkg.description}
-                          </p>
-                          <div className="mt-2 flex items-center justify-between">
-                            <div className="flex gap-1">
-                              <Tooltip
-                                content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                                disabled={hasActiveBookings}
+                          <div className="mt-4 flex gap-2">
+                            <Tooltip
+                              content={`Cannot edit with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                              disabled={hasActiveBookings}
+                            >
+                              <button
+                                onClick={
+                                  hasActiveBookings
+                                    ? undefined
+                                    : () => handleEditPackage(pkg)
+                                }
+                                className={`rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 ${
+                                  hasActiveBookings || isAddingOrEditingPackage
+                                    ? "cursor-not-allowed opacity-50"
+                                    : ""
+                                }`}
+                                aria-label={`Edit ${pkg.title}`}
+                                disabled={
+                                  hasActiveBookings || isAddingOrEditingPackage
+                                }
                               >
-                                <button
-                                  onClick={
-                                    hasActiveBookings
-                                      ? undefined
-                                      : () => handleEditPackage(pkg)
-                                  }
-                                  className={`rounded-full p-2 text-blue-500 hover:bg-blue-100 ${
-                                    hasActiveBookings
-                                      ? "cursor-not-allowed opacity-50"
-                                      : ""
-                                  }`}
-                                  aria-label={`Edit ${pkg.title}`}
-                                  disabled={
-                                    hasActiveBookings ||
-                                    isAddingOrEditingPackage
-                                  }
-                                >
-                                  <PencilIcon className="h-5 w-5" />
-                                </button>
-                              </Tooltip>
-                              <Tooltip
-                                content={`Cannot delete with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
-                                disabled={hasActiveBookings}
+                                Edit
+                              </button>
+                            </Tooltip>
+                            <Tooltip
+                              content={`Cannot delete with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+                              disabled={hasActiveBookings}
+                            >
+                              <button
+                                onClick={
+                                  hasActiveBookings
+                                    ? undefined
+                                    : () => handleDeletePackage(pkg.id)
+                                }
+                                className={`rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 ${
+                                  hasActiveBookings || isAddingOrEditingPackage
+                                    ? "cursor-not-allowed opacity-50"
+                                    : ""
+                                }`}
+                                aria-label={`Delete ${pkg.title}`}
+                                disabled={
+                                  hasActiveBookings || isAddingOrEditingPackage
+                                }
                               >
-                                <button
-                                  onClick={
-                                    hasActiveBookings
-                                      ? undefined
-                                      : () => handleDeletePackage(pkg.id)
-                                  }
-                                  className={`rounded-full p-2 text-red-500 hover:bg-red-100 ${
-                                    hasActiveBookings
-                                      ? "cursor-not-allowed opacity-50"
-                                      : ""
-                                  }`}
-                                  aria-label={`Delete ${pkg.title}`}
-                                  disabled={
-                                    hasActiveBookings ||
-                                    isAddingOrEditingPackage
-                                  }
-                                >
-                                  <TrashIcon className="h-5 w-5" />
-                                </button>
-                              </Tooltip>
-                            </div>
-                            <div className="flex flex-col text-right text-xs text-blue-500">
-                              <span>
-                                Created:{" "}
-                                {new Date(pkg.createdAt).toLocaleDateString()}
-                              </span>
-                              <span>
-                                Updated:{" "}
-                                {new Date(pkg.updatedAt).toLocaleDateString()}
-                              </span>
-                            </div>
+                                Delete
+                              </button>
+                            </Tooltip>
                           </div>
                         </div>
                       ))

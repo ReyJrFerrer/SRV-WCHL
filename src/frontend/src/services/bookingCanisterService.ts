@@ -940,6 +940,7 @@ export const bookingCanisterService = {
         [Principal.fromText(serviceCanisterId)],
         [Principal.fromText(reviewCanisterId)],
         [Principal.fromText(reputationCanisterId)],
+        [], // Add an empty array or the appropriate Principal(s) for the fifth argument
       );
 
       if ("ok" in result) {
