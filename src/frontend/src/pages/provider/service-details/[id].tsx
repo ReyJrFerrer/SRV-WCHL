@@ -17,6 +17,7 @@ import {
   PlusCircleIcon, // For adding time slots
   MinusCircleIcon, // For removing time slots
   PlusIcon, // For adding packages
+  DocumentIcon,
 } from "@heroicons/react/24/solid";
 import {
   useServiceManagement,
@@ -41,6 +42,9 @@ import { mediaService } from "../../../services/mediaService";
 import ViewReviewsButton from "../../../components/common/ViewReviewsButton";
 import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
 import { Toaster, toast } from "sonner";
+import { Dialog } from "@headlessui/react"; // Add this import for modal dialog
+
+// Helper to check if a file is a PDF based on its URL or filename
 
 // Simple Tooltip component for validation messages
 interface TooltipProps {
@@ -397,6 +401,13 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
 const ProviderServiceDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+
+  // State for image/certificate preview modal
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<"image" | "pdf" | null>(null);
+
+  // Helper to check if file is a PDF
+  const isPdfFile = (url: string) => url?.toLowerCase().endsWith(".pdf");
 
   const {
     getService,
@@ -1384,6 +1395,45 @@ const ProviderServiceDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
+
+      {/* Image/PDF Preview Modal */}
+      <Dialog
+        open={!!previewUrl}
+        onClose={() => setPreviewUrl(null)}
+        className="fixed inset-0 z-[100] flex items-center justify-center"
+      >
+        <div
+          className="fixed inset-0 bg-black/60"
+          aria-hidden="true"
+          onClick={() => setPreviewUrl(null)}
+        />
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          <button
+            className="absolute top-2 right-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
+            onClick={() => setPreviewUrl(null)}
+            aria-label="Close preview"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+          <div className="flex max-h-[90vh] max-w-[90vw] flex-col items-center rounded-lg bg-white p-4 shadow-2xl">
+            {previewUrl && previewType === "image" && (
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="max-h-[70vh] max-w-[80vw] rounded-lg object-contain"
+              />
+            )}
+            {previewUrl && previewType === "pdf" && (
+              <iframe
+                src={previewUrl}
+                title="PDF Preview"
+                className="h-[70vh] w-[80vw] rounded-lg border"
+              />
+            )}
+          </div>
+        </div>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -2127,41 +2177,44 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                   {serviceCertificates && serviceCertificates.length > 0 ? (
                     serviceCertificates.map(
-                      (certificate: any, index: number) => (
-                        <div
-                          key={index}
-                          className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm"
-                        >
-                          {certificate.error ? (
-                            <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                              <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
-                              <p className="mt-1">Failed to load</p>
-                            </div>
-                          ) : certificate.dataUrl ? (
-                            <img
-                              src={certificate.dataUrl}
-                              alt={`Certificate ${index + 1}`}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : certificate.fileName
-                              ?.toLowerCase()
-                              .endsWith(".pdf") ? (
-                            <div className="flex h-full w-full items-center justify-center bg-red-50">
-                              <div className="text-center">
-                                <AcademicCapIcon className="mx-auto h-8 w-8 text-red-500" />
-                                <p className="mt-1 text-xs text-red-700">
-                                  {certificate.fileName}
-                                </p>
+                      (certificate: any, index: number) => {
+                        const url = certificate.dataUrl || certificate.url;
+                        if (!url) return null;
+                        return (
+                          <button
+                            key={index}
+                            className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
+                            onClick={() => {
+                              setPreviewUrl(url);
+                              setPreviewType(isPdfFile(url) ? "pdf" : "image");
+                            }}
+                            type="button"
+                            tabIndex={0}
+                            aria-label="Inspect certificate"
+                          >
+                            {certificate.error ? (
+                              <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                                <AcademicCapIcon className="mx-auto h-8 w-8 text-blue-200" />
+                                <p className="mt-1">Failed to load</p>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
-                            </div>
-                          )}
-                        </div>
-                      ),
+                            ) : isPdfFile(url) ? (
+                              <div className="flex flex-col items-center justify-center">
+                                <DocumentIcon className="h-12 w-12 text-red-500" />
+                                <span className="mt-1 text-xs text-blue-700">
+                                  View PDF
+                                </span>
+                              </div>
+                            ) : (
+                              <img
+                                src={url}
+                                alt={`Certificate ${index + 1}`}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            )}
+                          </button>
+                        );
+                      },
                     )
                   ) : (
                     <div className="col-span-full flex flex-col items-center justify-center py-8 text-blue-300">
@@ -2289,30 +2342,44 @@ const ProviderServiceDetailPage: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                   {serviceImages && serviceImages.length > 0 ? (
-                    serviceImages.map((image: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm"
-                      >
-                        {image.error ? (
-                          <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                            <PhotoIcon className="mx-auto h-8 w-8 text-blue-200" />
-                            <p className="mt-1">Failed to load</p>
-                          </div>
-                        ) : image.dataUrl ? (
-                          <img
-                            src={image.dataUrl}
-                            alt={`Service image ${index + 1}`}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <div className="h-6 w-6 animate-spin rounded-full border-t-2 border-b-2 border-blue-400"></div>
-                          </div>
-                        )}
-                      </div>
-                    ))
+                    serviceImages.map((image: any, index: number) => {
+                      const url = image.dataUrl || image.url;
+                      if (!url) return null;
+                      return (
+                        <button
+                          key={index}
+                          className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
+                          onClick={() => {
+                            setPreviewUrl(url);
+                            setPreviewType(isPdfFile(url) ? "pdf" : "image");
+                          }}
+                          type="button"
+                          tabIndex={0}
+                          aria-label="Inspect image"
+                        >
+                          {image.error ? (
+                            <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
+                              <PhotoIcon className="mx-auto h-8 w-8 text-blue-200" />
+                              <p className="mt-1">Failed to load</p>
+                            </div>
+                          ) : isPdfFile(url) ? (
+                            <div className="flex flex-col items-center justify-center">
+                              <DocumentIcon className="h-12 w-12 text-red-500" />
+                              <span className="mt-1 text-xs text-blue-700">
+                                View PDF
+                              </span>
+                            </div>
+                          ) : (
+                            <img
+                              src={url}
+                              alt={`Service image ${index + 1}`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          )}
+                        </button>
+                      );
+                    })
                   ) : (
                     <div className="col-span-full flex flex-col items-center justify-center py-8 text-blue-300">
                       <PhotoIcon className="mb-2 h-12 w-12" />
